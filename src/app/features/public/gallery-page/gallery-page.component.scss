@@ -3,47 +3,6 @@
   background: var(--ink-900);
 }
 
-/* Filters bar */
-.filters-bar {
-  margin: 28px 0 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.hf-tab--active {
-  color: var(--brass-300) !important;
-  border-bottom-color: var(--brass-400) !important;
-}
-
-.tag-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag-pill {
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--rule-2);
-  background: transparent;
-  color: var(--t-300);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover {
-    border-color: var(--t-400);
-    color: var(--t-100);
-  }
-
-  &--active {
-    border-color: var(--brass-400);
-    color: var(--brass-300);
-    background: rgba(191, 148, 71, 0.08);
-  }
-}
-
 /* Masonry */
 .gallery-masonry {
   column-count: 3;
@@ -64,23 +23,30 @@
   }
 }
 
+/* Thumb with varying aspect ratios (reference pattern: 0→16/10, 1→4/5, 2→4/3) */
 .gallery-card-thumb {
   position: relative;
   overflow: hidden;
   background: var(--ink-800);
 
-  &--link {
-    min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  &--ar0 { aspect-ratio: 16/10; }
+  &--ar1 { aspect-ratio: 4/5; }
+  &--ar2 { aspect-ratio: 4/3; }
+}
+
+.gallery-card-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  background: var(--ink-800);
 }
 
 .gallery-card-img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
+  filter: saturate(0.9);
   transition: transform 0.3s;
 
   .gallery-card:hover & {
@@ -88,19 +54,9 @@
   }
 }
 
-.gallery-card-placeholder {
-  width: 100%;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--t-500);
-}
-
 .gallery-play-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,30 +64,31 @@
 }
 
 .gallery-play-btn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.65);
-  border: 2px solid rgba(255,255,255,0.7);
+  background: rgba(11, 14, 20, 0.7);
+  border: 1px solid var(--rule-3);
   display: flex;
   align-items: center;
   justify-content: center;
   padding-left: 3px;
+  color: var(--brass-300);
 }
 
 .gallery-link-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  left: 10px;
 }
 
 .gallery-card-body {
-  padding: 10px 12px 12px;
+  padding: 12px;
+  border-top: 1px solid var(--rule);
 }
 
 .gallery-card-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
   color: var(--t-100);
   line-height: 1.4;
 }

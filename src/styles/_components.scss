@@ -168,8 +168,11 @@
   letter-spacing: .04em;
   color: var(--t-400);
   cursor: pointer;
+  border: none;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
+  background: transparent;
+  font-family: var(--sans);
   transition: color .12s;
 
   &:hover { color: var(--t-200); }
