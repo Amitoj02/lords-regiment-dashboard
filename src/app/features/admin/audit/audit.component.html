@@ -1,0 +1,142 @@
+<hf-app-shell [activeRoute]="'audit'">
+  <div class="page">
+    <div class="page-head between">
+      <div>
+        <div class="page-sub">Ledger of Record</div>
+        <h1 class="page-title serif-display">Audit Ledger</h1>
+      </div>
+      <div class="row" style="gap:8px;">
+        <button class="btn btn-ghost btn-sm" (click)="exportCsv()">Export CSV</button>
+        <button class="btn btn-ghost btn-sm">Filters</button>
+      </div>
+    </div>
+
+    <!-- Filter row -->
+    <div class="filter-row">
+      <input
+        class="hf-input filter-search"
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="applyFilters()"
+        placeholder="Search actors, actions, details…"
+      />
+      <select class="hf-select" [(ngModel)]="filterActor" (ngModelChange)="applyFilters()">
+        <option value="">All actors</option>
+        <option *ngFor="let a of actors" [value]="a">{{ a }}</option>
+      </select>
+      <select class="hf-select" [(ngModel)]="filterAction" (ngModelChange)="applyFilters()">
+        <option value="">All actions</option>
+        <option *ngFor="let a of actions" [value]="a">{{ a }}</option>
+      </select>
+      <select class="hf-select">
+        <option>All time</option>
+        <option>Last 7 days</option>
+        <option>Last 30 days</option>
+        <option>This season</option>
+      </select>
+    </div>
+
+    <!-- Two-column body -->
+    <div class="audit-layout">
+
+      <!-- Log table -->
+      <div class="audit-table-wrap">
+        <table class="hf-table">
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Actor</th>
+              <th>Action</th>
+              <th>Target / Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let log of filteredLogs"
+              [ngClass]="{ 'row--active': selectedLog?.id === log.id }"
+              (click)="selectLog(log)"
+              style="cursor:pointer;"
+            >
+              <td class="mono ts-cell">{{ formatTimestamp(log.timestamp) }}</td>
+              <td>
+                <div class="row" style="gap:6px;align-items:center;">
+                  <hf-avatar [name]="log.actor"></hf-avatar>
+                  <span>{{ log.actor }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="action-badge mono" [ngClass]="getSeverityClass(log.severity)">{{ log.action }}</span>
+              </td>
+              <td class="detail-cell">{{ log.targetUser ? log.targetUser + ' — ' : '' }}{{ log.detail }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detail panel -->
+      <div class="audit-detail" *ngIf="selectedLog">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title mono">Entry #{{ selectedLog.requestId }}</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- Actor info -->
+            <div class="row" style="gap:10px;align-items:center;margin-bottom:16px;">
+              <hf-avatar [name]="selectedLog.actor" [size]="36"></hf-avatar>
+              <div>
+                <div class="detail-actor-name">{{ selectedLog.actor }}</div>
+                <div class="mono detail-timestamp">{{ formatTimestamp(selectedLog.timestamp) }}</div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="detail-desc parchment serif">{{ selectedLog.detail }}</div>
+
+            <!-- Before/After -->
+            <div class="grid-2 state-grid" *ngIf="selectedLog.beforeState || selectedLog.afterState">
+              <div>
+                <div class="admin-label brass">Before</div>
+                <div class="state-value">{{ selectedLog.beforeState || '—' }}</div>
+              </div>
+              <div>
+                <div class="admin-label brass">After</div>
+                <div class="state-value">{{ selectedLog.afterState || '—' }}</div>
+              </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="detail-metadata">
+              <div class="meta-item" *ngIf="selectedLog.targetUser">
+                <span class="field-label">Target member</span>
+                <span>{{ selectedLog.targetUser }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="field-label">Discord sync</span>
+                <span class="row" style="gap:4px;align-items:center;">
+                  <span class="status-dot" [ngClass]="selectedLog.discordSynced ? 'discord-on' : 'discord-off'"></span>
+                  {{ selectedLog.discordSynced ? 'Synced' : 'Not synced' }}
+                </span>
+              </div>
+              <div class="meta-item">
+                <span class="field-label">Request ID</span>
+                <span class="mono">{{ selectedLog.requestId }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="field-label">Severity</span>
+                <span class="badge" [ngClass]="getSeverityClass(selectedLog.severity)">{{ selectedLog.severity }}</span>
+              </div>
+            </div>
+
+            <div class="detail-footer-actions">
+              <button class="btn btn-ghost btn-sm" *ngIf="selectedLog.targetUser">View profile</button>
+              <button class="btn btn-ghost btn-sm">All by {{ selectedLog.actor.split(' ')[0] }}</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</hf-app-shell>

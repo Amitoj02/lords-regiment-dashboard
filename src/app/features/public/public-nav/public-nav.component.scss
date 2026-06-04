@@ -1,0 +1,33 @@
+.public-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  height: 60px;
+  background: var(--ink-900);
+  border-bottom: 1px solid var(--rule);
+  backdrop-filter: blur(8px);
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--t-300);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover {
+    color: var(--t-100);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &--active {
+    color: var(--brass-300);
+    background: rgba(var(--brass-400), 0.08);
+  }
+}

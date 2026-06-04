@@ -1,0 +1,123 @@
+.gdpr-center {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.gdpr-header {
+  text-align: center;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.gdpr-seal {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--oxblood-300);
+}
+
+.gdpr-title {
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.gdpr-panel {
+  border-color: var(--oxblood-600) !important;
+}
+
+.gdpr-quote {
+  background: var(--parch-100);
+  border: 1px solid var(--parch-300);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--t-on-parch);
+  margin: 0 0 20px;
+}
+
+.destruction-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.destruction-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+
+  svg { flex-shrink: 0; margin-top: 2px; }
+
+  &--retained {
+    opacity: 0.7;
+  }
+}
+
+.retained-note {
+  color: var(--t-400);
+  font-style: italic;
+}
+
+.confirm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field-row {
+  .field-label { margin-bottom: 6px; }
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+
+  input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+}
+
+.discord-reauth {
+  background: var(--parch-100);
+  border: 1px solid var(--rule-2);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discord-reauth__label {
+  margin-bottom: 0;
+}
+
+.gdpr-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+.gdpr-footer-note {
+  margin-top: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--t-400);
+  line-height: 1.5;
+
+  svg { flex-shrink: 0; margin-top: 1px; }
+}

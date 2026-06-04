@@ -1,0 +1,97 @@
+<hf-app-shell [activeRoute]="'profile'">
+  <div class="gdpr-center">
+
+    <!-- Wax seal + title -->
+    <div class="gdpr-header">
+      <div class="wax gdpr-seal">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+      </div>
+      <h1 class="gdpr-title serif-display">Discharge &amp; Destruction of Your Account</h1>
+    </div>
+
+    <!-- Main panel -->
+    <div class="panel gdpr-panel">
+      <div class="panel-body">
+
+        <!-- Parchment quote -->
+        <blockquote class="gdpr-quote parchment serif">
+          By this writ you may request the permanent erasure of your personal data held within the Lords Regiment portal. Once executed, this order cannot be reversed. Your service record will be purged from active records, though certain entries may be retained in the audit ledger as required by law.
+        </blockquote>
+
+        <hf-crest-divider label="What will be destroyed"></hf-crest-divider>
+
+        <ul class="destruction-list">
+          <li class="destruction-item destruction-item--yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>Your profile, rank, and medal records</span>
+          </li>
+          <li class="destruction-item destruction-item--yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>Your application history and moderator notes</span>
+          </li>
+          <li class="destruction-item destruction-item--yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>Gallery submissions and associated metadata</span>
+          </li>
+          <li class="destruction-item destruction-item--yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>RSVP records and event participation data</span>
+          </li>
+          <li class="destruction-item destruction-item--retained">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t-400)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="retained-note">Audit log entries are retained for legal compliance (anonymised after 12 months)</span>
+          </li>
+        </ul>
+
+        <hf-crest-divider label="To Execute"></hf-crest-divider>
+
+        <div class="confirm-form">
+          <div class="field-row">
+            <label class="field-label">Type <span class="mono admin-label brass">DELETE</span> to confirm</label>
+            <input class="hf-input" type="text" [(ngModel)]="confirmText" placeholder="DELETE" autocomplete="off" />
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="gdpr1" [(ngModel)]="checkbox1" />
+            <label for="gdpr1">I understand this action is permanent and cannot be undone.</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="gdpr2" [(ngModel)]="checkbox2" />
+            <label for="gdpr2">I have downloaded my data if I wish to retain a copy.</label>
+          </div>
+
+          <!-- Discord re-auth -->
+          <div class="discord-reauth">
+            <div class="discord-reauth__label field-label">Re-authenticate with Discord to proceed</div>
+            <button class="btn btn-discord btn-sm">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.11 18.102.128 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+              Authenticate with Discord
+            </button>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="gdpr-actions">
+            <button class="btn btn-ghost btn-sm" (click)="downloadData()">Download my data</button>
+            <button class="btn btn-ghost btn-sm" routerLink="/admin/settings">Return to settings</button>
+            <button
+              class="btn btn-destructive btn-sm"
+              [attr.disabled]="canExecute ? null : true"
+              (click)="execute()"
+            >
+              Execute discharge
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Footer note -->
+        <div class="gdpr-footer-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          A confirmation order will be dispatched to your registered Discord account. The discharge will not execute until that order is acknowledged.
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</hf-app-shell>

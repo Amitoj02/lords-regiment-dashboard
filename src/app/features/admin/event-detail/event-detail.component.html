@@ -1,0 +1,175 @@
+<hf-app-shell [activeRoute]="'events'">
+  <div class="event-detail">
+
+    <!-- Banner -->
+    <div class="event-banner">
+      <div class="event-banner__overlay">
+        <div class="event-banner__badges">
+          <hf-event-status [status]="event.status"></hf-event-status>
+          <span class="badge blue">5 days</span>
+          <hf-platform-badges [platforms]="event.platforms"></hf-platform-badges>
+          <span class="badge">Weekly</span>
+        </div>
+        <h1 class="event-banner__title serif-display">{{ event.title }}</h1>
+        <div class="event-banner__meta">
+          <span>{{ event.date }} &middot; {{ event.startTime }} &ndash; {{ event.endTime }} {{ event.timezone }}</span>
+          <span>&middot; {{ event.serverName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-column body -->
+    <div class="event-body">
+
+      <!-- Left column -->
+      <div class="event-left">
+
+        <!-- Orders of the Day -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Orders of the Day</span>
+          </div>
+          <div class="panel-body">
+            <p class="serif event-orders" *ngFor="let para of event.description.split('\n\n')">{{ para }}</p>
+          </div>
+        </div>
+
+        <!-- Server Details -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Server Details</span>
+          </div>
+          <div class="panel-body server-details">
+            <div class="field-group">
+              <div class="field-label">Server name</div>
+              <div class="mono">{{ event.serverName }}</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Password</div>
+              <div class="row" style="gap:8px;align-items:center;">
+                <span class="mono">{{ showPassword ? event.serverPassword : '&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;' }}</span>
+                <button class="btn btn-ghost btn-sm" (click)="togglePassword()">
+                  {{ showPassword ? 'Hide' : 'Reveal' }}
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Notify before</div>
+              <div class="row" style="gap:6px;">
+                <span *ngFor="let n of event.notifyBefore" class="badge">{{ n }}</span>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Tags</div>
+              <div class="row" style="gap:6px;">
+                <span *ngFor="let tag of event.tags" class="badge brass">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendees -->
+        <div class="panel">
+          <div class="panel-header between">
+            <span class="panel-title">Attendees</span>
+            <span class="badge">{{ rsvpTotal }}</span>
+          </div>
+          <div class="panel-body">
+            <div class="attendees-grid">
+              <div *ngFor="let a of attendees" class="attendee-item">
+                <hf-avatar [name]="a.name" [size]="26"></hf-avatar>
+                <span class="attendee-name">{{ a.name }}</span>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px;">+16 more</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column -->
+      <div class="event-right">
+
+        <!-- RSVP -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Your RSVP</span>
+          </div>
+          <div class="panel-body rsvp-options">
+            <button
+              class="btn btn-block rsvp-btn"
+              [ngClass]="{ 'rsvp-btn--active btn-primary': selectedRsvp === 'interested' }"
+              (click)="setRsvp('interested')"
+            >
+              <span>Interested</span>
+              <span class="badge">{{ event.rsvpCounts.interested }}</span>
+            </button>
+            <button
+              class="btn btn-block rsvp-btn"
+              [ngClass]="{ 'rsvp-btn--active btn-primary': selectedRsvp === 'tentative' }"
+              (click)="setRsvp('tentative')"
+            >
+              <span>Tentative</span>
+              <span class="badge">{{ event.rsvpCounts.tentative }}</span>
+            </button>
+            <button
+              class="btn btn-block rsvp-btn"
+              [ngClass]="{ 'rsvp-btn--active btn-destructive': selectedRsvp === 'declined' }"
+              (click)="setRsvp('declined')"
+            >
+              <span>Declined</span>
+              <span class="badge">{{ event.rsvpCounts.declined }}</span>
+            </button>
+            <button
+              class="btn btn-block rsvp-btn"
+              [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'neutral' }"
+              (click)="setRsvp('neutral')"
+            >
+              <span>Neutral</span>
+              <span class="badge">{{ event.rsvpCounts.neutral }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Roll-up -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Roll-up</span>
+          </div>
+          <div class="panel-body rollup">
+            <div class="rollup-row">
+              <span class="rollup-label">Interested</span>
+              <span class="rollup-count ok">{{ event.rsvpCounts.interested }}</span>
+            </div>
+            <div class="rollup-row">
+              <span class="rollup-label">Tentative</span>
+              <span class="rollup-count warn">{{ event.rsvpCounts.tentative }}</span>
+            </div>
+            <div class="rollup-row">
+              <span class="rollup-label">Declined</span>
+              <span class="rollup-count err">{{ event.rsvpCounts.declined }}</span>
+            </div>
+            <div class="rollup-row">
+              <span class="rollup-label">Neutral</span>
+              <span class="rollup-count">{{ event.rsvpCounts.neutral }}</span>
+            </div>
+            <div class="divider"></div>
+            <div class="rollup-row">
+              <span class="rollup-label">Goal</span>
+              <span class="rollup-count">32</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="event-actions">
+          <button class="btn btn-ghost btn-sm btn-block">Archive</button>
+          <button class="btn btn-destructive btn-sm btn-block">Delete</button>
+          <button class="btn btn-primary btn-sm btn-block">Edit orders</button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</hf-app-shell>

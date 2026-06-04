@@ -1,0 +1,145 @@
+// =========================================================
+// HOLDFAST · Forms & Inputs
+// =========================================================
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--t-400);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.hf-input,
+.hf-select,
+.hf-textarea {
+  width: 100%;
+  background: var(--ink-900);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r-2);
+  color: var(--t-100);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  padding: 9px 12px;
+  height: 36px;
+  transition: border-color .12s, background .12s;
+  outline: none;
+
+  &:hover { border-color: var(--rule-3); }
+
+  &:focus {
+    border-color: var(--brass-500);
+    box-shadow: 0 0 0 3px rgba(176,132,54,.12);
+  }
+
+  &::placeholder { color: var(--t-500); }
+
+  &.has-icon { padding-left: 34px; }
+
+  &.mono { font-family: var(--mono); }
+}
+
+.hf-textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.hf-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237d7866' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  cursor: pointer;
+
+  option {
+    background: var(--ink-800);
+    color: var(--t-100);
+  }
+}
+
+.field-hint  { font-size: 11.5px; color: var(--t-400); margin-top: 6px; }
+.field-error { font-size: 11.5px; color: var(--oxblood-300); margin-top: 6px; }
+
+.input-wrap {
+  position: relative;
+
+  > .input-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--t-400);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+  }
+}
+
+// Checkbox
+.hf-check {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--rule-3);
+  border-radius: 2px;
+  background: var(--ink-900);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  cursor: pointer;
+
+  &.on {
+    background: var(--brass-500);
+    border-color: var(--brass-600);
+
+    &::after {
+      content: "";
+      width: 8px;
+      height: 4px;
+      border: 1.5px solid #1a1306;
+      border-top: 0;
+      border-right: 0;
+      transform: translateY(-1px) rotate(-45deg);
+    }
+  }
+}
+
+// Toggle
+.hf-toggle {
+  width: 32px;
+  height: 18px;
+  background: var(--ink-700);
+  border: 1px solid var(--rule-3);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  flex: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--t-300);
+    top: 2px;
+    left: 2px;
+    transition: left .12s, background .12s;
+  }
+
+  &.on {
+    background: var(--laurel-600);
+    border-color: var(--laurel-500);
+
+    &::after {
+      left: 16px;
+      background: var(--brass-300);
+    }
+  }
+}

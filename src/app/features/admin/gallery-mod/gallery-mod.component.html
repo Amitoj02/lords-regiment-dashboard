@@ -1,0 +1,115 @@
+<hf-app-shell [activeRoute]="'gallery'">
+  <div class="page">
+    <div class="page-head between">
+      <div>
+        <div class="page-sub">Sentry Duty</div>
+        <h1 class="page-title serif-display">Gallery Moderation</h1>
+      </div>
+    </div>
+
+    <div class="hf-tabs">
+      <button class="hf-tab" [ngClass]="{'active': activeTab === 'pending'}" (click)="activeTab = 'pending'">
+        Pending <span class="badge ox">9</span>
+      </button>
+      <button class="hf-tab" [ngClass]="{'active': activeTab === 'approved'}" (click)="activeTab = 'approved'">
+        Recently approved <span class="badge">41</span>
+      </button>
+      <button class="hf-tab" [ngClass]="{'active': activeTab === 'declined'}" (click)="activeTab = 'declined'">
+        Declined <span class="badge">6</span>
+      </button>
+    </div>
+
+    <div class="mod-layout">
+
+      <!-- Left: gallery grid -->
+      <div class="mod-left">
+        <div class="gallery-grid">
+          <div
+            *ngFor="let item of items"
+            class="gallery-card"
+            [ngClass]="{ 'gallery-card--selected': item.id === selectedId }"
+            (click)="selectedId = item.id"
+          >
+            <div class="gallery-card__thumb" [ngStyle]="{'background': item.thumbnailColor}">
+              <div class="gallery-card__actions">
+                <button class="btn btn-primary btn-sm" (click)="approve(item.id); $event.stopPropagation()">&#10003;</button>
+                <button class="btn btn-destructive btn-sm" (click)="decline(item.id); $event.stopPropagation()">&times;</button>
+              </div>
+            </div>
+            <div class="gallery-card__info">
+              <span class="gallery-card__caption">{{ item.caption }}</span>
+              <span class="gallery-card__by">by {{ item.submittedBy }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: detail panel -->
+      <div class="mod-right" *ngIf="selected">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Submission Detail</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- Main preview -->
+            <div class="detail-main-preview" [ngStyle]="{'background': selected.thumbnailColor}"></div>
+
+            <!-- Thumbnail strip -->
+            <div class="detail-thumbnails">
+              <div
+                *ngFor="let t of selected.thumbnails"
+                class="detail-thumb"
+                [ngStyle]="{'background': t}"
+              ></div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="detail-meta">
+              <div class="meta-row">
+                <span class="field-label">Caption</span>
+                <span>{{ selected.caption }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="field-label">Linked event</span>
+                <span class="badge brass">{{ selected.event }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="field-label">Tags</span>
+                <div class="row" style="gap:4px;flex-wrap:wrap;">
+                  <span *ngFor="let tag of selected.tags" class="badge">{{ tag }}</span>
+                </div>
+              </div>
+              <div class="meta-row">
+                <span class="field-label">Tagged members</span>
+                <div class="row" style="gap:4px;flex-wrap:wrap;">
+                  <span *ngFor="let m of selected.taggedMembers" class="badge laurel">{{ m }}</span>
+                  <span *ngIf="selected.taggedMembers.length === 0" class="field-hint">None</span>
+                </div>
+              </div>
+              <div class="meta-row">
+                <span class="field-label">Submitted by</span>
+                <span>{{ selected.submittedBy }}</span>
+              </div>
+            </div>
+
+            <!-- Decline reason -->
+            <div class="field-row">
+              <label class="field-label">Decline reason <span class="field-hint">(optional)</span></label>
+              <textarea class="hf-textarea" rows="3" [(ngModel)]="declineReason" placeholder="Provide a reason to notify the submitter…"></textarea>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="detail-actions">
+              <button class="btn btn-destructive btn-sm" (click)="decline(selected.id)">Decline</button>
+              <button class="btn btn-ghost btn-sm" (click)="skip()">Skip</button>
+              <button class="btn btn-primary btn-sm" (click)="approve(selected.id)">Approve</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</hf-app-shell>

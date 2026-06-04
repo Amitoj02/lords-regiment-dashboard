@@ -1,0 +1,110 @@
+.ladder-grid {
+  margin-top: 20px;
+  align-items: start;
+}
+
+.rank-list,
+.medal-list {
+  padding: 0;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  cursor: grab;
+
+  &:last-child { border-bottom: none; }
+
+  &__grip { flex-shrink: 0; cursor: grab; }
+  &__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  &__name { font-weight: 600; font-size: 0.875rem; }
+  &__holders { font-size: 0.75rem; color: var(--t-400); }
+  &__role { flex-shrink: 0; }
+}
+
+.medal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--parch-50); }
+
+  &__grip { flex-shrink: 0; cursor: grab; }
+  &__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  &__name { font-weight: 600; font-size: 0.875rem; }
+  &__desc { font-size: 0.75rem; color: var(--t-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  &__holders { font-size: 0.8rem; color: var(--t-400); min-width: 24px; text-align: right; }
+}
+
+.editor-panel {
+  margin-top: 20px;
+}
+
+.editor-cols {
+  display: grid;
+  grid-template-columns: 160px 1fr 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+.editor-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.editor-discord {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ribbon-picker {
+  width: 100%;
+}
+
+.ribbon-swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.ribbon-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s;
+
+  &:hover { transform: scale(1.15); }
+  &--active { border-color: var(--ink-800) !important; transform: scale(1.15); }
+
+  &--blue { background: var(--regblue-500); }
+  &--red { background: var(--oxblood-400); }
+  &--gold { background: var(--brass-400); }
+  &--green { background: var(--laurel-600); }
+  &--tricolor { background: linear-gradient(to bottom, var(--regblue-500) 33%, #fff 33% 66%, var(--oxblood-400) 66%); }
+}

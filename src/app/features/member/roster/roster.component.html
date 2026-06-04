@@ -1,0 +1,159 @@
+<hf-app-shell [activeRoute]="'roster'" [crumbs]="['Roster']">
+  <!-- Page Head -->
+  <div class="page-head between" style="align-items:flex-start">
+    <div>
+      <div class="admin-label" style="margin-bottom:4px">Roll Call</div>
+      <h1 class="page-title serif">Regimental Roster</h1>
+    </div>
+    <div class="row" style="gap:8px;padding-top:8px">
+      <button class="btn btn-secondary btn-sm">
+        <span style="margin-right:4px">⊞</span> Filters
+      </button>
+      <button class="btn btn-ghost btn-sm">↓ Export Ledger</button>
+      <button class="btn btn-primary btn-sm">+ Invite Mercenary</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Filter Row -->
+  <div class="filter-bar">
+    <input
+      type="search"
+      class="hf-input"
+      placeholder="Search by name, Discord tag, or in-game name…"
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="applyFilters()"
+      style="max-width:320px"
+    >
+
+    <select class="hf-select" [(ngModel)]="filterRank" (ngModelChange)="applyFilters()" style="width:140px">
+      <option value="">All Ranks</option>
+      <option *ngFor="let rank of ranks" [value]="rank">{{ rank }}</option>
+    </select>
+
+    <select class="hf-select" [(ngModel)]="filterRole" (ngModelChange)="applyFilters()" style="width:140px">
+      <option value="">All Roles</option>
+      <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+    </select>
+
+    <select class="hf-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" style="width:130px">
+      <option value="">All Statuses</option>
+      <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+    </select>
+
+    <span class="sp"></span>
+
+    <span style="font-size:13px;color:var(--t-400)">
+      Showing <strong style="color:var(--t-200)">{{ filteredMembers.length }}</strong>
+      of {{ allMembers.length }}
+    </span>
+
+    <button
+      *ngIf="searchQuery || filterRank || filterRole || filterStatus"
+      class="btn btn-ghost btn-sm"
+      (click)="clearFilters()"
+    >Clear filters</button>
+  </div>
+
+  <!-- Table -->
+  <div class="panel" style="overflow:hidden;margin-top:0">
+    <div class="table-scroll">
+      <table class="hf-table" style="width:100%">
+        <thead>
+          <tr>
+            <th style="width:36px">
+              <input type="checkbox" class="hf-check">
+            </th>
+            <th>Member</th>
+            <th>Rank</th>
+            <th>Medals</th>
+            <th>Role</th>
+            <th>Discord</th>
+            <th>Status</th>
+            <th>Last Seen</th>
+            <th style="width:48px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of filteredMembers">
+            <td>
+              <input type="checkbox" class="hf-check">
+            </td>
+            <td>
+              <div class="row" style="gap:10px;align-items:center">
+                <hf-avatar
+                  [name]="member.name"
+                  [size]="32"
+                ></hf-avatar>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--t-100)">{{ member.name }}</div>
+                  <div class="mono" style="font-size:11px;color:var(--t-400)">{{ member.discordTag }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="row" style="gap:6px;align-items:center">
+                <hf-chevrons [count]="member.chevrons"></hf-chevrons>
+                <span style="font-size:12px;color:var(--t-300)">{{ member.rank }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="row" style="gap:4px">
+                <span
+                  *ngFor="let ribbon of member.medals"
+                  class="badge dot"
+                  [ngClass]="ribbon"
+                  style="width:10px;height:10px;min-width:10px;padding:0;border-radius:999px"
+                ></span>
+                <span *ngIf="member.medals.length === 0" style="color:var(--t-500);font-size:12px">—</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getRoleClass(member.role)">{{ member.role }}</span>
+            </td>
+            <td>
+              <span
+                class="status-dot"
+                [ngClass]="member.discordLinked ? 'discord-on' : 'discord-off'"
+                style="width:9px;height:9px;border-radius:999px;display:inline-block;margin-right:4px"
+                [ngStyle]="{ 'background': member.discordLinked ? 'var(--ok)' : 'var(--t-500)' }"
+              ></span>
+              <span class="mono" style="font-size:11px;color:var(--t-400)">
+                {{ member.discordLinked ? 'Linked' : 'Unlinked' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(member.status)">{{ member.status }}</span>
+            </td>
+            <td>
+              <span class="mono" style="font-size:12px;color:var(--t-400)">
+                {{ formatLastSeen(member.lastSeen) }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-icon btn-ghost btn-sm" title="Actions">···</button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredMembers.length === 0">
+            <td colspan="9" style="text-align:center;padding:32px;color:var(--t-400)">
+              No members match your current filters.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-bar">
+    <span style="font-size:13px;color:var(--t-400)">
+      Showing 1–{{ filteredMembers.length }} of {{ filteredMembers.length }} members
+    </span>
+    <div class="row" style="gap:6px">
+      <button class="btn btn-ghost btn-sm" disabled>← Prev</button>
+      <button class="btn btn-secondary btn-sm" style="min-width:32px">1</button>
+      <button class="btn btn-ghost btn-sm" disabled>Next →</button>
+    </div>
+  </div>
+</hf-app-shell>

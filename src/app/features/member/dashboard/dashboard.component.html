@@ -1,0 +1,180 @@
+<hf-app-shell [activeRoute]="'dashboard'" [crumbs]="['Dashboard']">
+  <!-- Honors Strip -->
+  <div class="panel honors-strip" style="margin-bottom:20px">
+    <div class="panel-body">
+      <div class="honors-row">
+        <!-- Current Rank -->
+        <div class="honor-block">
+          <div class="field-label" style="margin-bottom:6px">Current Rank</div>
+          <div class="row" style="gap:8px;align-items:center">
+            <hf-chevrons [count]="currentMember.chevrons"></hf-chevrons>
+            <span style="font-size:13px;color:var(--t-200);font-weight:600">{{ currentMember.rank }}</span>
+          </div>
+        </div>
+
+        <div class="divider" style="height:40px;border:none;border-left:1px solid var(--rule);margin:0 20px"></div>
+
+        <!-- Medals -->
+        <div class="honor-block">
+          <div class="field-label" style="margin-bottom:8px">Decorations</div>
+          <div class="row" style="gap:8px">
+            <hf-medal
+              *ngFor="let medal of currentMember.medals"
+              [letter]="medal.letter"
+              [ribbon]="medal.ribbon"
+              [title]="medal.title"
+            ></hf-medal>
+          </div>
+        </div>
+
+        <div class="divider" style="height:40px;border:none;border-left:1px solid var(--rule);margin:0 20px"></div>
+
+        <!-- Standing -->
+        <div class="honor-block">
+          <div class="field-label" style="margin-bottom:6px">Standing</div>
+          <div class="row" style="gap:8px;align-items:center">
+            <span class="badge laurel">Good Order</span>
+            <span style="font-size:13px;color:var(--t-300)">{{ currentMember.attendanceRate }}% attendance</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="dashboard-grid">
+    <!-- Left Column -->
+    <div class="dashboard-main">
+      <!-- Upcoming Orders -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header between">
+          <span class="panel-title serif">Upcoming Orders</span>
+          <a routerLink="/member/events" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="event-row" *ngFor="let event of upcomingEvents">
+            <div class="event-date-col">
+              <div class="serif" style="font-size:20px;font-weight:700;color:var(--brass-300);line-height:1">
+                {{ event.date | date:'d' }}
+              </div>
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--t-500)">
+                {{ event.date | date:'MMM' }}
+              </div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600;color:var(--t-100)">{{ event.title }}</div>
+              <div class="mono" style="font-size:11px;color:var(--t-400);margin-top:3px">
+                {{ event.startTime }} · {{ event.serverName }}
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge brass">RSVP</span>
+              <a [routerLink]="['/member/events', event.id]" class="btn btn-secondary btn-sm">Details</a>
+            </div>
+          </div>
+          <div *ngIf="upcomingEvents.length === 0" style="padding:24px;text-align:center;color:var(--t-400);font-size:13px">
+            No upcoming events.
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Approvals (Gallery) -->
+      <div class="panel">
+        <div class="panel-header between">
+          <span class="panel-title serif">Recent Gallery</span>
+          <a routerLink="/member/gallery" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        <div class="panel-body">
+          <div class="gallery-row">
+            <div class="gallery-thumb" *ngFor="let item of recentGallery">
+              <img [src]="item.thumbnailUrl" [alt]="item.title">
+              <div class="gallery-thumb-label">{{ item.title }}</div>
+            </div>
+            <div *ngIf="recentGallery.length === 0" style="color:var(--t-400);font-size:13px">
+              No recent gallery items.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="dashboard-aside">
+      <!-- Field Dispatches -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header">
+          <span class="panel-title serif">Field Dispatches</span>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div
+            class="dispatch-item"
+            *ngFor="let dispatch of dispatches"
+          >
+            <div
+              class="dispatch-tone-bar"
+              [ngStyle]="{
+                'background': dispatch.tone === 'info' ? 'var(--info)' :
+                              dispatch.tone === 'warn' ? 'var(--warn)' :
+                              dispatch.tone === 'ok' ? 'var(--ok)' : 'var(--t-400)'
+              }"
+            ></div>
+            <div class="dispatch-body">
+              <div style="font-size:13px;font-weight:600;color:var(--t-100);margin-bottom:3px">
+                {{ dispatch.title }}
+              </div>
+              <div style="font-size:12px;color:var(--t-400);line-height:1.5;margin-bottom:4px">
+                {{ dispatch.body }}
+              </div>
+              <div class="mono" style="font-size:11px;color:var(--t-500)">{{ dispatch.time }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Awaiting Review -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header between">
+          <span class="panel-title serif">Awaiting Review</span>
+          <span class="badge ox">{{ pendingApplications.length }}</span>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="applicant-row" *ngFor="let app of pendingApplications">
+            <hf-avatar [name]="app.applicantName" [size]="32"></hf-avatar>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:var(--t-100)">{{ app.applicantName }}</div>
+              <div class="mono" style="font-size:11px;color:var(--t-500)">{{ app.applicantType }}</div>
+            </div>
+            <div class="row" style="gap:6px">
+              <button class="btn btn-icon btn-sm" title="Approve" style="color:var(--ok)">✓</button>
+              <button class="btn btn-icon btn-sm" title="Decline" style="color:var(--err)">✕</button>
+            </div>
+          </div>
+          <div *ngIf="pendingApplications.length === 0" style="padding:16px;text-align:center;color:var(--t-400);font-size:13px">
+            No pending applications.
+          </div>
+        </div>
+      </div>
+
+      <!-- Quartermaster Status -->
+      <div class="panel qm-panel">
+        <div class="panel-header">
+          <span class="panel-title serif">Quartermaster</span>
+        </div>
+        <div class="panel-body">
+          <div class="qm-row">
+            <span style="font-size:13px;color:var(--t-300)">Uniform status</span>
+            <span class="badge laurel">Compliant</span>
+          </div>
+          <div class="qm-row">
+            <span style="font-size:13px;color:var(--t-300)">Equipment check</span>
+            <span class="badge laurel">Passed</span>
+          </div>
+          <div class="qm-row">
+            <span style="font-size:13px;color:var(--t-300)">Next inspection</span>
+            <span class="mono" style="font-size:12px;color:var(--t-400)">Jun 15</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</hf-app-shell>

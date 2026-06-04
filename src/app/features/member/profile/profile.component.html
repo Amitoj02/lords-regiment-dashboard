@@ -1,0 +1,260 @@
+<hf-app-shell
+  [activeRoute]="'roster'"
+  [crumbs]="['Roster', member?.name ?? 'Profile']"
+>
+  <div *ngIf="member" class="profile-page">
+    <!-- Banner -->
+    <div class="profile-banner" [ngStyle]="{'background-image': 'url(assets/images/bg-1.jpg)'}">
+      <div class="profile-banner-overlay"></div>
+    </div>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-avatar-wrap">
+        <hf-avatar
+          [name]="member.name"
+          [size]="124"
+          style="border:4px solid var(--ink-850);border-radius:8px"
+        ></hf-avatar>
+      </div>
+      <div class="profile-header-info">
+        <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+          <h1 class="serif" style="font-size:24px;margin:0;color:var(--t-100)">{{ member.name }}</h1>
+          <span class="badge" [ngClass]="getRoleClass(member.role)">{{ member.role }}</span>
+          <span class="badge laurel" *ngIf="member.status === 'Active'">Active</span>
+          <span class="badge parch" *ngIf="member.status === 'Inactive'">Inactive</span>
+          <span class="badge brass" *ngIf="member.status === 'Pending'">Pending</span>
+        </div>
+        <div class="row" style="gap:8px;align-items:center;margin-top:4px">
+          <hf-chevrons [count]="member.chevrons"></hf-chevrons>
+          <span style="font-size:13px;color:var(--t-300)">{{ member.rank }}</span>
+        </div>
+        <div class="mono" style="font-size:12px;color:var(--t-500);margin-top:6px">
+          {{ member.discordTag }}
+          <span *ngIf="member.discordLinked" style="color:var(--ok);margin-left:6px">● Discord linked</span>
+          <span *ngIf="!member.discordLinked" style="color:var(--t-500);margin-left:6px">○ Discord unlinked</span>
+        </div>
+      </div>
+      <div class="profile-actions row" style="gap:8px;margin-left:auto;align-self:flex-start;padding-top:8px">
+        <button class="btn btn-ghost btn-sm" *ngIf="isAdmin">Edit Profile</button>
+        <button class="btn btn-secondary btn-sm" *ngIf="isAdmin">Admin Actions ▾</button>
+        <button class="btn btn-primary btn-sm" *ngIf="isOwnProfile">Edit My Profile</button>
+      </div>
+    </div>
+
+    <!-- Main content layout -->
+    <div class="profile-grid">
+      <!-- Left panel -->
+      <aside class="profile-left">
+        <!-- Honors -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-header">
+            <span class="panel-title serif">Honours &amp; Decorations</span>
+          </div>
+          <div class="panel-body">
+            <div class="medals-grid">
+              <div class="medal-item" *ngFor="let medal of medals">
+                <hf-medal
+                  [letter]="medal.letter"
+                  [ribbon]="medal.ribbon"
+                  [title]="medal.title"
+                ></hf-medal>
+                <div class="medal-info">
+                  <div style="font-size:12px;font-weight:600;color:var(--t-200)">{{ medal.title }}</div>
+                  <div style="font-size:11px;color:var(--t-500);line-height:1.4">{{ medal.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Particulars -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-header">
+            <span class="panel-title serif">Particulars</span>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Platform</span>
+              <span style="font-size:13px;color:var(--t-200);text-transform:uppercase">
+                {{ member.platform ?? '—' }}
+              </span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Timezone</span>
+              <span style="font-size:13px;color:var(--t-200)">{{ member.timezone ?? '—' }}</span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">In-Game Name</span>
+              <span class="mono" style="font-size:12px;color:var(--t-300)">{{ member.inGameName }}</span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Events Attended</span>
+              <span style="font-size:13px;color:var(--t-200)">{{ member.eventsAttended ?? 0 }}</span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Attendance</span>
+              <span
+                style="font-size:13px;font-weight:600"
+                [ngStyle]="{ 'color': (member.attendanceRate ?? 0) >= 80 ? 'var(--ok)' : (member.attendanceRate ?? 0) >= 60 ? 'var(--warn)' : 'var(--err)' }"
+              >{{ member.attendanceRate ?? 0 }}%</span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Joined</span>
+              <span class="mono" style="font-size:12px;color:var(--t-400)">
+                {{ member.joinedAt ? (member.joinedAt | date:'MMM d, yyyy') : '—' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Command Information (admin-only) -->
+        <div class="panel" *ngIf="isAdmin">
+          <div class="panel-header">
+            <span class="panel-title serif">Command Information</span>
+            <span class="admin-label brass" style="font-size:9px">Admin Only</span>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Member ID</span>
+              <span class="mono" style="font-size:11px;color:var(--t-500)">{{ member.id }}</span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Discord Linked</span>
+              <span style="font-size:13px" [ngStyle]="{ 'color': member.discordLinked ? 'var(--ok)' : 'var(--err)' }">
+                {{ member.discordLinked ? 'Yes' : 'No' }}
+              </span>
+            </div>
+            <div class="particulars-row">
+              <span class="field-label" style="margin:0">Role</span>
+              <span class="badge" [ngClass]="getRoleClass(member.role)">{{ member.role }}</span>
+            </div>
+            <div style="padding:12px 16px">
+              <button class="btn btn-destructive btn-sm btn-block">Deactivate Account</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right panel -->
+      <div class="profile-right">
+        <!-- Tabs -->
+        <div class="hf-tabs" style="margin-bottom:20px">
+          <button
+            class="hf-tab"
+            [ngClass]="{ 'hf-tab--active': activeTab === 'gallery' }"
+            (click)="setTab('gallery')"
+          >Gallery</button>
+          <button
+            class="hf-tab"
+            [ngClass]="{ 'hf-tab--active': activeTab === 'tagged' }"
+            (click)="setTab('tagged')"
+          >Tagged</button>
+          <button
+            class="hf-tab"
+            [ngClass]="{ 'hf-tab--active': activeTab === 'events' }"
+            (click)="setTab('events')"
+          >Event History</button>
+          <button
+            class="hf-tab"
+            [ngClass]="{ 'hf-tab--active': activeTab === 'rsvps' }"
+            (click)="setTab('rsvps')"
+          >RSVPs</button>
+        </div>
+
+        <!-- Gallery Tab -->
+        <div *ngIf="activeTab === 'gallery'">
+          <div class="profile-gallery-grid" *ngIf="galleryItems.length > 0">
+            <div class="profile-gallery-thumb" *ngFor="let item of galleryItems">
+              <img [src]="item.thumbnailUrl" [alt]="item.title">
+              <div class="profile-gallery-overlay">
+                <span style="font-size:11px;color:white">{{ item.title }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="galleryItems.length === 0" class="notice info">
+            No gallery submissions yet.
+          </div>
+        </div>
+
+        <!-- Tagged Tab -->
+        <div *ngIf="activeTab === 'tagged'">
+          <div class="profile-gallery-grid" *ngIf="taggedItems.length > 0">
+            <div class="profile-gallery-thumb" *ngFor="let item of taggedItems">
+              <img [src]="item.thumbnailUrl" [alt]="item.title">
+              <div class="profile-gallery-overlay">
+                <span style="font-size:11px;color:white">{{ item.title }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="taggedItems.length === 0" class="notice info">
+            Not tagged in any gallery items.
+          </div>
+        </div>
+
+        <!-- Event History Tab -->
+        <div *ngIf="activeTab === 'events'">
+          <div class="panel" style="margin-bottom:20px">
+            <div class="panel-body" style="padding:0">
+              <div class="event-history-row" *ngFor="let event of eventHistory">
+                <div class="event-history-date">
+                  <div class="serif" style="font-size:16px;font-weight:700;color:var(--brass-300);line-height:1">
+                    {{ event.date | date:'d' }}
+                  </div>
+                  <div style="font-size:9px;text-transform:uppercase;color:var(--t-500)">
+                    {{ event.date | date:'MMM' }}
+                  </div>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:var(--t-100)">{{ event.title }}</div>
+                  <div class="mono" style="font-size:11px;color:var(--t-400);margin-top:2px">
+                    {{ event.serverName }}
+                  </div>
+                </div>
+                <span class="badge" [ngClass]="event.status === 'previous' ? 'laurel' : 'brass'">
+                  {{ event.status === 'previous' ? 'Attended' : event.status }}
+                </span>
+              </div>
+              <div *ngIf="eventHistory.length === 0" style="padding:24px;text-align:center;color:var(--t-400)">
+                No event history recorded.
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Timeline -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title serif">Service Record</span>
+            </div>
+            <div class="panel-body" style="padding:0">
+              <div class="timeline">
+                <div class="timeline-item" *ngFor="let entry of serviceTimeline">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-body">
+                    <div class="row" style="gap:8px;align-items:baseline">
+                      <div style="font-size:13px;font-weight:600;color:var(--t-100)">{{ entry.event }}</div>
+                    </div>
+                    <div class="mono" style="font-size:11px;color:var(--t-500);margin-top:2px">{{ entry.date }}</div>
+                    <div style="font-size:12px;color:var(--t-400);margin-top:3px" *ngIf="entry.note">
+                      {{ entry.note }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RSVPs Tab -->
+        <div *ngIf="activeTab === 'rsvps'">
+          <div class="notice info">RSVP history will be available in a future update.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="!member" style="text-align:center;padding:64px;color:var(--t-400)">
+    Loading profile…
+  </div>
+</hf-app-shell>

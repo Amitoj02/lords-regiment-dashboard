@@ -1,0 +1,40 @@
+// Global .sidebar, .nav-group, .nav-item styles from _layout.scss apply
+:host {
+  display: contents;
+}
+
+.sidebar-avatar {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: 0.04em;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.footer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t-100);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.footer-rank {
+  font-size: 11px;
+  color: var(--t-400);
+  letter-spacing: 0.06em;
+  margin-top: 1px;
+}

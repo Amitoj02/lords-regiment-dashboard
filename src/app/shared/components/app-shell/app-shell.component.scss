@@ -1,0 +1,17 @@
+// Global .appshell, .appmain, .appscroll, .page styles from _components.scss apply
+:host {
+  display: block;
+  height: 100%;
+  min-height: 100%;
+}
+
+.appshell {
+  height: 100%;
+  min-height: 100%;
+}
+
+.page-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

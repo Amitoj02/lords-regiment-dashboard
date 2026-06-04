@@ -1,0 +1,251 @@
+.landing-page {
+  min-height: 100vh;
+  background: var(--ink-900);
+}
+
+/* Hero */
+.hero {
+  position: relative;
+  min-height: 580px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  filter: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10, 8, 6, 0.72) 0%,
+      rgba(10, 8, 6, 0.55) 50%,
+      rgba(10, 8, 6, 0.9) 100%
+    );
+    filter: brightness(0.42) saturate(0.7);
+  }
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 6, 4, 0.65) 0%,
+    rgba(8, 6, 4, 0.4) 40%,
+    rgba(8, 6, 4, 0.85) 100%
+  );
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 80px 24px;
+  max-width: 680px;
+}
+
+.hero-crest {
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  border: 2px solid rgba(var(--brass-300), 0.3);
+  margin-bottom: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-headline {
+  font-size: 40px;
+  line-height: 1.15;
+  color: var(--t-100);
+  margin: 0 0 16px;
+}
+
+.hero-sub {
+  font-size: 16px;
+  color: var(--t-300);
+  line-height: 1.65;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--brass-300);
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: 11px;
+  color: var(--t-400);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* Content Layout */
+.landing-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.landing-main {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Event rows */
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.event-date-col {
+  text-align: center;
+  min-width: 38px;
+}
+
+.event-day {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--brass-300);
+  font-weight: 700;
+}
+
+.event-month {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--t-400);
+  margin-top: 2px;
+}
+
+.event-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t-100);
+}
+
+/* Gallery */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.gallery-thumb {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  &:hover img {
+    transform: scale(1.05);
+  }
+}
+
+.gallery-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  .gallery-thumb:hover & {
+    opacity: 1;
+  }
+}
+
+.gallery-thumb-title {
+  font-size: 11px;
+  color: white;
+  line-height: 1.3;
+}
+
+/* Charter */
+.charter-panel {
+  border: 1px solid var(--parch-300) !important;
+}
+
+.charter-quote {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--parch-900);
+  font-style: italic;
+  margin: 0;
+}
+
+/* Officer row */
+.officer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.officer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t-100);
+}
+
+/* Discord panel */
+.discord-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(88, 101, 242, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

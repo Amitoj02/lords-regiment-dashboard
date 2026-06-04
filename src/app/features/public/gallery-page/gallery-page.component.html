@@ -1,0 +1,89 @@
+<div class="gallery-page">
+  <hf-public-nav [activeLink]="'/gallery'"></hf-public-nav>
+
+  <div class="page" style="max-width:1060px;margin:0 auto;padding:40px 32px">
+    <!-- Page Head -->
+    <div class="page-head">
+      <div class="admin-label" style="margin-bottom:6px">Gallery Dispatches</div>
+      <h1 class="page-title serif">The Regiment's Archive</h1>
+      <p class="page-sub">
+        Screenshots, video highlights, and dispatches from the field, submitted by regiment members.
+      </p>
+    </div>
+
+    <!-- Filter Tabs & Tags -->
+    <div class="filters-bar">
+      <div class="hf-tabs" style="margin-bottom:0">
+        <button
+          *ngFor="let tab of tabs"
+          class="hf-tab"
+          [ngClass]="{ 'hf-tab--active': activeTab === tab.key }"
+          (click)="setTab(tab.key)"
+        >{{ tab.label }}</button>
+      </div>
+
+      <div class="tag-pills" *ngIf="allTags.length > 0">
+        <button
+          class="tag-pill"
+          [ngClass]="{ 'tag-pill--active': activeTag === null }"
+          (click)="setTag(null)"
+        >All tags</button>
+        <button
+          *ngFor="let tag of allTags"
+          class="tag-pill"
+          [ngClass]="{ 'tag-pill--active': activeTag === tag }"
+          (click)="setTag(tag)"
+        >{{ tag }}</button>
+      </div>
+    </div>
+
+    <!-- Gallery Masonry -->
+    <div class="gallery-masonry" *ngIf="filteredItems.length > 0">
+      <div class="gallery-card" *ngFor="let item of filteredItems">
+        <!-- Thumbnail / Placeholder -->
+        <div class="gallery-card-thumb" [ngClass]="{ 'gallery-card-thumb--link': isLink(item) }">
+          <img
+            *ngIf="item.thumbnailUrl"
+            [src]="item.thumbnailUrl"
+            [alt]="item.title"
+            class="gallery-card-img"
+          >
+          <div *ngIf="!item.thumbnailUrl" class="gallery-card-placeholder">
+            <span *ngIf="isLink(item)" style="font-size:22px">🔗</span>
+            <span *ngIf="!isLink(item)" style="font-size:22px">📷</span>
+          </div>
+
+          <!-- Video play overlay -->
+          <div *ngIf="isVideo(item)" class="gallery-play-overlay">
+            <div class="gallery-play-btn">
+              <svg width="14" height="16" viewBox="0 0 14 16" fill="white">
+                <path d="M0 0l14 8-14 8V0z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Link badge -->
+          <div *ngIf="isLink(item)" class="gallery-link-badge">
+            <span class="badge blue" style="font-size:10px">Link</span>
+          </div>
+        </div>
+
+        <!-- Card body -->
+        <div class="gallery-card-body">
+          <div class="gallery-card-title">{{ item.title }}</div>
+          <div class="gallery-card-meta row" style="gap:8px;margin-top:4px">
+            <span style="font-size:11px;color:var(--t-400)">{{ item.submittedBy }}</span>
+            <span class="sp"></span>
+            <span style="font-size:11px;color:var(--t-500)">♥ {{ item.likes }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="filteredItems.length === 0" class="notice info" style="margin-top:24px">
+      No items match the selected filter.
+    </div>
+  </div>
+
+  <hf-public-footer></hf-public-footer>
+</div>

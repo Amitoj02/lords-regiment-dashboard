@@ -1,0 +1,56 @@
+.apply-page {
+  min-height: 100vh;
+  background: var(--ink-900);
+  padding: 48px 24px;
+}
+
+.apply-inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.apply-header {
+  margin-bottom: 32px;
+}
+
+.apply-success {
+  background: var(--ink-850);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+/* Type cards */
+.type-card {
+  flex: 1;
+  padding: 16px;
+  background: var(--ink-800);
+  border: 1px solid var(--rule-2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: var(--t-400);
+    background: var(--ink-850);
+  }
+
+  &--active {
+    border-color: var(--brass-400) !important;
+    background: rgba(191,148,71,0.06) !important;
+  }
+}
+
+.type-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--t-100);
+  margin-bottom: 6px;
+}
+
+.type-card-desc {
+  font-size: 12px;
+  color: var(--t-400);
+  line-height: 1.5;
+}

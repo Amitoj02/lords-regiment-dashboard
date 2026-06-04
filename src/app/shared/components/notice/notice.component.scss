@@ -1,0 +1,14 @@
+// Global .notice styles from _components.scss apply
+// Component-specific layout additions
+.n-icon {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 1px;
+  flex: none;
+  opacity: 0.85;
+}
+
+.n-content {
+  flex: 1;
+  min-width: 0;
+}

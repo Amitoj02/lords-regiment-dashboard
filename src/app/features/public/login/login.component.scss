@@ -1,0 +1,114 @@
+.login-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Left Branding Panel */
+.login-left {
+  flex: 1;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.login-left-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(8,6,4,0.82) 0%, rgba(8,6,4,0.6) 100%);
+}
+
+.login-left-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-crest {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.15);
+  margin-bottom: 20px;
+  display: block;
+}
+
+.login-quote {
+  font-size: 18px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.75);
+  font-style: italic;
+  margin: 0;
+  border-left: 2px solid rgba(191,148,71,0.5);
+  padding-left: 18px;
+  max-width: 380px;
+}
+
+.login-left-footer {
+  padding-top: 24px;
+}
+
+/* Right Sign-in Panel */
+.login-right {
+  width: 480px;
+  flex-shrink: 0;
+  background: var(--ink-850);
+  border-left: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-right-inner {
+  width: 100%;
+  max-width: 380px;
+  padding: 48px 40px;
+}
+
+.login-header {
+  margin-bottom: 24px;
+}
+
+/* Steps */
+.login-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.login-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.login-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(191,148,71,0.12);
+  border: 1px solid var(--brass-400);
+  color: var(--brass-300);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.login-step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t-100);
+  margin-bottom: 3px;
+}
+
+.login-step-desc {
+  font-size: 12px;
+  color: var(--t-400);
+  line-height: 1.55;
+}

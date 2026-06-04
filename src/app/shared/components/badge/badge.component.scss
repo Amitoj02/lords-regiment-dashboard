@@ -1,0 +1,5 @@
+// Styles are provided globally via _components.scss (.badge variants)
+// Component-level overrides only
+:host {
+  display: inline-flex;
+}

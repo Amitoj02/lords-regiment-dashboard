@@ -1,0 +1,137 @@
+.gallery-page {
+  min-height: 100vh;
+  background: var(--ink-900);
+}
+
+/* Filters bar */
+.filters-bar {
+  margin: 28px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hf-tab--active {
+  color: var(--brass-300) !important;
+  border-bottom-color: var(--brass-400) !important;
+}
+
+.tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-2);
+  background: transparent;
+  color: var(--t-300);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--t-400);
+    color: var(--t-100);
+  }
+
+  &--active {
+    border-color: var(--brass-400);
+    color: var(--brass-300);
+    background: rgba(191, 148, 71, 0.08);
+  }
+}
+
+/* Masonry */
+.gallery-masonry {
+  column-count: 3;
+  column-gap: 14px;
+}
+
+.gallery-card {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  background: var(--ink-850);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--rule-2);
+  }
+}
+
+.gallery-card-thumb {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink-800);
+
+  &--link {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.gallery-card-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.3s;
+
+  .gallery-card:hover & {
+    transform: scale(1.03);
+  }
+}
+
+.gallery-card-placeholder {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t-500);
+}
+
+.gallery-play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.gallery-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.65);
+  border: 2px solid rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 3px;
+}
+
+.gallery-link-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.gallery-card-body {
+  padding: 10px 12px 12px;
+}
+
+.gallery-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t-100);
+  line-height: 1.4;
+}

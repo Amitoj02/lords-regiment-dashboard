@@ -1,0 +1,36 @@
+<div class="appshell">
+
+  <!-- Sidebar -->
+  <hf-sidebar
+    [active]="activeRoute"
+    [user]="navUser"
+    [isAdmin]="isAdmin"
+    (navigate)="onNavigate($event)"
+  ></hf-sidebar>
+
+  <!-- Main content area -->
+  <div class="appmain">
+
+    <!-- Topbar -->
+    <hf-topbar [crumbs]="crumbs">
+      <ng-content select="[topActions]" topbar-actions></ng-content>
+    </hf-topbar>
+
+    <!-- Page scroll area -->
+    <div class="appscroll">
+      <div class="page">
+        <!-- Optional page heading -->
+        <div class="page-head" *ngIf="title">
+          <h1 class="page-title">{{ title }}</h1>
+          <div class="page-head-actions">
+            <ng-content select="[pageActions]"></ng-content>
+          </div>
+        </div>
+
+        <!-- Page body -->
+        <ng-content></ng-content>
+      </div>
+    </div>
+
+  </div>
+</div>

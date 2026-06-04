@@ -1,0 +1,113 @@
+.setup-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.setup-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.setup-sidebar-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(8,6,4,0.88), rgba(8,6,4,0.78));
+}
+
+.setup-sidebar-inner {
+  position: relative;
+  z-index: 1;
+  padding: 40px 32px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.setup-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.setup-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  position: relative;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 40px;
+    width: 1px;
+    height: calc(100% - 14px);
+    background: var(--rule-2);
+  }
+}
+
+.setup-step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  z-index: 1;
+
+  .setup-step--done & {
+    background: var(--laurel-600);
+    color: white;
+  }
+
+  .setup-step--active & {
+    background: rgba(191,148,71,0.15);
+    color: var(--brass-300);
+    border: 2px solid var(--brass-400);
+  }
+
+  .setup-step--pending & {
+    background: transparent;
+    color: var(--t-500);
+    border: 1px solid var(--rule-2);
+  }
+}
+
+.setup-step-label {
+  font-size: 13px;
+
+  .setup-step--done & { color: var(--t-300); }
+  .setup-step--active & { color: var(--brass-300); font-weight: 600; }
+  .setup-step--pending & { color: var(--t-500); }
+}
+
+.setup-content {
+  flex: 1;
+  background: var(--ink-900);
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.setup-content-inner {
+  width: 100%;
+  max-width: 600px;
+  padding: 48px 40px;
+}
+
+.bot-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--ink-800);
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+}

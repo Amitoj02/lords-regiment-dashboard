@@ -1,0 +1,151 @@
+.event-banner {
+  height: 280px;
+  background: linear-gradient(to bottom right, var(--ink-850), var(--ink-800));
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px;
+    gap: 10px;
+  }
+
+  &__badges {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    font-size: 2rem;
+    color: #fff;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  &__meta {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.75);
+  }
+}
+
+.event-body {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.event-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-right {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-orders {
+  margin-bottom: 12px;
+  line-height: 1.7;
+  color: var(--t-on-parch);
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.server-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field-group .field-label {
+  margin-bottom: 4px;
+}
+
+.attendees-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.attendee-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.attendee-name {
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--t-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70px;
+}
+
+.rsvp-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rsvp-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--parch-100);
+  border: 1px solid var(--rule-2);
+  color: var(--ink-700);
+
+  &--active {
+    border-color: transparent;
+  }
+}
+
+.rollup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rollup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rollup-label {
+  font-size: 0.875rem;
+  color: var(--t-400);
+}
+
+.rollup-count {
+  font-weight: 700;
+  font-size: 1rem;
+
+  &.ok { color: var(--ok); }
+  &.warn { color: var(--warn); }
+  &.err { color: var(--err); }
+}
+
+.event-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

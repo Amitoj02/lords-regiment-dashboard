@@ -1,0 +1,9 @@
+<span class="hf-avatar" [style]="hostStyle" [style.background]="bg" [attr.title]="name">
+  {{ initials }}
+  <span
+    *ngIf="online"
+    class="hf-avatar__dot"
+    [style.width.px]="dotSize"
+    [style.height.px]="dotSize"
+  ></span>
+</span>

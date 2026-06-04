@@ -1,0 +1,24 @@
+<nav class="public-nav">
+  <div class="row" style="gap:12px">
+    <img src="assets/images/regiment-logo.png" width="34" height="34" alt="Regiment Crest" style="border-radius:999px">
+    <div>
+      <div class="serif" style="font-size:17px;color:var(--brass-300);font-weight:600">Lord Regiment</div>
+      <div class="admin-label" style="font-size:9px">Holdfast · Nations at War</div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-left:36px;gap:4px">
+    <a
+      *ngFor="let link of navLinks"
+      [routerLink]="link.path"
+      [ngClass]="{ 'nav-link': true, 'nav-link--active': activeLink === link.path }"
+    >{{ link.label }}</a>
+  </div>
+
+  <span class="sp"></span>
+
+  <div class="row" style="gap:8px">
+    <button class="btn btn-ghost btn-sm">Join Discord</button>
+    <a routerLink="/login" class="btn btn-discord">Sign in</a>
+  </div>
+</nav>

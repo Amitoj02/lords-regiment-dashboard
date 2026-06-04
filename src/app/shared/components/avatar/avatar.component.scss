@@ -1,0 +1,24 @@
+.hf-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--sans);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: 0.04em;
+  user-select: none;
+  position: relative;
+  flex: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+
+  &__dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-radius: 50%;
+    background: #4a9d63;
+    border: 2px solid var(--ink-850);
+    display: block;
+  }
+}
