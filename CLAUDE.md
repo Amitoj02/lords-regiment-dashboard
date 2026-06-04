@@ -3,6 +3,25 @@
 ## Project Overview
 Angular 19 frontend for a military regiment management dashboard (Holdfast: Nations at War). Single-page app with lazy-loaded feature modules, stub services ready for HTTP backend replacement, and a custom dark military design system.
 
+## UI/UX Reference — ALWAYS consult first
+
+All visual decisions (layout, spacing, colour, component shape) must be grounded in the wireframe/design kit at **`design-reference/`** in the repo root. These are the canonical UI/UX source of truth:
+
+| File | Contains |
+|---|---|
+| `screens-public.jsx` | Landing, Events, Gallery, Login public pages |
+| `screens-member.jsx` | Dashboard, Roster, Profile member views |
+| `screens-admin.jsx` | Admin panel — Applications, Members, Ranks, Audit, Settings |
+| `screens-onboarding.jsx` | Setup wizard, Discord link, Apply flow |
+| `screens-mobile.jsx` | Mobile variants of all screens |
+| `screens-designsystem.jsx` | Colours, typography, spacing tokens, component anatomy |
+| `components.jsx` | Shared component specs (avatar, badge, tabs, table, etc.) |
+| `design-canvas.jsx` | Full-page composition canvas |
+| `styles.css` | Reference CSS tokens and utility classes |
+| `assets/` | Brand assets (logo, banners, background images) |
+
+> Some pages in the wireframes may not yet be built — that's expected. When a screen exists in the wireframe, match it. When it doesn't, follow the established design language.
+
 ## Tech Stack
 - **Angular 19** — NgModule architecture (`standalone: false` on ALL components)
 - **Bootstrap 5.3** — Grid/reboot/utilities only (no Bootstrap components)

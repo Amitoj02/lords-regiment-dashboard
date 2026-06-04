@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Holdfast Command — Regiment Management Platform</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="styles.css"/>
+
+<style>
+  html, body, #root { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
+  body { overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="screens-public.jsx"></script>
+<script type="text/babel" src="screens-onboarding.jsx"></script>
+<script type="text/babel" src="screens-member.jsx"></script>
+<script type="text/babel" src="screens-admin.jsx"></script>
+<script type="text/babel" src="screens-mobile.jsx"></script>
+<script type="text/babel" src="screens-designsystem.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// Wrapper that scales fixed-width content into an artboard
+function FixedDesktop({ children, w = 1440, h = 900 }) {
+  return (
+    <div style={{ width: w, height: h, overflow: 'hidden', background: 'var(--ink-900)' }}>
+      {children}
+    </div>
+  );
+}
+
+function Canvas() {
+  return (
+    <DesignCanvas title="Holdfast Command — Regiment Management Platform"
+                  subtitle="Self-hosted, Discord-native. Plate I — 20 screens & a design system.">
+
+      {/* — DESIGN SYSTEM — */}
+      <DCSection id="design-system" title="Design System" subtitle="Visual order: color, type, components, ornaments.">
+        <DCArtboard id="ds-plate-one" label="Plate I · Visual Order" width={1280} height={1640}>
+          <DesignSystem/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* — PUBLIC — */}
+      <DCSection id="public" title="Public — Noticeboard" subtitle="The unauthenticated face of the regiment.">
+        <DCArtboard id="p-landing" label="01 · Public landing" width={1440} height={1280}>
+          <FixedDesktop w={1440} h={1280}><PublicLanding/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="p-events" label="02 · Public events" width={1440} height={1280}>
+          <FixedDesktop w={1440} h={1280}><PublicEvents/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="p-gallery" label="03 · Public gallery" width={1440} height={1200}>
+          <FixedDesktop w={1440} h={1200}><PublicGallery/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="p-login" label="04 · Discord sign-in" width={1440} height={900}>
+          <FixedDesktop w={1440} h={900}><DiscordLogin/></FixedDesktop>
+        </DCArtboard>
+      </DCSection>
+
+      {/* — ONBOARDING — */}
+      <DCSection id="onboarding" title="Onboarding & Enlistment" subtitle="First-run for owners; enlistment papers for applicants.">
+        <DCArtboard id="o-charter" label="05 · Owner setup · regiment details" width={1440} height={900}>
+          <FixedDesktop w={1440} h={900}><OwnerSetup initStep={2}/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="o-discord" label="06 · Owner setup · Discord bind" width={1440} height={900}>
+          <FixedDesktop w={1440} h={900}><OwnerSetupDiscord/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="o-application" label="07 · Applicant enlistment papers" width={1440} height={1280}>
+          <FixedDesktop w={1440} h={1280}><ApplicationForm/></FixedDesktop>
+        </DCArtboard>
+      </DCSection>
+
+      {/* — MEMBER APP — */}
+      <DCSection id="member" title="Members' Command Board" subtitle="The signed-in experience.">
+        <DCArtboard id="m-dash" label="08 · Member dashboard" width={1440} height={1000}>
+          <FixedDesktop w={1440} h={1000}><MemberDashboard/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="m-roster" label="09 · Roster" width={1440} height={1000}>
+          <FixedDesktop w={1440} h={1000}><MembersRoster/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="m-profile" label="10 · Member profile" width={1440} height={1280}>
+          <FixedDesktop w={1440} h={1280}><MemberProfile/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="m-action" label="11 · Admin action menu" width={1100} height={820}>
+          <FixedDesktop w={1100} h={820}><AdminActionModal standalone/></FixedDesktop>
+        </DCArtboard>
+      </DCSection>
+
+      {/* — ADMIN — */}
+      <DCSection id="admin" title="Officers' Command" subtitle="Moderation, ranks, events, audit, settings.">
+        <DCArtboard id="a-apps" label="12 · Applications review" width={1440} height={1100}>
+          <FixedDesktop w={1440} h={1100}><ApplicationsReview/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-ranks" label="13 · Ranks & medals" width={1440} height={1180}>
+          <FixedDesktop w={1440} h={1180}><RanksMedals/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-event-detail" label="14 · Event detail · RSVP" width={1440} height={1180}>
+          <FixedDesktop w={1440} h={1180}><EventDetail/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-event-create" label="15 · Event create / edit" width={1440} height={1280}>
+          <FixedDesktop w={1440} h={1280}><EventCreate/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-gal-submit" label="16 · Gallery submission" width={1440} height={1100}>
+          <FixedDesktop w={1440} h={1100}><GallerySubmit/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-gal-mod" label="17 · Gallery moderation" width={1440} height={1180}>
+          <FixedDesktop w={1440} h={1180}><GalleryMod/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-audit" label="18 · Audit ledger" width={1440} height={1000}>
+          <FixedDesktop w={1440} h={1000}><AuditLogs/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-settings" label="19 · Settings · permission matrix" width={1440} height={1640}>
+          <FixedDesktop w={1440} h={1640}><SettingsPage/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-bot" label="20 · Quartermaster bot status" width={1440} height={920}>
+          <FixedDesktop w={1440} h={920}><BotStatus/></FixedDesktop>
+        </DCArtboard>
+        <DCArtboard id="a-gdpr" label="21 · GDPR self-discharge" width={1100} height={1120}>
+          <FixedDesktop w={1100} h={1120}><GdprDelete/></FixedDesktop>
+        </DCArtboard>
+      </DCSection>
+
+      {/* — MOBILE — */}
+      <DCSection id="mobile" title="Mobile · In the Field" subtitle="The regiment in your pocket. Designed for one-thumb operation.">
+        <DCArtboard id="mob-landing" label="M01 · Landing"     width={420} height={820}><MobileLanding/></DCArtboard>
+        <DCArtboard id="mob-dash"    label="M02 · Dashboard"  width={420} height={820}><MobileDashboard/></DCArtboard>
+        <DCArtboard id="mob-event"   label="M03 · Event detail" width={420} height={820}><MobileEvent/></DCArtboard>
+        <DCArtboard id="mob-gallery" label="M04 · Gallery"     width={420} height={820}><MobileGallery/></DCArtboard>
+        <DCArtboard id="mob-roster"  label="M05 · Roster"      width={420} height={820}><MobileMembers/></DCArtboard>
+        <DCArtboard id="mob-profile" label="M06 · Profile"     width={420} height={820}><MobileProfile/></DCArtboard>
+        <DCArtboard id="mob-apps"    label="M07 · Apps review" width={420} height={820}><MobileApplications/></DCArtboard>
+      </DCSection>
+
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Canvas/>);
+</script>
+</body>
+</html>
