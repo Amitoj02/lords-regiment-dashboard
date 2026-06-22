@@ -1,59 +1,72 @@
-# LordsRegimentDashboard
+# Lords Regiment Dashboard
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.27.
+A management dashboard for a **Holdfast: Nations at War** military regiment — roster, events,
+gallery, applications, ranks/medals and an admin panel. Built as an **Angular 19 single-page app**
+with a custom dark military design system.
 
-## Development server
+> **Status:** UI-only. Every service returns stub data via RxJS `of(...)`; there is no backend yet.
+> Services are structured so each `of(stub)` can be swapped for an `HttpClient` call when an API
+> exists (see [`CLAUDE.md`](./CLAUDE.md)).
 
-To start a local development server, run:
+## Tech stack
 
-```bash
-ng serve
-```
+- **Angular 19** — NgModule architecture (`standalone: false` on all components), lazy-loaded features
+- **Bootstrap 5.3** — grid, reboot and utilities only (no Bootstrap JS components)
+- **SCSS** — custom design tokens exposed as CSS custom properties
+- **RxJS 7** — `Observable` + `of()` stub services
+- **ESLint (angular-eslint) + Prettier** — linting and formatting
+- **Karma + Jasmine** — unit tests
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Getting started
 
 ```bash
-ng generate --help
+npm install
+npm start            # dev server on http://localhost:4200/
 ```
 
-## Building
+Requires Node `^18.19.1 || ^20.11.1 || >=22` (see `engines` in `package.json`).
 
-To build the project run:
+## NPM scripts
 
-```bash
-ng build
+| Script                 | Purpose                                |
+| ---------------------- | -------------------------------------- |
+| `npm start`            | Run the dev server (`ng serve`)        |
+| `npm run build`        | Production build to `dist/`            |
+| `npm test`             | Unit tests in watch mode (Karma)       |
+| `npm run test:ci`      | Unit tests once, headless (used by CI) |
+| `npm run lint`         | ESLint over `*.ts` and `*.html`        |
+| `npm run lint:fix`     | ESLint with auto-fix                   |
+| `npm run format`       | Format the repo with Prettier          |
+| `npm run format:check` | Verify formatting (used by CI)         |
+
+## Project structure
+
+```
+src/app/
+├── core/        # singleton services (stub data), guards, models — provided in root
+├── shared/      # reusable design-system components (hf-*) + SharedModule
+└── features/    # lazy-loaded feature modules:
+    ├── public/        '', 'home', 'events', 'gallery', 'login'
+    ├── onboarding/    'setup', 'setup/discord', 'apply'
+    ├── member/        'dashboard', 'roster', 'profile', 'profile/:id'   (AuthGuard)
+    └── admin/         'admin/*'                                          (AuthGuard + AdminGuard)
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Member routes require authentication; admin routes additionally require an admin role. Both guards
+are functional (`CanActivateFn`) reading from `AuthService`, whose `currentUser` is an Angular
+`signal` (stubbed as a logged-in user).
 
-## Running unit tests
+## Design reference
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+All visual decisions are grounded in the wireframe/design kit under [`design-reference/`](./design-reference)
+(screens, component specs, design tokens). Consult it before changing layout, spacing or colour. See
+[`CLAUDE.md`](./CLAUDE.md) for the full architecture and design-system reference.
 
-```bash
-ng test
-```
+## Testing
 
-## Running end-to-end tests
+Unit tests run on Karma/Jasmine (`npm test`). There is no end-to-end suite configured.
 
-For end-to-end (e2e) testing, run:
+## Continuous integration
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+`.github/workflows/ci.yml` runs formatting check, lint, production build and headless unit tests on
+every push and pull request to `main`.
