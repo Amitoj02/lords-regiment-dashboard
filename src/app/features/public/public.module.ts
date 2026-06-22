@@ -12,30 +12,23 @@ import { PublicNavComponent } from './public-nav/public-nav.component';
 import { PublicFooterComponent } from './public-footer/public-footer.component';
 
 const routes: Routes = [
-  { path: '', component: LandingComponent },
-  { path: 'home', component: LandingComponent },
-  { path: 'events', component: EventsPageComponent },
-  { path: 'gallery', component: GalleryPageComponent },
-  { path: 'login', component: LoginPageComponent },
+    { path: '', component: LandingComponent },
+    { path: 'home', component: LandingComponent },
+    { path: 'events', component: EventsPageComponent },
+    { path: 'gallery', component: GalleryPageComponent },
+    { path: 'login', component: LoginPageComponent },
 ];
 
 @NgModule({
-  declarations: [
-    LandingComponent,
-    EventsPageComponent,
-    GalleryPageComponent,
-    LoginPageComponent,
-    PublicNavComponent,
-    PublicFooterComponent,
-  ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    RouterModule.forChild(routes),
-  ],
-  exports: [
-    PublicNavComponent,
-    PublicFooterComponent,
-  ],
+    declarations: [
+        LandingComponent,
+        EventsPageComponent,
+        GalleryPageComponent,
+        LoginPageComponent,
+        PublicNavComponent,
+        PublicFooterComponent,
+    ],
+    imports: [CommonModule, SharedModule, RouterModule.forChild(routes)],
+    exports: [PublicNavComponent, PublicFooterComponent],
 })
 export class PublicModule {}

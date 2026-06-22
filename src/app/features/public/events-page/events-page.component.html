@@ -1,118 +1,120 @@
 <div class="events-page">
-  <hf-public-nav [activeLink]="'/events'"></hf-public-nav>
+    <hf-public-nav [activeLink]="'/events'"></hf-public-nav>
 
-  <div class="page" style="max-width:900px;margin:0 auto;padding:40px 32px">
-    <!-- Page Head -->
-    <div class="page-head">
-      <div>
-        <div class="admin-label brass" style="margin-bottom:6px">Field Orders</div>
-        <h1 class="page-title">Events &amp; Orders</h1>
-        <div class="page-sub">
-          All current, upcoming, and recent operations of the Lord Regiment.
-          Sign in to RSVP, access server passwords, and receive notifications.
+    <div class="page page-wrap">
+        <!-- Page Head -->
+        <div class="page-head">
+            <div>
+                <div class="admin-label brass page-head-label">Field Orders</div>
+                <h1 class="page-title">Events &amp; Orders</h1>
+                <div class="page-sub">
+                    All current, upcoming, and recent operations of the Lord Regiment. Sign in to
+                    RSVP, access server passwords, and receive notifications.
+                </div>
+            </div>
         </div>
-      </div>
+
+        <div class="divider"></div>
+
+        <!-- Pinned Ongoing Event -->
+        @if (ongoingEvent) {
+        <section class="panel ongoing-panel ongoing-section">
+            <div class="ongoing-cover ongoing-cover-bg">
+                <div class="ongoing-cover-overlay"></div>
+                <div class="ongoing-cover-inner">
+                    <span class="badge ox ongoing-badge">
+                        <span class="status-dot ongoing-status-dot"></span>
+                        In Progress
+                    </span>
+                    <h2 class="serif ongoing-title">{{ ongoingEvent.title }}</h2>
+                    <p class="ongoing-desc">{{ ongoingEvent.description }}</p>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="row ongoing-meta-row">
+                    <div>
+                        <div class="field-label">Date &amp; Time</div>
+                        <div class="ongoing-datetime">
+                            {{ ongoingEvent.date | date:'MMMM d, yyyy' }} · {{
+                            ongoingEvent.startTime }} – {{ ongoingEvent.endTime }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="field-label">Server</div>
+                        <div class="mono ongoing-server">{{ ongoingEvent.serverName }}</div>
+                    </div>
+                    <div>
+                        <div class="field-label">Platforms</div>
+                        <hf-platform-badges
+                            [platforms]="ongoingEvent.platforms"
+                        ></hf-platform-badges>
+                    </div>
+                    <span class="sp"></span>
+                    <a routerLink="/login" class="btn btn-secondary btn-sm"
+                        >Sign in to view password</a
+                    >
+                </div>
+            </div>
+        </section>
+        }
+
+        <!-- Upcoming Events -->
+        <section>
+            <h2 class="serif upcoming-heading">Upcoming</h2>
+            <div class="panel upcoming-panel">
+                @for (event of upcomingEvents; track event) {
+                <div class="event-list-row">
+                    <div class="event-date-block">
+                        <div class="serif event-date-day">{{ event.date | date:'d' }}</div>
+                        <div class="event-date-month">{{ event.date | date:'MMM' }}</div>
+                    </div>
+                    <div class="event-list-body">
+                        <div class="event-title">{{ event.title }}</div>
+                        <div class="row event-time-row">
+                            <span class="mono event-time">
+                                {{ event.startTime }} – {{ event.endTime }}
+                            </span>
+                            <span class="mono event-server"> {{ event.serverName }} </span>
+                        </div>
+                        <hf-platform-badges
+                            [platforms]="event.platforms"
+                            class="event-platforms"
+                        ></hf-platform-badges>
+                    </div>
+                    <div class="event-list-meta event-list-meta-align">
+                        <div class="event-rsvps">{{ totalRsvps(event) }} RSVPs</div>
+                        <a routerLink="/login" class="btn btn-secondary btn-sm">Details</a>
+                    </div>
+                </div>
+                } @if (upcomingEvents.length === 0) {
+                <div class="events-empty">No upcoming events scheduled.</div>
+                }
+            </div>
+        </section>
+
+        <!-- Previous Events -->
+        @if (previousEvents.length > 0) {
+        <section class="previous-section">
+            <h2 class="serif previous-heading">Previous · Last 30 days</h2>
+            <div class="grid-2 previous-grid">
+                @for (event of previousEvents; track event) {
+                <div class="panel previous-card">
+                    <div class="panel-body">
+                        <div class="previous-title">{{ event.title }}</div>
+                        <div class="mono previous-date">{{ event.date | date:'MMMM d, yyyy' }}</div>
+                        <div class="previous-server">{{ event.serverName }}</div>
+                        <div class="row previous-tags">
+                            @for (tag of event.tags; track tag) {
+                            <span class="badge parch">{{ tag }}</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </section>
+        }
     </div>
 
-    <div class="divider"></div>
-
-    <!-- Pinned Ongoing Event -->
-    <section *ngIf="ongoingEvent" class="panel ongoing-panel" style="margin-bottom:32px">
-      <div class="ongoing-cover" [ngStyle]="{'background-image': 'url(assets/images/bg-2.jpg)'}">
-        <div class="ongoing-cover-overlay"></div>
-        <div class="ongoing-cover-inner">
-          <span class="badge ox" style="margin-bottom:8px">
-            <span class="status-dot" style="background:var(--ok);margin-right:6px;display:inline-block"></span>
-            In Progress
-          </span>
-          <h2 class="serif" style="font-size:22px;color:white;margin:0 0 6px">{{ ongoingEvent.title }}</h2>
-          <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0">{{ ongoingEvent.description }}</p>
-        </div>
-      </div>
-      <div class="panel-body">
-        <div class="row" style="gap:24px;flex-wrap:wrap;align-items:center">
-          <div>
-            <div class="field-label">Date &amp; Time</div>
-            <div style="font-size:13px;color:var(--t-100)">
-              {{ ongoingEvent.date | date:'MMMM d, yyyy' }} · {{ ongoingEvent.startTime }} – {{ ongoingEvent.endTime }}
-            </div>
-          </div>
-          <div>
-            <div class="field-label">Server</div>
-            <div class="mono" style="font-size:13px;color:var(--t-200)">{{ ongoingEvent.serverName }}</div>
-          </div>
-          <div>
-            <div class="field-label">Platforms</div>
-            <hf-platform-badges [platforms]="ongoingEvent.platforms"></hf-platform-badges>
-          </div>
-          <span class="sp"></span>
-          <a routerLink="/login" class="btn btn-secondary btn-sm">Sign in to view password</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Upcoming Events -->
-    <section>
-      <h2 class="serif" style="font-size:17px;color:var(--brass-300);margin:0 0 16px">Upcoming</h2>
-      <div class="panel" style="padding:0">
-        <div class="event-list-row" *ngFor="let event of upcomingEvents">
-          <div class="event-date-block">
-            <div class="serif" style="font-size:20px;font-weight:700;color:var(--brass-300);line-height:1">
-              {{ event.date | date:'d' }}
-            </div>
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--t-400)">
-              {{ event.date | date:'MMM' }}
-            </div>
-          </div>
-
-          <div class="event-list-body">
-            <div style="font-size:14px;font-weight:600;color:var(--t-100)">{{ event.title }}</div>
-            <div class="row" style="gap:10px;margin-top:4px;flex-wrap:wrap">
-              <span class="mono" style="font-size:11px;color:var(--t-400)">
-                {{ event.startTime }} – {{ event.endTime }}
-              </span>
-              <span class="mono" style="font-size:11px;color:var(--t-500)">
-                {{ event.serverName }}
-              </span>
-            </div>
-            <hf-platform-badges [platforms]="event.platforms" style="margin-top:6px;display:block"></hf-platform-badges>
-          </div>
-
-          <div class="event-list-meta" style="text-align:right">
-            <div style="font-size:12px;color:var(--t-400);margin-bottom:6px">
-              {{ totalRsvps(event) }} RSVPs
-            </div>
-            <a routerLink="/login" class="btn btn-secondary btn-sm">Details</a>
-          </div>
-        </div>
-
-        <div *ngIf="upcomingEvents.length === 0" style="padding:28px;text-align:center;color:var(--t-400)">
-          No upcoming events scheduled.
-        </div>
-      </div>
-    </section>
-
-    <!-- Previous Events -->
-    <section *ngIf="previousEvents.length > 0" style="margin-top:40px">
-      <h2 class="serif" style="font-size:17px;color:var(--t-300);margin:0 0 16px">
-        Previous · Last 30 days
-      </h2>
-      <div class="grid-2" style="gap:14px">
-        <div class="panel previous-card" *ngFor="let event of previousEvents">
-          <div class="panel-body">
-            <div style="font-size:13px;font-weight:600;color:var(--t-200)">{{ event.title }}</div>
-            <div class="mono" style="font-size:11px;color:var(--t-400);margin-top:4px">
-              {{ event.date | date:'MMMM d, yyyy' }}
-            </div>
-            <div style="font-size:12px;color:var(--t-400);margin-top:6px">{{ event.serverName }}</div>
-            <div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap">
-              <span class="badge parch" *ngFor="let tag of event.tags">{{ tag }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <hf-public-footer></hf-public-footer>
+    <hf-public-footer></hf-public-footer>
 </div>

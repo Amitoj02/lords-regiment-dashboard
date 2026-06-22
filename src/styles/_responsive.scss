@@ -10,136 +10,135 @@
 
 // Drawer backdrop is part of the app-shell; hidden on desktop.
 .drawer-backdrop {
-  display: none;
+    display: none;
 }
 
 @media (max-width: 820px) {
-
-  // ───────── App shell → drawer + bottom nav ─────────
-  // NOTE: The sidebar's off-canvas base state and the bottom-nav reveal live
-  // in their own component SCSS — they target `:host`, which a global type
-  // selector here cannot override. These rules key off `.appshell` classes so
-  // they belong in the global layer.
-  .appshell {
-    position: relative;
-  }
-
-  // Slide the drawer in when open (beats the component's :host translate)
-  .appshell.drawer-open hf-sidebar {
-    transform: translateX(0);
-  }
-
-  // Dimmed backdrop behind the open drawer
-  .appshell.drawer-open .drawer-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 150;
-    background: rgba(11, 14, 20, 0.6);
-    backdrop-filter: blur(1px);
-  }
-
-  // Tighter page gutters; leave room above the bottom nav
-  .page {
-    padding: 16px 16px 28px;
-    max-width: none;
-  }
-
-  // ───────── Page head ─────────
-  .page-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .page-title {
-    font-size: 26px !important;
-  }
-
-  .page-head-actions,
-  .page-head-actions > * {
-    width: 100%;
-  }
-
-  // ───────── Layout utilities ─────────
-  // Two-column utility grid stacks
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
-
-  // Image-thumbnail grids stay multi-column but tighten
-  .grid-3 {
-    gap: 8px;
-  }
-
-  // Toolbars / header rows that hold actions are allowed to wrap
-  .row.between,
-  .toolbar {
-    flex-wrap: wrap;
-  }
-
-  // ───────── Tables ─────────
-  // Default fallback: let wide tables scroll horizontally.
-  // (Specific screens — e.g. the roster — convert to cards instead.)
-  .table-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-
-    .hf-table {
-      min-width: 560px;
+    // ───────── App shell → drawer + bottom nav ─────────
+    // NOTE: The sidebar's off-canvas base state and the bottom-nav reveal live
+    // in their own component SCSS — they target `:host`, which a global type
+    // selector here cannot override. These rules key off `.appshell` classes so
+    // they belong in the global layer.
+    .appshell {
+        position: relative;
     }
-  }
 
-  // ───────── Panels & spacing ─────────
-  .panel {
-    padding: 14px;
-  }
+    // Slide the drawer in when open (beats the component's :host translate)
+    .appshell.drawer-open hf-sidebar {
+        transform: translateX(0);
+    }
 
-  // NOTE: Page-specific multi-column layouts (.dashboard-grid, .profile-grid,
-  // .event-body, etc.) are stacked inside each component's own SCSS. They use
-  // emulated view-encapsulation (specificity 0,2,0), which a global rule here
-  // (0,1,0) cannot override — so those overrides must live with the component.
+    // Dimmed backdrop behind the open drawer
+    .appshell.drawer-open .drawer-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 150;
+        background: rgba(11, 14, 20, 0.6);
+        backdrop-filter: blur(1px);
+    }
+
+    // Tighter page gutters; leave room above the bottom nav
+    .page {
+        padding: 16px 16px 28px;
+        max-width: none;
+    }
+
+    // ───────── Page head ─────────
+    .page-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .page-title {
+        font-size: 26px !important;
+    }
+
+    .page-head-actions,
+    .page-head-actions > * {
+        width: 100%;
+    }
+
+    // ───────── Layout utilities ─────────
+    // Two-column utility grid stacks
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    // Image-thumbnail grids stay multi-column but tighten
+    .grid-3 {
+        gap: 8px;
+    }
+
+    // Toolbars / header rows that hold actions are allowed to wrap
+    .row.between,
+    .toolbar {
+        flex-wrap: wrap;
+    }
+
+    // ───────── Tables ─────────
+    // Default fallback: let wide tables scroll horizontally.
+    // (Specific screens — e.g. the roster — convert to cards instead.)
+    .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+
+        .hf-table {
+            min-width: 560px;
+        }
+    }
+
+    // ───────── Panels & spacing ─────────
+    .panel {
+        padding: 14px;
+    }
+
+    // NOTE: Page-specific multi-column layouts (.dashboard-grid, .profile-grid,
+    // .event-body, etc.) are stacked inside each component's own SCSS. They use
+    // emulated view-encapsulation (specificity 0,2,0), which a global rule here
+    // (0,1,0) cannot override — so those overrides must live with the component.
 }
 
 // Admin/member two-column layouts render inside hf-app-shell's `.appshell .page`.
 // Using that ancestor gives specificity (0,3,0), which beats the components'
 // emulated-encapsulated grid rules (0,2,0) — so these overrides land reliably.
 @media (max-width: 820px) {
-  .appshell .page {
-    .applications-layout,
-    .settings-layout,
-    .submit-layout,
-    .editor-cols,
-    .bot-layout,
-    .create-layout,
-    .audit-layout,
-    .mod-layout,
-    .stat-tiles {
-      grid-template-columns: 1fr;
+    .appshell .page {
+        .applications-layout,
+        .settings-layout,
+        .submit-layout,
+        .editor-cols,
+        .bot-layout,
+        .create-layout,
+        .audit-layout,
+        .mod-layout,
+        .stat-tiles {
+            grid-template-columns: 1fr;
 
-      // Let the single track shrink to the container instead of being forced
-      // wide by a child's min-content (e.g. a min-width:600px scroll table).
-      > * {
-        min-width: 0;
-      }
-    }
+            // Let the single track shrink to the container instead of being forced
+            // wide by a child's min-content (e.g. a min-width:600px scroll table).
+            > * {
+                min-width: 0;
+            }
+        }
 
-    // Sticky side columns flow normally once stacked
-    .audit-detail,
-    .settings-nav {
-      position: static;
-      top: auto;
+        // Sticky side columns flow normally once stacked
+        .audit-detail,
+        .settings-nav {
+            position: static;
+            top: auto;
+        }
     }
-  }
 }
 
 // Extra tightening on small phones
 @media (max-width: 480px) {
-  .page {
-    padding: 14px 13px 24px;
-  }
+    .page {
+        padding: 14px 13px 24px;
+    }
 
-  .grid-3 {
-    grid-template-columns: 1fr 1fr;
-  }
+    .grid-3 {
+        grid-template-columns: 1fr 1fr;
+    }
 }

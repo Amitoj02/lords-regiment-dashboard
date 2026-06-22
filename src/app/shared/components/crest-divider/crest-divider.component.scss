@@ -1,21 +1,21 @@
 // Global .crest-divider styles from _base.scss apply
 :host {
-  display: block;
+    display: block;
 }
 
 .crest-divider {
-  svg {
-    width: 14px;
-    height: 14px;
-    flex: none;
-  }
+    svg {
+        width: 14px;
+        height: 14px;
+        flex: none;
+    }
 
-  // When content is projected, show it centred between the rules
-  ::ng-deep .crest-text {
-    font-family: var(--serif);
-    font-size: 13px;
-    color: var(--brass-400);
-    letter-spacing: 0.08em;
-    white-space: nowrap;
-  }
+    // When content is projected, show it centred between the rules
+    ::ng-deep .crest-text {
+        font-family: var(--serif);
+        font-size: 13px;
+        color: var(--brass-400);
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+    }
 }

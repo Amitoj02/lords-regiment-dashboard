@@ -1,159 +1,198 @@
 <hf-app-shell [activeRoute]="'roster'" [crumbs]="['Roster']">
-  <!-- Page Head -->
-  <div class="page-head between" style="align-items:flex-start">
-    <div>
-      <div class="admin-label" style="margin-bottom:4px">Roll Call</div>
-      <h1 class="page-title serif">Regimental Roster</h1>
+    <!-- Page Head -->
+    <div class="page-head between roster-page-head">
+        <div>
+            <div class="admin-label roster-roll-call">Roll Call</div>
+            <h1 class="page-title serif">Regimental Roster</h1>
+        </div>
+        <div class="row roster-head-actions">
+            <button type="button" class="btn btn-secondary btn-sm">
+                <span class="roster-btn-glyph">⊞</span> Filters
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm">↓ Export Ledger</button>
+            <button type="button" class="btn btn-primary btn-sm">+ Invite Mercenary</button>
+        </div>
     </div>
-    <div class="row" style="gap:8px;padding-top:8px">
-      <button class="btn btn-secondary btn-sm">
-        <span style="margin-right:4px">⊞</span> Filters
-      </button>
-      <button class="btn btn-ghost btn-sm">↓ Export Ledger</button>
-      <button class="btn btn-primary btn-sm">+ Invite Mercenary</button>
+
+    <div class="divider"></div>
+
+    <!-- Filter Row -->
+    <div class="filter-bar">
+        <input
+            type="search"
+            class="hf-input roster-search"
+            placeholder="Search by name, Discord tag, or in-game name…"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="applyFilters()"
+        />
+
+        <select
+            class="hf-select roster-filter-rank"
+            [(ngModel)]="filterRank"
+            (ngModelChange)="applyFilters()"
+        >
+            <option value="">All Ranks</option>
+            @for (rank of ranks; track rank) {
+            <option [value]="rank">{{ rank }}</option>
+            }
+        </select>
+
+        <select
+            class="hf-select roster-filter-role"
+            [(ngModel)]="filterRole"
+            (ngModelChange)="applyFilters()"
+        >
+            <option value="">All Roles</option>
+            @for (role of roles; track role) {
+            <option [value]="role">{{ role }}</option>
+            }
+        </select>
+
+        <select
+            class="hf-select roster-filter-status"
+            [(ngModel)]="filterStatus"
+            (ngModelChange)="applyFilters()"
+        >
+            <option value="">All Statuses</option>
+            @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+            }
+        </select>
+
+        <span class="sp"></span>
+
+        <span class="roster-count">
+            Showing <strong class="roster-count-strong">{{ filteredMembers.length }}</strong> of {{
+            allMembers.length }}
+        </span>
+
+        @if (searchQuery || filterRank || filterRole || filterStatus) {
+        <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+            Clear filters
+        </button>
+        }
     </div>
-  </div>
 
-  <div class="divider"></div>
-
-  <!-- Filter Row -->
-  <div class="filter-bar">
-    <input
-      type="search"
-      class="hf-input"
-      placeholder="Search by name, Discord tag, or in-game name…"
-      [(ngModel)]="searchQuery"
-      (ngModelChange)="applyFilters()"
-      style="max-width:320px"
-    >
-
-    <select class="hf-select" [(ngModel)]="filterRank" (ngModelChange)="applyFilters()" style="width:140px">
-      <option value="">All Ranks</option>
-      <option *ngFor="let rank of ranks" [value]="rank">{{ rank }}</option>
-    </select>
-
-    <select class="hf-select" [(ngModel)]="filterRole" (ngModelChange)="applyFilters()" style="width:140px">
-      <option value="">All Roles</option>
-      <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
-    </select>
-
-    <select class="hf-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" style="width:130px">
-      <option value="">All Statuses</option>
-      <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
-    </select>
-
-    <span class="sp"></span>
-
-    <span style="font-size:13px;color:var(--t-400)">
-      Showing <strong style="color:var(--t-200)">{{ filteredMembers.length }}</strong>
-      of {{ allMembers.length }}
-    </span>
-
-    <button
-      *ngIf="searchQuery || filterRank || filterRole || filterStatus"
-      class="btn btn-ghost btn-sm"
-      (click)="clearFilters()"
-    >Clear filters</button>
-  </div>
-
-  <!-- Table -->
-  <div class="panel" style="overflow:hidden;margin-top:0">
-    <div class="table-scroll">
-      <table class="hf-table" style="width:100%">
-        <thead>
-          <tr>
-            <th style="width:36px">
-              <input type="checkbox" class="hf-check">
-            </th>
-            <th>Member</th>
-            <th>Rank</th>
-            <th>Medals</th>
-            <th>Role</th>
-            <th>Discord</th>
-            <th>Status</th>
-            <th>Last Seen</th>
-            <th style="width:48px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let member of filteredMembers">
-            <td class="col-check">
-              <input type="checkbox" class="hf-check">
-            </td>
-            <td class="col-member">
-              <div class="row" style="gap:10px;align-items:center">
-                <hf-avatar
-                  [name]="member.name"
-                  [size]="32"
-                ></hf-avatar>
-                <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--t-100)">{{ member.name }}</div>
-                  <div class="mono" style="font-size:11px;color:var(--t-400)">{{ member.discordTag }}</div>
-                </div>
-              </div>
-            </td>
-            <td data-label="Rank">
-              <div class="row" style="gap:6px;align-items:center">
-                <hf-chevrons [count]="member.chevrons"></hf-chevrons>
-                <span style="font-size:12px;color:var(--t-300)">{{ member.rank }}</span>
-              </div>
-            </td>
-            <td data-label="Medals">
-              <div class="row" style="gap:4px">
-                <span
-                  *ngFor="let ribbon of member.medals"
-                  class="badge dot"
-                  [ngClass]="ribbon"
-                  style="width:10px;height:10px;min-width:10px;padding:0;border-radius:999px"
-                ></span>
-                <span *ngIf="member.medals.length === 0" style="color:var(--t-500);font-size:12px">—</span>
-              </div>
-            </td>
-            <td data-label="Role">
-              <span class="badge" [ngClass]="getRoleClass(member.role)">{{ member.role }}</span>
-            </td>
-            <td data-label="Discord">
-              <span
-                class="status-dot"
-                [ngClass]="member.discordLinked ? 'discord-on' : 'discord-off'"
-                style="width:9px;height:9px;border-radius:999px;display:inline-block;margin-right:4px"
-                [ngStyle]="{ 'background': member.discordLinked ? 'var(--ok)' : 'var(--t-500)' }"
-              ></span>
-              <span class="mono" style="font-size:11px;color:var(--t-400)">
-                {{ member.discordLinked ? 'Linked' : 'Unlinked' }}
-              </span>
-            </td>
-            <td data-label="Status">
-              <span class="badge" [ngClass]="getStatusClass(member.status)">{{ member.status }}</span>
-            </td>
-            <td data-label="Last Seen">
-              <span class="mono" style="font-size:12px;color:var(--t-400)">
-                {{ formatLastSeen(member.lastSeen) }}
-              </span>
-            </td>
-            <td class="col-actions">
-              <button class="btn btn-icon btn-ghost btn-sm" title="Actions">···</button>
-            </td>
-          </tr>
-          <tr *ngIf="filteredMembers.length === 0">
-            <td colspan="9" style="text-align:center;padding:32px;color:var(--t-400)">
-              No members match your current filters.
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Table -->
+    <div class="panel roster-panel">
+        <div class="table-scroll">
+            <table class="hf-table roster-table">
+                <thead>
+                    <tr>
+                        <th class="roster-th-check">
+                            <input
+                                type="checkbox"
+                                class="hf-check"
+                                aria-label="Select all members"
+                            />
+                        </th>
+                        <th>Member</th>
+                        <th>Rank</th>
+                        <th>Medals</th>
+                        <th>Role</th>
+                        <th>Discord</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th class="roster-th-actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (member of filteredMembers; track member) {
+                    <tr>
+                        <td class="col-check">
+                            <input
+                                type="checkbox"
+                                class="hf-check"
+                                [attr.aria-label]="'Select ' + member.name"
+                            />
+                        </td>
+                        <td class="col-member">
+                            <div class="row roster-member-cell">
+                                <hf-avatar [name]="member.name" [size]="32"></hf-avatar>
+                                <div>
+                                    <div class="roster-member-name">{{ member.name }}</div>
+                                    <div class="mono roster-member-tag">
+                                        {{ member.discordTag }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Rank">
+                            <div class="row roster-rank-cell">
+                                <hf-chevrons [count]="member.chevrons"></hf-chevrons>
+                                <span class="roster-rank-label">{{ member.rank }}</span>
+                            </div>
+                        </td>
+                        <td data-label="Medals">
+                            <div class="row roster-medals-cell">
+                                @for (ribbon of member.medals; track ribbon) {
+                                <span class="badge dot roster-medal-dot" [ngClass]="ribbon"></span>
+                                } @if (member.medals.length === 0) {
+                                <span class="roster-medal-empty">—</span>
+                                }
+                            </div>
+                        </td>
+                        <td data-label="Role">
+                            <span class="badge" [ngClass]="getRoleClass(member.role)"
+                                >{{ member.role }}</span
+                            >
+                        </td>
+                        <td data-label="Discord">
+                            <span
+                                class="status-dot roster-discord-dot"
+                                [ngClass]="member.discordLinked ? 'discord-on' : 'discord-off'"
+                                [ngStyle]="{
+                                        background: member.discordLinked
+                                            ? 'var(--ok)'
+                                            : 'var(--t-500)',
+                                    }"
+                            ></span>
+                            <span class="mono roster-discord-label">
+                                {{ member.discordLinked ? 'Linked' : 'Unlinked' }}
+                            </span>
+                        </td>
+                        <td data-label="Status">
+                            <span class="badge" [ngClass]="getStatusClass(member.status)"
+                                >{{ member.status }}</span
+                            >
+                        </td>
+                        <td data-label="Last Seen">
+                            <span class="mono roster-lastseen">
+                                {{ formatLastSeen(member.lastSeen) }}
+                            </span>
+                        </td>
+                        <td class="col-actions">
+                            <button
+                                type="button"
+                                class="btn btn-icon btn-ghost btn-sm"
+                                title="Actions"
+                                aria-label="Member actions"
+                            >
+                                ···
+                            </button>
+                        </td>
+                    </tr>
+                    } @if (filteredMembers.length === 0) {
+                    <tr>
+                        <td colspan="9" class="roster-empty">
+                            No members match your current filters.
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
 
-  <!-- Pagination -->
-  <div class="pagination-bar">
-    <span style="font-size:13px;color:var(--t-400)">
-      Showing 1–{{ filteredMembers.length }} of {{ filteredMembers.length }} members
-    </span>
-    <div class="row" style="gap:6px">
-      <button class="btn btn-ghost btn-sm" disabled>← Prev</button>
-      <button class="btn btn-secondary btn-sm" style="min-width:32px">1</button>
-      <button class="btn btn-ghost btn-sm" disabled>Next →</button>
+    <!-- Pagination -->
+    <div class="pagination-bar">
+        <span class="roster-page-summary">
+            Showing 1–{{ filteredMembers.length }} of {{ filteredMembers.length }} members
+        </span>
+        <div class="row roster-page-controls">
+            <button type="button" class="btn btn-ghost btn-sm" disabled>← Prev</button>
+            <button type="button" class="btn btn-secondary btn-sm roster-page-num">1</button>
+            <button type="button" class="btn btn-ghost btn-sm" disabled>Next →</button>
+        </div>
     </div>
-  </div>
 </hf-app-shell>

@@ -1,279 +1,369 @@
 // =========================================================
 // HOLDFAST · Base & Reset
 // =========================================================
+// Web fonts (Cormorant Garamond, Inter, JetBrains Mono) are loaded via <link>
+// tags in src/index.html for faster, non-render-blocking delivery.
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-*, *::before, *::after {
-  box-sizing: border-box;
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background: var(--ink-900);
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--ink-900);
 }
 
 body {
-  font-family: var(--sans);
-  color: var(--t-200);
-  -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "cv11";
+    font-family: var(--sans);
+    color: var(--t-200);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01', 'cv11';
 }
 
 // Typography utilities
 .serif {
-  font-family: var(--serif) !important;
-  font-weight: 500;
-  letter-spacing: .005em;
+    font-family: var(--serif) !important;
+    font-weight: 500;
+    letter-spacing: 0.005em;
 }
 
 .mono {
-  font-family: var(--mono) !important;
+    font-family: var(--mono) !important;
 }
 
 .serif-display {
-  font-family: var(--serif) !important;
-  font-weight: 600;
+    font-family: var(--serif) !important;
+    font-weight: 600;
 }
 
 // Grain texture overlay
 .grain {
-  position: relative;
+    position: relative;
 
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image:
-      radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-      radial-gradient(rgba(0,0,0,.18) 1px, transparent 1px);
-    background-size: 3px 3px, 5px 5px;
-    background-position: 0 0, 1px 2px;
-    mix-blend-mode: overlay;
-    opacity: .35;
-    z-index: 0;
-  }
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+            radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            radial-gradient(rgba(0, 0, 0, 0.18) 1px, transparent 1px);
+        background-size:
+            3px 3px,
+            5px 5px;
+        background-position:
+            0 0,
+            1px 2px;
+        mix-blend-mode: overlay;
+        opacity: 0.35;
+        z-index: 0;
+    }
 }
 
 // Admin label
 .admin-label {
-  font-family: var(--sans);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--t-400);
+    font-family: var(--sans);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--t-400);
 
-  &.brass { color: var(--brass-400); }
-  &.parch { color: var(--parch-700); }
+    &.brass {
+        color: var(--brass-400);
+    }
+    &.parch {
+        color: var(--parch-700);
+    }
 }
 
 // Utility classes
-.muted   { color: var(--t-400) !important; }
-.faint   { color: var(--t-500) !important; }
-.bright  { color: var(--t-100) !important; }
-.brass   { color: var(--brass-300) !important; }
+.muted {
+    color: var(--t-400) !important;
+}
+.faint {
+    color: var(--t-500) !important;
+}
+.bright {
+    color: var(--t-100) !important;
+}
+.brass {
+    color: var(--brass-300) !important;
+}
 
-.d-flex       { display: flex !important; }
-.align-center { align-items: center !important; }
-.justify-between { justify-content: space-between !important; }
-.flex-1       { flex: 1 !important; }
-.gap-8        { gap: 8px !important; }
-.gap-10       { gap: 10px !important; }
-.gap-12       { gap: 12px !important; }
+.d-flex {
+    display: flex !important;
+}
+.align-center {
+    align-items: center !important;
+}
+.justify-between {
+    justify-content: space-between !important;
+}
+.flex-1 {
+    flex: 1 !important;
+}
+.gap-8 {
+    gap: 8px !important;
+}
+.gap-10 {
+    gap: 10px !important;
+}
+.gap-12 {
+    gap: 12px !important;
+}
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
 
-  // Reset Bootstrap grid's .row > * overrides so this stays a flex utility
-  > * {
-    width: auto;
-    max-width: none;
-    padding-right: 0;
-    padding-left: 0;
-    margin-top: 0;
-    flex-shrink: 1;
-  }
+    // Reset Bootstrap grid's .row > * overrides so this stays a flex utility
+    > * {
+        width: auto;
+        max-width: none;
+        padding-right: 0;
+        padding-left: 0;
+        margin-top: 0;
+        flex-shrink: 1;
+    }
 }
 
 .col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.sp { flex: 1; }
+.sp {
+    flex: 1;
+}
 
 .between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .divider {
-  height: 1px;
-  background: var(--rule);
-  margin: 14px 0;
+    height: 1px;
+    background: var(--rule);
+    margin: 14px 0;
 
-  &.brass {
-    background: linear-gradient(90deg, transparent, var(--brass-700), var(--brass-400), var(--brass-700), transparent);
-    opacity: .7;
-  }
+    &.brass {
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--brass-700),
+            var(--brass-400),
+            var(--brass-700),
+            transparent
+        );
+        opacity: 0.7;
+    }
 }
 
 .rule-ornament {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--brass-400);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--brass-400);
 
-  &::before,
-  &::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--brass-700) 30%, var(--brass-400) 50%, var(--brass-700) 70%, transparent);
-  }
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--brass-700) 30%,
+            var(--brass-400) 50%,
+            var(--brass-700) 70%,
+            transparent
+        );
+    }
 
-  .pip {
-    width: 6px;
-    height: 6px;
-    transform: rotate(45deg);
-    background: var(--brass-400);
-    display: block;
-  }
+    .pip {
+        width: 6px;
+        height: 6px;
+        transform: rotate(45deg);
+        background: var(--brass-400);
+        display: block;
+    }
 }
 
 .crest-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--brass-400);
-  margin: 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--brass-400);
+    margin: 14px 0;
 
-  &::before,
-  &::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--brass-700) 40%, var(--brass-400) 50%, var(--brass-700) 60%, transparent);
-  }
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--brass-700) 40%,
+            var(--brass-400) 50%,
+            var(--brass-700) 60%,
+            transparent
+        );
+    }
 
-  svg { width: 14px; height: 14px; }
+    svg {
+        width: 14px;
+        height: 14px;
+    }
 }
 
 // Grid helpers
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
 
 // Status dots
 .status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  display: inline-block;
-  flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    display: inline-block;
+    flex: none;
 
-  &.discord-on  { background: #4a9d63; }
-  &.discord-off { background: #6b4a3e; }
+    &.discord-on {
+        background: var(--status-online);
+    }
+    &.discord-off {
+        background: var(--status-offline);
+    }
 }
 
 // Archive label
 .archive-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  background: var(--parch-100);
-  color: var(--parch-900);
-  border: 1px solid var(--parch-300);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: var(--parch-100);
+    color: var(--parch-900);
+    border: 1px solid var(--parch-300);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
 // Wax seal
 .wax {
-  width: 56px;
-  height: 56px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%, #b14a3f, #6c2118 70%);
-  border: 2px solid #4f1c16;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--serif);
-  font-weight: 600;
-  color: #fbe5d8;
-  font-size: 11px;
-  letter-spacing: .14em;
-  text-align: center;
-  line-height: 1.05;
-  text-transform: uppercase;
-  box-shadow: inset 0 -3px 6px rgba(0,0,0,.3), inset 0 2px 3px rgba(255,255,255,.15);
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 35% 30%, #b14a3f, #6c2118 70%);
+    border: 2px solid var(--oxblood-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-weight: 600;
+    color: #fbe5d8;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-align: center;
+    line-height: 1.05;
+    text-transform: uppercase;
+    box-shadow:
+        inset 0 -3px 6px rgba(0, 0, 0, 0.3),
+        inset 0 2px 3px rgba(255, 255, 255, 0.15);
 }
 
 // Medal ribbon
 .medal {
-  position: relative;
-  width: 28px;
-  height: 34px;
-  display: inline-block;
-  filter: drop-shadow(0 1px 0 rgba(0,0,0,.4));
+    position: relative;
+    width: 28px;
+    height: 34px;
+    display: inline-block;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4));
 
-  .rib {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 14px;
-  }
+    .rib {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 14px;
+    }
 
-  .disk {
-    position: absolute;
-    left: 50%;
-    top: 11px;
-    transform: translateX(-50%);
-    width: 22px;
-    height: 22px;
-    border-radius: 999px;
-    background: radial-gradient(circle at 35% 30%, var(--brass-100), var(--brass-500) 60%, var(--brass-700));
-    border: 1.5px solid var(--brass-700);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--serif);
-    font-size: 11px;
-    font-weight: 600;
-    color: #4a3416;
-  }
+    .disk {
+        position: absolute;
+        left: 50%;
+        top: 11px;
+        transform: translateX(-50%);
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: radial-gradient(
+            circle at 35% 30%,
+            var(--brass-100),
+            var(--brass-500) 60%,
+            var(--brass-700)
+        );
+        border: 1.5px solid var(--brass-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--serif);
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a3416;
+    }
 }
 
 // Rank chevrons
 .chevs {
-  display: inline-flex;
-  gap: 2px;
-  align-items: center;
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
 }
 
 .chev {
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid var(--brass-400);
-  border-bottom: 2px solid var(--brass-400);
-  transform: rotate(-45deg);
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid var(--brass-400);
+    border-bottom: 2px solid var(--brass-400);
+    transform: rotate(-45deg);
 }
 
 // Scrollbars
-.appscroll::-webkit-scrollbar { width: 8px; height: 8px; }
-.appscroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 8px; }
-.appscroll::-webkit-scrollbar-track { background: transparent; }
+.appscroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.appscroll::-webkit-scrollbar-thumb {
+    background: var(--rule-2);
+    border-radius: 8px;
+}
+.appscroll::-webkit-scrollbar-track {
+    background: transparent;
+}

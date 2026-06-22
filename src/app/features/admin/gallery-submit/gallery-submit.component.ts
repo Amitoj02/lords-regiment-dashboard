@@ -1,65 +1,83 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 interface UploadedFile {
-  id: string;
-  filename: string;
-  size: string;
-  caption: string;
-  thumbnailColor: string;
+    id: string;
+    filename: string;
+    size: string;
+    caption: string;
+    thumbnailColor: string;
 }
 
 @Component({
-  selector: 'app-gallery-submit',
-  templateUrl: './gallery-submit.component.html',
-  styleUrls: ['./gallery-submit.component.scss'],
-  standalone: false,
+    selector: 'app-gallery-submit',
+    templateUrl: './gallery-submit.component.html',
+    styleUrls: ['./gallery-submit.component.scss'],
+    standalone: false,
 })
-export class GallerySubmitComponent implements OnInit {
-  activeTab: 'files' | 'link' = 'files';
+export class GallerySubmitComponent {
+    activeTab: 'files' | 'link' = 'files';
 
-  uploadedFiles: UploadedFile[] = [
-    { id: 'f1', filename: 'siege_defense_01.jpg', size: '2.4 MB', caption: '', thumbnailColor: '#3a4a5c' },
-    { id: 'f2', filename: 'charge_left_flank.jpg', size: '1.9 MB', caption: '', thumbnailColor: '#4a3a2c' },
-    { id: 'f3', filename: 'artillery_volley.jpg', size: '3.1 MB', caption: '', thumbnailColor: '#2c3a2c' },
-  ];
+    uploadedFiles: UploadedFile[] = [
+        {
+            id: 'f1',
+            filename: 'siege_defense_01.jpg',
+            size: '2.4 MB',
+            caption: '',
+            thumbnailColor: '#3a4a5c',
+        },
+        {
+            id: 'f2',
+            filename: 'charge_left_flank.jpg',
+            size: '1.9 MB',
+            caption: '',
+            thumbnailColor: '#4a3a2c',
+        },
+        {
+            id: 'f3',
+            filename: 'artillery_volley.jpg',
+            size: '3.1 MB',
+            caption: '',
+            thumbnailColor: '#2c3a2c',
+        },
+    ];
 
-  submissionTitle = '';
-  selectedEvent = '';
-  tagInput = '';
-  tags: string[] = [];
+    submissionTitle = '';
+    selectedEvent = '';
+    tagInput = '';
+    tags: string[] = [];
 
-  events = [
-    { value: 'ev1', label: 'Grand Autumn Campaign — Line Battle' },
-    { value: 'ev2', label: 'Officer Training Drill' },
-    { value: 'ev3', label: 'May Grand Campaign — Final Assault' },
-  ];
+    readonly events = [
+        { value: 'ev1', label: 'Grand Autumn Campaign — Line Battle' },
+        { value: 'ev2', label: 'Officer Training Drill' },
+        { value: 'ev3', label: 'May Grand Campaign — Final Assault' },
+    ];
 
-  taggedMembers: string[] = [];
-  tagMemberInput = '';
+    taggedMembers: string[] = [];
+    tagMemberInput = '';
 
-  linkUrl = '';
+    linkUrl = '';
 
-  constructor() {}
-
-  ngOnInit(): void {}
-
-  removeFile(id: string): void {
-    this.uploadedFiles = this.uploadedFiles.filter(f => f.id !== id);
-  }
-
-  addTag(): void {
-    const t = this.tagInput.trim();
-    if (t && !this.tags.includes(t)) {
-      this.tags.push(t);
+    removeFile(id: string): void {
+        this.uploadedFiles = this.uploadedFiles.filter((f) => f.id !== id);
     }
-    this.tagInput = '';
-  }
 
-  removeTag(t: string): void {
-    this.tags = this.tags.filter(tag => tag !== t);
-  }
+    addTag(): void {
+        const t = this.tagInput.trim();
+        if (t && !this.tags.includes(t)) {
+            this.tags.push(t);
+        }
+        this.tagInput = '';
+    }
 
-  saveDraft(): void {}
+    removeTag(t: string): void {
+        this.tags = this.tags.filter((tag) => tag !== t);
+    }
 
-  submit(): void {}
+    saveDraft(): void {
+        // No-op stub: persistence wired up when the gallery backend lands.
+    }
+
+    submit(): void {
+        // No-op stub: submission wired up when the gallery backend lands.
+    }
 }

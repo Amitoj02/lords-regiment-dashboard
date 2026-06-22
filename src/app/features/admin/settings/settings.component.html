@@ -1,151 +1,246 @@
 <hf-app-shell [activeRoute]="'settings'">
-  <div class="settings-layout">
-
-    <!-- Sidebar nav -->
-    <aside class="settings-nav">
-      <div *ngFor="let group of navGroups" class="nav-group">
-        <div class="nav-group-label">{{ group }}</div>
-        <button
-          *ngFor="let item of getNavByGroup(group)"
-          class="nav-item"
-          [ngClass]="{ 'nav-item--active': activeSection === item.id }"
-          (click)="activeSection = item.id"
-        >
-          {{ item.label }}
-        </button>
-      </div>
-    </aside>
-
-    <!-- Main content -->
-    <main class="settings-main">
-
-      <!-- Identity panel -->
-      <div class="panel" *ngIf="activeSection === 'profile'">
-        <div class="panel-header">
-          <span class="panel-title">Identity</span>
-        </div>
-        <div class="panel-body">
-          <div class="field-row">
-            <label class="field-label">Regiment name</label>
-            <input class="hf-input" type="text" [(ngModel)]="regimentName" />
-          </div>
-          <div class="field-row">
-            <label class="field-label">Short tag</label>
-            <input class="hf-input" type="text" [(ngModel)]="shortTag" style="width:100px;" />
-            <span class="field-hint">Displayed in brackets before member names, e.g. [LR] Jameson Nolt</span>
-          </div>
-          <div class="field-row">
-            <label class="field-label">Mission statement</label>
-            <textarea class="hf-textarea" rows="3" [(ngModel)]="missionStatement"></textarea>
-          </div>
-          <div class="grid-2">
-            <div class="field-row">
-              <label class="field-label">Crest</label>
-              <div class="upload-target">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M3 16l5-5 4 4 3-3 4 4"/></svg>
-                <span>Upload crest</span>
-              </div>
+    <div class="settings-layout">
+        <!-- Sidebar nav -->
+        <aside class="settings-nav">
+            @for (group of navGroups; track group) {
+            <div class="nav-group">
+                <div class="nav-group-label">{{ group }}</div>
+                @for (item of getNavByGroup(group); track item) {
+                <button
+                    type="button"
+                    class="nav-item"
+                    [ngClass]="{ 'nav-item--active': activeSection === item.id }"
+                    (click)="activeSection = item.id"
+                >
+                    {{ item.label }}
+                </button>
+                }
             </div>
-            <div class="field-row">
-              <label class="field-label">Banner</label>
-              <div class="upload-target">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M3 16l5-5 4 4 3-3 4 4"/></svg>
-                <span>Upload banner</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            }
+        </aside>
 
-      <!-- Visibility panel -->
-      <div class="panel" *ngIf="activeSection === 'profile'">
-        <div class="panel-header">
-          <span class="panel-title">Visibility</span>
-        </div>
-        <div class="panel-body toggle-list">
-          <div *ngFor="let toggle of visibilityToggles" class="toggle-row">
-            <div>
-              <div class="toggle-label">{{ toggle.label }}</div>
-              <div class="field-hint">{{ toggle.hint }}</div>
+        <!-- Main content -->
+        <main class="settings-main">
+            <!-- Identity panel -->
+            @if (activeSection === 'profile') {
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Identity</span>
+                </div>
+                <div class="panel-body">
+                    <div class="field-row">
+                        <label class="field-label" for="regiment-name">Regiment name</label>
+                        <input
+                            id="regiment-name"
+                            class="hf-input"
+                            type="text"
+                            [(ngModel)]="regimentName"
+                        />
+                    </div>
+                    <div class="field-row">
+                        <label class="field-label" for="short-tag">Short tag</label>
+                        <input
+                            id="short-tag"
+                            class="hf-input short-tag-input"
+                            type="text"
+                            [(ngModel)]="shortTag"
+                        />
+                        <span class="field-hint"
+                            >Displayed in brackets before member names, e.g. [LR] Jameson Nolt</span
+                        >
+                    </div>
+                    <div class="field-row">
+                        <label class="field-label" for="mission-statement">Mission statement</label>
+                        <textarea
+                            id="mission-statement"
+                            class="hf-textarea"
+                            rows="3"
+                            [(ngModel)]="missionStatement"
+                        ></textarea>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field-row">
+                            <label class="field-label" for="upload-crest">Crest</label>
+                            <button id="upload-crest" type="button" class="upload-target">
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    aria-hidden="true"
+                                >
+                                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <path d="M3 16l5-5 4 4 3-3 4 4" />
+                                </svg>
+                                <span>Upload crest</span>
+                            </button>
+                        </div>
+                        <div class="field-row">
+                            <label class="field-label" for="upload-banner">Banner</label>
+                            <button id="upload-banner" type="button" class="upload-target">
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    aria-hidden="true"
+                                >
+                                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <path d="M3 16l5-5 4 4 3-3 4 4" />
+                                </svg>
+                                <span>Upload banner</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" [(ngModel)]="toggle.value" />
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-        </div>
-      </div>
+            }
 
-      <!-- Permission Matrix panel -->
-      <div class="panel" *ngIf="activeSection === 'profile' || activeSection === 'roles'">
-        <div class="panel-header">
-          <span class="panel-title">Permission Matrix</span>
-        </div>
-        <div class="panel-body perm-matrix-wrap">
-          <table class="hf-table perm-table">
-            <thead>
-              <tr>
-                <th>Capability</th>
-                <th *ngFor="let col of roleColumns" class="role-col">
-                  {{ col | titlecase }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of permissionMatrix">
-                <td>{{ row.capability }}</td>
-                <!-- Owner: locked, brass check -->
-                <td class="perm-cell perm-cell--locked">
-                  <svg *ngIf="row.owner" width="14" height="14" viewBox="0 0 24 24" fill="var(--brass-400)" stroke="none"><path d="M20 6L9 17l-5-5"/></svg>
-                  <svg *ngIf="!row.owner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t-300)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </td>
-                <td class="perm-cell"><input type="checkbox" [(ngModel)]="row.admin" /></td>
-                <td class="perm-cell"><input type="checkbox" [(ngModel)]="row.moderator" /></td>
-                <td class="perm-cell"><input type="checkbox" [(ngModel)]="row.member" /></td>
-                <td class="perm-cell"><input type="checkbox" [(ngModel)]="row.mercenary" /></td>
-                <td class="perm-cell"><input type="checkbox" [(ngModel)]="row.applicant" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Hazardous Operations panel -->
-      <div class="panel panel--hazard" *ngIf="activeSection === 'profile'">
-        <div class="panel-header">
-          <span class="panel-title">Hazardous Operations</span>
-        </div>
-        <div class="panel-body">
-          <div class="hazard-row">
-            <div>
-              <div class="hazard-label">Purge declined applications</div>
-              <div class="field-hint">Permanently delete all declined applications older than 90 days.</div>
+            <!-- Visibility panel -->
+            @if (activeSection === 'profile') {
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Visibility</span>
+                </div>
+                <div class="panel-body toggle-list">
+                    @for (toggle of visibilityToggles; track toggle) {
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">{{ toggle.label }}</div>
+                            <div class="field-hint">{{ toggle.hint }}</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" [(ngModel)]="toggle.value" />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    }
+                </div>
             </div>
-            <button class="btn btn-destructive btn-sm">Purge</button>
-          </div>
-          <div class="hazard-row">
-            <div>
-              <div class="hazard-label">Reset all event RSVPs</div>
-              <div class="field-hint">Clear RSVP data for all future events. Cannot be undone.</div>
-            </div>
-            <button class="btn btn-destructive btn-sm">Reset</button>
-          </div>
-          <div class="hazard-row">
-            <div>
-              <div class="hazard-label">Dissolve regiment</div>
-              <div class="field-hint">Permanently delete all regiment data. This is final.</div>
-            </div>
-            <button class="btn btn-destructive btn-sm">Dissolve</button>
-          </div>
-        </div>
-      </div>
+            }
 
-      <!-- Save footer -->
-      <div class="settings-footer">
-        <button class="btn btn-ghost" (click)="discard()">Discard changes</button>
-        <button class="btn btn-primary" (click)="save()">Save settings</button>
-      </div>
+            <!-- Permission Matrix panel -->
+            @if (activeSection === 'profile' || activeSection === 'roles') {
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Permission Matrix</span>
+                </div>
+                <div class="panel-body perm-matrix-wrap">
+                    <table class="hf-table perm-table">
+                        <thead>
+                            <tr>
+                                <th>Capability</th>
+                                @for (col of roleColumns; track col) {
+                                <th class="role-col">{{ col | titlecase }}</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (row of permissionMatrix; track row) {
+                            <tr>
+                                <td>{{ row.capability }}</td>
+                                <!-- Owner: locked, brass check -->
+                                <td class="perm-cell perm-cell--locked">
+                                    @if (row.owner) {
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="var(--brass-400)"
+                                        stroke="none"
+                                    >
+                                        <path d="M20 6L9 17l-5-5" />
+                                    </svg>
+                                    } @if (!row.owner) {
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="var(--t-300)"
+                                        stroke-width="2"
+                                    >
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                    }
+                                </td>
+                                <td class="perm-cell">
+                                    <input type="checkbox" [(ngModel)]="row.admin" />
+                                </td>
+                                <td class="perm-cell">
+                                    <input type="checkbox" [(ngModel)]="row.moderator" />
+                                </td>
+                                <td class="perm-cell">
+                                    <input type="checkbox" [(ngModel)]="row.member" />
+                                </td>
+                                <td class="perm-cell">
+                                    <input type="checkbox" [(ngModel)]="row.mercenary" />
+                                </td>
+                                <td class="perm-cell">
+                                    <input type="checkbox" [(ngModel)]="row.applicant" />
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            }
 
-    </main>
-  </div>
+            <!-- Hazardous Operations panel -->
+            @if (activeSection === 'profile') {
+            <div class="panel panel--hazard">
+                <div class="panel-header">
+                    <span class="panel-title">Hazardous Operations</span>
+                </div>
+                <div class="panel-body">
+                    <div class="hazard-row">
+                        <div>
+                            <div class="hazard-label">Purge declined applications</div>
+                            <div class="field-hint">
+                                Permanently delete all declined applications older than 90 days.
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-destructive btn-sm">Purge</button>
+                    </div>
+                    <div class="hazard-row">
+                        <div>
+                            <div class="hazard-label">Reset all event RSVPs</div>
+                            <div class="field-hint">
+                                Clear RSVP data for all future events. Cannot be undone.
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-destructive btn-sm">Reset</button>
+                    </div>
+                    <div class="hazard-row">
+                        <div>
+                            <div class="hazard-label">Dissolve regiment</div>
+                            <div class="field-hint">
+                                Permanently delete all regiment data. This is final.
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-destructive btn-sm">Dissolve</button>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- Save footer -->
+            <div class="settings-footer">
+                <button type="button" class="btn btn-ghost" (click)="discard()">
+                    Discard changes
+                </button>
+                <button type="button" class="btn btn-primary" (click)="save()">
+                    Save settings
+                </button>
+            </div>
+        </main>
+    </div>
 </hf-app-shell>

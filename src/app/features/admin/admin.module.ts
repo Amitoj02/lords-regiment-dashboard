@@ -13,33 +13,30 @@ import { SettingsComponent } from './settings/settings.component';
 import { BotStatusComponent } from './bot-status/bot-status.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'applications', pathMatch: 'full' },
-  { path: 'applications', component: ApplicationsComponent },
-  { path: 'ranks', component: RanksMedalsComponent },
-  { path: 'events/create', component: EventCreateComponent },
-  { path: 'events/:id', component: EventDetailComponent },
-  { path: 'gallery/submit', component: GallerySubmitComponent },
-  { path: 'gallery/mod', component: GalleryModComponent },
-  { path: 'audit', component: AuditComponent },
-  { path: 'settings', component: SettingsComponent },
-  { path: 'bot', component: BotStatusComponent },
+    { path: '', redirectTo: 'applications', pathMatch: 'full' },
+    { path: 'applications', component: ApplicationsComponent },
+    { path: 'ranks', component: RanksMedalsComponent },
+    { path: 'events/create', component: EventCreateComponent },
+    { path: 'events/:id', component: EventDetailComponent },
+    { path: 'gallery/submit', component: GallerySubmitComponent },
+    { path: 'gallery/mod', component: GalleryModComponent },
+    { path: 'audit', component: AuditComponent },
+    { path: 'settings', component: SettingsComponent },
+    { path: 'bot', component: BotStatusComponent },
 ];
 
 @NgModule({
-  declarations: [
-    ApplicationsComponent,
-    RanksMedalsComponent,
-    EventDetailComponent,
-    EventCreateComponent,
-    GallerySubmitComponent,
-    GalleryModComponent,
-    AuditComponent,
-    SettingsComponent,
-    BotStatusComponent,
-  ],
-  imports: [
-    SharedModule,
-    RouterModule.forChild(routes),
-  ],
+    declarations: [
+        ApplicationsComponent,
+        RanksMedalsComponent,
+        EventDetailComponent,
+        EventCreateComponent,
+        GallerySubmitComponent,
+        GalleryModComponent,
+        AuditComponent,
+        SettingsComponent,
+        BotStatusComponent,
+    ],
+    imports: [SharedModule, RouterModule.forChild(routes)],
 })
 export class AdminModule {}

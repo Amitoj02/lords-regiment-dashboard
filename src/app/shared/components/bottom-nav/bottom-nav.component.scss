@@ -3,40 +3,47 @@
 // The reveal must live here: a global `hf-bottom-nav` type selector (0,0,1)
 // cannot override `:host { display: none }` (0,1,0).
 :host {
-  display: none;
+    display: none;
 }
 
 @media (max-width: 820px) {
-  :host {
-    display: block;
-    flex: none;
-  }
+    :host {
+        display: block;
+        flex: none;
+    }
 }
 
 .bnav {
-  height: 60px;
-  background: var(--ink-850);
-  border-top: 1px solid var(--rule);
-  display: flex;
-  flex: none;
-
-  .b {
-    flex: 1;
+    height: 60px;
+    background: var(--ink-850);
+    border-top: 1px solid var(--rule);
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    color: var(--t-400);
-    font-size: 9.5px;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition: color .12s;
+    flex: none;
 
-    svg { width: 18px; height: 18px; }
+    .b {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: var(--t-400);
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: color 0.12s;
 
-    &.active { color: var(--brass-300); }
-    &:active { color: var(--brass-200); }
-  }
+        svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        &.active {
+            color: var(--brass-300);
+        }
+        &:active {
+            color: var(--brass-200);
+        }
+    }
 }

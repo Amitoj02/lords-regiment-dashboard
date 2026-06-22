@@ -1,11 +1,18 @@
 // Global .stat-tile styles from _components.scss apply
 :host {
-  display: block;
+    display: block;
 }
 
 .stat-accent-bar {
-  height: 2px;
-  border-radius: 1px;
-  margin-bottom: 10px;
-  opacity: 0.7;
+    height: 2px;
+    border-radius: 1px;
+    margin-bottom: 10px;
+    opacity: 0.7;
+    background: var(--stat-accent);
+}
+
+// Accent overrides the default value colour when set; falls back to the
+// global --t-100 default otherwise (preserves prior `accent || null` behaviour).
+.stat-tile .stat-value {
+    color: var(--stat-accent, var(--t-100));
 }

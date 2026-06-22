@@ -1,157 +1,243 @@
 <hf-app-shell [activeRoute]="'apps'">
-  <div class="applications-layout">
-
-    <!-- Queue Column -->
-    <div class="queue-col">
-      <div class="panel">
-        <div class="panel-header between">
-          <span class="panel-title">Queue</span>
-          <span class="badge brass">7</span>
-        </div>
-        <div class="panel-body queue-list">
-          <div
-            *ngFor="let item of queue"
-            class="queue-item"
-            [ngClass]="{ 'queue-item--active': isSelected(item.id) }"
-            (click)="selectApplication(item.id)"
-          >
-            <div class="queue-item__avatar">
-              <hf-avatar [name]="item.name" [size]="28"></hf-avatar>
-            </div>
-            <div class="queue-item__body">
-              <div class="row between">
-                <span class="queue-item__name">{{ item.name }}</span>
-                <span class="badge" [ngClass]="item.applicantType === 'Mercenary' ? 'ox' : 'laurel'">
-                  {{ item.applicantType }}
-                </span>
-              </div>
-              <div class="row between">
-                <span class="queue-item__discord mono">{{ item.discordTag }}</span>
-                <span class="queue-item__time">{{ item.timeAgo }}</span>
-              </div>
-              <span *ngIf="item.isReapply" class="badge blue sp">Re-apply</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Detail Column -->
-    <div class="detail-col">
-      <div class="panel">
-        <div class="panel-header">
-          <div class="row between">
-            <div class="row" style="gap:12px;align-items:center;">
-              <hf-avatar name="Mara Erskine" [size]="36"></hf-avatar>
-              <div>
-                <div class="row" style="gap:8px;align-items:center;">
-                  <span class="panel-title">{{ selectedApplication.applicantName }}</span>
-                  <span class="badge laurel">{{ selectedApplication.applicantType }}</span>
+    <div class="applications-layout">
+        <!-- Queue Column -->
+        <div class="queue-col">
+            <div class="panel">
+                <div class="panel-header between">
+                    <span class="panel-title">Queue</span>
+                    <span class="badge brass">7</span>
                 </div>
-                <span class="mono" style="font-size:0.75rem;color:var(--t-400);">{{ selectedApplication.discordTag }} &middot; 2h ago</span>
-              </div>
+                <div class="panel-body queue-list">
+                    @for (item of queue; track item.id) {
+                    <button
+                        type="button"
+                        class="queue-item"
+                        [ngClass]="{ 'queue-item--active': isSelected(item.id) }"
+                        (click)="selectApplication(item.id)"
+                    >
+                        <div class="queue-item__avatar">
+                            <hf-avatar [name]="item.name" [size]="28"></hf-avatar>
+                        </div>
+                        <div class="queue-item__body">
+                            <div class="row between">
+                                <span class="queue-item__name">{{ item.name }}</span>
+                                <span
+                                    class="badge"
+                                    [ngClass]="
+                                            item.applicantType === 'Mercenary' ? 'ox' : 'laurel'
+                                        "
+                                >
+                                    {{ item.applicantType }}
+                                </span>
+                            </div>
+                            <div class="row between">
+                                <span class="queue-item__discord mono">{{ item.discordTag }}</span>
+                                <span class="queue-item__time">{{ item.timeAgo }}</span>
+                            </div>
+                            @if (item.isReapply) {
+                            <span class="badge blue sp">Re-apply</span>
+                            }
+                        </div>
+                    </button>
+                    }
+                </div>
             </div>
-            <button class="btn btn-discord btn-sm">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.11 18.102.128 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-              Open in Discord
-            </button>
-          </div>
         </div>
-        <div class="panel-body">
 
-          <!-- Info Grid -->
-          <div class="grid-2 info-grid">
-            <div>
-              <div class="field-label">In-game name</div>
-              <div class="mono">{{ selectedApplication.inGameName }}</div>
+        <!-- Detail Column -->
+        <div class="detail-col">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="row between">
+                        <div class="row gap-12">
+                            <hf-avatar name="Mara Erskine" [size]="36"></hf-avatar>
+                            <div>
+                                <div class="row gap-8">
+                                    <span class="panel-title"
+                                        >{{ selectedApplication.applicantName }}</span
+                                    >
+                                    <span class="badge laurel"
+                                        >{{ selectedApplication.applicantType }}</span
+                                    >
+                                </div>
+                                <span class="mono applicant-meta"
+                                    >{{ selectedApplication.discordTag }} &middot; 2h ago</span
+                                >
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-discord btn-sm">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.11 18.102.128 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"
+                                />
+                            </svg>
+                            Open in Discord
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <!-- Info Grid -->
+                    <div class="grid-2 info-grid">
+                        <div>
+                            <div class="field-label">In-game name</div>
+                            <div class="mono">{{ selectedApplication.inGameName }}</div>
+                        </div>
+                        <div>
+                            <div class="field-label">Discord verification</div>
+                            <div class="row discord-verify-row">
+                                <span class="status-dot discord-on"></span>
+                                <span>In server &middot; 4 mutual events</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="field-label">Platform</div>
+                            <hf-platform-badges
+                                [platforms]="[selectedApplication.platform]"
+                            ></hf-platform-badges>
+                        </div>
+                        <div>
+                            <div class="field-label">Timezone</div>
+                            <span>{{ selectedApplication.timezone }}</span>
+                        </div>
+                    </div>
+
+                    <hf-crest-divider label="Enlistment Answers"></hf-crest-divider>
+
+                    <!-- Q&A -->
+                    <div class="qa-section">
+                        <div class="admin-label brass">
+                            Why do you want to join the Lords Regiment?
+                        </div>
+                        <div class="qa-answer parchment serif">
+                            {{ selectedApplication.whyJoin }}
+                        </div>
+                    </div>
+
+                    <div class="qa-section">
+                        <div class="admin-label brass">How did you find us?</div>
+                        <div class="qa-answer parchment serif">
+                            {{ selectedApplication.howFound }}
+                        </div>
+                    </div>
+
+                    <div class="qa-section">
+                        <div class="admin-label brass">
+                            Describe any prior regiment or milsim experience.
+                        </div>
+                        <div class="qa-answer parchment serif">
+                            {{ selectedApplication.priorExperience }}
+                        </div>
+                    </div>
+
+                    <!-- Moderator tools -->
+                    <div class="grid-2 mod-tools">
+                        <div>
+                            <label class="field-label" for="moderator-note">Moderator note</label>
+                            <textarea
+                                id="moderator-note"
+                                class="hf-textarea"
+                                rows="3"
+                                [(ngModel)]="moderatorNote"
+                                placeholder="Internal note visible to admins only..."
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label" for="discord-dm-message"
+                                >Discord DM message</label
+                            >
+                            <textarea
+                                id="discord-dm-message"
+                                class="hf-textarea"
+                                rows="3"
+                                [(ngModel)]="discordDmMessage"
+                                placeholder="Personalised message to send on decision..."
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <hf-notice type="info" class="decision-notice">
+                        A Discord DM will be sent automatically to the applicant when you make a
+                        decision. You may customise the message above.
+                    </hf-notice>
+
+                    <!-- Navigation & Decisions -->
+                    <div class="decisions-row">
+                        <div class="nav-btns">
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="prev()"
+                                [disabled]="selectedIndex === 0"
+                            >
+                                &#8592; Previous
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="next()"
+                                [disabled]="selectedIndex === queue.length - 1"
+                            >
+                                Next &#8594;
+                            </button>
+                        </div>
+                        <div class="action-btns">
+                            <button
+                                type="button"
+                                class="btn btn-destructive btn-sm"
+                                (click)="decline()"
+                            >
+                                Decline
+                            </button>
+                            <button type="button" class="btn btn-ghost btn-sm" (click)="hold()">
+                                Hold for committee
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                (click)="approve()"
+                            >
+                                Approve &amp; enlist
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div>
-              <div class="field-label">Discord verification</div>
-              <div class="row" style="gap:6px;align-items:center;">
-                <span class="status-dot discord-on"></span>
-                <span>In server &middot; 4 mutual events</span>
-              </div>
+
+            <!-- Tab bar -->
+            <div class="hf-tabs tab-bar">
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'pending' }"
+                    (click)="setTab('pending')"
+                >
+                    Pending <span class="badge brass">7</span>
+                </button>
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'approved' }"
+                    (click)="setTab('approved')"
+                >
+                    Approved <span class="badge">142</span>
+                </button>
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'declined' }"
+                    (click)="setTab('declined')"
+                >
+                    Declined <span class="badge">28</span>
+                </button>
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'reapply' }"
+                    (click)="setTab('reapply')"
+                >
+                    Re-applications <span class="badge blue">4</span>
+                </button>
             </div>
-            <div>
-              <div class="field-label">Platform</div>
-              <hf-platform-badges [platforms]="[selectedApplication.platform]"></hf-platform-badges>
-            </div>
-            <div>
-              <div class="field-label">Timezone</div>
-              <span>{{ selectedApplication.timezone }}</span>
-            </div>
-          </div>
-
-          <hf-crest-divider label="Enlistment Answers"></hf-crest-divider>
-
-          <!-- Q&A -->
-          <div class="qa-section">
-            <div class="admin-label brass">Why do you want to join the Lords Regiment?</div>
-            <div class="qa-answer parchment serif">{{ selectedApplication.whyJoin }}</div>
-          </div>
-
-          <div class="qa-section">
-            <div class="admin-label brass">How did you find us?</div>
-            <div class="qa-answer parchment serif">{{ selectedApplication.howFound }}</div>
-          </div>
-
-          <div class="qa-section">
-            <div class="admin-label brass">Describe any prior regiment or milsim experience.</div>
-            <div class="qa-answer parchment serif">{{ selectedApplication.priorExperience }}</div>
-          </div>
-
-          <!-- Moderator tools -->
-          <div class="grid-2 mod-tools">
-            <div>
-              <label class="field-label">Moderator note</label>
-              <textarea class="hf-textarea" rows="3" [(ngModel)]="moderatorNote" placeholder="Internal note visible to admins only..."></textarea>
-            </div>
-            <div>
-              <label class="field-label">Discord DM message</label>
-              <textarea class="hf-textarea" rows="3" [(ngModel)]="discordDmMessage" placeholder="Personalised message to send on decision..."></textarea>
-            </div>
-          </div>
-
-          <hf-notice type="info" style="margin-top:12px;">
-            A Discord DM will be sent automatically to the applicant when you make a decision. You may customise the message above.
-          </hf-notice>
-
-          <!-- Navigation & Decisions -->
-          <div class="decisions-row">
-            <div class="nav-btns">
-              <button class="btn btn-ghost btn-sm" (click)="prev()" [disabled]="selectedIndex === 0">
-                &#8592; Previous
-              </button>
-              <button class="btn btn-ghost btn-sm" (click)="next()" [disabled]="selectedIndex === queue.length - 1">
-                Next &#8594;
-              </button>
-            </div>
-            <div class="action-btns">
-              <button class="btn btn-destructive btn-sm" (click)="decline()">Decline</button>
-              <button class="btn btn-ghost btn-sm" (click)="hold()">Hold for committee</button>
-              <button class="btn btn-primary btn-sm" (click)="approve()">Approve &amp; enlist</button>
-            </div>
-          </div>
-
         </div>
-      </div>
-
-      <!-- Tab bar -->
-      <div class="hf-tabs" style="margin-top:16px;">
-        <button class="hf-tab" [ngClass]="{'active': activeTab === 'pending'}" (click)="setTab('pending')">
-          Pending <span class="badge brass">7</span>
-        </button>
-        <button class="hf-tab" [ngClass]="{'active': activeTab === 'approved'}" (click)="setTab('approved')">
-          Approved <span class="badge">142</span>
-        </button>
-        <button class="hf-tab" [ngClass]="{'active': activeTab === 'declined'}" (click)="setTab('declined')">
-          Declined <span class="badge">28</span>
-        </button>
-        <button class="hf-tab" [ngClass]="{'active': activeTab === 'reapply'}" (click)="setTab('reapply')">
-          Re-applications <span class="badge blue">4</span>
-        </button>
-      </div>
     </div>
-
-  </div>
 </hf-app-shell>

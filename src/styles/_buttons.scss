@@ -3,123 +3,144 @@
 // =========================================================
 
 .btn {
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: .02em;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: var(--r-2);
-  background: transparent;
-  border: 1px solid transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-  transition: background .12s, border-color .12s, color .12s;
-  white-space: nowrap;
-  text-decoration: none;
-
-  &:focus-visible {
-    outline: 1.5px solid var(--brass-400);
-    outline-offset: 1px;
-  }
-
-  // Variants
-  &.btn-primary {
-    background: linear-gradient(180deg, #c69a45, #a07724);
-    color: #1a1306;
-    border-color: #5e4413;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.25);
-    font-weight: 600;
-
-    &:hover { background: linear-gradient(180deg, #d5a955, #b58432); }
-  }
-
-  &.btn-secondary {
-    background: var(--ink-700);
-    color: var(--t-100);
-    border-color: var(--rule-3);
-
-    &:hover { background: var(--ink-600); }
-  }
-
-  &.btn-ghost {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: var(--r-2);
     background: transparent;
-    color: var(--t-200);
-    border-color: var(--rule-2);
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition:
+        background 0.12s,
+        border-color 0.12s,
+        color 0.12s;
+    white-space: nowrap;
+    text-decoration: none;
 
-    &:hover { background: var(--ink-700); border-color: var(--rule-3); }
-  }
+    &:focus-visible {
+        outline: 1.5px solid var(--brass-400);
+        outline-offset: 1px;
+    }
 
-  &.btn-muted {
-    background: transparent;
-    color: var(--t-300);
-    border-color: transparent;
+    // Variants
+    &.btn-primary {
+        background: linear-gradient(180deg, #c69a45, #a07724);
+        color: #1a1306;
+        border-color: #5e4413;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+        font-weight: 600;
 
-    &:hover { background: var(--ink-700); color: var(--t-100); }
-  }
+        &:hover {
+            background: linear-gradient(180deg, #d5a955, #b58432);
+        }
+    }
 
-  &.btn-destructive {
-    background: linear-gradient(180deg, #8a382f, #6e2a23);
-    color: #f3e0d6;
-    border-color: #4f1c16;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    &.btn-secondary {
+        background: var(--ink-700);
+        color: var(--t-100);
+        border-color: var(--rule-3);
 
-    &:hover { background: linear-gradient(180deg, #a64d44, #8a382f); }
-  }
+        &:hover {
+            background: var(--ink-600);
+        }
+    }
 
-  &.btn-discord {
-    background: #404eed;
-    color: #fff;
-    border-color: #2c37b8;
-    font-weight: 600;
+    &.btn-ghost {
+        background: transparent;
+        color: var(--t-200);
+        border-color: var(--rule-2);
 
-    &:hover { background: #4a58f0; }
-  }
+        &:hover {
+            background: var(--ink-700);
+            border-color: var(--rule-3);
+        }
+    }
 
-  // Sizes
-  &.btn-sm {
-    height: 28px;
-    padding: 0 10px;
-    font-size: 12px;
-  }
+    &.btn-muted {
+        background: transparent;
+        color: var(--t-300);
+        border-color: transparent;
 
-  &.btn-lg {
-    height: 42px;
-    padding: 0 22px;
-    font-size: 14px;
-  }
+        &:hover {
+            background: var(--ink-700);
+            color: var(--t-100);
+        }
+    }
 
-  &.btn-icon {
-    padding: 0;
-    width: 34px;
+    &.btn-destructive {
+        background: linear-gradient(180deg, var(--oxblood-500), var(--oxblood-600));
+        color: #f3e0d6;
+        border-color: var(--oxblood-700);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
-    &.btn-sm { width: 28px; }
-  }
+        &:hover {
+            background: linear-gradient(180deg, var(--oxblood-400), var(--oxblood-500));
+        }
+    }
 
-  &.btn-block {
-    width: 100%;
-  }
+    &.btn-discord {
+        background: var(--discord);
+        color: var(--white);
+        border-color: var(--discord-press);
+        font-weight: 600;
 
-  &:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-  }
+        &:hover {
+            background: var(--discord-hover);
+        }
+    }
+
+    // Sizes
+    &.btn-sm {
+        height: 28px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
+
+    &.btn-lg {
+        height: 42px;
+        padding: 0 22px;
+        font-size: 14px;
+    }
+
+    &.btn-icon {
+        padding: 0;
+        width: 34px;
+
+        &.btn-sm {
+            width: 28px;
+        }
+    }
+
+    &.btn-block {
+        width: 100%;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }
 
 // Parchment surface overrides
 .parchment {
-  .btn-secondary {
-    background: var(--parch-200);
-    color: var(--t-on-parch);
-    border-color: var(--parch-300);
-  }
+    .btn-secondary {
+        background: var(--parch-200);
+        color: var(--t-on-parch);
+        border-color: var(--parch-300);
+    }
 
-  .btn-ghost {
-    color: var(--parch-900);
-    border-color: var(--parch-300);
-  }
+    .btn-ghost {
+        color: var(--parch-900);
+        border-color: var(--parch-300);
+    }
 }

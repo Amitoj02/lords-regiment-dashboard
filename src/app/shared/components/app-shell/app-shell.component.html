@@ -1,42 +1,41 @@
 <div class="appshell" [class.drawer-open]="drawerOpen">
+    <!-- Mobile drawer backdrop (tap to dismiss) -->
+    <div class="drawer-backdrop" (click)="closeDrawer()" aria-hidden="true"></div>
 
-  <!-- Mobile drawer backdrop (tap to dismiss) -->
-  <div class="drawer-backdrop" (click)="closeDrawer()" aria-hidden="true"></div>
+    <!-- Sidebar — becomes an off-canvas drawer on mobile -->
+    <hf-sidebar
+        [active]="activeRoute"
+        [user]="navUser"
+        [isAdmin]="isAdmin()"
+        (navigate)="onNavigate($event)"
+    ></hf-sidebar>
 
-  <!-- Sidebar — becomes an off-canvas drawer on mobile -->
-  <hf-sidebar
-    [active]="activeRoute"
-    [user]="navUser"
-    [isAdmin]="isAdmin"
-    (navigate)="onNavigate($event)"
-  ></hf-sidebar>
+    <!-- Main content area -->
+    <div class="appmain">
+        <!-- Topbar -->
+        <hf-topbar [crumbs]="crumbs" (menu)="toggleDrawer()">
+            <ng-content select="[topActions]" topbar-actions></ng-content>
+        </hf-topbar>
 
-  <!-- Main content area -->
-  <div class="appmain">
+        <!-- Page scroll area -->
+        <div class="appscroll">
+            <div class="page">
+                <!-- Optional page heading -->
+                @if (title) {
+                <div class="page-head">
+                    <h1 class="page-title">{{ title }}</h1>
+                    <div class="page-head-actions">
+                        <ng-content select="[pageActions]"></ng-content>
+                    </div>
+                </div>
+                }
 
-    <!-- Topbar -->
-    <hf-topbar [crumbs]="crumbs" (menu)="toggleDrawer()">
-      <ng-content select="[topActions]" topbar-actions></ng-content>
-    </hf-topbar>
-
-    <!-- Page scroll area -->
-    <div class="appscroll">
-      <div class="page">
-        <!-- Optional page heading -->
-        <div class="page-head" *ngIf="title">
-          <h1 class="page-title">{{ title }}</h1>
-          <div class="page-head-actions">
-            <ng-content select="[pageActions]"></ng-content>
-          </div>
+                <!-- Page body -->
+                <ng-content></ng-content>
+            </div>
         </div>
 
-        <!-- Page body -->
-        <ng-content></ng-content>
-      </div>
+        <!-- Mobile bottom navigation -->
+        <hf-bottom-nav [active]="activeRoute" (navigate)="onNavigate($event)"></hf-bottom-nav>
     </div>
-
-    <!-- Mobile bottom navigation -->
-    <hf-bottom-nav [active]="activeRoute" (navigate)="onNavigate($event)"></hf-bottom-nav>
-
-  </div>
 </div>

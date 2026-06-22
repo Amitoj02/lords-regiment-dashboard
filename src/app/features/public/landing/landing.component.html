@@ -1,154 +1,178 @@
 <div class="landing-page">
-  <hf-public-nav [activeLink]="'/'"></hf-public-nav>
+    <hf-public-nav [activeLink]="'/'"></hf-public-nav>
 
-  <!-- Hero Section -->
-  <section class="hero" [ngStyle]="{'background-image': 'url(assets/images/bg-1.jpg)'}">
-    <div class="hero-overlay"></div>
-    <div class="hero-inner">
-      <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment Crest">
-      <div class="admin-label brass" style="letter-spacing:0.18em;margin-bottom:14px">
-        Holdfast: Nations at War
-      </div>
-      <h1 class="serif-display hero-headline">
-        The Lord Regiment.<br>Discipline, not spectacle.
-      </h1>
-      <p class="hero-sub">
-        An organized regiment built on drill, camaraderie, and the pursuit of excellence on the field of battle.
-        We fight together, or we do not fight at all.
-      </p>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-inner">
+            <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
+            <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
+            <h1 class="serif-display hero-headline">
+                The Lord Regiment.<br />Discipline, not spectacle.
+            </h1>
+            <p class="hero-sub">
+                An organized regiment built on drill, camaraderie, and the pursuit of excellence on
+                the field of battle. We fight together, or we do not fight at all.
+            </p>
 
-      <div class="hero-stats">
-        <div class="hero-stat" *ngFor="let stat of stats">
-          <div class="hero-stat-value serif">{{ stat.value }}</div>
-          <div class="hero-stat-label">{{ stat.label }}</div>
+            <div class="hero-stats">
+                @for (stat of stats; track stat) {
+                <div class="hero-stat">
+                    <div class="hero-stat-value serif">{{ stat.value }}</div>
+                    <div class="hero-stat-label">{{ stat.label }}</div>
+                </div>
+                }
+            </div>
+
+            <div class="row gap-12 hero-actions">
+                <a routerLink="/apply" class="btn btn-primary btn-lg">Apply to Join</a>
+                <a routerLink="/events" class="btn btn-ghost btn-lg">View Orders</a>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="row" style="gap:12px;margin-top:32px;justify-content:center">
-        <a routerLink="/apply" class="btn btn-primary btn-lg">Apply to Join</a>
-        <a routerLink="/events" class="btn btn-ghost btn-lg">View Orders</a>
-      </div>
+    <!-- Main Content -->
+    <div class="landing-content">
+        <div class="landing-grid">
+            <!-- Left Column -->
+            <div class="landing-main">
+                <!-- Upcoming Orders -->
+                <section class="panel">
+                    <div class="panel-header between">
+                        <span class="panel-title serif">Upcoming Orders</span>
+                        <a routerLink="/events" class="btn btn-ghost btn-sm">View all →</a>
+                    </div>
+                    <div class="panel-body panel-body-flush">
+                        @for (event of upcomingEvents; track event) {
+                        <div class="event-row">
+                            <div class="event-date-col">
+                                <div class="event-day serif">{{ event.date | date:'d' }}</div>
+                                <div class="event-month">{{ event.date | date:'MMM' }}</div>
+                            </div>
+                            <div class="event-details">
+                                <div class="event-title">{{ event.title }}</div>
+                                <div class="event-meta row gap-8">
+                                    <span class="mono event-meta-time">
+                                        {{ event.startTime }} – {{ event.endTime }} {{
+                                        event.timezone | slice:event.timezone.lastIndexOf('/')+1 }}
+                                    </span>
+                                    <span class="event-meta-divider"></span>
+                                    <span class="mono event-meta-server"
+                                        >{{ event.serverName }}</span
+                                    >
+                                </div>
+                                <hf-platform-badges
+                                    [platforms]="event.platforms"
+                                    class="event-platforms"
+                                ></hf-platform-badges>
+                            </div>
+                            <div class="event-actions">
+                                <a routerLink="/events" class="btn btn-secondary btn-sm">Details</a>
+                            </div>
+                        </div>
+                        } @if (upcomingEvents.length === 0) {
+                        <div class="event-empty">No upcoming events scheduled.</div>
+                        }
+                    </div>
+                </section>
+
+                <!-- From the Gallery -->
+                <section class="panel gallery-panel">
+                    <div class="panel-header between">
+                        <span class="panel-title serif">From the Gallery</span>
+                        <a routerLink="/gallery" class="btn btn-ghost btn-sm">Full archive →</a>
+                    </div>
+                    <div class="panel-body">
+                        <div class="gallery-grid">
+                            @for (item of galleryItems; track item) {
+                            <div class="gallery-thumb">
+                                <img [src]="item.thumbnailUrl" [alt]="item.title" />
+                                <div class="gallery-thumb-overlay">
+                                    <span class="gallery-thumb-title">{{ item.title }}</span>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Aside -->
+            <aside class="landing-aside">
+                <!-- Parchment Charter Quote -->
+                <div class="panel parchment charter-panel">
+                    <div class="panel-body">
+                        <div class="rule-ornament charter-ornament-top"></div>
+                        <blockquote class="serif charter-quote">
+                            "We stand not for glory alone, but for order in the line, honour on the
+                            field, and brotherhood in the mess. The regiment endures where the
+                            individual falls."
+                        </blockquote>
+                        <div class="rule-ornament charter-ornament-bottom"></div>
+                        <div class="charter-attribution">
+                            <span class="admin-label charter-attribution-label"
+                                >— Regiment Charter, Article I</span
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Officers' Mess -->
+                <div class="panel officers-panel">
+                    <div class="panel-header">
+                        <span class="panel-title serif">Officers' Mess</span>
+                    </div>
+                    <div class="panel-body panel-body-flush">
+                        @for (officer of officers; track officer) {
+                        <div class="officer-row">
+                            <hf-avatar [name]="officer.name" [size]="36"></hf-avatar>
+                            <div class="officer-info">
+                                <div class="officer-name">{{ officer.name }}</div>
+                                <div class="row officer-rank-row">
+                                    <hf-chevrons [count]="officer.chevrons"></hf-chevrons>
+                                    <span class="officer-rank">{{ officer.rank }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Discord Panel -->
+                <div class="panel discord-panel">
+                    <div class="panel-body">
+                        <div class="row gap-12 discord-head">
+                            <div class="discord-icon">
+                                <svg
+                                    width="22"
+                                    height="16"
+                                    viewBox="0 0 22 16"
+                                    fill="none"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M18.59 1.32A18.23 18.23 0 0 0 14.11 0c-.2.35-.43.83-.59 1.2a17 17 0 0 0-5.04 0C8.32.83 8.08.35 7.88 0A18.28 18.28 0 0 0 3.4 1.32C.49 5.55-.3 9.67.09 13.73a18.35 18.35 0 0 0 5.57 2.82c.45-.61.85-1.26 1.2-1.94a11.9 11.9 0 0 1-1.89-.91c.16-.11.31-.23.46-.35a13.1 13.1 0 0 0 11.14 0c.15.12.3.24.46.35-.6.35-1.23.65-1.9.91.35.68.75 1.33 1.2 1.94a18.3 18.3 0 0 0 5.58-2.82c.46-4.76-.78-8.88-3.32-12.41ZM7.35 11.25c-1.08 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.98.99 1.97 2.21c.01 1.22-.86 2.21-1.97 2.21Zm7.29 0c-1.09 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.97.99 1.97 2.21c0 1.22-.87 2.21-1.97 2.21Z"
+                                        fill="#5865F2"
+                                    />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="discord-title">Join our Discord</div>
+                                <div class="discord-subtitle">Primary communication hub</div>
+                            </div>
+                        </div>
+                        <div class="notice info discord-notice">
+                            Discord is required for all regiment operations — voice comms, orders,
+                            and announcements.
+                        </div>
+                        <button type="button" class="btn btn-discord btn-block">
+                            Join the Lord Regiment Server
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </div>
-  </section>
 
-  <!-- Main Content -->
-  <div class="landing-content">
-    <div class="landing-grid">
-      <!-- Left Column -->
-      <div class="landing-main">
-        <!-- Upcoming Orders -->
-        <section class="panel">
-          <div class="panel-header between">
-            <span class="panel-title serif">Upcoming Orders</span>
-            <a routerLink="/events" class="btn btn-ghost btn-sm">View all →</a>
-          </div>
-          <div class="panel-body" style="padding:0">
-            <div class="event-row" *ngFor="let event of upcomingEvents">
-              <div class="event-date-col">
-                <div class="event-day serif">{{ event.date | date:'d' }}</div>
-                <div class="event-month">{{ event.date | date:'MMM' }}</div>
-              </div>
-              <div class="event-details">
-                <div class="event-title">{{ event.title }}</div>
-                <div class="event-meta row" style="gap:8px;margin-top:4px">
-                  <span class="mono" style="font-size:11px;color:var(--t-400)">
-                    {{ event.startTime }} – {{ event.endTime }} {{ event.timezone | slice:event.timezone.lastIndexOf('/')+1 }}
-                  </span>
-                  <span class="divider" style="height:10px;border:none;border-left:1px solid var(--rule);margin:0"></span>
-                  <span class="mono" style="font-size:11px;color:var(--t-500)">{{ event.serverName }}</span>
-                </div>
-                <hf-platform-badges [platforms]="event.platforms" style="margin-top:6px;display:block"></hf-platform-badges>
-              </div>
-              <div class="event-actions" style="margin-left:auto">
-                <a routerLink="/events" class="btn btn-secondary btn-sm">Details</a>
-              </div>
-            </div>
-            <div *ngIf="upcomingEvents.length === 0" style="padding:24px;text-align:center;color:var(--t-400)">
-              No upcoming events scheduled.
-            </div>
-          </div>
-        </section>
-
-        <!-- From the Gallery -->
-        <section class="panel" style="margin-top:20px">
-          <div class="panel-header between">
-            <span class="panel-title serif">From the Gallery</span>
-            <a routerLink="/gallery" class="btn btn-ghost btn-sm">Full archive →</a>
-          </div>
-          <div class="panel-body">
-            <div class="gallery-grid">
-              <div class="gallery-thumb" *ngFor="let item of galleryItems">
-                <img [src]="item.thumbnailUrl" [alt]="item.title">
-                <div class="gallery-thumb-overlay">
-                  <span class="gallery-thumb-title">{{ item.title }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <!-- Right Aside -->
-      <aside class="landing-aside">
-        <!-- Parchment Charter Quote -->
-        <div class="panel parchment charter-panel">
-          <div class="panel-body">
-            <div class="rule-ornament" style="margin-bottom:12px"></div>
-            <blockquote class="serif charter-quote">
-              "We stand not for glory alone, but for order in the line, honour on the field,
-              and brotherhood in the mess. The regiment endures where the individual falls."
-            </blockquote>
-            <div class="rule-ornament" style="margin-top:12px"></div>
-            <div style="text-align:right;margin-top:10px">
-              <span class="admin-label" style="font-size:10px">— Regiment Charter, Article I</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Officers' Mess -->
-        <div class="panel" style="margin-top:16px">
-          <div class="panel-header">
-            <span class="panel-title serif">Officers' Mess</span>
-          </div>
-          <div class="panel-body" style="padding:0">
-            <div class="officer-row" *ngFor="let officer of officers">
-              <hf-avatar [name]="officer.name" [size]="36"></hf-avatar>
-              <div class="officer-info">
-                <div class="officer-name">{{ officer.name }}</div>
-                <div class="row" style="gap:6px;align-items:center;margin-top:2px">
-                  <hf-chevrons [count]="officer.chevrons"></hf-chevrons>
-                  <span style="font-size:11px;color:var(--t-400)">{{ officer.rank }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Discord Panel -->
-        <div class="panel discord-panel" style="margin-top:16px">
-          <div class="panel-body">
-            <div class="row" style="gap:12px;align-items:center;margin-bottom:16px">
-              <div class="discord-icon">
-                <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
-                  <path d="M18.59 1.32A18.23 18.23 0 0 0 14.11 0c-.2.35-.43.83-.59 1.2a17 17 0 0 0-5.04 0C8.32.83 8.08.35 7.88 0A18.28 18.28 0 0 0 3.4 1.32C.49 5.55-.3 9.67.09 13.73a18.35 18.35 0 0 0 5.57 2.82c.45-.61.85-1.26 1.2-1.94a11.9 11.9 0 0 1-1.89-.91c.16-.11.31-.23.46-.35a13.1 13.1 0 0 0 11.14 0c.15.12.3.24.46.35-.6.35-1.23.65-1.9.91.35.68.75 1.33 1.2 1.94a18.3 18.3 0 0 0 5.58-2.82c.46-4.76-.78-8.88-3.32-12.41ZM7.35 11.25c-1.08 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.98.99 1.97 2.21c.01 1.22-.86 2.21-1.97 2.21Zm7.29 0c-1.09 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.97.99 1.97 2.21c0 1.22-.87 2.21-1.97 2.21Z" fill="#5865F2"/>
-                </svg>
-              </div>
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--t-100)">Join our Discord</div>
-                <div style="font-size:12px;color:var(--t-400)">Primary communication hub</div>
-              </div>
-            </div>
-            <div class="notice info" style="margin-bottom:14px">
-              Discord is required for all regiment operations — voice comms, orders, and announcements.
-            </div>
-            <button class="btn btn-discord btn-block">
-              Join the Lord Regiment Server
-            </button>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <hf-public-footer></hf-public-footer>
+    <hf-public-footer></hf-public-footer>
 </div>
