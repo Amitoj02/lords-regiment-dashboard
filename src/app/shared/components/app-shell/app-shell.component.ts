@@ -17,6 +17,9 @@ export class AppShellComponent implements OnInit {
   currentUser: CurrentUser | null = null;
   isAdmin = false;
 
+  /** Mobile off-canvas sidebar drawer state. Ignored on desktop (CSS). */
+  drawerOpen = false;
+
   constructor(
     private auth: AuthService,
     private router: Router,
@@ -27,6 +30,14 @@ export class AppShellComponent implements OnInit {
     this.isAdmin = this.auth.isAdmin();
   }
 
+  toggleDrawer(): void {
+    this.drawerOpen = !this.drawerOpen;
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen = false;
+  }
+
   get navUser(): { name: string; rank: string } {
     return {
       name: this.currentUser?.name ?? '',
@@ -35,6 +46,7 @@ export class AppShellComponent implements OnInit {
   }
 
   onNavigate(route: string): void {
+    this.closeDrawer();
     this.router.navigateByUrl(route);
   }
 }

@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-gdpr',
-  templateUrl: './gdpr.component.html',
-  styleUrls: ['./gdpr.component.scss'],
+  selector: 'app-account-deletion',
+  templateUrl: './account-deletion.component.html',
+  styleUrls: ['./account-deletion.component.scss'],
   standalone: false,
 })
-export class GdprComponent implements OnInit {
+export class AccountDeletionComponent implements OnInit {
   confirmText = '';
   checkbox1 = false;
   checkbox2 = false;
@@ -25,7 +25,7 @@ export class GdprComponent implements OnInit {
 
   execute(): void {
     if (this.canExecute) {
-      // TODO: initiate GDPR erasure flow
+      // TODO: initiate account erasure flow
     }
   }
 }

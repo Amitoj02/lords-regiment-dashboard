@@ -1,9 +1,9 @@
-.gdpr-center {
+.acct-del-center {
   max-width: 720px;
   margin: 0 auto;
 }
 
-.gdpr-header {
+.acct-del-header {
   text-align: center;
   margin-bottom: 24px;
   display: flex;
@@ -12,7 +12,7 @@
   gap: 12px;
 }
 
-.gdpr-seal {
+.acct-del-seal {
   width: 60px;
   height: 60px;
   display: flex;
@@ -22,16 +22,16 @@
   color: var(--oxblood-300);
 }
 
-.gdpr-title {
+.acct-del-title {
   font-size: 1.6rem;
   margin: 0;
 }
 
-.gdpr-panel {
+.acct-del-panel {
   border-color: var(--oxblood-600) !important;
 }
 
-.gdpr-quote {
+.acct-del-quote {
   background: var(--parch-100);
   border: 1px solid var(--parch-300);
   border-radius: 8px;
@@ -102,7 +102,7 @@
   margin-bottom: 0;
 }
 
-.gdpr-actions {
+.acct-del-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -110,7 +110,7 @@
   border-top: 1px solid var(--rule);
 }
 
-.gdpr-footer-note {
+.acct-del-footer-note {
   margin-top: 20px;
   display: flex;
   align-items: flex-start;

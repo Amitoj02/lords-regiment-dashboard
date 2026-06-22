@@ -7,6 +7,9 @@ export interface NavUser {
 
 interface NavItem {
   label: string;
+  /** Active-state key — matches the `activeRoute` value each page supplies. */
+  key: string;
+  /** Router URL to navigate to. Must resolve to a real configured route. */
   route: string;
   icon: string;
   adminOnly: boolean;
@@ -26,22 +29,22 @@ export class SidebarComponent {
   @Output() navigate = new EventEmitter<string>();
 
   readonly navItems: NavItem[] = [
-    { label: 'Dashboard',     route: '/dashboard',      icon: 'home',         adminOnly: false },
-    { label: 'Events',        route: '/events',         icon: 'calendar',     adminOnly: false },
-    { label: 'Gallery',       route: '/gallery',        icon: 'image',        adminOnly: false },
-    { label: 'Members',       route: '/members',        icon: 'users',        adminOnly: false },
-    { label: 'Applications',  route: '/applications',   icon: 'scroll',       adminOnly: true  },
-    { label: 'Ranks & Medals',route: '/ranks-medals',   icon: 'award',        adminOnly: true  },
-    { label: 'Audit Ledger',  route: '/audit',          icon: 'activity',     adminOnly: true  },
-    { label: 'Settings',      route: '/settings',       icon: 'settings',     adminOnly: true  },
+    { label: 'Dashboard',     key: 'dashboard', route: '/dashboard',          icon: 'home',     adminOnly: false },
+    { label: 'Events',        key: 'events',    route: '/events',             icon: 'calendar', adminOnly: false },
+    { label: 'Gallery',       key: 'gallery',   route: '/gallery',            icon: 'image',    adminOnly: false },
+    { label: 'Members',       key: 'roster',    route: '/roster',             icon: 'users',    adminOnly: false },
+    { label: 'Applications',  key: 'apps',      route: '/admin/applications', icon: 'scroll',   adminOnly: true  },
+    { label: 'Ranks & Medals',key: 'ranks',     route: '/admin/ranks',        icon: 'award',    adminOnly: true  },
+    { label: 'Audit Ledger',  key: 'audit',     route: '/admin/audit',        icon: 'activity', adminOnly: true  },
+    { label: 'Settings',      key: 'settings',  route: '/admin/settings',     icon: 'settings', adminOnly: true  },
   ];
 
   get visibleItems(): NavItem[] {
     return this.navItems.filter(i => !i.adminOnly || this.isAdmin);
   }
 
-  isActive(route: string): boolean {
-    return this.active === route || this.active.startsWith(route + '/');
+  isActive(key: string): boolean {
+    return this.active === key;
   }
 
   onNavigate(route: string): void {

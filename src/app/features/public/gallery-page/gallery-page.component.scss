@@ -92,3 +92,16 @@
   color: var(--t-100);
   line-height: 1.4;
 }
+
+// ───────── Mobile (ref: MobileGallery — 2-up masonry) ─────────
+@media (max-width: 820px) {
+  .gallery-masonry {
+    column-count: 2;
+    column-gap: 8px;
+  }
+
+  .gallery-card {
+    margin-bottom: 8px;
+  }
+}
+

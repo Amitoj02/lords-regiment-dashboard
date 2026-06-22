@@ -11,7 +11,6 @@ import { GalleryModComponent } from './gallery-mod/gallery-mod.component';
 import { AuditComponent } from './audit/audit.component';
 import { SettingsComponent } from './settings/settings.component';
 import { BotStatusComponent } from './bot-status/bot-status.component';
-import { GdprComponent } from './gdpr/gdpr.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'applications', pathMatch: 'full' },
@@ -24,7 +23,6 @@ const routes: Routes = [
   { path: 'audit', component: AuditComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'bot', component: BotStatusComponent },
-  { path: 'gdpr', component: GdprComponent },
 ];
 
 @NgModule({
@@ -38,7 +36,6 @@ const routes: Routes = [
     AuditComponent,
     SettingsComponent,
     BotStatusComponent,
-    GdprComponent,
   ],
   imports: [
     SharedModule,

@@ -1,5 +1,5 @@
-<nav class="public-nav">
-  <div class="row" style="gap:12px">
+<nav class="public-nav" [class.menu-open]="menuOpen">
+  <div class="row public-nav-brand" style="gap:12px">
     <img src="assets/images/regiment-logo.png" width="34" height="34" alt="Regiment Crest" style="border-radius:999px">
     <div>
       <div class="serif" style="font-size:17px;color:var(--brass-300);font-weight:600">Lord Regiment</div>
@@ -7,18 +7,23 @@
     </div>
   </div>
 
-  <div class="row" style="margin-left:36px;gap:4px">
+  <div class="public-nav-links">
     <a
       *ngFor="let link of navLinks"
       [routerLink]="link.path"
+      (click)="closeMenu()"
       [ngClass]="{ 'nav-link': true, 'nav-link--active': activeLink === link.path }"
     >{{ link.label }}</a>
+
+    <div class="public-nav-cta">
+      <button class="btn btn-ghost btn-sm">Join Discord</button>
+      <a routerLink="/login" class="btn btn-discord" (click)="closeMenu()">Sign in</a>
+    </div>
   </div>
 
-  <span class="sp"></span>
-
-  <div class="row" style="gap:8px">
-    <button class="btn btn-ghost btn-sm">Join Discord</button>
-    <a routerLink="/login" class="btn btn-discord">Sign in</a>
-  </div>
+  <!-- Mobile menu toggle -->
+  <button type="button" class="public-nav-burger" (click)="toggleMenu()" aria-label="Toggle menu">
+    <svg *ngIf="!menuOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <svg *ngIf="menuOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
 </nav>

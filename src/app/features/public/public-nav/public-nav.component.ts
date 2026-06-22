@@ -9,6 +9,9 @@ import { Component, Input } from '@angular/core';
 export class PublicNavComponent {
   @Input() activeLink = '';
 
+  /** Mobile collapsible menu state. */
+  menuOpen = false;
+
   navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Events', path: '/events' },
@@ -19,5 +22,13 @@ export class PublicNavComponent {
 
   isActive(path: string): boolean {
     return this.activeLink === path;
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  closeMenu(): void {
+    this.menuOpen = false;
   }
 }

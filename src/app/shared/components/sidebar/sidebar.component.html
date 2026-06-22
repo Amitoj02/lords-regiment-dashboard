@@ -16,7 +16,7 @@
     <a
       *ngFor="let item of visibleItems"
       class="nav-item"
-      [class.active]="isActive(item.route)"
+      [class.active]="isActive(item.key)"
       [routerLink]="item.route"
       (click)="onNavigate(item.route)"
     >
