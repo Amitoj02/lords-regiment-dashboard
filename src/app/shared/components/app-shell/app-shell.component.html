@@ -1,6 +1,9 @@
-<div class="appshell">
+<div class="appshell" [class.drawer-open]="drawerOpen">
 
-  <!-- Sidebar -->
+  <!-- Mobile drawer backdrop (tap to dismiss) -->
+  <div class="drawer-backdrop" (click)="closeDrawer()" aria-hidden="true"></div>
+
+  <!-- Sidebar — becomes an off-canvas drawer on mobile -->
   <hf-sidebar
     [active]="activeRoute"
     [user]="navUser"
@@ -12,7 +15,7 @@
   <div class="appmain">
 
     <!-- Topbar -->
-    <hf-topbar [crumbs]="crumbs">
+    <hf-topbar [crumbs]="crumbs" (menu)="toggleDrawer()">
       <ng-content select="[topActions]" topbar-actions></ng-content>
     </hf-topbar>
 
@@ -31,6 +34,9 @@
         <ng-content></ng-content>
       </div>
     </div>
+
+    <!-- Mobile bottom navigation -->
+    <hf-bottom-nav [active]="activeRoute" (navigate)="onNavigate($event)"></hf-bottom-nav>
 
   </div>
 </div>

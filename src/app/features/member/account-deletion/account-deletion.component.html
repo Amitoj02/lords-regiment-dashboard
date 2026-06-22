@@ -1,24 +1,24 @@
-<hf-app-shell [activeRoute]="'profile'">
-  <div class="gdpr-center">
+<hf-app-shell [activeRoute]="'profile'" [crumbs]="['Account Deletion']">
+  <div class="acct-del-center">
 
     <!-- Wax seal + title -->
-    <div class="gdpr-header">
-      <div class="wax gdpr-seal">
+    <div class="acct-del-header">
+      <div class="wax acct-del-seal">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
       </div>
-      <h1 class="gdpr-title serif-display">Discharge &amp; Destruction of Your Account</h1>
+      <h1 class="acct-del-title serif-display">Discharge &amp; Destruction of Your Account</h1>
     </div>
 
     <!-- Main panel -->
-    <div class="panel gdpr-panel">
+    <div class="panel acct-del-panel">
       <div class="panel-body">
 
         <!-- Parchment quote -->
-        <blockquote class="gdpr-quote parchment serif">
+        <blockquote class="acct-del-quote parchment serif">
           By this writ you may request the permanent erasure of your personal data held within the Lords Regiment portal. Once executed, this order cannot be reversed. Your service record will be purged from active records, though certain entries may be retained in the audit ledger as required by law.
         </blockquote>
 
-        <hf-crest-divider label="What will be destroyed"></hf-crest-divider>
+        <hf-crest-divider>What will be destroyed</hf-crest-divider>
 
         <ul class="destruction-list">
           <li class="destruction-item destruction-item--yes">
@@ -43,7 +43,7 @@
           </li>
         </ul>
 
-        <hf-crest-divider label="To Execute"></hf-crest-divider>
+        <hf-crest-divider>To Execute</hf-crest-divider>
 
         <div class="confirm-form">
           <div class="field-row">
@@ -52,12 +52,12 @@
           </div>
 
           <div class="checkbox-row">
-            <input type="checkbox" id="gdpr1" [(ngModel)]="checkbox1" />
-            <label for="gdpr1">I understand this action is permanent and cannot be undone.</label>
+            <input type="checkbox" id="acct-del-1" [(ngModel)]="checkbox1" />
+            <label for="acct-del-1">I understand this action is permanent and cannot be undone.</label>
           </div>
           <div class="checkbox-row">
-            <input type="checkbox" id="gdpr2" [(ngModel)]="checkbox2" />
-            <label for="gdpr2">I have downloaded my data if I wish to retain a copy.</label>
+            <input type="checkbox" id="acct-del-2" [(ngModel)]="checkbox2" />
+            <label for="acct-del-2">I have downloaded my data if I wish to retain a copy.</label>
           </div>
 
           <!-- Discord re-auth -->
@@ -70,9 +70,9 @@
           </div>
 
           <!-- Action buttons -->
-          <div class="gdpr-actions">
+          <div class="acct-del-actions">
             <button class="btn btn-ghost btn-sm" (click)="downloadData()">Download my data</button>
-            <button class="btn btn-ghost btn-sm" routerLink="/admin/settings">Return to settings</button>
+            <button class="btn btn-ghost btn-sm" routerLink="/profile">Return to profile</button>
             <button
               class="btn btn-destructive btn-sm"
               [attr.disabled]="canExecute ? null : true"
@@ -85,7 +85,7 @@
         </div>
 
         <!-- Footer note -->
-        <div class="gdpr-footer-note">
+        <div class="acct-del-footer-note">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           A confirmation order will be dispatched to your registered Discord account. The discharge will not execute until that order is acknowledged.
         </div>

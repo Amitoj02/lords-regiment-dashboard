@@ -39,6 +39,7 @@
         <button class="btn btn-ghost btn-sm" *ngIf="isAdmin">Edit Profile</button>
         <button class="btn btn-secondary btn-sm" *ngIf="isAdmin">Admin Actions ▾</button>
         <button class="btn btn-primary btn-sm" *ngIf="isOwnProfile">Edit My Profile</button>
+        <a class="btn btn-ghost btn-sm" routerLink="/account-deletion" *ngIf="isOwnProfile">Account Deletion</a>
       </div>
     </div>
 

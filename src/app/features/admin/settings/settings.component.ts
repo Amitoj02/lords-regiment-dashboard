@@ -45,7 +45,7 @@ export class SettingsComponent implements OnInit {
     { id: 'event-defaults', label: 'Event defaults', group: 'Operations' },
     { id: 'hf-server', label: 'Holdfast server', group: 'Operations' },
     { id: 'backups', label: 'Backups & exports', group: 'Operations' },
-    { id: 'gdpr', label: 'Privacy & GDPR', group: 'Compliance' },
+    { id: 'gdpr', label: 'Privacy & data', group: 'Compliance' },
     { id: 'transfer-discord', label: 'Transfer Discord server', group: 'Compliance' },
     { id: 'transfer-ownership', label: 'Transfer ownership', group: 'Compliance' },
   ];

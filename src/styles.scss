@@ -20,3 +20,6 @@
 @import 'styles/forms';
 @import 'styles/components';
 @import 'styles/layout';
+
+// Responsive / mobile layer — imported last so it overrides desktop rules
+@import 'styles/responsive';

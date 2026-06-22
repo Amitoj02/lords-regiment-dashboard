@@ -187,3 +187,28 @@
   color: var(--brass-300) !important;
   border-bottom-color: var(--brass-400) !important;
 }
+
+// ───────── Mobile (ref: MobileProfile) ─────────
+@media (max-width: 820px) {
+  // Banner side margins must match the mobile .page gutter (16px) to avoid
+  // horizontal overflow from the negative margin.
+  .profile-banner {
+    height: 150px;
+    margin: -16px -16px 0;
+  }
+
+  .profile-header {
+    margin-top: -40px;
+    gap: 14px;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-banner {
+    margin: -14px -13px 0;
+  }
+}

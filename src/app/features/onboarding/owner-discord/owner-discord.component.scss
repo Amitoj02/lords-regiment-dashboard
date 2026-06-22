@@ -102,6 +102,26 @@
   padding: 48px 40px;
 }
 
+// ───────── Mobile: stack stepper sidebar above content ─────────
+@media (max-width: 820px) {
+  .setup-layout {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .setup-sidebar {
+    width: 100%;
+  }
+
+  .setup-sidebar-inner {
+    padding: 24px 20px;
+  }
+
+  .setup-content-inner {
+    padding: 28px 18px;
+  }
+}
+
 .bot-status-row {
   display: flex;
   align-items: center;

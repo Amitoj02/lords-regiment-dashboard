@@ -15,6 +15,7 @@ import { StatTileComponent } from './components/stat-tile/stat-tile.component';
 import { AppShellComponent } from './components/app-shell/app-shell.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
+import { BottomNavComponent } from './components/bottom-nav/bottom-nav.component';
 
 const SHARED_COMPONENTS = [
   AvatarComponent,
@@ -29,6 +30,7 @@ const SHARED_COMPONENTS = [
   AppShellComponent,
   SidebarComponent,
   TopbarComponent,
+  BottomNavComponent,
 ];
 
 @NgModule({
