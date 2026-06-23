@@ -1,152 +1,178 @@
 .submit-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 20px;
-  align-items: start;
-  margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+    margin-top: 16px;
 }
 
 .submit-left {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .submit-right {
-  position: sticky;
-  top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .drop-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 2px dashed var(--rule-2);
-  border-radius: 10px;
-  padding: 40px 24px;
-  text-align: center;
-  color: var(--t-400);
-  cursor: pointer;
-  background: var(--parch-50);
-  transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px dashed var(--rule-2);
+    border-radius: 10px;
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--t-400);
+    cursor: pointer;
+    background: var(--parch-50);
+    transition: all 0.15s;
 
-  &:hover {
-    border-color: var(--brass-400);
-    background: color-mix(in srgb, var(--brass-400) 4%, transparent);
-  }
+    &:hover {
+        border-color: var(--brass-400);
+        background: color-mix(in srgb, var(--brass-400) 4%, transparent);
+    }
 }
 
 .upload-link {
-  color: var(--brass-500);
-  cursor: pointer;
-  text-decoration: underline;
+    color: var(--brass-500);
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .file-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--parch-100);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--parch-100);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
 }
 
 .file-thumb {
-  width: 48px;
-  height: 36px;
-  border-radius: 4px;
-  flex-shrink: 0;
+    width: 48px;
+    height: 36px;
+    border-radius: 4px;
+    flex-shrink: 0;
 }
 
 .file-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .file-name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 140px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
 }
 
 .file-size {
-  font-size: 0.75rem;
-  color: var(--t-400);
+    font-size: 0.75rem;
+    color: var(--t-400);
 }
 
 .file-caption {
-  flex: 1;
-  min-width: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .field-row {
-  margin-bottom: 14px;
+    margin-bottom: 14px;
 
-  &:last-child { margin-bottom: 0; }
+    &:last-child {
+        margin-bottom: 0;
+    }
 
-  .field-label { margin-bottom: 5px; }
+    .field-label {
+        margin-bottom: 5px;
+    }
 }
 
 .tags-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
 }
 
 .tag-remove {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  color: inherit;
-  opacity: 0.6;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
 
-  &:hover { opacity: 1; }
+    &:hover {
+        opacity: 1;
+    }
 }
 
 .guidelines-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .guideline-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .guideline-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--t-400);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--t-400);
 }
 
 .submit-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-hint-block {
+    margin-top: 4px;
+    display: block;
+}
+
+.tag-input {
+    width: 120px;
+}
+
+.allowed-types {
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.content-policy-note {
+    font-size: 0.8rem;
+    color: var(--t-400);
 }

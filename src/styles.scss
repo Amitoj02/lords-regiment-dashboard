@@ -1,25 +1,17 @@
 // Holdfast Command · Global Styles
 
-// Design tokens
-@import 'styles/variables';
+// Design tokens (CSS custom properties on :root)
+@use 'styles/variables';
 
-// Bootstrap (grid, utilities, reboot)
-@import 'bootstrap/scss/functions';
-@import 'bootstrap/scss/variables';
-@import 'bootstrap/scss/maps';
-@import 'bootstrap/scss/mixins';
-@import 'bootstrap/scss/utilities';
-@import 'bootstrap/scss/reboot';
-@import 'bootstrap/scss/grid';
-@import 'bootstrap/scss/containers';
-@import 'bootstrap/scss/utilities/api';
+// Bootstrap (grid, utilities, reboot) — wrapped to isolate its legacy @import layers
+@use 'styles/bootstrap';
 
 // Design system
-@import 'styles/base';
-@import 'styles/buttons';
-@import 'styles/forms';
-@import 'styles/components';
-@import 'styles/layout';
+@use 'styles/base';
+@use 'styles/buttons';
+@use 'styles/forms';
+@use 'styles/components';
+@use 'styles/layout';
 
-// Responsive / mobile layer — imported last so it overrides desktop rules
-@import 'styles/responsive';
+// Responsive / mobile layer — loaded last so it overrides desktop rules
+@use 'styles/responsive';

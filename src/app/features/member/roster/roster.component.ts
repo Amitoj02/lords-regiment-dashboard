@@ -1,97 +1,123 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Member } from '../../../core/models/member.model';
 import { MembersService } from '../../../core/services/members.service';
 
 @Component({
-  selector: 'hf-roster',
-  templateUrl: './roster.component.html',
-  styleUrls: ['./roster.component.scss'],
-  standalone: false,
+    selector: 'hf-roster',
+    templateUrl: './roster.component.html',
+    styleUrls: ['./roster.component.scss'],
+    standalone: false,
 })
 export class RosterComponent implements OnInit {
-  allMembers: Member[] = [];
-  filteredMembers: Member[] = [];
+    allMembers: Member[] = [];
+    filteredMembers: Member[] = [];
 
-  searchQuery = '';
-  filterRank = '';
-  filterRole = '';
-  filterStatus = '';
+    searchQuery = '';
+    filterRank = '';
+    filterRole = '';
+    filterStatus = '';
 
-  ranks = ['Colonel', 'Major', 'Captain', 'Lieutenant', 'Sergeant', 'Corporal', 'Private', 'Mercenary', 'Applicant'];
-  roles = ['Owner', 'Admin', 'Moderator', 'Member', 'Mercenary', 'Applicant'];
-  statuses = ['Active', 'Inactive', 'Pending'];
+    ranks = [
+        'Colonel',
+        'Major',
+        'Captain',
+        'Lieutenant',
+        'Sergeant',
+        'Corporal',
+        'Private',
+        'Mercenary',
+        'Applicant',
+    ];
+    roles = ['Owner', 'Admin', 'Moderator', 'Member', 'Mercenary', 'Applicant'];
+    statuses = ['Active', 'Inactive', 'Pending'];
 
-  constructor(private membersService: MembersService) {}
+    private readonly destroyRef = inject(DestroyRef);
 
-  ngOnInit(): void {
-    this.membersService.getAll().subscribe(members => {
-      this.allMembers = members;
-      this.filteredMembers = members;
-    });
-  }
+    constructor(private membersService: MembersService) {}
 
-  applyFilters(): void {
-    let results = this.allMembers;
-
-    if (this.searchQuery.trim()) {
-      const q = this.searchQuery.toLowerCase();
-      results = results.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        m.discordTag.toLowerCase().includes(q) ||
-        m.inGameName.toLowerCase().includes(q)
-      );
+    ngOnInit(): void {
+        this.membersService
+            .getAll()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((members) => {
+                this.allMembers = members;
+                this.filteredMembers = members;
+            });
     }
 
-    if (this.filterRank) {
-      results = results.filter(m => m.rank === this.filterRank);
+    applyFilters(): void {
+        let results = this.allMembers;
+
+        if (this.searchQuery.trim()) {
+            const q = this.searchQuery.toLowerCase();
+            results = results.filter(
+                (m) =>
+                    m.name.toLowerCase().includes(q) ||
+                    m.discordTag.toLowerCase().includes(q) ||
+                    m.inGameName.toLowerCase().includes(q),
+            );
+        }
+
+        if (this.filterRank) {
+            results = results.filter((m) => m.rank === this.filterRank);
+        }
+
+        if (this.filterRole) {
+            results = results.filter((m) => m.role === this.filterRole);
+        }
+
+        if (this.filterStatus) {
+            results = results.filter((m) => m.status === this.filterStatus);
+        }
+
+        this.filteredMembers = results;
     }
 
-    if (this.filterRole) {
-      results = results.filter(m => m.role === this.filterRole);
+    clearFilters(): void {
+        this.searchQuery = '';
+        this.filterRank = '';
+        this.filterRole = '';
+        this.filterStatus = '';
+        this.filteredMembers = this.allMembers;
     }
 
-    if (this.filterStatus) {
-      results = results.filter(m => m.status === this.filterStatus);
+    formatLastSeen(dateStr: string): string {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
-    this.filteredMembers = results;
-  }
-
-  clearFilters(): void {
-    this.searchQuery = '';
-    this.filterRank = '';
-    this.filterRole = '';
-    this.filterStatus = '';
-    this.filteredMembers = this.allMembers;
-  }
-
-  formatLastSeen(dateStr: string): string {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
-  getRoleClass(role: string): string {
-    switch (role) {
-      case 'Owner': return 'brass';
-      case 'Admin': return 'ox';
-      case 'Moderator': return 'blue';
-      case 'Member': return 'parch';
-      default: return '';
+    getRoleClass(role: string): string {
+        switch (role) {
+            case 'Owner':
+                return 'brass';
+            case 'Admin':
+                return 'ox';
+            case 'Moderator':
+                return 'blue';
+            case 'Member':
+                return 'parch';
+            default:
+                return '';
+        }
     }
-  }
 
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'Active': return 'laurel';
-      case 'Inactive': return 'parch';
-      case 'Pending': return 'brass';
-      default: return '';
+    getStatusClass(status: string): string {
+        switch (status) {
+            case 'Active':
+                return 'laurel';
+            case 'Inactive':
+                return 'parch';
+            case 'Pending':
+                return 'brass';
+            default:
+                return '';
+        }
     }
-  }
 }

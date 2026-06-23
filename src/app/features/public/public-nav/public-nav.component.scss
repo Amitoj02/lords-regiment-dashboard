@@ -1,115 +1,134 @@
 .public-nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  padding: 0 32px;
-  height: 60px;
-  background: var(--ink-900);
-  border-bottom: 1px solid var(--rule);
-  backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    height: 60px;
+    background: var(--ink-900);
+    border-bottom: 1px solid var(--rule);
+    backdrop-filter: blur(8px);
 }
 
 .public-nav-brand {
-  flex: none;
+    flex: none;
+}
+
+.public-nav-logo {
+    border-radius: 999px;
+}
+
+.public-nav-title {
+    font-size: 17px;
+    color: var(--brass-300);
+    font-weight: 600;
+}
+
+.public-nav-subtitle {
+    font-size: 9px;
 }
 
 .public-nav-links {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 36px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 36px;
 }
 
 .public-nav-cta {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .nav-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  font-size: 13px;
-  color: var(--t-300);
-  text-decoration: none;
-  border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--t-300);
+    text-decoration: none;
+    border-radius: 4px;
+    transition:
+        color 0.15s,
+        background 0.15s;
 
-  &:hover {
-    color: var(--t-100);
-    background: rgba(255, 255, 255, 0.05);
-  }
+    &:hover {
+        color: var(--t-100);
+        background: rgba(255, 255, 255, 0.05);
+    }
 
-  &--active {
-    color: var(--brass-300);
-    background: rgba(var(--brass-400), 0.08);
-  }
+    &--active {
+        color: var(--brass-300);
+        background: rgba(var(--brass-400), 0.08);
+    }
 }
 
 // Hamburger hidden on desktop
 .public-nav-burger {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--t-200);
-  padding: 6px;
-  cursor: pointer;
-  line-height: 0;
+    display: none;
+    background: none;
+    border: none;
+    color: var(--t-200);
+    padding: 6px;
+    cursor: pointer;
+    line-height: 0;
 }
 
 // ───────── Mobile ─────────
 @media (max-width: 820px) {
-  .public-nav {
-    padding: 0 18px;
-  }
+    .public-nav {
+        padding: 0 18px;
+    }
 
-  .public-nav-burger {
-    display: inline-flex;
-    margin-left: auto;
-  }
+    .public-nav-burger {
+        display: inline-flex;
+        margin-left: auto;
+    }
 
-  // Collapse links into a dropdown panel below the bar
-  .public-nav-links {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2px;
-    margin-left: 0;
-    padding: 10px 14px 14px;
-    background: var(--ink-850);
-    border-bottom: 1px solid var(--rule);
-    box-shadow: var(--shadow-2);
+    // Collapse links into a dropdown panel below the bar
+    .public-nav-links {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2px;
+        margin-left: 0;
+        padding: 10px 14px 14px;
+        background: var(--ink-850);
+        border-bottom: 1px solid var(--rule);
+        box-shadow: var(--shadow-2);
 
-    // Hidden until toggled
-    display: none;
-  }
+        // Hidden until toggled
+        display: none;
+    }
 
-  .public-nav.menu-open .public-nav-links {
-    display: flex;
-  }
+    .public-nav.menu-open .public-nav-links {
+        display: flex;
+    }
 
-  .nav-link {
-    padding: 11px 12px;
-    font-size: 15px;
-  }
+    .nav-link {
+        padding: 11px 12px;
+        font-size: 15px;
+    }
 
-  .public-nav-cta {
-    margin-left: 0;
-    margin-top: 10px;
-    padding-top: 12px;
-    border-top: 1px solid var(--rule);
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    .public-nav-cta {
+        margin-left: 0;
+        margin-top: 10px;
+        padding-top: 12px;
+        border-top: 1px solid var(--rule);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
 
-    .btn { width: 100%; justify-content: center; }
-  }
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 }

@@ -1,148 +1,221 @@
 <hf-app-shell [activeRoute]="'ranks'">
-  <div class="page">
-    <div class="page-head between">
-      <div>
-        <div class="page-sub">Regimental Structure</div>
-        <h1 class="page-title serif-display">Ranks &amp; Medals</h1>
-      </div>
-      <div class="row" style="gap:8px;">
-        <button class="btn btn-ghost btn-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515"/><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          Sync with Discord
-        </button>
-        <button class="btn btn-primary btn-sm">+ New</button>
-      </div>
+    <div class="page">
+        <div class="page-head between">
+            <div>
+                <div class="page-sub">Regimental Structure</div>
+                <h1 class="page-title serif-display">Ranks &amp; Medals</h1>
+            </div>
+            <div class="row gap-8">
+                <button type="button" class="btn btn-ghost btn-sm">
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515" />
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                    </svg>
+                    Sync with Discord
+                </button>
+                <button type="button" class="btn btn-primary btn-sm">+ New</button>
+            </div>
+        </div>
+
+        <hf-notice type="warn">
+            Rank changes here update your records and Discord roles, but do not affect portal
+            permissions. Manage role permissions in Settings &rarr; Roles &amp; Permissions.
+        </hf-notice>
+
+        <div class="grid-2 ladder-grid">
+            <!-- Rank Ladder -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Rank Ladder</span>
+                </div>
+                <div class="panel-body rank-list">
+                    @for (rank of ranks; track rank) {
+                    <div class="rank-row">
+                        <div class="rank-row__grip">
+                            <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-300)">
+                                <circle cx="3" cy="3" r="1.5" />
+                                <circle cx="7" cy="3" r="1.5" />
+                                <circle cx="3" cy="8" r="1.5" />
+                                <circle cx="7" cy="8" r="1.5" />
+                                <circle cx="3" cy="13" r="1.5" />
+                                <circle cx="7" cy="13" r="1.5" />
+                            </svg>
+                        </div>
+                        <hf-chevrons [count]="rank.chevrons" size="sm"></hf-chevrons>
+                        <div class="rank-row__info">
+                            <span class="rank-row__name">{{ rank.name }}</span>
+                            <span class="rank-row__holders">{{ rank.holders }} holders</span>
+                        </div>
+                        <div class="rank-row__role">
+                            <span class="badge" [ngClass]="rank.discordLinked ? 'blue' : ''"
+                                >{{ rank.discordRole }}</span
+                            >
+                        </div>
+                        <button type="button" class="btn btn-icon btn-ghost btn-sm" title="Options">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="12" cy="19" r="1.5" />
+                            </svg>
+                        </button>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Medal Cabinet -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Medal Cabinet</span>
+                </div>
+                <div class="panel-body medal-list">
+                    @for (medal of medals; track medal) {
+                    <button type="button" class="medal-row" (click)="selectMedalEdit(medal)">
+                        <div class="medal-row__grip">
+                            <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-300)">
+                                <circle cx="3" cy="3" r="1.5" />
+                                <circle cx="7" cy="3" r="1.5" />
+                                <circle cx="3" cy="8" r="1.5" />
+                                <circle cx="7" cy="8" r="1.5" />
+                                <circle cx="3" cy="13" r="1.5" />
+                                <circle cx="7" cy="13" r="1.5" />
+                            </svg>
+                        </div>
+                        <hf-medal
+                            [letter]="medal.letter"
+                            [ribbon]="medal.ribbon"
+                            size="sm"
+                        ></hf-medal>
+                        <div class="medal-row__info">
+                            <span class="medal-row__name">{{ medal.title }}</span>
+                            <span class="medal-row__desc">{{ medal.description }}</span>
+                        </div>
+                        <span class="badge" [ngClass]="medal.discordLinked ? 'blue' : ''">
+                            {{ medal.discordLinked ? 'Linked' : 'Unlinked' }}
+                        </span>
+                        <span class="medal-row__holders">{{ medal.holders }}</span>
+                        <button
+                            type="button"
+                            class="btn btn-icon btn-ghost btn-sm"
+                            title="Options"
+                            (click)="$event.stopPropagation()"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="12" cy="19" r="1.5" />
+                            </svg>
+                        </button>
+                    </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="panel editor-panel">
+            <div class="panel-header">
+                <span class="panel-title">Editor &mdash; {{ editTitle }}</span>
+            </div>
+            <div class="panel-body">
+                <div class="editor-cols">
+                    <!-- Preview + ribbon picker -->
+                    <div class="editor-preview">
+                        <hf-medal [letter]="editLetter" [ribbon]="editRibbon" size="lg"></hf-medal>
+                        <div class="ribbon-picker">
+                            <div class="field-label">Ribbon colour</div>
+                            <div class="ribbon-swatches">
+                                @for (r of ribbonOptions; track r) {
+                                <button
+                                    type="button"
+                                    class="ribbon-swatch"
+                                    [ngClass]="[
+                                            'ribbon-swatch--' + r,
+                                            editRibbon === r ? 'ribbon-swatch--active' : '',
+                                        ]"
+                                    (click)="editRibbon = r"
+                                    [title]="r"
+                                ></button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form fields -->
+                    <div class="editor-form">
+                        <div>
+                            <label class="field-label" for="medal-title">Title</label>
+                            <input
+                                id="medal-title"
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="editTitle"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-letter">Disk letter</label>
+                            <input
+                                id="medal-letter"
+                                class="hf-input field-width-letter"
+                                type="text"
+                                [(ngModel)]="editLetter"
+                                maxlength="1"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-description">Description</label>
+                            <textarea
+                                id="medal-description"
+                                class="hf-textarea"
+                                rows="3"
+                                [(ngModel)]="editDescription"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-precedence">Precedence</label>
+                            <input
+                                id="medal-precedence"
+                                class="hf-input field-width-precedence"
+                                type="number"
+                                [(ngModel)]="editPrecedence"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Discord role panel -->
+                    <div class="editor-discord">
+                        <div class="panel discord-link-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">Discord role link</span>
+                            </div>
+                            <div class="panel-body">
+                                <label class="field-label" for="medal-discord-role">Role</label>
+                                <select id="medal-discord-role" class="hf-select">
+                                    <option>Marksman</option>
+                                    <option>Sharpshooter</option>
+                                    <option>No role</option>
+                                </select>
+                                <hf-notice type="info" class="discord-link-notice">
+                                    Linking awards this medal's Discord role when the medal is
+                                    granted to a member.
+                                </hf-notice>
+                            </div>
+                        </div>
+                        <div class="editor-actions">
+                            <button type="button" class="btn btn-ghost btn-sm">Discard</button>
+                            <button type="button" class="btn btn-primary btn-sm">Save medal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <hf-notice type="warn">
-      Rank changes here update your records and Discord roles, but do not affect portal permissions. Manage role permissions in Settings &rarr; Roles &amp; Permissions.
-    </hf-notice>
-
-    <div class="grid-2 ladder-grid">
-
-      <!-- Rank Ladder -->
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Rank Ladder</span>
-        </div>
-        <div class="panel-body rank-list">
-          <div *ngFor="let rank of ranks" class="rank-row">
-            <div class="rank-row__grip">
-              <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-300)"><circle cx="3" cy="3" r="1.5"/><circle cx="7" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/><circle cx="3" cy="13" r="1.5"/><circle cx="7" cy="13" r="1.5"/></svg>
-            </div>
-            <hf-chevrons [count]="rank.chevrons" size="sm"></hf-chevrons>
-            <div class="rank-row__info">
-              <span class="rank-row__name">{{ rank.name }}</span>
-              <span class="rank-row__holders">{{ rank.holders }} holders</span>
-            </div>
-            <div class="rank-row__role">
-              <span class="badge" [ngClass]="rank.discordLinked ? 'blue' : ''">{{ rank.discordRole }}</span>
-            </div>
-            <button class="btn btn-icon btn-ghost btn-sm" title="Options">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Medal Cabinet -->
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Medal Cabinet</span>
-        </div>
-        <div class="panel-body medal-list">
-          <div *ngFor="let medal of medals" class="medal-row" (click)="selectMedalEdit(medal)">
-            <div class="medal-row__grip">
-              <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-300)"><circle cx="3" cy="3" r="1.5"/><circle cx="7" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/><circle cx="3" cy="13" r="1.5"/><circle cx="7" cy="13" r="1.5"/></svg>
-            </div>
-            <hf-medal [letter]="medal.letter" [ribbon]="medal.ribbon" size="sm"></hf-medal>
-            <div class="medal-row__info">
-              <span class="medal-row__name">{{ medal.title }}</span>
-              <span class="medal-row__desc">{{ medal.description }}</span>
-            </div>
-            <span class="badge" [ngClass]="medal.discordLinked ? 'blue' : ''">
-              {{ medal.discordLinked ? 'Linked' : 'Unlinked' }}
-            </span>
-            <span class="medal-row__holders">{{ medal.holders }}</span>
-            <button class="btn btn-icon btn-ghost btn-sm" title="Options">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Editor -->
-    <div class="panel editor-panel">
-      <div class="panel-header">
-        <span class="panel-title">Editor &mdash; {{ editTitle }}</span>
-      </div>
-      <div class="panel-body">
-        <div class="editor-cols">
-
-          <!-- Preview + ribbon picker -->
-          <div class="editor-preview">
-            <hf-medal [letter]="editLetter" [ribbon]="editRibbon" size="lg"></hf-medal>
-            <div class="ribbon-picker">
-              <div class="field-label">Ribbon colour</div>
-              <div class="ribbon-swatches">
-                <button
-                  *ngFor="let r of ribbonOptions"
-                  class="ribbon-swatch"
-                  [ngClass]="['ribbon-swatch--' + r, editRibbon === r ? 'ribbon-swatch--active' : '']"
-                  (click)="editRibbon = r"
-                  [title]="r"
-                ></button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Form fields -->
-          <div class="editor-form">
-            <div>
-              <label class="field-label">Title</label>
-              <input class="hf-input" type="text" [(ngModel)]="editTitle" />
-            </div>
-            <div>
-              <label class="field-label">Disk letter</label>
-              <input class="hf-input" type="text" [(ngModel)]="editLetter" maxlength="1" style="width:60px;" />
-            </div>
-            <div>
-              <label class="field-label">Description</label>
-              <textarea class="hf-textarea" rows="3" [(ngModel)]="editDescription"></textarea>
-            </div>
-            <div>
-              <label class="field-label">Precedence</label>
-              <input class="hf-input" type="number" [(ngModel)]="editPrecedence" style="width:80px;" />
-            </div>
-          </div>
-
-          <!-- Discord role panel -->
-          <div class="editor-discord">
-            <div class="panel" style="border:1px solid var(--rule-2);">
-              <div class="panel-header"><span class="panel-title">Discord role link</span></div>
-              <div class="panel-body">
-                <label class="field-label">Role</label>
-                <select class="hf-select">
-                  <option>Marksman</option>
-                  <option>Sharpshooter</option>
-                  <option>No role</option>
-                </select>
-                <hf-notice type="info" style="margin-top:10px;">
-                  Linking awards this medal's Discord role when the medal is granted to a member.
-                </hf-notice>
-              </div>
-            </div>
-            <div class="editor-actions">
-              <button class="btn btn-ghost btn-sm">Discard</button>
-              <button class="btn btn-primary btn-sm">Save medal</button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-  </div>
 </hf-app-shell>

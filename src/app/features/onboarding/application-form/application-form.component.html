@@ -1,221 +1,247 @@
 <div class="apply-page">
-  <div class="apply-inner">
-    <!-- Header -->
-    <div class="apply-header">
-      <img src="assets/images/regiment-logo.png" width="48" height="48" style="border-radius:999px;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto">
-      <h1 class="serif-display" style="font-size:26px;text-align:center;margin:0 0 6px">Apply to the Lord Regiment</h1>
-      <p style="font-size:14px;color:var(--t-400);text-align:center;margin:0">
-        Submit your application to join. Officers review all submissions within 48 hours.
-      </p>
+    <div class="apply-inner">
+        <!-- Header -->
+        <div class="apply-header">
+            <img
+                src="assets/images/regiment-logo.png"
+                width="48"
+                height="48"
+                alt="Lord Regiment crest"
+                class="apply-logo"
+            />
+            <h1 class="serif-display apply-title">Apply to the Lord Regiment</h1>
+            <p class="apply-subtitle">
+                Submit your application to join. Officers review all submissions within 48 hours.
+            </p>
+        </div>
+
+        <!-- Success State -->
+        @if (submitted) {
+        <div class="apply-success">
+            <div class="apply-success-icon">⚔️</div>
+            <h2 class="serif apply-success-title">Application Submitted</h2>
+            <p class="apply-success-text">
+                Your application has been received. Officers will review it and contact you via
+                Discord within 48 hours.
+            </p>
+            <div class="row apply-success-actions">
+                <a routerLink="/" class="btn btn-primary">Return Home</a>
+            </div>
+        </div>
+        }
+
+        <!-- Form -->
+        @if (!submitted) {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <!-- Discord Identity -->
+            <div class="panel apply-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Discord Identity</span>
+                    <span class="badge blue apply-verified-badge">Verified</span>
+                </div>
+                <div class="panel-body">
+                    <div class="row gap-12">
+                        <hf-avatar [name]="discordUser.name" [size]="44"></hf-avatar>
+                        <div>
+                            <div class="discord-name">{{ discordUser.name }}</div>
+                            <div class="mono discord-tag">{{ discordUser.tag }}</div>
+                        </div>
+                        <span class="sp"></span>
+                        <a routerLink="/login" class="btn btn-ghost btn-sm">Change account</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Basic Info -->
+            <div class="panel apply-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Basic Information</span>
+                </div>
+                <div class="panel-body">
+                    <!-- In-game Name -->
+                    <div class="field-group">
+                        <label class="field-label" for="inGameName">In-Game Name</label>
+                        <input
+                            id="inGameName"
+                            class="hf-input"
+                            formControlName="inGameName"
+                            placeholder="e.g. Rhett_Asher"
+                        />
+                        <div class="field-hint">
+                            Your Holdfast character name. Used in event rosters.
+                        </div>
+                        @if ( form.get('inGameName')?.touched &&
+                        form.get('inGameName')?.hasError('required') ) {
+                        <div class="field-hint field-error">In-game name is required.</div>
+                        }
+                    </div>
+                    <!-- Platform -->
+                    <div class="field-group">
+                        <label class="field-label" for="platform">Platform</label>
+                        <select id="platform" class="hf-select" formControlName="platform">
+                            @for (opt of platformOptions; track opt) {
+                            <option [value]="opt.value">{{ opt.label }}</option>
+                            }
+                        </select>
+                    </div>
+                    <!-- Applicant Type -->
+                    <div>
+                        <div class="field-label">Joining As</div>
+                        <div class="field-hint type-card-hint">
+                            Members are full regiment participants. Mercenaries join for events
+                            without long-term commitment.
+                        </div>
+                        <div class="row gap-12">
+                            <button
+                                type="button"
+                                class="type-card"
+                                [ngClass]="{
+                                        'type-card--active':
+                                            form.get('applicantType')?.value === 'Applicant',
+                                    }"
+                                (click)="setApplicantType('Applicant')"
+                            >
+                                <div class="type-card-title">⚔️ Member</div>
+                                <div class="type-card-desc">
+                                    Full regiment membership. Attend events, earn rank and medals.
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                class="type-card"
+                                [ngClass]="{
+                                        'type-card--active':
+                                            form.get('applicantType')?.value === 'Mercenary',
+                                    }"
+                                (click)="setApplicantType('Mercenary')"
+                            >
+                                <div class="type-card-title">🗡️ Mercenary</div>
+                                <div class="type-card-desc">
+                                    Occasional participation. No rank progression or regiment
+                                    obligations.
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Application Details -->
+            <div class="panel apply-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Application Details</span>
+                </div>
+                <div class="panel-body">
+                    <!-- Why Join -->
+                    <div class="field-group">
+                        <label class="field-label" for="whyJoin">Why do you want to join?</label>
+                        <textarea
+                            id="whyJoin"
+                            class="hf-textarea"
+                            formControlName="whyJoin"
+                            rows="4"
+                            placeholder="Tell us what draws you to the Lord Regiment and what kind of player you are…"
+                        ></textarea>
+                        <div class="field-hint">Minimum 30 characters. Max 800.</div>
+                        @if ( form.get('whyJoin')?.touched &&
+                        form.get('whyJoin')?.hasError('required') ) {
+                        <div class="field-hint field-error">This field is required.</div>
+                        } @if ( form.get('whyJoin')?.touched &&
+                        form.get('whyJoin')?.hasError('minlength') ) {
+                        <div class="field-hint field-error">
+                            Please write at least 30 characters.
+                        </div>
+                        }
+                    </div>
+                    <!-- How Found -->
+                    <div class="field-group">
+                        <label class="field-label" for="howFound">How did you find us?</label>
+                        <select id="howFound" class="hf-select" formControlName="howFound">
+                            <option value="">— Select —</option>
+                            @for (opt of howFoundOptions; track opt) {
+                            <option [value]="opt.value">{{ opt.label }}</option>
+                            }
+                        </select>
+                        @if ( form.get('howFound')?.touched &&
+                        form.get('howFound')?.hasError('required') ) {
+                        <div class="field-hint field-error">Please select an option.</div>
+                        }
+                    </div>
+                    <!-- Prior Experience -->
+                    <div>
+                        <label class="field-label" for="priorExp">Prior Regiment Experience</label>
+                        <textarea
+                            id="priorExp"
+                            class="hf-textarea"
+                            formControlName="priorExperience"
+                            rows="3"
+                            placeholder="List any previous regiments, milsim groups, or relevant game experience (optional)…"
+                        ></textarea>
+                        <div class="field-hint">Optional. Max 600 characters.</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Final Details -->
+            <div class="panel apply-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Preferences & Confirmation</span>
+                </div>
+                <div class="panel-body">
+                    <!-- Timezone -->
+                    <div class="field-group">
+                        <label class="field-label" for="timezone">Your Timezone</label>
+                        <select id="timezone" class="hf-select" formControlName="timezone">
+                            <option value="">— Select your timezone —</option>
+                            @for (tz of timezoneOptions; track tz) {
+                            <option [value]="tz.value">{{ tz.label }}</option>
+                            }
+                        </select>
+                        @if ( form.get('timezone')?.touched &&
+                        form.get('timezone')?.hasError('required') ) {
+                        <div class="field-hint field-error">
+                            Timezone is required for scheduling purposes.
+                        </div>
+                        }
+                    </div>
+                    <!-- Age Confirm -->
+                    <div class="row gap-12 age-confirm-row">
+                        <input
+                            type="checkbox"
+                            id="ageConfirm"
+                            class="hf-check age-confirm-check"
+                            formControlName="ageConfirm"
+                        />
+                        <label for="ageConfirm" class="age-confirm-label">
+                            I confirm that I am 16 years of age or older and agree to abide by the
+                            regiment's
+                            <a href="#" class="age-confirm-link">Code of Conduct</a> and
+                            <a href="#" class="age-confirm-link">Charter</a>.
+                        </label>
+                    </div>
+                    @if ( form.get('ageConfirm')?.touched &&
+                    form.get('ageConfirm')?.hasError('required') ) {
+                    <div class="field-hint field-error age-confirm-error">
+                        You must confirm your age and agree to the terms.
+                    </div>
+                    }
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="row gap-12">
+                <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+                <span class="sp"></span>
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-lg"
+                    [ngClass]="{ 'btn-muted': submitting }"
+                    [disabled]="submitting"
+                >
+                    @if (submitting) {
+                    <span>Submitting…</span>
+                    } @if (!submitting) {
+                    <span>Submit Application</span>
+                    }
+                </button>
+            </div>
+        </form>
+        }
     </div>
-
-    <!-- Success State -->
-    <div *ngIf="submitted" class="apply-success">
-      <div style="font-size:40px;text-align:center;margin-bottom:16px">⚔️</div>
-      <h2 class="serif" style="font-size:20px;text-align:center;margin:0 0 8px">Application Submitted</h2>
-      <p style="font-size:14px;color:var(--t-400);text-align:center;margin:0 0 20px">
-        Your application has been received. Officers will review it and contact you via Discord within 48 hours.
-      </p>
-      <div class="row" style="justify-content:center">
-        <a routerLink="/" class="btn btn-primary">Return Home</a>
-      </div>
-    </div>
-
-    <!-- Form -->
-    <form *ngIf="!submitted" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- Discord Identity -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-header">
-          <span class="panel-title">Discord Identity</span>
-          <span class="badge blue" style="margin-left:8px">Verified</span>
-        </div>
-        <div class="panel-body">
-          <div class="row" style="gap:12px;align-items:center">
-            <hf-avatar [name]="discordUser.name" [size]="44"></hf-avatar>
-            <div>
-              <div style="font-size:14px;font-weight:600;color:var(--t-100)">{{ discordUser.name }}</div>
-              <div class="mono" style="font-size:12px;color:var(--t-400)">{{ discordUser.tag }}</div>
-            </div>
-            <span class="sp"></span>
-            <a routerLink="/login" class="btn btn-ghost btn-sm">Change account</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Basic Info -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-header">
-          <span class="panel-title">Basic Information</span>
-        </div>
-        <div class="panel-body">
-          <!-- In-game Name -->
-          <div style="margin-bottom:20px">
-            <label class="field-label" for="inGameName">In-Game Name</label>
-            <input
-              id="inGameName"
-              class="hf-input"
-              formControlName="inGameName"
-              placeholder="e.g. Rhett_Asher"
-            >
-            <div class="field-hint">Your Holdfast character name. Used in event rosters.</div>
-            <div
-              class="field-hint"
-              *ngIf="form.get('inGameName')?.touched && form.get('inGameName')?.hasError('required')"
-              style="color:var(--err)"
-            >In-game name is required.</div>
-          </div>
-
-          <!-- Platform -->
-          <div style="margin-bottom:20px">
-            <label class="field-label" for="platform">Platform</label>
-            <select id="platform" class="hf-select" formControlName="platform">
-              <option *ngFor="let opt of platformOptions" [value]="opt.value">{{ opt.label }}</option>
-            </select>
-          </div>
-
-          <!-- Applicant Type -->
-          <div>
-            <div class="field-label">Joining As</div>
-            <div class="field-hint" style="margin-bottom:12px">
-              Members are full regiment participants. Mercenaries join for events without long-term commitment.
-            </div>
-            <div class="row" style="gap:12px">
-              <div
-                class="type-card"
-                [ngClass]="{ 'type-card--active': form.get('applicantType')?.value === 'Applicant' }"
-                (click)="setApplicantType('Applicant')"
-              >
-                <div class="type-card-title">⚔️ Member</div>
-                <div class="type-card-desc">Full regiment membership. Attend events, earn rank and medals.</div>
-              </div>
-              <div
-                class="type-card"
-                [ngClass]="{ 'type-card--active': form.get('applicantType')?.value === 'Mercenary' }"
-                (click)="setApplicantType('Mercenary')"
-              >
-                <div class="type-card-title">🗡️ Mercenary</div>
-                <div class="type-card-desc">Occasional participation. No rank progression or regiment obligations.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Application Details -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-header">
-          <span class="panel-title">Application Details</span>
-        </div>
-        <div class="panel-body">
-          <!-- Why Join -->
-          <div style="margin-bottom:20px">
-            <label class="field-label" for="whyJoin">Why do you want to join?</label>
-            <textarea
-              id="whyJoin"
-              class="hf-textarea"
-              formControlName="whyJoin"
-              rows="4"
-              placeholder="Tell us what draws you to the Lord Regiment and what kind of player you are…"
-            ></textarea>
-            <div class="field-hint">Minimum 30 characters. Max 800.</div>
-            <div
-              class="field-hint"
-              *ngIf="form.get('whyJoin')?.touched && form.get('whyJoin')?.hasError('required')"
-              style="color:var(--err)"
-            >This field is required.</div>
-            <div
-              class="field-hint"
-              *ngIf="form.get('whyJoin')?.touched && form.get('whyJoin')?.hasError('minlength')"
-              style="color:var(--err)"
-            >Please write at least 30 characters.</div>
-          </div>
-
-          <!-- How Found -->
-          <div style="margin-bottom:20px">
-            <label class="field-label" for="howFound">How did you find us?</label>
-            <select id="howFound" class="hf-select" formControlName="howFound">
-              <option value="">— Select —</option>
-              <option *ngFor="let opt of howFoundOptions" [value]="opt.value">{{ opt.label }}</option>
-            </select>
-            <div
-              class="field-hint"
-              *ngIf="form.get('howFound')?.touched && form.get('howFound')?.hasError('required')"
-              style="color:var(--err)"
-            >Please select an option.</div>
-          </div>
-
-          <!-- Prior Experience -->
-          <div>
-            <label class="field-label" for="priorExp">Prior Regiment Experience</label>
-            <textarea
-              id="priorExp"
-              class="hf-textarea"
-              formControlName="priorExperience"
-              rows="3"
-              placeholder="List any previous regiments, milsim groups, or relevant game experience (optional)…"
-            ></textarea>
-            <div class="field-hint">Optional. Max 600 characters.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Final Details -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-header">
-          <span class="panel-title">Preferences & Confirmation</span>
-        </div>
-        <div class="panel-body">
-          <!-- Timezone -->
-          <div style="margin-bottom:20px">
-            <label class="field-label" for="timezone">Your Timezone</label>
-            <select id="timezone" class="hf-select" formControlName="timezone">
-              <option value="">— Select your timezone —</option>
-              <option *ngFor="let tz of timezoneOptions" [value]="tz.value">{{ tz.label }}</option>
-            </select>
-            <div
-              class="field-hint"
-              *ngIf="form.get('timezone')?.touched && form.get('timezone')?.hasError('required')"
-              style="color:var(--err)"
-            >Timezone is required for scheduling purposes.</div>
-          </div>
-
-          <!-- Age Confirm -->
-          <div class="row" style="gap:12px;align-items:flex-start">
-            <input
-              type="checkbox"
-              id="ageConfirm"
-              class="hf-check"
-              formControlName="ageConfirm"
-              style="margin-top:2px;flex-shrink:0"
-            >
-            <label for="ageConfirm" style="font-size:13px;color:var(--t-300);cursor:pointer;line-height:1.5">
-              I confirm that I am 16 years of age or older and agree to abide by the regiment's
-              <a href="#" style="color:var(--brass-300)">Code of Conduct</a> and
-              <a href="#" style="color:var(--brass-300)">Charter</a>.
-            </label>
-          </div>
-          <div
-            class="field-hint"
-            *ngIf="form.get('ageConfirm')?.touched && form.get('ageConfirm')?.hasError('required')"
-            style="color:var(--err);margin-top:4px"
-          >You must confirm your age and agree to the terms.</div>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="row" style="gap:12px">
-        <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
-        <span class="sp"></span>
-        <button
-          type="submit"
-          class="btn btn-primary btn-lg"
-          [ngClass]="{ 'btn-muted': submitting }"
-          [disabled]="submitting"
-        >
-          <span *ngIf="submitting">Submitting…</span>
-          <span *ngIf="!submitting">Submit Application</span>
-        </button>
-      </div>
-    </form>
-  </div>
 </div>

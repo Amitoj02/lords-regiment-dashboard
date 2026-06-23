@@ -1,52 +1,46 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { CurrentUser } from '../../../core/services/auth.service';
 
 @Component({
-  standalone: false,
-  selector: 'hf-app-shell',
-  templateUrl: './app-shell.component.html',
-  styleUrls: ['./app-shell.component.scss'],
+    standalone: false,
+    selector: 'hf-app-shell',
+    templateUrl: './app-shell.component.html',
+    styleUrls: ['./app-shell.component.scss'],
 })
-export class AppShellComponent implements OnInit {
-  @Input() activeRoute = '';
-  @Input() crumbs: string[] = [];
-  @Input() title = '';
+export class AppShellComponent {
+    private readonly auth = inject(AuthService);
+    private readonly router = inject(Router);
 
-  currentUser: CurrentUser | null = null;
-  isAdmin = false;
+    @Input() activeRoute = '';
+    @Input() crumbs: string[] = [];
+    @Input() title = '';
 
-  /** Mobile off-canvas sidebar drawer state. Ignored on desktop (CSS). */
-  drawerOpen = false;
+    /** Reactive auth state — the shell updates when the user logs in or out. */
+    readonly currentUser = this.auth.currentUser;
+    readonly isAdmin = computed(() => this.auth.isAdmin());
 
-  constructor(
-    private auth: AuthService,
-    private router: Router,
-  ) {}
+    /** Mobile off-canvas sidebar drawer state. Ignored on desktop (CSS). */
+    drawerOpen = false;
 
-  ngOnInit(): void {
-    this.currentUser = this.auth.currentUser();
-    this.isAdmin = this.auth.isAdmin();
-  }
+    toggleDrawer(): void {
+        this.drawerOpen = !this.drawerOpen;
+    }
 
-  toggleDrawer(): void {
-    this.drawerOpen = !this.drawerOpen;
-  }
+    closeDrawer(): void {
+        this.drawerOpen = false;
+    }
 
-  closeDrawer(): void {
-    this.drawerOpen = false;
-  }
+    get navUser(): { name: string; rank: string } {
+        const user = this.currentUser();
+        return {
+            name: user?.name ?? '',
+            rank: user?.rank ?? '',
+        };
+    }
 
-  get navUser(): { name: string; rank: string } {
-    return {
-      name: this.currentUser?.name ?? '',
-      rank: this.currentUser?.rank ?? '',
-    };
-  }
-
-  onNavigate(route: string): void {
-    this.closeDrawer();
-    this.router.navigateByUrl(route);
-  }
+    onNavigate(route: string): void {
+        this.closeDrawer();
+        this.router.navigateByUrl(route);
+    }
 }

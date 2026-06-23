@@ -1,56 +1,169 @@
 .apply-page {
-  min-height: 100vh;
-  background: var(--ink-900);
-  padding: 48px 24px;
+    min-height: 100vh;
+    background: var(--ink-900);
+    padding: 48px 24px;
 }
 
 .apply-inner {
-  max-width: 640px;
-  margin: 0 auto;
+    max-width: 640px;
+    margin: 0 auto;
 }
 
 .apply-header {
-  margin-bottom: 32px;
+    margin-bottom: 32px;
+}
+
+.apply-logo {
+    border-radius: 999px;
+    margin-bottom: 16px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.apply-title {
+    font-size: 26px;
+    text-align: center;
+    margin: 0 0 6px;
+}
+
+.apply-subtitle {
+    font-size: 14px;
+    color: var(--t-400);
+    text-align: center;
+    margin: 0;
+}
+
+/* Panels */
+.apply-panel {
+    margin-bottom: 24px;
+}
+
+.apply-verified-badge {
+    margin-left: 8px;
+}
+
+.field-group {
+    margin-bottom: 20px;
+}
+
+.field-error {
+    color: var(--err);
+}
+
+/* Discord identity */
+.discord-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--t-100);
+}
+
+.discord-tag {
+    font-size: 12px;
+    color: var(--t-400);
+}
+
+/* Success state */
+.apply-success-icon {
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.apply-success-title {
+    font-size: 20px;
+    text-align: center;
+    margin: 0 0 8px;
+}
+
+.apply-success-text {
+    font-size: 14px;
+    color: var(--t-400);
+    text-align: center;
+    margin: 0 0 20px;
+}
+
+.apply-success-actions {
+    justify-content: center;
+}
+
+/* Age confirmation */
+.age-confirm-row {
+    align-items: flex-start;
+}
+
+.age-confirm-check {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.age-confirm-label {
+    font-size: 13px;
+    color: var(--t-300);
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.age-confirm-link {
+    color: var(--brass-300);
+}
+
+.age-confirm-error {
+    margin-top: 4px;
 }
 
 .apply-success {
-  background: var(--ink-850);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 48px 32px;
-  text-align: center;
+    background: var(--ink-850);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 48px 32px;
+    text-align: center;
+}
+
+.type-card-hint {
+    margin-bottom: 12px;
 }
 
 /* Type cards */
 .type-card {
-  flex: 1;
-  padding: 16px;
-  background: var(--ink-800);
-  border: 1px solid var(--rule-2);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+    // Neutralize default <button> chrome so it renders identically to the
+    // former <div>: no UA font/color, left-aligned block content.
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    display: block;
 
-  &:hover {
-    border-color: var(--t-400);
-    background: var(--ink-850);
-  }
+    flex: 1;
+    padding: 16px;
+    background: var(--ink-800);
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
 
-  &--active {
-    border-color: var(--brass-400) !important;
-    background: rgba(191,148,71,0.06) !important;
-  }
+    &:hover {
+        border-color: var(--t-400);
+        background: var(--ink-850);
+    }
+
+    &--active {
+        border-color: var(--brass-400) !important;
+        background: rgba(191, 148, 71, 0.06) !important;
+    }
 }
 
 .type-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--t-100);
-  margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--t-100);
+    margin-bottom: 6px;
 }
 
 .type-card-desc {
-  font-size: 12px;
-  color: var(--t-400);
-  line-height: 1.5;
+    font-size: 12px;
+    color: var(--t-400);
+    line-height: 1.5;
 }

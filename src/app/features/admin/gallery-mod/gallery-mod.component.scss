@@ -1,130 +1,146 @@
 .mod-layout {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 20px;
-  align-items: start;
-  margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+    align-items: start;
+    margin-top: 16px;
 }
 
 .mod-right {
-  position: sticky;
-  top: 20px;
+    position: sticky;
+    top: 20px;
 }
 
 .gallery-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
 .gallery-card {
-  border-radius: 8px;
-  border: 2px solid transparent;
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  background: var(--parch-100);
-
-  &--selected {
-    border-color: var(--brass-400);
-  }
-
-  &:hover:not(&--selected) {
-    border-color: var(--rule-2);
-  }
-
-  &__thumb {
-    height: 120px;
-    position: relative;
-
-    &:hover .gallery-card__actions {
-      opacity: 1;
-    }
-  }
-
-  &__actions {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    display: flex;
-    gap: 6px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-
-  &__info {
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  &__caption {
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
+    // Neutralize default <button> chrome so it renders identically to the former <div>
+    display: block;
+    width: 100%;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    appearance: none;
+    border-radius: 8px;
+    border: 2px solid transparent;
     overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    cursor: pointer;
+    transition: border-color 0.15s;
+    background: var(--parch-100);
 
-  &__by {
-    font-size: 0.72rem;
-    color: var(--t-400);
-  }
+    &--selected {
+        border-color: var(--brass-400);
+    }
+
+    &:hover:not(&--selected) {
+        border-color: var(--rule-2);
+    }
+
+    &__thumb {
+        height: 120px;
+        position: relative;
+
+        &:hover .gallery-card__actions {
+            opacity: 1;
+        }
+    }
+
+    &__actions {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        display: flex;
+        gap: 6px;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    &__info {
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__caption {
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__by {
+        font-size: 0.72rem;
+        color: var(--t-400);
+    }
 }
 
 .detail-main-preview {
-  height: 180px;
-  border-radius: 8px;
-  margin-bottom: 10px;
+    height: 180px;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
 
 .detail-thumbnails {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
 }
 
 .detail-thumb {
-  width: 64px;
-  height: 48px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.12s;
+    width: 64px;
+    height: 48px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.12s;
 
-  &:first-child {
-    border-color: var(--brass-400);
-  }
+    &:first-child {
+        border-color: var(--brass-400);
+    }
 }
 
 .detail-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .meta-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 
-  .field-label {
-    font-size: 0.7rem;
-    margin-bottom: 0;
-  }
+    .field-label {
+        font-size: 0.7rem;
+        margin-bottom: 0;
+    }
 }
 
 .field-row {
-  margin-bottom: 14px;
-  .field-label { margin-bottom: 5px; }
+    margin-bottom: 14px;
+    .field-label {
+        margin-bottom: 5px;
+    }
 }
 
 .detail-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  padding-top: 12px;
-  border-top: 1px solid var(--rule);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+}
+
+// Replaces inline style="gap:4px;flex-wrap:wrap;" on .row badge groups
+.row--wrap-4 {
+    gap: 4px;
+    flex-wrap: wrap;
 }

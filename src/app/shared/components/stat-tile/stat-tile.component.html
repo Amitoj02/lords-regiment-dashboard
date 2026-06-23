@@ -1,10 +1,10 @@
-<div class="stat-tile">
-  <div
-    class="stat-accent-bar"
-    *ngIf="accent"
-    [style.background]="accent"
-  ></div>
-  <div class="admin-label stat-label">{{ label }}</div>
-  <div class="stat-value" [style.color]="accent || null">{{ value }}</div>
-  <div class="stat-foot" *ngIf="foot">{{ foot }}</div>
+<div class="stat-tile" [style.--stat-accent]="accent || null">
+    @if (accent) {
+    <div class="stat-accent-bar"></div>
+    }
+    <div class="admin-label stat-label">{{ label }}</div>
+    <div class="stat-value">{{ value }}</div>
+    @if (foot) {
+    <div class="stat-foot">{{ foot }}</div>
+    }
 </div>

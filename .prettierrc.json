@@ -1,0 +1,20 @@
+{
+  "tabWidth": 4,
+  "printWidth": 100,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "semi": true,
+  "bracketSpacing": true,
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": ["*.json", "*.jsonc", "*.yml", "*.yaml", "*.md"],
+      "options": { "tabWidth": 2 }
+    },
+    {
+      "comment": "Angular component templates default to the angular parser (locked to 2-space). Force the html parser so 4-space indentation is honored.",
+      "files": "*.component.html",
+      "options": { "parser": "html" }
+    }
+  ]
+}

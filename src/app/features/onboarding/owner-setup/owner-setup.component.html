@@ -1,161 +1,199 @@
 <div class="setup-layout">
-  <!-- Left progress sidebar -->
-  <aside class="setup-sidebar" [ngStyle]="{'background-image': 'url(assets/images/bg-1.jpg)'}">
-    <div class="setup-sidebar-overlay"></div>
-    <div class="setup-sidebar-inner">
-      <div style="margin-bottom:36px">
-        <img src="assets/images/regiment-logo.png" width="40" height="40" style="border-radius:999px;margin-bottom:14px;display:block">
-        <div class="serif" style="font-size:17px;color:var(--brass-300);font-weight:600">Lord Regiment</div>
-        <div class="admin-label" style="font-size:9px;margin-top:2px">Regiment Setup Wizard</div>
-      </div>
+    <!-- Left progress sidebar -->
+    <aside class="setup-sidebar">
+        <div class="setup-sidebar-overlay"></div>
+        <div class="setup-sidebar-inner">
+            <div class="setup-brand">
+                <img
+                    src="assets/images/regiment-logo.png"
+                    width="40"
+                    height="40"
+                    alt="Lord Regiment crest"
+                    class="setup-brand-logo"
+                />
+                <div class="serif setup-brand-name">Lord Regiment</div>
+                <div class="admin-label setup-brand-sub">Regiment Setup Wizard</div>
+            </div>
 
-      <div class="setup-steps">
-        <div
-          *ngFor="let step of steps"
-          class="setup-step"
-          [ngClass]="{
-            'setup-step--done': step.num < currentStep,
-            'setup-step--active': step.num === currentStep,
-            'setup-step--pending': step.num > currentStep
-          }"
-        >
-          <div class="setup-step-circle">
-            <span *ngIf="step.num < currentStep" class="setup-step-check">✓</span>
-            <span *ngIf="step.num >= currentStep">{{ step.num }}</span>
-          </div>
-          <div class="setup-step-label">{{ step.label }}</div>
-        </div>
-      </div>
+            <div class="setup-steps">
+                @for (step of steps; track step) {
+                <div
+                    class="setup-step"
+                    [ngClass]="{
+                            'setup-step--done': step.num < currentStep,
+                            'setup-step--active': step.num === currentStep,
+                            'setup-step--pending': step.num > currentStep,
+                        }"
+                >
+                    <div class="setup-step-circle">
+                        @if (step.num < currentStep) {
+                        <span class="setup-step-check">✓</span>
+                        } @if (step.num >= currentStep) {
+                        <span>{{ step.num }}</span>
+                        }
+                    </div>
+                    <div class="setup-step-label">{{ step.label }}</div>
+                </div>
+                }
+            </div>
 
-      <div style="margin-top:auto;padding-top:32px">
-        <div class="notice info" style="font-size:11px">
-          You can save progress and return at any time.
+            <div class="setup-sidebar-foot">
+                <div class="notice info setup-foot-notice">
+                    You can save progress and return at any time.
+                </div>
+            </div>
         </div>
-      </div>
+    </aside>
+
+    <!-- Right content panel -->
+    <div class="setup-content">
+        <div class="setup-content-inner">
+            <div class="page-head setup-page-head">
+                <div>
+                    <div class="admin-label brass setup-step-eyebrow">Step 2 of 5</div>
+                    <h1 class="serif setup-title">Inscribe the colors of your regiment</h1>
+                    <p class="setup-subtitle">
+                        Set your regiment name, tag, and visual identity. These will appear across
+                        the dashboard and public pages.
+                    </p>
+                </div>
+            </div>
+
+            <form [formGroup]="form" (ngSubmit)="continue()">
+                <!-- Regiment Name -->
+                <div class="setup-field">
+                    <label class="field-label" for="regName">Regiment Name</label>
+                    <input
+                        id="regName"
+                        class="hf-input"
+                        formControlName="regimentName"
+                        placeholder="e.g. The Lord Regiment"
+                    />
+                    @if ( form.get('regimentName')?.touched &&
+                    form.get('regimentName')?.hasError('required') ) {
+                    <div class="field-hint field-hint--error">Regiment name is required.</div>
+                    }
+                </div>
+
+                <!-- Short Tag -->
+                <div class="setup-field">
+                    <label class="field-label" for="shortTag">Short Tag</label>
+                    <input
+                        id="shortTag"
+                        class="hf-input setup-tag-input"
+                        formControlName="shortTag"
+                        placeholder="e.g. LRD"
+                    />
+                    <div class="field-hint">1–6 characters. Appears as [LRD] in member tags.</div>
+                    @if ( form.get('shortTag')?.touched &&
+                    form.get('shortTag')?.hasError('required') ) {
+                    <div class="field-hint field-hint--error">Short tag is required.</div>
+                    }
+                </div>
+
+                <!-- Mission Statement -->
+                <div class="setup-field setup-field--mission">
+                    <label class="field-label" for="mission">Mission Statement</label>
+                    <textarea
+                        id="mission"
+                        class="hf-textarea"
+                        formControlName="missionStatement"
+                        rows="3"
+                        placeholder="Describe the regiment's purpose and values…"
+                    ></textarea>
+                    <div class="field-hint">
+                        Shown on the public landing page. Max 400 characters.
+                    </div>
+                </div>
+
+                <!-- Crest & Banner Upload -->
+                <div class="grid-2 setup-upload-grid">
+                    <div>
+                        <div class="field-label">Regiment Crest</div>
+                        <div class="upload-panel">
+                            <div class="upload-panel-preview">
+                                <img
+                                    src="assets/images/regiment-logo.png"
+                                    width="48"
+                                    height="48"
+                                    alt="Current regiment crest preview"
+                                    class="upload-preview-crest"
+                                />
+                            </div>
+                            <div class="upload-panel-body">
+                                <div class="upload-panel-title">Upload crest image</div>
+                                <div class="field-hint">PNG or SVG · max 1MB</div>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary btn-sm upload-panel-btn"
+                                >
+                                    Choose file
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="field-label">Banner Image</div>
+                        <div class="upload-panel">
+                            <div class="upload-panel-preview upload-panel-preview--wide">
+                                <img
+                                    src="assets/images/banner.png"
+                                    alt="Current regiment banner preview"
+                                    class="upload-preview-banner"
+                                />
+                            </div>
+                            <div class="upload-panel-body">
+                                <div class="upload-panel-title">Upload banner</div>
+                                <div class="field-hint">JPG or PNG · 1200×400px recommended</div>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary btn-sm upload-panel-btn"
+                                >
+                                    Choose file
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accent Color -->
+                <div class="setup-accent">
+                    <div class="field-label">Accent Color</div>
+                    <div class="field-hint setup-accent-hint">
+                        Primary color used for highlights, headings, and badges.
+                    </div>
+                    <div class="color-picker">
+                        @for (color of colorOptions; track color) {
+                        <button
+                            type="button"
+                            class="color-swatch"
+                            [ngClass]="{
+                                    'color-swatch--selected': selectedColor === color.key,
+                                }"
+                            [ngStyle]="{ 'background-color': color.hex }"
+                            [title]="color.label"
+                            [attr.aria-label]="color.label"
+                            [attr.aria-pressed]="selectedColor === color.key"
+                            (click)="selectColor(color.key)"
+                        >
+                            @if (selectedColor === color.key) {
+                            <span class="color-check">✓</span>
+                            }
+                        </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="row gap-12">
+                    <button type="button" class="btn btn-ghost" (click)="goBack()">← Back</button>
+                    <button type="button" class="btn btn-secondary" (click)="save()">
+                        Save Draft
+                    </button>
+                    <span class="sp"></span>
+                    <button type="submit" class="btn btn-primary">Save &amp; Continue →</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </aside>
-
-  <!-- Right content panel -->
-  <div class="setup-content">
-    <div class="setup-content-inner">
-      <div class="page-head" style="margin-bottom:28px">
-        <div>
-          <div class="admin-label brass" style="margin-bottom:6px">Step 2 of 5</div>
-          <h1 class="serif" style="font-size:24px;margin:0 0 6px">Inscribe the colors of your regiment</h1>
-          <p style="font-size:14px;color:var(--t-400);margin:0">
-            Set your regiment name, tag, and visual identity. These will appear across the dashboard and public pages.
-          </p>
-        </div>
-      </div>
-
-      <form [formGroup]="form" (ngSubmit)="continue()">
-        <!-- Regiment Name -->
-        <div style="margin-bottom:20px">
-          <label class="field-label" for="regName">Regiment Name</label>
-          <input
-            id="regName"
-            class="hf-input"
-            formControlName="regimentName"
-            placeholder="e.g. The Lord Regiment"
-          >
-          <div
-            class="field-hint"
-            *ngIf="form.get('regimentName')?.touched && form.get('regimentName')?.hasError('required')"
-            style="color:var(--err)"
-          >Regiment name is required.</div>
-        </div>
-
-        <!-- Short Tag -->
-        <div style="margin-bottom:20px">
-          <label class="field-label" for="shortTag">Short Tag</label>
-          <input
-            id="shortTag"
-            class="hf-input"
-            formControlName="shortTag"
-            placeholder="e.g. LRD"
-            style="width:160px"
-          >
-          <div class="field-hint">
-            1–6 characters. Appears as [LRD] in member tags.
-          </div>
-          <div
-            class="field-hint"
-            *ngIf="form.get('shortTag')?.touched && form.get('shortTag')?.hasError('required')"
-            style="color:var(--err)"
-          >Short tag is required.</div>
-        </div>
-
-        <!-- Mission Statement -->
-        <div style="margin-bottom:28px">
-          <label class="field-label" for="mission">Mission Statement</label>
-          <textarea
-            id="mission"
-            class="hf-textarea"
-            formControlName="missionStatement"
-            rows="3"
-            placeholder="Describe the regiment's purpose and values…"
-          ></textarea>
-          <div class="field-hint">
-            Shown on the public landing page. Max 400 characters.
-          </div>
-        </div>
-
-        <!-- Crest & Banner Upload -->
-        <div class="grid-2" style="gap:16px;margin-bottom:28px">
-          <div>
-            <div class="field-label">Regiment Crest</div>
-            <div class="upload-panel">
-              <div class="upload-panel-preview">
-                <img src="assets/images/regiment-logo.png" width="48" height="48" style="border-radius:999px;opacity:0.6">
-              </div>
-              <div class="upload-panel-body">
-                <div style="font-size:13px;color:var(--t-200);margin-bottom:4px">Upload crest image</div>
-                <div class="field-hint">PNG or SVG · max 1MB</div>
-                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px">Choose file</button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="field-label">Banner Image</div>
-            <div class="upload-panel">
-              <div class="upload-panel-preview upload-panel-preview--wide">
-                <img src="assets/images/banner.png" style="width:100%;height:100%;object-fit:cover;opacity:0.5">
-              </div>
-              <div class="upload-panel-body">
-                <div style="font-size:13px;color:var(--t-200);margin-bottom:4px">Upload banner</div>
-                <div class="field-hint">JPG or PNG · 1200×400px recommended</div>
-                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px">Choose file</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Accent Color -->
-        <div style="margin-bottom:32px">
-          <div class="field-label">Accent Color</div>
-          <div class="field-hint" style="margin-bottom:10px">Primary color used for highlights, headings, and badges.</div>
-          <div class="color-picker">
-            <div
-              *ngFor="let color of colorOptions"
-              class="color-swatch"
-              [ngClass]="{ 'color-swatch--selected': selectedColor === color.key }"
-              [ngStyle]="{ 'background-color': color.hex }"
-              [title]="color.label"
-              (click)="selectColor(color.key)"
-            >
-              <span *ngIf="selectedColor === color.key" class="color-check">✓</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="row" style="gap:12px">
-          <button type="button" class="btn btn-ghost" (click)="goBack()">← Back</button>
-          <button type="button" class="btn btn-secondary" (click)="save()">Save Draft</button>
-          <span class="sp"></span>
-          <button type="submit" class="btn btn-primary">Save &amp; Continue →</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </div>

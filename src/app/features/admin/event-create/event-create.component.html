@@ -1,184 +1,324 @@
 <hf-app-shell [activeRoute]="'events'">
-  <div class="page">
-    <div class="page-head">
-      <div>
-        <div class="admin-label brass" style="margin-bottom:6px">Article of Order</div>
-        <h1 class="page-title">Draft an Event</h1>
-      </div>
+    <div class="page">
+        <div class="page-head">
+            <div>
+                <div class="admin-label brass label-spaced">Article of Order</div>
+                <h1 class="page-title">Draft an Event</h1>
+            </div>
+        </div>
+
+        <form [formGroup]="form" class="create-layout">
+            <!-- Left: main form -->
+            <div class="create-left">
+                <!-- Particulars -->
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title">Particulars</span></div>
+                    <div class="panel-body">
+                        <div class="field-row">
+                            <label class="field-label" for="event-title">Event title</label>
+                            <input
+                                id="event-title"
+                                class="hf-input"
+                                type="text"
+                                formControlName="title"
+                                placeholder="e.g. Grand Autumn Campaign — Line Battle"
+                            />
+                        </div>
+
+                        <div class="field-row">
+                            <label class="field-label" for="event-orders">Orders of the Day</label>
+                            <div class="orders-toolbar">
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm btn-icon"
+                                    title="Bold"
+                                >
+                                    <b>B</b>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm btn-icon"
+                                    title="Italic"
+                                >
+                                    <i>I</i>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm btn-icon"
+                                    title="Underline"
+                                >
+                                    <u>U</u>
+                                </button>
+                                <span class="rule-ornament"></span>
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm btn-icon"
+                                    title="List"
+                                >
+                                    &#9776;
+                                </button>
+                            </div>
+                            <textarea
+                                id="event-orders"
+                                class="hf-textarea"
+                                rows="7"
+                                formControlName="orders"
+                                placeholder="Write the orders for this engagement..."
+                            ></textarea>
+                        </div>
+
+                        <div class="field-row">
+                            <div class="field-label">Banner image</div>
+                            <div class="banner-upload">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    aria-hidden="true"
+                                    focusable="false"
+                                >
+                                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                                    <path d="M3 16l5-5 4 4 3-3 4 4" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                </svg>
+                                <span
+                                    >Drag &amp; drop or
+                                    <span class="upload-link">browse</span></span
+                                >
+                                <span class="field-hint"
+                                    >PNG, JPG — max 4 MB, 1920×600 recommended</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- When -->
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title">When</span></div>
+                    <div class="panel-body">
+                        <div class="grid-2">
+                            <div>
+                                <div class="field-label">Starts</div>
+                                <div class="row time-row">
+                                    <input
+                                        class="hf-input flex-1"
+                                        type="date"
+                                        formControlName="date"
+                                        aria-label="Start date"
+                                    />
+                                    <input
+                                        class="hf-input time-input"
+                                        type="time"
+                                        formControlName="startTime"
+                                        aria-label="Start time"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <div class="field-label">Ends</div>
+                                <div class="row time-row">
+                                    <input
+                                        class="hf-input flex-1"
+                                        type="date"
+                                        formControlName="date"
+                                        aria-label="End date"
+                                    />
+                                    <input
+                                        class="hf-input time-input"
+                                        type="time"
+                                        formControlName="endTime"
+                                        aria-label="End time"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-row">
+                            <label class="field-label" for="event-timezone">Timezone</label>
+                            <select
+                                id="event-timezone"
+                                class="hf-select timezone-select"
+                                formControlName="timezone"
+                            >
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern (UTC-5)</option>
+                                <option value="America/Chicago">Central (UTC-6)</option>
+                                <option value="Europe/London">London (UTC+0/+1)</option>
+                                <option value="Europe/Berlin">Berlin (UTC+1/+2)</option>
+                            </select>
+                        </div>
+
+                        <div class="field-row">
+                            <label class="field-label">
+                                <input type="checkbox" formControlName="recurring" />
+                                Recurring event
+                            </label>
+                        </div>
+
+                        <div class="field-row">
+                            <div class="field-label">Notify before</div>
+                            <div class="notify-chips">
+                                @for (n of notifyOptions; track n) {
+                                <button
+                                    type="button"
+                                    class="chip"
+                                    [ngClass]="{ 'chip--active': isNotifySelected(n) }"
+                                    (click)="toggleNotify(n)"
+                                >
+                                    {{ n }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="field-row">
+                            <label class="field-label" for="event-tag-input">Tags</label>
+                            <div class="tags-input-row">
+                                <div class="tag-chips">
+                                    @for (tag of tags; track tag) {
+                                    <span class="badge brass tag-chip">
+                                        {{ tag }}
+                                        <button
+                                            type="button"
+                                            class="tag-remove"
+                                            (click)="removeTag(tag)"
+                                            [attr.aria-label]="'Remove tag ' + tag"
+                                        >
+                                            &times;
+                                        </button>
+                                    </span>
+                                    }
+                                </div>
+                                <input
+                                    id="event-tag-input"
+                                    class="hf-input tag-input"
+                                    type="text"
+                                    [(ngModel)]="tagInput"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    placeholder="Add tag…"
+                                    (keydown.enter)="addTag(); $event.preventDefault()"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server Details -->
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title">Server Details</span></div>
+                    <div class="panel-body">
+                        <div class="field-row">
+                            <label class="field-label" for="event-server-name">Server name</label>
+                            <input
+                                id="event-server-name"
+                                class="hf-input"
+                                type="text"
+                                formControlName="serverName"
+                                placeholder="e.g. Lords Regiment Official #1"
+                            />
+                        </div>
+
+                        <div class="field-row">
+                            <label class="field-label" for="event-server-password">Password</label>
+                            <div class="password-field">
+                                <svg
+                                    class="lock-icon"
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    aria-hidden="true"
+                                    focusable="false"
+                                >
+                                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                <input
+                                    id="event-server-password"
+                                    class="hf-input password-input"
+                                    [type]="showPassword ? 'text' : 'password'"
+                                    formControlName="serverPassword"
+                                    placeholder="Server password"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm"
+                                    (click)="showPassword = !showPassword"
+                                >
+                                    {{ showPassword ? 'Hide' : 'Show' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="field-row">
+                            <div class="field-label">Platform availability</div>
+                            <div class="platform-toggles">
+                                @for (p of platformOptions; track p) {
+                                <button
+                                    type="button"
+                                    class="chip"
+                                    [ngClass]="{ 'chip--active': isPlatformSelected(p.id) }"
+                                    (click)="togglePlatform(p.id)"
+                                >
+                                    {{ p.label }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+
+                        <hf-notice type="warn">
+                            The server password will only be visible to members who have RSVP'd as
+                            Interested or Tentative.
+                        </hf-notice>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: preview + actions -->
+            <div class="create-right">
+                <div class="panel preview-card">
+                    <div class="panel-header"><span class="panel-title">Preview</span></div>
+                    <div class="panel-body">
+                        <div class="preview-banner"></div>
+                        <div class="preview-info">
+                            <div class="preview-title serif">
+                                {{ form.get('title')?.value || 'Event title…' }}
+                            </div>
+                            <div class="preview-meta">
+                                {{ form.get('date')?.value || 'Date TBD' }} &middot; {{
+                                form.get('startTime')?.value }} {{ form.get('timezone')?.value }}
+                            </div>
+                            <div class="row preview-tags">
+                                @for (tag of tags; track tag) {
+                                <span class="badge brass">{{ tag }}</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="create-actions">
+                    <button type="button" class="btn btn-ghost btn-block" (click)="saveDraft()">
+                        Save draft
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-primary btn-block"
+                        (click)="publish()"
+                        [disabled]="form.invalid"
+                    >
+                        Publish
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
-
-    <form [formGroup]="form" class="create-layout">
-
-      <!-- Left: main form -->
-      <div class="create-left">
-
-        <!-- Particulars -->
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">Particulars</span></div>
-          <div class="panel-body">
-            <div class="field-row">
-              <label class="field-label">Event title</label>
-              <input class="hf-input" type="text" formControlName="title" placeholder="e.g. Grand Autumn Campaign — Line Battle" />
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Orders of the Day</label>
-              <div class="orders-toolbar">
-                <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Bold"><b>B</b></button>
-                <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Italic"><i>I</i></button>
-                <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Underline"><u>U</u></button>
-                <span class="rule-ornament"></span>
-                <button type="button" class="btn btn-ghost btn-sm btn-icon" title="List">&#9776;</button>
-              </div>
-              <textarea class="hf-textarea" rows="7" formControlName="orders" placeholder="Write the orders for this engagement..."></textarea>
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Banner image</label>
-              <div class="banner-upload">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 16l5-5 4 4 3-3 4 4"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
-                <span>Drag &amp; drop or <span class="upload-link">browse</span></span>
-                <span class="field-hint">PNG, JPG — max 4 MB, 1920×600 recommended</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- When -->
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">When</span></div>
-          <div class="panel-body">
-            <div class="grid-2">
-              <div>
-                <label class="field-label">Starts</label>
-                <div class="row" style="gap:6px;">
-                  <input class="hf-input" type="date" formControlName="date" style="flex:1;" />
-                  <input class="hf-input" type="time" formControlName="startTime" style="width:100px;" />
-                </div>
-              </div>
-              <div>
-                <label class="field-label">Ends</label>
-                <div class="row" style="gap:6px;">
-                  <input class="hf-input" type="date" formControlName="date" style="flex:1;" />
-                  <input class="hf-input" type="time" formControlName="endTime" style="width:100px;" />
-                </div>
-              </div>
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Timezone</label>
-              <select class="hf-select" formControlName="timezone" style="width:200px;">
-                <option value="UTC">UTC</option>
-                <option value="America/New_York">Eastern (UTC-5)</option>
-                <option value="America/Chicago">Central (UTC-6)</option>
-                <option value="Europe/London">London (UTC+0/+1)</option>
-                <option value="Europe/Berlin">Berlin (UTC+1/+2)</option>
-              </select>
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">
-                <input type="checkbox" formControlName="recurring" />
-                Recurring event
-              </label>
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Notify before</label>
-              <div class="notify-chips">
-                <button
-                  *ngFor="let n of notifyOptions"
-                  type="button"
-                  class="chip"
-                  [ngClass]="{ 'chip--active': isNotifySelected(n) }"
-                  (click)="toggleNotify(n)"
-                >{{ n }}</button>
-              </div>
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Tags</label>
-              <div class="tags-input-row">
-                <div class="tag-chips">
-                  <span *ngFor="let tag of tags" class="badge brass tag-chip">
-                    {{ tag }}
-                    <button type="button" class="tag-remove" (click)="removeTag(tag)">&times;</button>
-                  </span>
-                </div>
-                <input class="hf-input" type="text" [(ngModel)]="tagInput" [ngModelOptions]="{standalone: true}" placeholder="Add tag…" (keydown.enter)="addTag(); $event.preventDefault()" style="width:140px;" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Server Details -->
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">Server Details</span></div>
-          <div class="panel-body">
-            <div class="field-row">
-              <label class="field-label">Server name</label>
-              <input class="hf-input" type="text" formControlName="serverName" placeholder="e.g. Lords Regiment Official #1" />
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Password</label>
-              <div class="password-field">
-                <svg class="lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <input class="hf-input" [type]="showPassword ? 'text' : 'password'" formControlName="serverPassword" placeholder="Server password" style="padding-left:32px;flex:1;" />
-                <button type="button" class="btn btn-ghost btn-sm" (click)="showPassword = !showPassword">
-                  {{ showPassword ? 'Hide' : 'Show' }}
-                </button>
-              </div>
-            </div>
-
-            <div class="field-row">
-              <label class="field-label">Platform availability</label>
-              <div class="platform-toggles">
-                <button
-                  *ngFor="let p of platformOptions"
-                  type="button"
-                  class="chip"
-                  [ngClass]="{ 'chip--active': isPlatformSelected(p.id) }"
-                  (click)="togglePlatform(p.id)"
-                >{{ p.label }}</button>
-              </div>
-            </div>
-
-            <hf-notice type="warn">
-              The server password will only be visible to members who have RSVP'd as Interested or Tentative.
-            </hf-notice>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Right: preview + actions -->
-      <div class="create-right">
-        <div class="panel preview-card">
-          <div class="panel-header"><span class="panel-title">Preview</span></div>
-          <div class="panel-body">
-            <div class="preview-banner"></div>
-            <div class="preview-info">
-              <div class="preview-title serif">{{ form.get('title')?.value || 'Event title…' }}</div>
-              <div class="preview-meta">
-                {{ form.get('date')?.value || 'Date TBD' }}
-                &middot; {{ form.get('startTime')?.value }} {{ form.get('timezone')?.value }}
-              </div>
-              <div class="row" style="gap:6px;margin-top:6px;">
-                <span *ngFor="let tag of tags" class="badge brass">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="create-actions">
-          <button type="button" class="btn btn-ghost btn-block" (click)="saveDraft()">Save draft</button>
-          <button type="button" class="btn btn-primary btn-block" (click)="publish()" [disabled]="form.invalid">Publish</button>
-        </div>
-      </div>
-
-    </form>
-  </div>
 </hf-app-shell>

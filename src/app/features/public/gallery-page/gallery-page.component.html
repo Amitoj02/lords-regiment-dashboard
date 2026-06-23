@@ -1,101 +1,126 @@
 <div class="gallery-page">
-  <hf-public-nav [activeLink]="'/gallery'"></hf-public-nav>
+    <hf-public-nav [activeLink]="'/gallery'"></hf-public-nav>
 
-  <div class="page" style="max-width:1280px;margin:0 auto;padding:32px 56px 64px">
-    <!-- Page Head -->
-    <div class="page-head">
-      <div>
-        <div class="admin-label brass" style="margin-bottom:6px">Gallery Dispatches</div>
-        <h1 class="page-title">The Regiment's Archive</h1>
-        <div class="page-sub">
-          Approved photographs, clips, and dispatches submitted by members. Sign in to submit your own.
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn btn-ghost btn-sm">Sign in to submit</button>
-      </div>
-    </div>
-
-    <!-- Filter Tabs & Tags -->
-    <div class="row between" style="margin-bottom:18px;align-items:center">
-      <div class="hf-tabs" style="margin-bottom:0;border:none">
-        <button
-          *ngFor="let tab of tabs"
-          class="hf-tab"
-          [ngClass]="{ 'active': activeTab === tab.key }"
-          (click)="setTab(tab.key)"
-        >{{ tab.label }}</button>
-      </div>
-
-      <div class="row" style="gap:6px;flex-wrap:wrap;max-width:600px;justify-content:flex-end">
-        <span
-          class="badge"
-          [ngClass]="{ 'brass': activeTag === null }"
-          style="cursor:pointer"
-          (click)="setTag(null)"
-        >#all</span>
-        <span
-          *ngFor="let tag of allTags"
-          class="badge"
-          [ngClass]="{ 'brass': activeTag === tag }"
-          style="cursor:pointer"
-          (click)="setTag(tag)"
-        >#{{ tag }}</span>
-      </div>
-    </div>
-
-    <!-- Gallery Masonry -->
-    <div class="gallery-masonry" *ngIf="filteredItems.length > 0">
-      <div class="gallery-card" *ngFor="let item of filteredItems; let i = index">
-        <!-- Thumbnail -->
-        <div class="gallery-card-thumb" [ngClass]="'gallery-card-thumb--ar' + (i % 3)">
-          <img
-            *ngIf="item.thumbnailUrl"
-            [src]="item.thumbnailUrl"
-            [alt]="item.title"
-            class="gallery-card-img"
-          >
-          <div *ngIf="!item.thumbnailUrl" class="gallery-card-placeholder"></div>
-
-          <!-- Video play overlay -->
-          <div *ngIf="isVideo(item)" class="gallery-play-overlay">
-            <div class="gallery-play-btn">
-              <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor">
-                <path d="M0 0l12 7-12 7V0z"/>
-              </svg>
+    <div class="page gallery-page-wrap">
+        <!-- Page Head -->
+        <div class="page-head">
+            <div>
+                <div class="admin-label brass gallery-eyebrow">Gallery Dispatches</div>
+                <h1 class="page-title">The Regiment's Archive</h1>
+                <div class="page-sub">
+                    Approved photographs, clips, and dispatches submitted by members. Sign in to
+                    submit your own.
+                </div>
             </div>
-          </div>
-
-          <!-- Link / VOD badge -->
-          <div *ngIf="isLink(item)" class="gallery-link-badge">
-            <span class="badge brass" style="font-size:10px">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" style="margin-right:3px"><path d="M7.5 3.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5zM2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8zm1 0a5 5 0 1 0 10 0A5 5 0 0 0 3 8z"/></svg>
-              VOD
-            </span>
-          </div>
-        </div>
-
-        <!-- Card body -->
-        <div class="gallery-card-body">
-          <div class="gallery-card-title serif-display">{{ item.title }}</div>
-          <div class="row between" style="margin-top:8px">
-            <div class="row" style="gap:6px">
-              <hf-avatar [name]="item.submittedBy" [size]="18"></hf-avatar>
-              <span style="font-size:11.5px;color:var(--t-400)">{{ item.submittedBy }}</span>
+            <div class="row">
+                <button type="button" class="btn btn-ghost btn-sm">Sign in to submit</button>
             </div>
-            <span class="row" style="gap:4px;color:var(--oxblood-300);font-size:11.5px">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14.25l-1.45-1.32C2.7 9.12 0 6.6 0 4.5 0 2.42 1.67 1 3.5 1c1.09 0 2.13.5 2.8 1.29L8 4.01l1.7-1.72C10.37 1.5 11.41 1 12.5 1 14.33 1 16 2.42 16 4.5c0 2.1-2.7 4.62-6.55 8.43L8 14.25z"/></svg>
-              {{ item.likes }}
-            </span>
-          </div>
         </div>
-      </div>
+
+        <!-- Filter Tabs & Tags -->
+        <div class="row between gallery-filter-bar">
+            <div class="hf-tabs gallery-tabs">
+                @for (tab of tabs; track tab) {
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ 'active': activeTab === tab.key }"
+                    (click)="setTab(tab.key)"
+                >
+                    {{ tab.label }}
+                </button>
+                }
+            </div>
+
+            <div class="row gallery-tag-list">
+                <button
+                    type="button"
+                    class="badge gallery-tag"
+                    [ngClass]="{ 'brass': activeTag === null }"
+                    (click)="setTag(null)"
+                >
+                    #all
+                </button>
+                @for (tag of allTags; track tag) {
+                <button
+                    type="button"
+                    class="badge gallery-tag"
+                    [ngClass]="{ 'brass': activeTag === tag }"
+                    (click)="setTag(tag)"
+                >
+                    #{{ tag }}
+                </button>
+                }
+            </div>
+        </div>
+
+        <!-- Gallery Masonry -->
+        @if (filteredItems.length > 0) {
+        <div class="gallery-masonry">
+            @for (item of filteredItems; track item; let i = $index) {
+            <div class="gallery-card">
+                <!-- Thumbnail -->
+                <div class="gallery-card-thumb" [ngClass]="'gallery-card-thumb--ar' + (i % 3)">
+                    @if (item.thumbnailUrl) {
+                    <img [src]="item.thumbnailUrl" [alt]="item.title" class="gallery-card-img" />
+                    } @if (!item.thumbnailUrl) {
+                    <div class="gallery-card-placeholder"></div>
+                    }
+                    <!-- Video play overlay -->
+                    @if (isVideo(item)) {
+                    <div class="gallery-play-overlay">
+                        <div class="gallery-play-btn">
+                            <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor">
+                                <path d="M0 0l12 7-12 7V0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    }
+                    <!-- Link / VOD badge -->
+                    @if (isLink(item)) {
+                    <div class="gallery-link-badge">
+                        <span class="badge brass gallery-vod-badge">
+                            <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                class="gallery-vod-icon"
+                            >
+                                <path
+                                    d="M7.5 3.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5zM2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8zm1 0a5 5 0 1 0 10 0A5 5 0 0 0 3 8z"
+                                />
+                            </svg>
+                            VOD
+                        </span>
+                    </div>
+                    }
+                </div>
+                <!-- Card body -->
+                <div class="gallery-card-body">
+                    <div class="gallery-card-title serif-display">{{ item.title }}</div>
+                    <div class="row between gallery-card-meta">
+                        <div class="row gallery-submitter">
+                            <hf-avatar [name]="item.submittedBy" [size]="18"></hf-avatar>
+                            <span class="gallery-submitter-name">{{ item.submittedBy }}</span>
+                        </div>
+                        <span class="row gallery-likes">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                <path
+                                    d="M8 14.25l-1.45-1.32C2.7 9.12 0 6.6 0 4.5 0 2.42 1.67 1 3.5 1c1.09 0 2.13.5 2.8 1.29L8 4.01l1.7-1.72C10.37 1.5 11.41 1 12.5 1 14.33 1 16 2.42 16 4.5c0 2.1-2.7 4.62-6.55 8.43L8 14.25z"
+                                />
+                            </svg>
+                            {{ item.likes }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        } @if (filteredItems.length === 0) {
+        <div class="notice info gallery-empty">No items match the selected filter.</div>
+        }
     </div>
 
-    <div *ngIf="filteredItems.length === 0" class="notice info" style="margin-top:24px">
-      No items match the selected filter.
-    </div>
-  </div>
-
-  <hf-public-footer></hf-public-footer>
+    <hf-public-footer></hf-public-footer>
 </div>

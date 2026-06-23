@@ -18,35 +18,24 @@ import { TopbarComponent } from './components/topbar/topbar.component';
 import { BottomNavComponent } from './components/bottom-nav/bottom-nav.component';
 
 const SHARED_COMPONENTS = [
-  AvatarComponent,
-  BadgeComponent,
-  NoticeComponent,
-  MedalComponent,
-  ChevronsComponent,
-  CrestDividerComponent,
-  PlatformBadgesComponent,
-  EventStatusComponent,
-  StatTileComponent,
-  AppShellComponent,
-  SidebarComponent,
-  TopbarComponent,
-  BottomNavComponent,
+    AvatarComponent,
+    BadgeComponent,
+    NoticeComponent,
+    MedalComponent,
+    ChevronsComponent,
+    CrestDividerComponent,
+    PlatformBadgesComponent,
+    EventStatusComponent,
+    StatTileComponent,
+    AppShellComponent,
+    SidebarComponent,
+    TopbarComponent,
+    BottomNavComponent,
 ];
 
 @NgModule({
-  declarations: SHARED_COMPONENTS,
-  imports: [
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    ReactiveFormsModule,
-  ],
-  exports: [
-    ...SHARED_COMPONENTS,
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    ReactiveFormsModule,
-  ],
+    declarations: SHARED_COMPONENTS,
+    imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+    exports: [...SHARED_COMPONENTS, CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
 })
 export class SharedModule {}

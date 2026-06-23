@@ -1,0 +1,16 @@
+# Build output & caches (root-anchored so feature dirs like src/app/features/public are NOT ignored)
+/dist
+/.angular
+/coverage
+/out-tsc
+
+# Dependencies & lockfiles
+/node_modules
+/package-lock.json
+
+# Vendored design reference kit (not application code)
+/design-reference
+
+# Static assets
+/public
+/src/assets

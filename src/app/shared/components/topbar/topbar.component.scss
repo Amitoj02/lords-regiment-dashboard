@@ -1,67 +1,69 @@
 // Global .topbar, .crumbs styles from _layout.scss apply
 :host {
-  display: block;
+    display: block;
 }
 
 .sp {
-  flex: 1;
+    flex: 1;
 }
 
 // Mobile hamburger — hidden on desktop, revealed below the breakpoint
 .topbar-burger {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--t-200);
-  padding: 4px;
-  margin-right: 4px;
-  cursor: pointer;
-  line-height: 0;
+    display: none;
+    background: none;
+    border: none;
+    color: var(--t-200);
+    padding: 4px;
+    margin-right: 4px;
+    cursor: pointer;
+    line-height: 0;
 
-  &:hover { color: var(--t-100); }
+    &:hover {
+        color: var(--t-100);
+    }
 }
 
 .topbar-search {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--ink-800);
-  border: 1px solid var(--rule-2);
-  border-radius: var(--r-3);
-  padding: 5px 10px;
-  color: var(--t-400);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ink-800);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-3);
+    padding: 5px 10px;
+    color: var(--t-400);
 
-  &:focus-within {
-    border-color: var(--rule-3);
-    color: var(--t-200);
-  }
+    &:focus-within {
+        border-color: var(--rule-3);
+        color: var(--t-200);
+    }
 
-  svg {
-    flex: none;
-  }
+    svg {
+        flex: none;
+    }
 }
 
 .topbar-input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--t-200);
-  font-family: var(--sans);
-  font-size: 13px;
-  width: 160px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--t-200);
+    font-family: var(--sans);
+    font-size: 13px;
+    width: 160px;
 
-  &::placeholder {
-    color: var(--t-500);
-  }
+    &::placeholder {
+        color: var(--t-500);
+    }
 }
 
 @media (max-width: 820px) {
-  .topbar-burger {
-    display: inline-flex;
-  }
+    .topbar-burger {
+        display: inline-flex;
+    }
 
-  // Reclaim space on small screens — drop the search field
-  .topbar-search {
-    display: none;
-  }
+    // Reclaim space on small screens — drop the search field
+    .topbar-search {
+        display: none;
+    }
 }

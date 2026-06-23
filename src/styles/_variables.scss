@@ -3,87 +3,99 @@
 // =========================================================
 
 :root {
-  // — Surfaces (dark) —
-  --ink-900: #0b0e14;
-  --ink-850: #10141c;
-  --ink-800: #161b25;
-  --ink-750: #1b212c;
-  --ink-700: #222936;
-  --ink-600: #2c3442;
-  --ink-500: #3a4250;
-  --ink-400: #525a6a;
+    // — Surfaces (dark) —
+    --ink-900: #0b0e14;
+    --ink-850: #10141c;
+    --ink-800: #161b25;
+    --ink-750: #1b212c;
+    --ink-700: #222936;
+    --ink-600: #2c3442;
+    --ink-500: #3a4250;
+    --ink-400: #525a6a;
 
-  // — Hairlines & borders —
-  --rule:   #1f2531;
-  --rule-2: #2a3142;
-  --rule-3: #394155;
+    // — Hairlines & borders —
+    --rule: #1f2531;
+    --rule-2: #2a3142;
+    --rule-3: #394155;
 
-  // — Parchment —
-  --parch-50:  #f3ecd9;
-  --parch-100: #ebe2c8;
-  --parch-200: #ddd1ae;
-  --parch-300: #c9b98e;
-  --parch-700: #6b5a37;
-  --parch-900: #2c2418;
+    // — Parchment —
+    --parch-50: #f3ecd9;
+    --parch-100: #ebe2c8;
+    --parch-200: #ddd1ae;
+    --parch-300: #c9b98e;
+    --parch-700: #6b5a37;
+    --parch-900: #2c2418;
 
-  // — Brass / antique gold —
-  --brass-100: #efd9a3;
-  --brass-300: #d5b167;
-  --brass-400: #c69a45;
-  --brass-500: #b08436;
-  --brass-600: #8d6724;
-  --brass-700: #634914;
+    // — Brass / antique gold —
+    --brass-100: #efd9a3;
+    --brass-300: #d5b167;
+    --brass-400: #c69a45;
+    --brass-500: #b08436;
+    --brass-600: #8d6724;
+    --brass-700: #634914;
 
-  // — Laurel (regimental green) —
-  --laurel-400: #6c7e54;
-  --laurel-500: #556b48;
-  --laurel-600: #3f5238;
-  --laurel-700: #2c3a28;
+    // — Laurel (regimental green) —
+    --laurel-400: #6c7e54;
+    --laurel-500: #556b48;
+    --laurel-600: #3f5238;
+    --laurel-700: #2c3a28;
 
-  // — Oxblood —
-  --oxblood-300: #c2746c;
-  --oxblood-400: #a64d44;
-  --oxblood-500: #8a382f;
-  --oxblood-600: #6e2a23;
-  --oxblood-700: #4f1c16;
+    // — Oxblood —
+    --oxblood-300: #c2746c;
+    --oxblood-400: #a64d44;
+    --oxblood-500: #8a382f;
+    --oxblood-600: #6e2a23;
+    --oxblood-700: #4f1c16;
 
-  // — Regiment steel-blue —
-  --regblue-300: #7d97b4;
-  --regblue-500: #4f6b8a;
-  --regblue-700: #2b3e55;
+    // — Regiment steel-blue —
+    --regblue-300: #7d97b4;
+    --regblue-500: #4f6b8a;
+    --regblue-700: #2b3e55;
 
-  // — Semantic —
-  --ok:   #6a8b4e;
-  --warn: #b08436;
-  --err:  #a64d44;
-  --info: #4f6b8a;
+    // — Semantic —
+    --ok: #6a8b4e;
+    --warn: #b08436;
+    --err: #a64d44;
+    --info: #4f6b8a;
 
-  // — Text —
-  --t-100: #efe9d8;
-  --t-200: #d8d2c2;
-  --t-300: #aea795;
-  --t-400: #7d7866;
-  --t-500: #5a5648;
-  --t-on-parch:   #1d1812;
-  --t-on-parch-2: #4a3f28;
+    // — Text —
+    --t-100: #efe9d8;
+    --t-200: #d8d2c2;
+    --t-300: #aea795;
+    --t-400: #7d7866;
+    --t-500: #5a5648;
+    --t-on-parch: #1d1812;
+    --t-on-parch-2: #4a3f28;
 
-  // — Typography —
-  --serif: "Cormorant Garamond", "Libre Caslon Text", Garamond, "Times New Roman", serif;
-  --sans:  "Inter", "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono:  "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    // — Typography —
+    --serif: 'Cormorant Garamond', 'Libre Caslon Text', Garamond, 'Times New Roman', serif;
+    --sans: 'Inter', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
-  // — Radii —
-  --r-1: 2px;
-  --r-2: 3px;
-  --r-3: 4px;
-  --r-4: 6px;
+    // — Radii —
+    --r-1: 2px;
+    --r-2: 3px;
+    --r-3: 4px;
+    --r-4: 6px;
 
-  // — Elevation —
-  --shadow-1: 0 1px 0 rgba(0,0,0,.4), 0 0 0 1px var(--rule);
-  --shadow-2: 0 12px 28px -16px rgba(0,0,0,.6), 0 0 0 1px var(--rule-2);
+    // — Elevation —
+    --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px var(--rule);
+    --shadow-2: 0 12px 28px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--rule-2);
+
+    // — Brand (Discord) —
+    --discord: #404eed;
+    --discord-hover: #4a58f0;
+    --discord-press: #2c37b8;
+
+    // — Presence dots —
+    --status-online: #4a9d63;
+    --status-offline: #6b4a3e;
+
+    // — Pure white (text on brand / photographic surfaces) —
+    --white: #ffffff;
 }
 
 // SCSS variables for use in mixins/functions
 $serif: var(--serif);
-$sans:  var(--sans);
-$mono:  var(--mono);
+$sans: var(--sans);
+$mono: var(--mono);
