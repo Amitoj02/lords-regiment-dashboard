@@ -1,0 +1,127 @@
+%% Lords Regiment Dashboard — client-side data model (frontend interface models).
+%% Reverse-engineered from src/app/core/models/. The authoritative relational
+%% schema lives in the companion backend repo (lords-dashboard-backend/SCHEMA.md).
+%% Frontend "relationships" are logical: most cross-references are string ids
+%% (e.g. rank name, member id, event id), not enforced foreign keys.
+erDiagram
+    MEMBER {
+        string id PK
+        string name
+        string discordTag
+        string inGameName
+        string rank FK "-> RANK.name"
+        int chevrons
+        MedalRibbon_array medals "-> MEDAL.ribbon"
+        MemberRole role
+        boolean discordLinked
+        MemberStatus status
+        string lastSeen
+        Platform platform
+        string timezone
+        string joinedAt
+        int eventsAttended
+        int attendanceRate
+    }
+    RANK {
+        string name PK
+        int chevrons
+        int holders
+        string discordRole
+        boolean discordLinked
+        int order
+    }
+    MEDAL {
+        string letter
+        MedalRibbon ribbon
+        string title
+        string description
+        int holders
+        boolean discordLinked
+    }
+    APPLICATION {
+        string id PK
+        string applicantName
+        string discordTag
+        string inGameName
+        string platform
+        ApplicantType applicantType
+        string source
+        string submittedAt
+        ApplicationStatus status
+        string whyJoin
+        string howFound
+        string priorExperience
+        string timezone
+        boolean isPreviousApplicant
+        string moderatorNote
+        string discordDmMessage
+    }
+    REGIMENT_EVENT {
+        string id PK
+        string title
+        string description
+        string serverName
+        string serverPassword
+        string date
+        string startTime
+        string endTime
+        string timezone
+        string_array platforms
+        EventStatus status
+        string recurring
+        string_array tags
+        json rsvpCounts
+        string_array attendees FK "-> MEMBER.id"
+        string bannerUrl
+        string_array notifyBefore
+    }
+    GALLERY_ITEM {
+        string id PK
+        string title
+        GalleryItemType type
+        string thumbnailUrl
+        string mediaUrl
+        string submittedBy FK "-> MEMBER.id"
+        string submittedAt
+        GalleryItemStatus status
+        int likes
+        string_array tags
+        string linkedEvent FK "-> REGIMENT_EVENT.id"
+        string_array taggedMembers FK "-> MEMBER.id"
+        string caption
+        int fileCount
+    }
+    AUDIT_LOG {
+        string id PK
+        string timestamp
+        string actor FK "-> MEMBER.id"
+        string action
+        string detail
+        AuditSeverity severity
+        string targetUser FK "-> MEMBER.id"
+        string beforeState
+        string afterState
+        string actorIp
+        string requestId
+        boolean discordSynced
+    }
+    CURRENT_USER {
+        string id PK "-> MEMBER.id"
+        string name
+        string rank
+        MemberRole role
+        string discordTag
+        boolean discordLinked
+        string avatarUrl
+    }
+
+    RANK ||--o{ MEMBER : "held by"
+    MEMBER }o--o{ MEDAL : "awarded"
+    APPLICATION |o--o| MEMBER : "becomes on approval"
+    MEMBER ||--o{ REGIMENT_EVENT : "attends"
+    MEMBER ||--o{ GALLERY_ITEM : "submits"
+    REGIMENT_EVENT |o--o{ GALLERY_ITEM : "linked in"
+    MEMBER }o--o{ GALLERY_ITEM : "tagged in"
+    MEMBER ||--o{ AUDIT_LOG : "actor of"
+    MEMBER |o--o{ AUDIT_LOG : "target of"
+    MEMBER ||--|| CURRENT_USER : "session projection"
