@@ -162,14 +162,17 @@
                             </span>
                         </td>
                         <td class="col-actions">
+                            @if (canManage) {
                             <button
                                 type="button"
                                 class="btn btn-icon btn-ghost btn-sm"
                                 title="Actions"
                                 aria-label="Member actions"
+                                (click)="openActions(member)"
                             >
                                 ···
                             </button>
+                            }
                         </td>
                     </tr>
                     } @if (filteredMembers.length === 0) {
@@ -195,4 +198,11 @@
             <button type="button" class="btn btn-ghost btn-sm" disabled>Next →</button>
         </div>
     </div>
+
+    <!-- Admin action modal -->
+    <hf-admin-action-modal
+        [member]="selectedMember"
+        (close)="selectedMember = null"
+        (memberUpdated)="onMemberUpdated($event)"
+    ></hf-admin-action-modal>
 </hf-app-shell>

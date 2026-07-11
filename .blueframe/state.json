@@ -2,9 +2,9 @@
   "version": 1,
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "c2e191e",
-  "lastSyncedAt": "2026-07-11T01:45:00Z",
-  "notesForNextSession": "State REBUILT via /bf-init against origin/main c2e191e (pulled 6 commits: PRs #1 mobile-view support + #2 tech-debt cleanup + an Angular dev guide). Part of the two-repo Blueframe workspace \"lords-dashboard\" (backend: `lords-dashboard-backend` at ../lords-dashboard-backend). Tasks are scoped by feature area so each shows as its own planet (scaffold/tooling/design-system/responsive/shared/core-data/public/onboarding/member/admin/auth/accessibility/testing/integration) -- NOT one repo-wide 'web' planet. Still Angular 19.2 NgModule SPA, standalone:false, Bootstrap 5.3, stub services (of(...)) + hard-coded signal AuthService; nothing talks to the real backend yet. NEW since the last state: T-0018 responsive/mobile (bottom-nav + _responsive.scss, DEPLOYED), T-0019 dev tooling+CI (ESLint/Prettier/editorconfig/GitHub Actions, DEPLOYED), T-0020 member account-deletion GDPR self-service (replaces the removed admin GDPR screen, REVIEW), T-0021 accessibility+architecture modernization pass (DEPLOYED). REMOVED by the cleanup: admin GDPR route (admin now 9 routes) and the member admin-action-modal shell -- so T-0017 (admin action & settings UI) is now a from-scratch build. Cross-repo deps reference backend as `lords-dashboard-backend:T-####`; backend T-0025 depends back on THIS repo's T-0011/T-0012/T-0017 (ids kept stable across the rebuild). Integration still planned: HTTP wiring (T-0011), OAuth2->JWT (T-0012), env config (T-0013), tests (T-0014). Questionnaires open: model-shape alignment (T-0015), integration sequencing (T-0016). (Unrelated nested git repo `task-dashboard/` sits untracked at repo root -- not part of this project.)",
-  "nextIdCounter": 22,
+  "lastSyncedAt": "2026-07-11T03:00:00Z",
+  "notesForNextSession": "PLAN RE-PRIORITIZED via bf-plan (2026-07-11) into MVP-first tiers alongside the backend, under the workspace Docker-first mandate. OWNER DECISIONS: MVP = core dashboard (Discord bot UI DEFERRED); ONE unified docker-compose lives in the BACKEND repo (lords-dashboard-backend) and builds THIS app as its `web` service via T-0022's Dockerfile — there is NO compose in this repo; dev/prod image parity. FRONTEND PRIORITY: MVP = T-0013 Docker-aware env+proxy -> T-0022 frontend Dockerfile/nginx; T-0011 core HTTP (members/apps/ranks/medals/regiment) + T-0012 real Discord OAuth2->JWT + /auth/callback -> T-0023 member admin-action modal (capability-gated via the /auth/me capabilities array) -> T-0026 guard un-wired surfaces so the MVP ships no stub data. Resolve questionnaires T-0015 (model-shape vs backend SCHEMA.md) + T-0016 (integration sequencing) BEFORE wiring HTTP. POST-MVP features = T-0025 wire events/gallery/audit/notifications/settings + T-0017 settings panes/announcement composer/invite; T-0014 test coverage. BOT milestone = T-0024 bot-status + Discord settings panes -> backend /discord endpoints. CROSS-REPO: backend MVP deploy lords-dashboard-backend:T-0032 depends on THIS repo T-0011/T-0012/T-0013/T-0022/T-0023; backend hardening lords-dashboard-backend:T-0025 depends on T-0017/T-0024/T-0025; the backend unified compose lords-dashboard-backend:T-0009 builds THIS repo's T-0022 image. SHIPPED: scaffold, design system, shared lib, stub services, public/onboarding/member/admin screens (stub-driven), responsive/mobile (T-0018), tooling/CI (T-0019), account-deletion GDPR (T-0020), accessibility pass (T-0021).",
+  "nextIdCounter": 27,
   "connections": [],
   "tasks": [
     {
@@ -17,17 +17,37 @@
       "sizeWeight": 5,
       "area": "scaffold",
       "repo": "",
-      "paths": ["src/app/app.module.ts", "src/app/app-routing.module.ts", "src/app/app.component.ts", "src/app/core/core.module.ts", "src/app/shared/shared.module.ts", "src/main.ts"],
+      "paths": [
+        "src/app/app.module.ts",
+        "src/app/app-routing.module.ts",
+        "src/app/app.component.ts",
+        "src/app/core/core.module.ts",
+        "src/app/shared/shared.module.ts",
+        "src/main.ts"
+      ],
       "dependsOn": [],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "All 4 feature modules lazy-load without console errors", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "All 4 feature modules lazy-load without console errors",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "deployed", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        }
+      ]
     },
     {
       "id": "T-0002",
@@ -39,17 +59,39 @@
       "sizeWeight": 3,
       "area": "design-system",
       "repo": "",
-      "paths": ["src/styles/_variables.scss", "src/styles/_base.scss", "src/styles/_buttons.scss", "src/styles/_forms.scss", "src/styles/_components.scss", "src/styles/_layout.scss", "src/styles/_bootstrap.scss", "src/styles.scss"],
+      "paths": [
+        "src/styles/_variables.scss",
+        "src/styles/_base.scss",
+        "src/styles/_buttons.scss",
+        "src/styles/_forms.scss",
+        "src/styles/_components.scss",
+        "src/styles/_layout.scss",
+        "src/styles/_bootstrap.scss",
+        "src/styles.scss"
+      ],
       "dependsOn": [],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "Custom .row utility overrides Bootstrap .row > * width:100% collision", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "Custom .row utility overrides Bootstrap .row > * width:100% collision",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "deployed", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        }
+      ]
     },
     {
       "id": "T-0003",
@@ -61,17 +103,39 @@
       "sizeWeight": 5,
       "area": "shared",
       "repo": "",
-      "paths": ["src/app/shared/components/", "src/app/shared/shared.module.ts"],
-      "dependsOn": ["T-0002"],
+      "paths": [
+        "src/app/shared/components/",
+        "src/app/shared/shared.module.ts"
+      ],
+      "dependsOn": [
+        "T-0002"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "hf-avatar computes initials + deterministic oklch colour from name", "status": "pending" }, { "desc": "hf-app-shell renders sidebar/topbar/scroll area with active route + crumbs", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "hf-avatar computes initials + deterministic oklch colour from name",
+          "status": "pending"
+        },
+        {
+          "desc": "hf-app-shell renders sidebar/topbar/scroll area with active route + crumbs",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "deployed", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        }
+      ]
     },
     {
       "id": "T-0004",
@@ -83,17 +147,39 @@
       "sizeWeight": 3,
       "area": "core-data",
       "repo": "",
-      "paths": ["src/app/core/models/", "src/app/core/services/members.service.ts", "src/app/core/services/events.service.ts", "src/app/core/services/applications.service.ts", "src/app/core/services/gallery.service.ts", "src/app/core/services/audit.service.ts"],
+      "paths": [
+        "src/app/core/models/",
+        "src/app/core/services/members.service.ts",
+        "src/app/core/services/events.service.ts",
+        "src/app/core/services/applications.service.ts",
+        "src/app/core/services/gallery.service.ts",
+        "src/app/core/services/audit.service.ts"
+      ],
       "dependsOn": [],
-      "blocks": ["T-0011"],
+      "blocks": [
+        "T-0011"
+      ],
       "questions": [],
-      "testPlan": [{ "desc": "Each service returns the expected stub collection via of()", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "Each service returns the expected stub collection via of()",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "deployed", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        }
+      ]
     },
     {
       "id": "T-0005",
@@ -105,7 +191,10 @@
       "sizeWeight": 2,
       "area": "design-system",
       "repo": "",
-      "paths": ["design-reference/", "CLAUDE.md"],
+      "paths": [
+        "design-reference/",
+        "CLAUDE.md"
+      ],
       "dependsOn": [],
       "blocks": [],
       "questions": [],
@@ -115,7 +204,15 @@
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "deployed", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        }
+      ]
     },
     {
       "id": "T-0006",
@@ -127,17 +224,39 @@
       "sizeWeight": 5,
       "area": "public",
       "repo": "",
-      "paths": ["src/app/features/public/"],
-      "dependsOn": ["T-0003", "T-0004"],
+      "paths": [
+        "src/app/features/public/"
+      ],
+      "dependsOn": [
+        "T-0003",
+        "T-0004"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "/, /home, /events, /gallery, /login all render", "status": "pending" }, { "desc": "Gallery/events broken-image icons are expected (stub URLs)", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "/, /home, /events, /gallery, /login all render",
+          "status": "pending"
+        },
+        {
+          "desc": "Gallery/events broken-image icons are expected (stub URLs)",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "review", "by": "claude", "note": "created via bf-init reverse-engineering; built but stub-driven and untested" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        }
+      ]
     },
     {
       "id": "T-0007",
@@ -149,17 +268,35 @@
       "sizeWeight": 3,
       "area": "onboarding",
       "repo": "",
-      "paths": ["src/app/features/onboarding/"],
-      "dependsOn": ["T-0003", "T-0004"],
+      "paths": [
+        "src/app/features/onboarding/"
+      ],
+      "dependsOn": [
+        "T-0003",
+        "T-0004"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "/onboarding/setup, /onboarding/setup/discord, /onboarding/apply render and submit against stubs", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "/onboarding/setup, /onboarding/setup/discord, /onboarding/apply render and submit against stubs",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "review", "by": "claude", "note": "created via bf-init reverse-engineering; built but stub-driven and untested" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        }
+      ]
     },
     {
       "id": "T-0008",
@@ -171,17 +308,43 @@
       "sizeWeight": 5,
       "area": "member",
       "repo": "",
-      "paths": ["src/app/features/member/dashboard/", "src/app/features/member/roster/", "src/app/features/member/profile/", "src/app/features/member/member.module.ts"],
-      "dependsOn": ["T-0003", "T-0004", "T-0010"],
+      "paths": [
+        "src/app/features/member/dashboard/",
+        "src/app/features/member/roster/",
+        "src/app/features/member/profile/",
+        "src/app/features/member/member.module.ts"
+      ],
+      "dependsOn": [
+        "T-0003",
+        "T-0004",
+        "T-0010"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "/dashboard, /roster, /profile, /profile/:id render for the stub user", "status": "pending" }, { "desc": "AuthGuard redirects to /login when unauthenticated", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "/dashboard, /roster, /profile, /profile/:id render for the stub user",
+          "status": "pending"
+        },
+        {
+          "desc": "AuthGuard redirects to /login when unauthenticated",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "review", "by": "claude", "note": "created via bf-init reverse-engineering; built but stub-driven and untested" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        }
+      ]
     },
     {
       "id": "T-0009",
@@ -193,17 +356,40 @@
       "sizeWeight": 8,
       "area": "admin",
       "repo": "",
-      "paths": ["src/app/features/admin/"],
-      "dependsOn": ["T-0003", "T-0004", "T-0010"],
+      "paths": [
+        "src/app/features/admin/"
+      ],
+      "dependsOn": [
+        "T-0003",
+        "T-0004",
+        "T-0010"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "All 9 /admin/* routes render for an admin/moderator stub user", "status": "pending" }, { "desc": "AdminGuard redirects non-admins to /dashboard", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "All 9 /admin/* routes render for an admin/moderator stub user",
+          "status": "pending"
+        },
+        {
+          "desc": "AdminGuard redirects non-admins to /dashboard",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "review", "by": "claude", "note": "created via bf-init reverse-engineering; built but stub-driven and untested" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        }
+      ]
     },
     {
       "id": "T-0010",
@@ -215,39 +401,98 @@
       "sizeWeight": 3,
       "area": "auth",
       "repo": "",
-      "paths": ["src/app/core/services/auth.service.ts", "src/app/core/guards/auth.guard.ts", "src/app/core/guards/admin.guard.ts"],
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/core/guards/auth.guard.ts",
+        "src/app/core/guards/admin.guard.ts"
+      ],
       "dependsOn": [],
-      "blocks": ["T-0012"],
+      "blocks": [
+        "T-0012"
+      ],
       "questions": [],
-      "testPlan": [{ "desc": "isAdmin() true for Owner/Admin/Moderator; isOwnerOrAdmin() true only for Owner/Admin", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "isAdmin() true for Owner/Admin/Moderator; isOwnerOrAdmin() true only for Owner/Admin",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "review", "by": "claude", "note": "created via bf-init reverse-engineering; stub auth, real flow not implemented" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; stub auth, real flow not implemented"
+        }
+      ]
     },
     {
       "id": "T-0011",
-      "title": "Wire real HTTP into services",
-      "summary": "Replace the of(stubData) implementations in all 5 core services with HttpClient calls to the backend REST API (http://localhost:3000/api), and register provideHttpClient. Extend beyond the 5 stub services with clients for ranks, medals, notifications, settings, regiment stats and Discord control as their backend modules land. Contracts live in companion repo lords-dashboard-backend (SCHEMA.md, Swagger at /api/docs) -- read them rather than inventing endpoints.",
+      "title": "Wire core MVP HTTP services",
+      "summary": "MVP HTTP wiring: register provideHttpClient and swap the of(stubData) implementations for real HttpClient calls to the core MVP endpoints — members, applications, ranks, medals and regiment stats. Events/gallery/audit/notifications/settings clients are deferred to T-0025 (post-MVP, as those backend modules land). Contracts live in lords-dashboard-backend (SCHEMA.md, Swagger at /api/docs) — read them rather than inventing endpoints.",
       "status": "planned",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
       "area": "core-data",
       "repo": "",
-      "paths": ["src/app/core/services/members.service.ts", "src/app/core/services/events.service.ts", "src/app/core/services/applications.service.ts", "src/app/core/services/gallery.service.ts", "src/app/core/services/audit.service.ts", "src/app/app.module.ts"],
-      "dependsOn": ["T-0004", "T-0013", "lords-dashboard-backend:T-0010", "lords-dashboard-backend:T-0014", "lords-dashboard-backend:T-0015", "lords-dashboard-backend:T-0016", "lords-dashboard-backend:T-0017"],
+      "paths": [
+        "src/app/core/services/members.service.ts",
+        "src/app/core/services/applications.service.ts",
+        "src/app/app.module.ts"
+      ],
+      "dependsOn": [
+        "T-0004",
+        "T-0013",
+        "T-0015",
+        "T-0016",
+        "lords-dashboard-backend:T-0010",
+        "lords-dashboard-backend:T-0011",
+        "lords-dashboard-backend:T-0012",
+        "lords-dashboard-backend:T-0013",
+        "lords-dashboard-backend:T-0014"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "provideHttpClient registered and each service hits its /api/* endpoint", "status": "pending" }],
-      "regressionRisk": [{ "desc": "All feature screens consume these services; swapping stub->HTTP changes async timing and error surfaces app-wide", "status": "open", "notedAt": "2026-07-11T00:44:53Z" }],
+      "testPlan": [
+        {
+          "desc": "provideHttpClient registered and the members/applications/ranks/medals/regiment services hit their /api/* endpoints with live data",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "All feature screens consume these services; swapping stub->HTTP changes async timing and error surfaces app-wide",
+          "status": "open",
+          "notedAt": "2026-07-11T00:44:53Z"
+        }
+      ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "planned", "by": "claude", "note": "created via bf-init reverse-engineering; TODO markers present in every service" }]
+      "updatedAt": "2026-07-11T03:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; TODO markers present in every service"
+        },
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": "planned",
+          "to": "planned",
+          "by": "claude",
+          "note": "bf-plan re-scope: narrowed to MVP core services; events/gallery/audit/notifications/settings split to T-0025; added dep on T-0015 model-shape check"
+        }
+      ]
     },
     {
       "id": "T-0012",
@@ -259,39 +504,98 @@
       "sizeWeight": 5,
       "area": "auth",
       "repo": "",
-      "paths": ["src/app/core/services/auth.service.ts", "src/app/features/public/login/login.component.ts"],
-      "dependsOn": ["T-0010", "T-0013", "lords-dashboard-backend:T-0004"],
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/public/login/login.component.ts"
+      ],
+      "dependsOn": [
+        "T-0010",
+        "T-0013",
+        "T-0016",
+        "lords-dashboard-backend:T-0004"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "Login redirects to Discord; /auth/callback exchanges code and stores JWT", "status": "pending" }, { "desc": "currentUser hydrates from /api/auth/me; guards honour real role", "status": "pending" }],
-      "regressionRisk": [{ "desc": "AuthGuard/AdminGuard and every guarded route depend on AuthService shape; changing it affects all member/admin access", "status": "open", "notedAt": "2026-07-11T00:44:53Z" }],
+      "testPlan": [
+        {
+          "desc": "Login redirects to Discord; /auth/callback exchanges code and stores JWT",
+          "status": "pending"
+        },
+        {
+          "desc": "currentUser hydrates from /api/auth/me; guards honour real role",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "AuthGuard/AdminGuard and every guarded route depend on AuthService shape; changing it affects all member/admin access",
+          "status": "open",
+          "notedAt": "2026-07-11T00:44:53Z"
+        }
+      ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "planned", "by": "claude", "note": "created via bf-init reverse-engineering; no /auth/callback route or token handling exists yet" }]
+      "updatedAt": "2026-07-11T03:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; no /auth/callback route or token handling exists yet"
+        }
+      ]
     },
     {
       "id": "T-0013",
-      "title": "Environment configuration for API base URL",
-      "summary": "No src/environments/*.ts files exist. Add environment.ts / environment.prod.ts (or equivalent) exposing the API base URL and OAuth config, plus the angular.json fileReplacements, so HTTP and auth work aren't hard-coding http://localhost:3000/api.",
+      "title": "Environment configuration for API base URL (Docker-aware)",
+      "summary": "Add environment.ts / environment.prod.ts (+ angular.json fileReplacements) exposing the API base URL and OAuth config. Docker-aware: dev proxies /api to the api container (Angular proxy.conf or the web container's nginx) so the SPA is same-origin and CORS-free; prod resolves /api behind the reverse proxy. No hard-coded http://localhost:3000/api.",
       "status": "planned",
       "type": "infra",
       "size": "S",
       "sizeWeight": 2,
       "area": "scaffold",
       "repo": "",
-      "paths": ["src/environments/", "angular.json"],
+      "paths": [
+        "src/environments/",
+        "angular.json",
+        "proxy.conf.json"
+      ],
       "dependsOn": [],
-      "blocks": ["T-0011", "T-0012"],
+      "blocks": [
+        "T-0011",
+        "T-0012",
+        "T-0022"
+      ],
       "questions": [],
-      "testPlan": [{ "desc": "Prod build swaps environment file; base URL resolves per configuration", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "Prod build swaps environment file; base URL resolves per configuration and /api is same-origin behind the proxy",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "planned", "by": "claude", "note": "created via bf-init reverse-engineering; no environments dir found" }]
+      "updatedAt": "2026-07-11T02:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; no environments dir found"
+        },
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": "planned",
+          "to": "planned",
+          "by": "claude",
+          "note": "bf-plan re-scope: Docker-aware env + proxy.conf so the SPA is same-origin with the api container; now also unblocks T-0022"
+        }
+      ]
     },
     {
       "id": "T-0014",
@@ -303,49 +607,102 @@
       "sizeWeight": 3,
       "area": "testing",
       "repo": "",
-      "paths": ["src/app/"],
-      "dependsOn": ["T-0019"],
+      "paths": [
+        "src/app/"
+      ],
+      "dependsOn": [
+        "T-0019"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "ng test runs green with meaningful coverage of services and guards", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "ng test runs green with meaningful coverage of services and guards",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "planned", "by": "claude", "note": "created via bf-init reverse-engineering; test coverage effectively absent" }]
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering; test coverage effectively absent"
+        }
+      ]
     },
     {
       "id": "T-0015",
       "title": "Verify model shapes against backend SCHEMA.md",
       "summary": "The frontend interface models (member/event/application/gallery/audit-log) were authored to mirror the backend, but drift is likely. Reconcile field names, enums, and optionality against the backend's normalized schema before wiring HTTP.",
-      "status": "questionnaire",
+      "status": "in_progress",
       "type": "question",
       "size": "M",
       "sizeWeight": 3,
       "area": "core-data",
       "repo": "",
-      "paths": ["src/app/core/models/"],
-      "dependsOn": ["lords-dashboard-backend:T-0003"],
-      "blocks": ["T-0011"],
+      "paths": [
+        "src/app/core/models/"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0003"
+      ],
+      "blocks": [
+        "T-0011"
+      ],
       "questions": [
-        { "q": "Do the frontend interface models exactly match the backend SCHEMA.md (28 tables) field names and types, or should they be regenerated from the API contract?", "answer": null, "askedAt": "2026-07-11T00:44:53Z" },
-        { "q": "Are IDs strings (as the frontend assumes) or numeric/UUID in the backend, and do date fields come as ISO strings?", "answer": null, "askedAt": "2026-07-11T00:44:53Z" },
-        { "q": "Do the frontend enums (statuses, roles, platforms, medal ribbons) enumerate the same values the API returns?", "answer": null, "askedAt": "2026-07-11T00:44:53Z" }
+        {
+          "q": "Do the frontend interface models exactly match the backend SCHEMA.md (28 tables) field names and types, or should they be regenerated from the API contract?",
+          "answer": "Always best practice. Try to follow same name conventions, also if the frontend need more fields than backend (usually it do), just follow what standard practice suggests online.",
+          "askedAt": "2026-07-11T00:44:53Z",
+          "answeredAt": "2026-07-11T02:39:18.271Z"
+        },
+        {
+          "q": "Are IDs strings (as the frontend assumes) or numeric/UUID in the backend, and do date fields come as ISO strings?",
+          "answer": "Find it yourself, personally i like numbers, because this regiment is going to be used by fewer people. UUID would be super overkill.",
+          "askedAt": "2026-07-11T00:44:53Z",
+          "answeredAt": "2026-07-11T02:40:15.463Z"
+        },
+        {
+          "q": "Do the frontend enums (statuses, roles, platforms, medal ribbons) enumerate the same values the API returns?",
+          "answer": "Yes",
+          "askedAt": "2026-07-11T00:44:53Z",
+          "answeredAt": "2026-07-11T02:37:38.738Z"
+        }
       ],
       "testPlan": [],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "questionnaire", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "updatedAt": "2026-07-11T02:40:15.463Z",
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "questionnaire",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        },
+        {
+          "at": "2026-07-11T02:40:15.463Z",
+          "from": "questionnaire",
+          "to": "in_progress",
+          "by": "human",
+          "note": "all questions answered"
+        }
+      ]
     },
     {
       "id": "T-0016",
       "title": "Confirm backend-integration sequencing & scope",
       "summary": "Open questions about how to prioritise the transition from stub to live backend so the next work session targets the right thing first.",
-      "status": "questionnaire",
+      "status": "in_progress",
       "type": "question",
       "size": "S",
       "sizeWeight": 2,
@@ -353,43 +710,115 @@
       "repo": "",
       "paths": [],
       "dependsOn": [],
-      "blocks": [],
+      "blocks": [
+        "T-0011",
+        "T-0012"
+      ],
       "questions": [
-        { "q": "Which comes first -- real Discord OAuth2/JWT auth (T-0012) or HTTP wiring of the data services (T-0011)?", "answer": null, "askedAt": "2026-07-11T00:44:53Z" },
-        { "q": "Is the backend (lords-dashboard-backend) running locally and seeded, so integration can be exercised end-to-end?", "answer": null, "askedAt": "2026-07-11T00:44:53Z" },
-        { "q": "Should HTTP errors/loading states be added to screens as part of wiring, or handled as a separate pass?", "answer": null, "askedAt": "2026-07-11T00:44:53Z" }
+        {
+          "q": "Which comes first -- real Discord OAuth2/JWT auth (T-0012) or HTTP wiring of the data services (T-0011)?",
+          "answer": "http wiring first, then discord oauth2, because i want you to always progress while im away.",
+          "askedAt": "2026-07-11T00:44:53Z",
+          "answeredAt": "2026-07-11T02:50:39.911Z"
+        },
+        {
+          "q": "Is the backend (lords-dashboard-backend) running locally and seeded, so integration can be exercised end-to-end?",
+          "answer": "yes",
+          "askedAt": "2026-07-11T00:44:53Z",
+          "answeredAt": "2026-07-11T02:50:52.045Z"
+        },
+        {
+          "q": "Should HTTP errors/loading states be added to screens as part of wiring, or handled as a separate pass?",
+          "answer": "part of wiring",
+          "askedAt": "2026-07-11T00:44:53Z",
+          "answeredAt": "2026-07-11T02:51:07.116Z"
+        }
       ],
       "testPlan": [],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T00:44:53Z", "from": null, "to": "questionnaire", "by": "claude", "note": "created via bf-init reverse-engineering" }]
+      "updatedAt": "2026-07-11T02:51:07.116Z",
+      "history": [
+        {
+          "at": "2026-07-11T00:44:53Z",
+          "from": null,
+          "to": "questionnaire",
+          "by": "claude",
+          "note": "created via bf-init reverse-engineering"
+        },
+        {
+          "at": "2026-07-11T03:00:00Z",
+          "from": "questionnaire",
+          "to": "questionnaire",
+          "by": "claude",
+          "note": "bf-plan verify: wired as an MVP gate (blocks T-0011/T-0012) so integration sequencing is decided before HTTP wiring"
+        },
+        {
+          "at": "2026-07-11T02:51:07.116Z",
+          "from": "questionnaire",
+          "to": "in_progress",
+          "by": "human",
+          "note": "all questions answered"
+        }
+      ]
     },
     {
       "id": "T-0017",
-      "title": "Build admin action & settings UI",
-      "summary": "Complete the admin action layer. The Settings panes (Identity/Discord/Quartermaster-bot/Operations) and bot-status screen already exist as stub-driven UI (covered by T-0009); the outstanding work is: (a) rebuild the member action modal removed in the tech-debt cleanup (change rank/role, award/remove medal, suspend/ban/unban), (b) build the announcement/dispatch composer and invite-Mercenary flow, and (c) wire all of these to real backend endpoints with UI capability-gating.",
+      "title": "Admin settings, announcements & invite UI (post-MVP)",
+      "summary": "Post-MVP admin surfaces: wire the Settings panes (Identity/Discord/Quartermaster-bot/Operations) and build the announcement/dispatch composer + invite-Mercenary flow, all wired to real backend endpoints with UI capability-gating. The member admin-action modal is split out to the MVP task T-0023; the Discord/bot-status wiring is split out to T-0024.",
       "status": "planned",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
       "area": "admin",
       "repo": "",
-      "paths": ["src/app/features/admin/settings/", "src/app/features/admin/bot-status/"],
-      "dependsOn": ["T-0009", "T-0011", "lords-dashboard-backend:T-0010", "lords-dashboard-backend:T-0011", "lords-dashboard-backend:T-0012", "lords-dashboard-backend:T-0019", "lords-dashboard-backend:T-0020"],
+      "paths": [
+        "src/app/features/admin/settings/"
+      ],
+      "dependsOn": [
+        "T-0009",
+        "T-0011",
+        "T-0025",
+        "lords-dashboard-backend:T-0018",
+        "lords-dashboard-backend:T-0019"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "each admin surface round-trips to its endpoint and hides actions the user lacks capability for", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "each admin surface round-trips to its endpoint and hides actions the user lacks capability for",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T01:15:00Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-11T02:30:00Z",
       "history": [
-        { "at": "2026-07-11T01:15:00Z", "from": null, "to": "planned", "by": "claude", "note": "created during workspace re-scope; migrated from backend cross-repo task" },
-        { "at": "2026-07-11T01:45:00Z", "from": "planned", "to": "planned", "by": "claude", "note": "rebuild: admin-action-modal shell was removed in PR #2, so this is now a from-scratch build" }
+        {
+          "at": "2026-07-11T01:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during workspace re-scope; migrated from backend cross-repo task"
+        },
+        {
+          "at": "2026-07-11T01:45:00Z",
+          "from": "planned",
+          "to": "planned",
+          "by": "claude",
+          "note": "rebuild: admin-action-modal shell was removed in PR #2, so this is now a from-scratch build"
+        },
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": "planned",
+          "to": "planned",
+          "by": "claude",
+          "note": "bf-plan re-scope: member action modal split to MVP T-0023 and bot UI to T-0024; this task now = post-MVP settings/announcements/invite"
+        }
       ]
     },
     {
@@ -402,17 +831,36 @@
       "sizeWeight": 5,
       "area": "responsive",
       "repo": "",
-      "paths": ["src/app/shared/components/bottom-nav/", "src/styles/_responsive.scss"],
-      "dependsOn": ["T-0003", "T-0002"],
+      "paths": [
+        "src/app/shared/components/bottom-nav/",
+        "src/styles/_responsive.scss"
+      ],
+      "dependsOn": [
+        "T-0003",
+        "T-0002"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "bottom-nav renders on mobile widths; layouts reflow without horizontal scroll across public/member/admin", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "bottom-nav renders on mobile widths; layouts reflow without horizontal scroll across public/member/admin",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T01:45:00Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T01:45:00Z", "from": null, "to": "deployed", "by": "claude", "note": "created via /bf-init rebuild; shipped in PR #1 (merge b8f9e9f base, on origin/main)" }]
+      "history": [
+        {
+          "at": "2026-07-11T01:45:00Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via /bf-init rebuild; shipped in PR #1 (merge b8f9e9f base, on origin/main)"
+        }
+      ]
     },
     {
       "id": "T-0019",
@@ -424,17 +872,37 @@
       "sizeWeight": 2,
       "area": "tooling",
       "repo": "",
-      "paths": ["eslint.config.js", ".prettierrc.json", ".prettierignore", ".gitattributes", ".github/workflows/ci.yml", "package.json"],
+      "paths": [
+        "eslint.config.js",
+        ".prettierrc.json",
+        ".prettierignore",
+        ".gitattributes",
+        ".github/workflows/ci.yml",
+        "package.json"
+      ],
       "dependsOn": [],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "npm run lint + format:check pass; CI workflow runs lint/build on push", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "npm run lint + format:check pass; CI workflow runs lint/build on push",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T01:45:00Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T01:45:00Z", "from": null, "to": "deployed", "by": "claude", "note": "created via /bf-init rebuild; shipped in PR #2 (tech-debt cleanup)" }]
+      "history": [
+        {
+          "at": "2026-07-11T01:45:00Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via /bf-init rebuild; shipped in PR #2 (tech-debt cleanup)"
+        }
+      ]
     },
     {
       "id": "T-0020",
@@ -446,17 +914,37 @@
       "sizeWeight": 2,
       "area": "member",
       "repo": "",
-      "paths": ["src/app/features/member/account-deletion/"],
-      "dependsOn": ["T-0003", "T-0004", "T-0010", "lords-dashboard-backend:T-0010"],
+      "paths": [
+        "src/app/features/member/account-deletion/"
+      ],
+      "dependsOn": [
+        "T-0003",
+        "T-0004",
+        "T-0010",
+        "lords-dashboard-backend:T-0010"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "/dashboard account-deletion renders; request + export actions submit against stubs", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "/dashboard account-deletion renders; request + export actions submit against stubs",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T01:45:00Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T01:45:00Z", "from": null, "to": "review", "by": "claude", "note": "created via /bf-init rebuild; new member screen from PR #2, stub-driven" }]
+      "history": [
+        {
+          "at": "2026-07-11T01:45:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created via /bf-init rebuild; new member screen from PR #2, stub-driven"
+        }
+      ]
     },
     {
       "id": "T-0021",
@@ -468,17 +956,259 @@
       "sizeWeight": 3,
       "area": "accessibility",
       "repo": "",
-      "paths": ["src/app/", "src/styles/", "src/index.html"],
-      "dependsOn": ["T-0003"],
+      "paths": [
+        "src/app/",
+        "src/styles/",
+        "src/index.html"
+      ],
+      "dependsOn": [
+        "T-0003"
+      ],
       "blocks": [],
       "questions": [],
-      "testPlan": [{ "desc": "interactive controls are keyboard-reachable and labelled; no obvious axe violations on the main screens", "status": "pending" }],
+      "testPlan": [
+        {
+          "desc": "interactive controls are keyboard-reachable and labelled; no obvious axe violations on the main screens",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T01:45:00Z",
       "updatedAt": "2026-07-11T01:45:00Z",
-      "history": [{ "at": "2026-07-11T01:45:00Z", "from": null, "to": "deployed", "by": "claude", "note": "created via /bf-init rebuild; shipped in PR #2" }]
+      "history": [
+        {
+          "at": "2026-07-11T01:45:00Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via /bf-init rebuild; shipped in PR #2"
+        }
+      ]
+    },
+    {
+      "id": "T-0022",
+      "title": "Frontend Docker container (dev + prod parity)",
+      "summary": "Multi-stage Dockerfile for the Angular app: a dev stage running `ng serve --host 0.0.0.0` with hot reload, and a prod stage that builds the app and serves the static bundle via nginx (which also reverse-proxies /api to the api container). This image is the `web` service the backend's unified docker-compose builds (context ../lords-regiment-dashboard). No host Node needed.",
+      "status": "planned",
+      "type": "infra",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "tooling",
+      "repo": "",
+      "paths": [
+        "Dockerfile",
+        ".dockerignore",
+        "nginx.conf",
+        "proxy.conf.json"
+      ],
+      "dependsOn": [
+        "T-0013"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "prod image builds and nginx serves the SPA + proxies /api; dev image hot-reloads ng serve from a bind mount",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T02:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; Docker-first (MVP foundation), consumed by lords-dashboard-backend:T-0009 unified compose"
+        }
+      ]
+    },
+    {
+      "id": "T-0023",
+      "title": "Member admin-action modal (MVP)",
+      "summary": "Rebuild the admin-action modal removed in the tech-debt cleanup: change rank/role, award/remove medal, suspend/ban/unban — launched from the Roster row menu and Profile, wired to the real member endpoints and capability-gated in the UI via the capabilities array from /auth/me (lords-dashboard-backend:T-0006). The single biggest admin gap and part of the MVP core loop.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/roster/",
+        "src/app/features/member/profile/",
+        "src/app/features/admin/"
+      ],
+      "dependsOn": [
+        "T-0011",
+        "T-0012",
+        "lords-dashboard-backend:T-0006",
+        "lords-dashboard-backend:T-0010"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "each action (rank/role/medal/suspend/ban/unban) round-trips to the member endpoint and is hidden when the user lacks the capability",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T03:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; split from T-0017 as the MVP-scoped admin action UI"
+        },
+        {
+          "at": "2026-07-11T03:00:00Z",
+          "from": "planned",
+          "to": "planned",
+          "by": "claude",
+          "note": "bf-plan verify: gate on /auth/me capabilities (backend T-0006), not coarse role, so hidden actions match the backend guard"
+        }
+      ]
+    },
+    {
+      "id": "T-0024",
+      "title": "Discord bot admin UI wiring (post-MVP)",
+      "summary": "Wire the existing bot-status screen + the Settings Discord-connection and Quartermaster-bot panes to the backend Discord control endpoints (connection/verify, settings, resync/reinvite, operations resolve). Part of the post-MVP Discord bot milestone; no-op until the backend bot lands.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/bot-status/",
+        "src/app/features/admin/settings/"
+      ],
+      "dependsOn": [
+        "T-0017",
+        "lords-dashboard-backend:T-0020",
+        "lords-dashboard-backend:T-0021",
+        "lords-dashboard-backend:T-0022"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "bot-status + Discord settings panes round-trip to the /discord control endpoints and reflect live connection/operation state",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T02:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; split from T-0017 as the post-MVP bot admin UI"
+        }
+      ]
+    },
+    {
+      "id": "T-0025",
+      "title": "Wire remaining feature HTTP services (post-MVP)",
+      "summary": "Swap the remaining stub services for real HttpClient calls as their backend modules land: events, gallery, audit, notifications, plus a new settings client. Follows the same of(stub)->http pattern as T-0011.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "core-data",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/events.service.ts",
+        "src/app/core/services/gallery.service.ts",
+        "src/app/core/services/audit.service.ts"
+      ],
+      "dependsOn": [
+        "T-0011",
+        "lords-dashboard-backend:T-0015",
+        "lords-dashboard-backend:T-0016",
+        "lords-dashboard-backend:T-0017",
+        "lords-dashboard-backend:T-0018",
+        "lords-dashboard-backend:T-0019"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "events/gallery/audit/notifications/settings services hit their /api endpoints and screens render live data",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T02:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T02:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; split from T-0011 to keep MVP HTTP wiring lean"
+        }
+      ]
+    },
+    {
+      "id": "T-0026",
+      "title": "Guard un-wired MVP surfaces (no stub data in prod)",
+      "summary": "So the deployed MVP never shows fabricated data: hide or route-guard the surfaces whose HTTP wiring is deferred to T-0025 — public events + gallery, and admin audit/settings/bot-status — behind a feature flag or empty/coming-soon states, until their real services land. Only the MVP-wired surfaces (roster, profile, applications, ranks/medals, regiment stats) stay live.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/",
+        "src/app/features/admin/",
+        "src/app/app-routing.module.ts"
+      ],
+      "dependsOn": [
+        "T-0011"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "on the MVP build, events/gallery/audit/settings/bot-status render an empty/coming-soon state (or are route-guarded) — never stub data",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T03:00:00Z",
+      "updatedAt": "2026-07-11T03:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T03:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan verify: deferring the data tier (T-0025) without guarding these UIs would ship fabricated events/gallery/audit publicly"
+        }
+      ]
     }
   ]
 }

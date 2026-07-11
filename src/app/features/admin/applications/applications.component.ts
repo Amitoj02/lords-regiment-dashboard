@@ -149,8 +149,10 @@ export class ApplicationsComponent implements OnInit {
 
     approve(): void {
         const id = this.selectedId;
+        // Approve takes no note server-side (it promotes to a member); the
+        // moderator note applies to decline/hold only.
         this.applicationsService
-            .approve(id, this.moderatorNote)
+            .approve(id)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.removeFromQueue(id),

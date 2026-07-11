@@ -4,6 +4,25 @@
 
 Angular 19 frontend for a military regiment management dashboard (Holdfast: Nations at War). Single-page app with lazy-loaded feature modules, stub services ready for HTTP backend replacement, and a custom dark military design system.
 
+## Companion Repository — Backend API
+
+This frontend is one half of a two-repo system. The **REST API it consumes lives in a separate backend repository** — when wiring real HTTP (see [Services Pattern](#services-pattern) below), read that repo for the actual endpoint contracts instead of inventing them.
+
+| | |
+|---|---|
+| **Repo** | `lords-dashboard-backend` |
+| **Local path** | `../lords-dashboard-backend` (abs: `/home/amitoj/Repositories/lords-dashboard-backend`) |
+| **Remote** | https://github.com/Amitoj02/lords-dashboard-backend |
+| **Stack** | NestJS 11 + TypeORM + MySQL 8 |
+| **API base URL** | `http://localhost:3000/api` (Swagger UI at `/api/docs`) |
+
+Key files to consult in the backend repo:
+- `SCHEMA.md` — complete normalized DB schema (28 tables); the source of truth for the data shapes mirrored in `src/app/core/models/`.
+- `src/auth/dto/current-user.dto.ts` — the `CurrentUser` projection returned by `GET /api/auth/me`, which this app's `AuthService` consumes.
+- `README.md` — auth flow (Discord OAuth2 → JWT), route table, and local setup.
+
+Auth handoff: on Discord sign-in the backend redirects to `http://localhost:4200/auth/callback` (success) or `/login` (failure). Both repos are grouped in the Blueframe workspace **`lords-dashboard`** — run `bf serve lords-dashboard` for combined project state and cross-repo drift.
+
 ## UI/UX Reference — ALWAYS consult first
 
 All visual decisions (layout, spacing, colour, component shape) must be grounded in the wireframe/design kit at **`design-reference/`** in the repo root. These are the canonical UI/UX source of truth:
@@ -126,3 +145,40 @@ Images in `src/assets/images/` — served at `/assets/images/*` via `angular.jso
 
 - Sass `@import` deprecation warnings — non-blocking, future migration to `@use`/`@forward`
 - Gallery/events images show broken img icons — expected (stub URLs, no real backend)
+
+<!-- blueframe:start -->
+## Blueframe state protocol (managed — do not edit inside these markers)
+
+This repo uses **Blueframe**. Its machine-readable project state lives in
+`.blueframe/state.json` and is the single source of truth for task status.
+
+**At the start of every session:** read `.blueframe/state.json`. Focus on
+tasks with status `in_progress`, any open `questions`, pending `testPlan`
+items, and `notesForNextSession`.
+
+**Before ending any session,** reconcile `.blueframe/state.json`:
+- Advance task `status` values to reflect what actually happened
+  (`planned → in_progress → questionnaire → review → test → deploy_ready → deployed`;
+  use `blocked`/`archived` as off-ramps).
+- Add newly discovered work as new tasks. **Never reuse or collide task ids**
+  (`T-####`); allocate the next unused number.
+- Record anything you deliberately did NOT do in `skippedByClaude`.
+- Update `testPlan` items and add `regressionRisk` entries (status `open`)
+  for any shared code you touched.
+- Re-check open `regressionRisk` entries: if new commits show a risk was
+  addressed or retired, mark it `resolved` with `resolvedAt`, `resolvedBy`,
+  and a short evidence `note`; otherwise leave it `open`. Link a fix task
+  to the risk it retires via `resolvesRisk` (`"<taskId>#<riskIndex>"`).
+- Set `lastSyncedCommit` to the current `git rev-parse HEAD` and
+  `lastSyncedAt` to now.
+- Write a concise `notesForNextSession` handoff to your future self.
+- Append a `history` entry for each status change.
+
+In a monorepo, set each task `area` to the package name (`packages/web` →
+`web`). Cross-repo dependencies use `"<repoKey>:T-####"` in `dependsOn`;
+bare ids are local to this repo.
+
+Keep diffs **minimal** and preserve existing key order. Do not touch content
+in CLAUDE.md outside these markers.
+<!-- blueframe:end -->
+

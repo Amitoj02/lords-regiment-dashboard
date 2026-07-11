@@ -1,0 +1,240 @@
+@if (member) {
+<div class="aam-backdrop" (click)="onBackdrop($event)">
+    <div
+        class="aam-modal panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="aam-title"
+    >
+        <!-- Header -->
+        <div class="aam-head">
+            <div>
+                <div class="admin-label aam-eyebrow">Admin Actions</div>
+                <h2 id="aam-title" class="serif aam-title">{{ member.name }}</h2>
+            </div>
+            <button
+                type="button"
+                class="btn btn-icon btn-ghost btn-sm"
+                aria-label="Close"
+                (click)="onClose()"
+            >
+                ✕
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="aam-body">
+            @if (error) {
+            <div class="notice err aam-error">
+                <div class="n-body">{{ error }}</div>
+            </div>
+            }
+
+            @if (!hasAnyCapability) {
+            <div class="notice info">
+                <div class="n-body">You don't have permission to manage this member.</div>
+            </div>
+            }
+
+            <!-- 1 · Change rank -->
+            @if (canRanksMedals) {
+            <section class="aam-section">
+                <div class="field-label">Rank</div>
+                <div class="row aam-inline">
+                    <select class="hf-select" [(ngModel)]="selectedRankId">
+                        <option value="">Select a rank…</option>
+                        @for (rank of ranks; track rank.id) {
+                        <option [value]="rank.id">{{ rank.name }}</option>
+                        }
+                    </select>
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        [disabled]="!selectedRankId || rankBusy"
+                        (click)="changeRank()"
+                    >
+                        {{ rankBusy ? 'Saving…' : 'Change rank' }}
+                    </button>
+                </div>
+            </section>
+            }
+
+            <!-- 2 · Change role -->
+            @if (canRoles) {
+            <section class="aam-section">
+                <div class="field-label">Role</div>
+                <div class="row aam-inline">
+                    <select class="hf-select" [(ngModel)]="selectedRole">
+                        <option value="">Select a role…</option>
+                        @for (role of assignableRoles; track role) {
+                        <option [value]="role">{{ role }}</option>
+                        }
+                    </select>
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        [disabled]="!selectedRole || roleBusy"
+                        (click)="changeRole()"
+                    >
+                        {{ roleBusy ? 'Saving…' : 'Change role' }}
+                    </button>
+                </div>
+            </section>
+            }
+
+            <!-- 3 · Medals -->
+            @if (canRanksMedals) {
+            <section class="aam-section">
+                <div class="field-label">Medals</div>
+
+                @if (member.medalAwards && member.medalAwards.length > 0) {
+                <div class="aam-chips">
+                    @for (award of member.medalAwards; track award.id) {
+                    <span class="badge aam-chip">
+                        {{ award.title }}
+                        <button
+                            type="button"
+                            class="aam-chip-x"
+                            [attr.aria-label]="'Remove ' + award.title"
+                            [disabled]="removingMedalId !== null"
+                            (click)="removeMedal(award.medalId)"
+                        >
+                            ✕
+                        </button>
+                    </span>
+                    }
+                </div>
+                } @else {
+                <div class="aam-empty">No medals awarded yet.</div>
+                }
+
+                <div class="row aam-inline aam-award-row">
+                    <select class="hf-select" [(ngModel)]="selectedMedalId">
+                        <option value="">Award a medal…</option>
+                        @for (medal of medals; track medal.id) {
+                        <option [value]="medal.id">{{ medal.title }}</option>
+                        }
+                    </select>
+                    <input
+                        type="text"
+                        class="hf-input aam-detail"
+                        placeholder="Detail (optional)"
+                        [(ngModel)]="medalDetail"
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        [disabled]="!selectedMedalId || awardBusy"
+                        (click)="awardMedal()"
+                    >
+                        {{ awardBusy ? 'Awarding…' : 'Award' }}
+                    </button>
+                </div>
+            </section>
+            }
+
+            <!-- 4 · Suspend -->
+            @if (canRoles) {
+            <section class="aam-section">
+                <div class="field-label">Suspend</div>
+                @if (member.suspendedUntil) {
+                <div class="aam-current">
+                    Currently suspended until
+                    <strong>{{ member.suspendedUntil | date: 'MMM d, y, h:mm a' }}</strong>
+                </div>
+                }
+                <div class="aam-stack">
+                    <input
+                        type="datetime-local"
+                        class="hf-input"
+                        [min]="minDateTime"
+                        [(ngModel)]="suspendUntil"
+                    />
+                    <input
+                        type="text"
+                        class="hf-input"
+                        placeholder="Reason (optional)"
+                        [(ngModel)]="suspendReason"
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-sm aam-self-start"
+                        [disabled]="suspendBusy"
+                        (click)="suspend()"
+                    >
+                        {{ suspendBusy ? 'Suspending…' : 'Suspend member' }}
+                    </button>
+                </div>
+            </section>
+            }
+
+            <!-- 5 · Ban / Unban -->
+            @if (canRoles) {
+            <section class="aam-section aam-section--last">
+                <div class="field-label">{{ member.bannedAt ? 'Ban status' : 'Ban' }}</div>
+
+                @if (member.bannedAt) {
+                <div class="aam-current">
+                    Banned on <strong>{{ member.bannedAt | date: 'MMM d, y' }}</strong>
+                </div>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    [disabled]="banBusy"
+                    (click)="unban()"
+                >
+                    {{ banBusy ? 'Unbanning…' : 'Unban member' }}
+                </button>
+                } @else {
+                <div class="aam-stack">
+                    <input
+                        type="text"
+                        class="hf-input"
+                        placeholder="Reason (optional)"
+                        [(ngModel)]="banReason"
+                        [disabled]="banConfirming"
+                    />
+                    @if (!banConfirming) {
+                    <button
+                        type="button"
+                        class="btn btn-destructive btn-sm aam-self-start"
+                        (click)="startBan()"
+                    >
+                        Ban member
+                    </button>
+                    } @else {
+                    <div class="notice warn aam-confirm">
+                        <div class="n-body">
+                            This bans {{ member.name }} and removes their access. Continue?
+                        </div>
+                    </div>
+                    <div class="row aam-inline">
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm"
+                            [disabled]="banBusy"
+                            (click)="confirmBan()"
+                        >
+                            {{ banBusy ? 'Banning…' : 'Confirm ban' }}
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm"
+                            [disabled]="banBusy"
+                            (click)="cancelBan()"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                    }
+                </div>
+                }
+                <div class="field-hint aam-ban-hint">
+                    Also removes the member from Discord once the bot is enabled.
+                </div>
+            </section>
+            }
+        </div>
+    </div>
+</div>
+}

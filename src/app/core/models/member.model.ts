@@ -4,15 +4,21 @@ export type Platform = 'steam' | 'xbox' | 'ps';
 export type MedalRibbon = 'blue' | 'red' | 'gold' | 'green' | 'tricolor';
 
 export interface Medal {
+    /** Catalogue id (from the backend). Optional so legacy stub data still types. */
+    id?: string;
     letter: string;
     ribbon: MedalRibbon;
     title: string;
     description: string;
     holders?: number;
+    /** Total awards (repeatable medals may exceed `holders`). */
+    awards?: number;
     discordLinked?: boolean;
 }
 
 export interface Rank {
+    /** Rank id (from the backend). Optional so legacy stub data still types. */
+    id?: string;
     name: string;
     chevrons: number;
     holders: number;
@@ -21,14 +27,30 @@ export interface Rank {
     order: number;
 }
 
+/** A single medal award held by a member (medals are repeatable). */
+export interface MemberMedalAward {
+    /** The award (member_medal) id — used to identify a specific award. */
+    id: string;
+    medalId: string;
+    title: string;
+    glyph: string;
+    ribbon: MedalRibbon;
+    detail?: string | null;
+    awardedAt: string;
+}
+
 export interface Member {
     id: string;
     name: string;
     discordTag: string;
     inGameName: string;
     rank: string;
+    /** Rank id (from the backend), needed to change a member's rank. */
+    rankId?: string;
     chevrons: number;
     medals: MedalRibbon[];
+    /** Full medal awards (populated on the detail view; drives the admin modal). */
+    medalAwards?: MemberMedalAward[];
     role: MemberRole;
     discordLinked: boolean;
     status: MemberStatus;
@@ -38,4 +60,6 @@ export interface Member {
     joinedAt?: string;
     eventsAttended?: number;
     attendanceRate?: number;
+    suspendedUntil?: string | null;
+    bannedAt?: string | null;
 }

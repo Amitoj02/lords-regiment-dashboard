@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'hf-login-page',
@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
     standalone: false,
 })
 export class LoginPageComponent {
+    private readonly auth = inject(AuthService);
     isLoading = false;
 
     steps = [
@@ -28,14 +29,10 @@ export class LoginPageComponent {
         },
     ];
 
-    constructor(private router: Router) {}
-
     signInWithDiscord(): void {
         this.isLoading = true;
-        // Simulate OAuth redirect — in production this would call auth.initiateDiscordOAuth()
-        setTimeout(() => {
-            this.isLoading = false;
-            this.router.navigate(['/member/dashboard']);
-        }, 1200);
+        // Real OAuth2: full-page redirect to the backend, which (mock or live)
+        // sends the browser back to /auth/callback with a session token.
+        this.auth.initiateDiscordLogin();
     }
 }

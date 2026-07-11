@@ -1,0 +1,12 @@
+node_modules
+dist
+.angular
+.git
+.github
+*.log
+.vscode
+.idea
+.blueframe
+task-dashboard
+Dockerfile
+.dockerignore
