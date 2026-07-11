@@ -202,7 +202,7 @@
     <!-- Admin action modal -->
     <hf-admin-action-modal
         [member]="selectedMember"
-        (close)="selectedMember = null"
+        (closed)="selectedMember = null"
         (memberUpdated)="onMemberUpdated($event)"
     ></hf-admin-action-modal>
 </hf-app-shell>

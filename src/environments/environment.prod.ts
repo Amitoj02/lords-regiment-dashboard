@@ -3,6 +3,6 @@
  * it to the api container over the compose network (no CORS, no hard-coded host).
  */
 export const environment = {
-  production: true,
-  apiBaseUrl: '/api',
+    production: true,
+    apiBaseUrl: '/api',
 };

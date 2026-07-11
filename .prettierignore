@@ -14,3 +14,11 @@
 # Static assets
 /public
 /src/assets
+
+# Tooling / machine-managed files — not application source, and must not be rewritten:
+#   - Blueframe state is machine-managed (protocol requires minimal diffs / preserved key order)
+#   - CLAUDE.md contains managed markers that must not be reformatted
+#   - .claude/ holds agent commands & vendored skills, not team-maintained source
+/.blueframe
+/.claude
+/CLAUDE.md

@@ -46,8 +46,7 @@ export class RosterComponent implements OnInit {
     /** Whether the caller may open the admin-action modal on a row. */
     get canManage(): boolean {
         return (
-            this.auth.hasCapability('edit_ranks_medals') ||
-            this.auth.hasCapability('manage_roles')
+            this.auth.hasCapability('edit_ranks_medals') || this.auth.hasCapability('manage_roles')
         );
     }
 

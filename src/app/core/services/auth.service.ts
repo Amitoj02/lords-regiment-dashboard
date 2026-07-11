@@ -88,13 +88,14 @@ export class AuthService {
     }
 
     logout(): void {
-        this.http.post(`${environment.apiBaseUrl}/auth/logout`, {}).pipe(
-            catchError(() => of(null)),
-        ).subscribe(() => {
-            this.clearToken();
-            this.currentUser.set(null);
-            this.router.navigateByUrl('/login');
-        });
+        this.http
+            .post(`${environment.apiBaseUrl}/auth/logout`, {})
+            .pipe(catchError(() => of(null)))
+            .subscribe(() => {
+                this.clearToken();
+                this.currentUser.set(null);
+                this.router.navigateByUrl('/login');
+            });
     }
 
     /** Called by the JWT interceptor on a 401 — drop the session. */

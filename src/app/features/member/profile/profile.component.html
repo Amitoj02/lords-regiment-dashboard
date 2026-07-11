@@ -40,11 +40,7 @@
                 @if (isAdmin) {
                 <button type="button" class="btn btn-ghost btn-sm">Edit Profile</button>
                 } @if (isAdmin) {
-                <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="openAdminActions()"
-                >
+                <button type="button" class="btn btn-secondary btn-sm" (click)="openAdminActions()">
                     Admin Actions ▾
                 </button>
                 } @if (isOwnProfile) {
@@ -322,7 +318,7 @@
     <!-- Admin action modal -->
     <hf-admin-action-modal
         [member]="adminTarget"
-        (close)="adminTarget = null"
+        (closed)="adminTarget = null"
         (memberUpdated)="onMemberUpdated($event)"
     ></hf-admin-action-modal>
 </hf-app-shell>

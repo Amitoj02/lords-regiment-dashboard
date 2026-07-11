@@ -40,9 +40,30 @@ export class SidebarComponent {
             enabled: true,
         },
         // Events + Gallery are MVP-deferred (T-0026) — hidden until wired.
-        { label: 'Events', key: 'events', route: '/events', icon: 'calendar', adminOnly: false, enabled: false },
-        { label: 'Gallery', key: 'gallery', route: '/gallery', icon: 'image', adminOnly: false, enabled: false },
-        { label: 'Members', key: 'roster', route: '/roster', icon: 'users', adminOnly: false, enabled: true },
+        {
+            label: 'Events',
+            key: 'events',
+            route: '/events',
+            icon: 'calendar',
+            adminOnly: false,
+            enabled: false,
+        },
+        {
+            label: 'Gallery',
+            key: 'gallery',
+            route: '/gallery',
+            icon: 'image',
+            adminOnly: false,
+            enabled: false,
+        },
+        {
+            label: 'Members',
+            key: 'roster',
+            route: '/roster',
+            icon: 'users',
+            adminOnly: false,
+            enabled: true,
+        },
         {
             label: 'Applications',
             key: 'apps',

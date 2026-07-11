@@ -5,7 +5,7 @@
  * proxy.conf.docker.json (container).
  */
 export const environment = {
-  production: false,
-  /** Relative, same-origin API base (proxied to the NestJS backend). */
-  apiBaseUrl: '/api',
+    production: false,
+    /** Relative, same-origin API base (proxied to the NestJS backend). */
+    apiBaseUrl: '/api',
 };

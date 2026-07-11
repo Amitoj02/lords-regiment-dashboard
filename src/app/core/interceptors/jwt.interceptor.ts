@@ -17,9 +17,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     const token = auth.getToken();
     const isApi = req.url.startsWith(environment.apiBaseUrl);
     const authorized =
-        token && isApi
-            ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-            : req;
+        token && isApi ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
     return next(authorized).pipe(
         catchError((error: HttpErrorResponse) => {

@@ -4,11 +4,7 @@
  * whole app) lets the existing components stay unchanged while the services swap
  * `of(stub)` for real HTTP. Field names mirror the NestJS DTOs exactly.
  */
-import {
-    Application,
-    ApplicantType,
-    ApplicationStatus,
-} from './application.model';
+import { Application, ApplicantType, ApplicationStatus } from './application.model';
 import {
     Medal,
     MedalRibbon,

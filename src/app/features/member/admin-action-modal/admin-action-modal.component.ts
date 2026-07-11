@@ -2,6 +2,7 @@ import {
     Component,
     DestroyRef,
     EventEmitter,
+    HostListener,
     Input,
     Output,
     inject,
@@ -43,7 +44,7 @@ export class AdminActionModalComponent {
     }
     private _member: Member | null = null;
 
-    @Output() close = new EventEmitter<void>();
+    @Output() closed = new EventEmitter<void>();
     /** Emitted with the updated member after each successful action. */
     @Output() memberUpdated = new EventEmitter<Member>();
 
@@ -150,12 +151,18 @@ export class AdminActionModalComponent {
     }
 
     onClose(): void {
-        this.close.emit();
+        this.closed.emit();
     }
 
     /** Close when the backdrop (not the dialog) is clicked. */
     onBackdrop(event: MouseEvent): void {
         if (event.target === event.currentTarget) this.onClose();
+    }
+
+    /** Escape closes the dialog for keyboard users (the backdrop click is mouse-only). */
+    @HostListener('document:keydown.escape')
+    onEscapeKey(): void {
+        if (this._member) this.onClose();
     }
 
     // ── Actions ──────────────────────────────────────────────────────────────
@@ -260,10 +267,6 @@ export class AdminActionModalComponent {
 
     private extractError(e: unknown): string {
         const err = e as HttpErrorResponse;
-        return (
-            err?.error?.message ??
-            err?.message ??
-            'Something went wrong. Please try again.'
-        );
+        return err?.error?.message ?? err?.message ?? 'Something went wrong. Please try again.';
     }
 }

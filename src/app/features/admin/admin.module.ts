@@ -24,7 +24,11 @@ const routes: Routes = [
     { path: 'events/create', component: ComingSoonComponent, data: { feature: 'Events' } },
     { path: 'events/:id', component: ComingSoonComponent, data: { feature: 'Events' } },
     { path: 'gallery/submit', component: ComingSoonComponent, data: { feature: 'Gallery' } },
-    { path: 'gallery/mod', component: ComingSoonComponent, data: { feature: 'Gallery moderation' } },
+    {
+        path: 'gallery/mod',
+        component: ComingSoonComponent,
+        data: { feature: 'Gallery moderation' },
+    },
     { path: 'audit', component: ComingSoonComponent, data: { feature: 'Audit ledger' } },
     { path: 'settings', component: ComingSoonComponent, data: { feature: 'Settings' } },
     { path: 'bot', component: ComingSoonComponent, data: { feature: 'Quartermaster bot' } },
