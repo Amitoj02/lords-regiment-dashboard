@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "c2e191e",
-  "lastSyncedAt": "2026-07-11T03:00:00Z",
-  "notesForNextSession": "PLAN RE-PRIORITIZED via bf-plan (2026-07-11) into MVP-first tiers alongside the backend, under the workspace Docker-first mandate. OWNER DECISIONS: MVP = core dashboard (Discord bot UI DEFERRED); ONE unified docker-compose lives in the BACKEND repo (lords-dashboard-backend) and builds THIS app as its `web` service via T-0022's Dockerfile — there is NO compose in this repo; dev/prod image parity. FRONTEND PRIORITY: MVP = T-0013 Docker-aware env+proxy -> T-0022 frontend Dockerfile/nginx; T-0011 core HTTP (members/apps/ranks/medals/regiment) + T-0012 real Discord OAuth2->JWT + /auth/callback -> T-0023 member admin-action modal (capability-gated via the /auth/me capabilities array) -> T-0026 guard un-wired surfaces so the MVP ships no stub data. Resolve questionnaires T-0015 (model-shape vs backend SCHEMA.md) + T-0016 (integration sequencing) BEFORE wiring HTTP. POST-MVP features = T-0025 wire events/gallery/audit/notifications/settings + T-0017 settings panes/announcement composer/invite; T-0014 test coverage. BOT milestone = T-0024 bot-status + Discord settings panes -> backend /discord endpoints. CROSS-REPO: backend MVP deploy lords-dashboard-backend:T-0032 depends on THIS repo T-0011/T-0012/T-0013/T-0022/T-0023; backend hardening lords-dashboard-backend:T-0025 depends on T-0017/T-0024/T-0025; the backend unified compose lords-dashboard-backend:T-0009 builds THIS repo's T-0022 image. SHIPPED: scaffold, design system, shared lib, stub services, public/onboarding/member/admin screens (stub-driven), responsive/mobile (T-0018), tooling/CI (T-0019), account-deletion GDPR (T-0020), accessibility pass (T-0021).",
+  "lastSyncedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+  "lastSyncedAt": "2026-07-11T04:20:00Z",
+  "notesForNextSession": "MVP integration SHIPPED this session on branch feat/mvp-integration. Wired the stub service layer to the live NestJS API (same-origin /api, proxied): real Discord OAuth2->JWT (login->/auth/callback->interceptor->/auth/me hydrate; identity-only->/apply) [T-0012]; environment.ts + proxy.conf [T-0013]; HttpClient services for members/applications + NEW ranks/medals/regiment with DTO->view-model mappers in core/models/api.model.ts [T-0011]; member admin-action modal (rank/role/medal/suspend/ban/unban), capability-gated on /auth/me capabilities, launched from roster row menu + profile [T-0023]; coming-soon guard hides deferred surfaces events/gallery/audit/settings/bot so NO stub data ships [T-0026]; multi-stage Dockerfile dev(ng serve)/prod(nginx serving SPA + /api proxy) [T-0022]. Dashboard shows the real signed-in member; apply form posts to the API. `ng build` clean. Verified LIVE end-to-end in the backend's prod docker stack. NOTE: the roster/apply use ?limit=100 (the backend caps limit at 100). NEXT (post-MVP): FE T-0025 wire events/gallery/audit/notifications/settings services; FE T-0017 admin settings panes + announcement composer + invite; FE T-0024 Discord bot UI; FE T-0014 unit/component tests. CurrentUser now carries isMember + capabilities; Member carries rankId + medalAwards.",
   "nextIdCounter": 27,
   "connections": [],
   "tasks": [
@@ -435,8 +435,8 @@
     {
       "id": "T-0011",
       "title": "Wire core MVP HTTP services",
-      "summary": "MVP HTTP wiring: register provideHttpClient and swap the of(stubData) implementations for real HttpClient calls to the core MVP endpoints — members, applications, ranks, medals and regiment stats. Events/gallery/audit/notifications/settings clients are deferred to T-0025 (post-MVP, as those backend modules land). Contracts live in lords-dashboard-backend (SCHEMA.md, Swagger at /api/docs) — read them rather than inventing endpoints.",
-      "status": "planned",
+      "summary": "MVP HTTP wiring: register provideHttpClient and swap the of(stubData) implementations for real HttpClient calls to the core MVP endpoints \u2014 members, applications, ranks, medals and regiment stats. Events/gallery/audit/notifications/settings clients are deferred to T-0025 (post-MVP, as those backend modules land). Contracts live in lords-dashboard-backend (SCHEMA.md, Swagger at /api/docs) \u2014 read them rather than inventing endpoints.",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -463,7 +463,7 @@
       "testPlan": [
         {
           "desc": "provideHttpClient registered and the members/applications/ranks/medals/regiment services hit their /api/* endpoints with live data",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -474,9 +474,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T03:00:00Z",
+      "updatedAt": "2026-07-11T04:20:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -491,6 +491,13 @@
           "to": "planned",
           "by": "claude",
           "note": "bf-plan re-scope: narrowed to MVP core services; events/gallery/audit/notifications/settings split to T-0025; added dep on T-0015 model-shape check"
+        },
+        {
+          "at": "2026-07-11T04:20:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
         }
       ]
     },
@@ -498,7 +505,7 @@
       "id": "T-0012",
       "title": "Real Discord OAuth2 -> JWT authentication",
       "summary": "Implement the real auth flow: initiate Discord OAuth2, handle the backend redirect to /auth/callback (success) or /login (failure), persist the JWT, hydrate currentUser from GET /api/auth/me (CurrentUser DTO), and add logout. Includes a JWT HttpInterceptor (attach token, handle 401) and identity-only sessions (isMember:false -> /apply). Replaces the stub AuthService user.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -519,11 +526,11 @@
       "testPlan": [
         {
           "desc": "Login redirects to Discord; /auth/callback exchanges code and stores JWT",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "currentUser hydrates from /api/auth/me; guards honour real role",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -534,9 +541,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T03:00:00Z",
+      "updatedAt": "2026-07-11T04:20:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -544,6 +551,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; no /auth/callback route or token handling exists yet"
+        },
+        {
+          "at": "2026-07-11T04:20:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
         }
       ]
     },
@@ -551,7 +565,7 @@
       "id": "T-0013",
       "title": "Environment configuration for API base URL (Docker-aware)",
       "summary": "Add environment.ts / environment.prod.ts (+ angular.json fileReplacements) exposing the API base URL and OAuth config. Docker-aware: dev proxies /api to the api container (Angular proxy.conf or the web container's nginx) so the SPA is same-origin and CORS-free; prod resolves /api behind the reverse proxy. No hard-coded http://localhost:3000/api.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "infra",
       "size": "S",
       "sizeWeight": 2,
@@ -572,14 +586,14 @@
       "testPlan": [
         {
           "desc": "Prod build swaps environment file; base URL resolves per configuration and /api is same-origin behind the proxy",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T04:20:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -594,6 +608,13 @@
           "to": "planned",
           "by": "claude",
           "note": "bf-plan re-scope: Docker-aware env + proxy.conf so the SPA is same-origin with the api container; now also unblocks T-0022"
+        },
+        {
+          "at": "2026-07-11T04:20:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
         }
       ]
     },
@@ -991,7 +1012,7 @@
       "id": "T-0022",
       "title": "Frontend Docker container (dev + prod parity)",
       "summary": "Multi-stage Dockerfile for the Angular app: a dev stage running `ng serve --host 0.0.0.0` with hot reload, and a prod stage that builds the app and serves the static bundle via nginx (which also reverse-proxies /api to the api container). This image is the `web` service the backend's unified docker-compose builds (context ../lords-regiment-dashboard). No host Node needed.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "infra",
       "size": "M",
       "sizeWeight": 3,
@@ -1011,14 +1032,14 @@
       "testPlan": [
         {
           "desc": "prod image builds and nginx serves the SPA + proxies /api; dev image hot-reloads ng serve from a bind mount",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T04:20:00Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1026,14 +1047,21 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; Docker-first (MVP foundation), consumed by lords-dashboard-backend:T-0009 unified compose"
+        },
+        {
+          "at": "2026-07-11T04:20:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
         }
       ]
     },
     {
       "id": "T-0023",
       "title": "Member admin-action modal (MVP)",
-      "summary": "Rebuild the admin-action modal removed in the tech-debt cleanup: change rank/role, award/remove medal, suspend/ban/unban — launched from the Roster row menu and Profile, wired to the real member endpoints and capability-gated in the UI via the capabilities array from /auth/me (lords-dashboard-backend:T-0006). The single biggest admin gap and part of the MVP core loop.",
-      "status": "planned",
+      "summary": "Rebuild the admin-action modal removed in the tech-debt cleanup: change rank/role, award/remove medal, suspend/ban/unban \u2014 launched from the Roster row menu and Profile, wired to the real member endpoints and capability-gated in the UI via the capabilities array from /auth/me (lords-dashboard-backend:T-0006). The single biggest admin gap and part of the MVP core loop.",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1055,14 +1083,14 @@
       "testPlan": [
         {
           "desc": "each action (rank/role/medal/suspend/ban/unban) round-trips to the member endpoint and is hidden when the user lacks the capability",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T03:00:00Z",
+      "updatedAt": "2026-07-11T04:20:00Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1077,6 +1105,13 @@
           "to": "planned",
           "by": "claude",
           "note": "bf-plan verify: gate on /auth/me capabilities (backend T-0006), not coarse role, so hidden actions match the backend guard"
+        },
+        {
+          "at": "2026-07-11T04:20:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
         }
       ]
     },
@@ -1172,8 +1207,8 @@
     {
       "id": "T-0026",
       "title": "Guard un-wired MVP surfaces (no stub data in prod)",
-      "summary": "So the deployed MVP never shows fabricated data: hide or route-guard the surfaces whose HTTP wiring is deferred to T-0025 — public events + gallery, and admin audit/settings/bot-status — behind a feature flag or empty/coming-soon states, until their real services land. Only the MVP-wired surfaces (roster, profile, applications, ranks/medals, regiment stats) stay live.",
-      "status": "planned",
+      "summary": "So the deployed MVP never shows fabricated data: hide or route-guard the surfaces whose HTTP wiring is deferred to T-0025 \u2014 public events + gallery, and admin audit/settings/bot-status \u2014 behind a feature flag or empty/coming-soon states, until their real services land. Only the MVP-wired surfaces (roster, profile, applications, ranks/medals, regiment stats) stay live.",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -1191,15 +1226,15 @@
       "questions": [],
       "testPlan": [
         {
-          "desc": "on the MVP build, events/gallery/audit/settings/bot-status render an empty/coming-soon state (or are route-guarded) — never stub data",
-          "status": "pending"
+          "desc": "on the MVP build, events/gallery/audit/settings/bot-status render an empty/coming-soon state (or are route-guarded) \u2014 never stub data",
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
       "createdAt": "2026-07-11T03:00:00Z",
-      "updatedAt": "2026-07-11T03:00:00Z",
+      "updatedAt": "2026-07-11T04:20:00Z",
       "history": [
         {
           "at": "2026-07-11T03:00:00Z",
@@ -1207,6 +1242,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan verify: deferring the data tier (T-0025) without guarding these UIs would ship fabricated events/gallery/audit publicly"
+        },
+        {
+          "at": "2026-07-11T04:20:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
         }
       ]
     }
