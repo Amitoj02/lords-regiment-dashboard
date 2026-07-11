@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Member } from '../../../core/models/member.model';
 import { MembersService } from '../../../core/services/members.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'hf-roster',
@@ -12,6 +13,9 @@ import { MembersService } from '../../../core/services/members.service';
 export class RosterComponent implements OnInit {
     allMembers: Member[] = [];
     filteredMembers: Member[] = [];
+
+    /** The member whose admin-action modal is open (null = closed). */
+    selectedMember: Member | null = null;
 
     searchQuery = '';
     filterRank = '';
@@ -34,7 +38,31 @@ export class RosterComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(private membersService: MembersService) {}
+    constructor(
+        private membersService: MembersService,
+        private auth: AuthService,
+    ) {}
+
+    /** Whether the caller may open the admin-action modal on a row. */
+    get canManage(): boolean {
+        return (
+            this.auth.hasCapability('edit_ranks_medals') || this.auth.hasCapability('manage_roles')
+        );
+    }
+
+    openActions(member: Member): void {
+        this.selectedMember = member;
+    }
+
+    /** Replace the updated member across the roster and re-apply filters. */
+    onMemberUpdated(updated: Member): void {
+        const swap = (list: Member[]) => {
+            const i = list.findIndex((m) => m.id === updated.id);
+            if (i !== -1) list[i] = updated;
+        };
+        swap(this.allMembers);
+        this.applyFilters();
+    }
 
     ngOnInit(): void {
         this.membersService

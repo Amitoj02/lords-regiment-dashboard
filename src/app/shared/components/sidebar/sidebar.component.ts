@@ -13,6 +13,8 @@ interface NavItem {
     route: string;
     icon: string;
     adminOnly: boolean;
+    /** MVP feature flag — deferred surfaces are hidden until wired (T-0026). */
+    enabled?: boolean;
 }
 
 @Component({
@@ -35,16 +37,40 @@ export class SidebarComponent {
             route: '/dashboard',
             icon: 'home',
             adminOnly: false,
+            enabled: true,
         },
-        { label: 'Events', key: 'events', route: '/events', icon: 'calendar', adminOnly: false },
-        { label: 'Gallery', key: 'gallery', route: '/gallery', icon: 'image', adminOnly: false },
-        { label: 'Members', key: 'roster', route: '/roster', icon: 'users', adminOnly: false },
+        // Events + Gallery are MVP-deferred (T-0026) — hidden until wired.
+        {
+            label: 'Events',
+            key: 'events',
+            route: '/events',
+            icon: 'calendar',
+            adminOnly: false,
+            enabled: false,
+        },
+        {
+            label: 'Gallery',
+            key: 'gallery',
+            route: '/gallery',
+            icon: 'image',
+            adminOnly: false,
+            enabled: false,
+        },
+        {
+            label: 'Members',
+            key: 'roster',
+            route: '/roster',
+            icon: 'users',
+            adminOnly: false,
+            enabled: true,
+        },
         {
             label: 'Applications',
             key: 'apps',
             route: '/admin/applications',
             icon: 'scroll',
             adminOnly: true,
+            enabled: true,
         },
         {
             label: 'Ranks & Medals',
@@ -52,13 +78,16 @@ export class SidebarComponent {
             route: '/admin/ranks',
             icon: 'award',
             adminOnly: true,
+            enabled: true,
         },
+        // Audit + Settings are MVP-deferred (T-0026) — hidden until wired.
         {
             label: 'Audit Ledger',
             key: 'audit',
             route: '/admin/audit',
             icon: 'activity',
             adminOnly: true,
+            enabled: false,
         },
         {
             label: 'Settings',
@@ -66,11 +95,12 @@ export class SidebarComponent {
             route: '/admin/settings',
             icon: 'settings',
             adminOnly: true,
+            enabled: false,
         },
     ];
 
     get visibleItems(): NavItem[] {
-        return this.navItems.filter((i) => !i.adminOnly || this.isAdmin);
+        return this.navItems.filter((i) => i.enabled !== false && (!i.adminOnly || this.isAdmin));
     }
 
     isActive(key: string): boolean {

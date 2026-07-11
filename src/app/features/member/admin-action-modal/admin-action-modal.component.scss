@@ -1,0 +1,162 @@
+// =========================================================
+// HOLDFAST · Member admin-action modal
+// Overlay mirrors the app-shell drawer backdrop
+// (see src/styles/_responsive.scss .drawer-backdrop).
+// =========================================================
+
+.aam-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(11, 14, 20, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.aam-modal {
+    width: min(560px, 100%);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    background: var(--ink-800);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-3);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+}
+
+// — Header —
+.aam-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent);
+}
+
+.aam-eyebrow {
+    margin-bottom: 2px;
+}
+
+.aam-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--t-100);
+    line-height: 1.1;
+    margin: 0;
+}
+
+// — Body —
+.aam-body {
+    padding: 4px 16px 16px;
+    overflow-y: auto;
+}
+
+.aam-error {
+    margin: 12px 0 4px;
+}
+
+.aam-section {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+
+    &--last {
+        border-bottom: none;
+        padding-bottom: 4px;
+    }
+}
+
+// Inline control rows (select + button) — wrap on narrow widths
+.aam-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    > .hf-select,
+    > .hf-input {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+}
+
+.aam-award-row {
+    margin-top: 10px;
+}
+
+.aam-detail {
+    flex: 1 1 140px;
+}
+
+.aam-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.aam-self-start {
+    align-self: flex-start;
+}
+
+// — Medal chips —
+.aam-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.aam-chip {
+    text-transform: none;
+    letter-spacing: 0.01em;
+    gap: 6px;
+}
+
+.aam-chip-x {
+    background: none;
+    border: none;
+    color: var(--t-300);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0;
+    display: inline-flex;
+
+    &:hover {
+        color: var(--oxblood-300);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+.aam-empty {
+    font-size: 12.5px;
+    color: var(--t-400);
+    margin-bottom: 4px;
+}
+
+.aam-current {
+    font-size: 12.5px;
+    color: var(--t-300);
+    margin-bottom: 8px;
+
+    strong {
+        color: var(--t-100);
+    }
+}
+
+.aam-confirm {
+    margin-bottom: 2px;
+}
+
+.aam-ban-hint {
+    margin-top: 8px;
+}

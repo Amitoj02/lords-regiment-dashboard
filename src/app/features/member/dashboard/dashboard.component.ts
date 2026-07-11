@@ -3,9 +3,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { Application } from '../../../core/models/application.model';
-import { EventsService } from '../../../core/services/events.service';
-import { GalleryService } from '../../../core/services/gallery.service';
+import { MedalRibbon } from '../../../core/models/member.model';
 import { ApplicationsService } from '../../../core/services/applications.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { MembersService } from '../../../core/services/members.service';
+
+interface HonorMedal {
+    letter: string;
+    ribbon: MedalRibbon;
+    title: string;
+}
 
 @Component({
     selector: 'hf-dashboard',
@@ -15,93 +22,63 @@ import { ApplicationsService } from '../../../core/services/applications.service
 })
 export class DashboardComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
+    private readonly auth = inject(AuthService);
+    private readonly membersService = inject(MembersService);
+    private readonly applicationsService = inject(ApplicationsService);
     private readonly PREVIEW_COUNT = 3;
 
+    // Events + Gallery are MVP-deferred (T-0026): kept empty so the widgets show
+    // their empty state rather than fabricated data. They wire up post-MVP.
     upcomingEvents: RegimentEvent[] = [];
     recentGallery: GalleryItem[] = [];
+    // Field Dispatches (notifications) are also deferred.
+    dispatches: { tone: string; title: string; body: string; time: string }[] = [];
     pendingApplications: Application[] = [];
 
-    // Current member data (would come from AuthService in production)
-    currentMember = {
-        name: 'Alistair Holcombe',
-        rank: 'Colonel',
-        chevrons: 6,
-        attendanceRate: 94,
-        medals: [
-            {
-                letter: 'V',
-                ribbon: 'gold' as const,
-                title: 'Valour Cross',
-                description: 'Awarded for exceptional battlefield conduct.',
-            },
-            {
-                letter: 'C',
-                ribbon: 'tricolor' as const,
-                title: 'Campaign Star',
-                description: 'Awarded for completing a full campaign.',
-            },
-            {
-                letter: 'L',
-                ribbon: 'red' as const,
-                title: 'Long Service',
-                description: 'Three or more seasons of active service.',
-            },
-        ],
-    };
-
-    dispatches = [
-        {
-            tone: 'info',
-            title: 'Thursday Line Battle — Server password updated',
-            body: 'New password: holdfast2026. Please do not share outside the regiment.',
-            time: '2 hours ago',
-        },
-        {
-            tone: 'warn',
-            title: 'Officer drill mandatory this Wednesday',
-            body: 'All officers and NCOs are expected. Mark your RSVP.',
-            time: 'Yesterday',
-        },
-        {
-            tone: 'ok',
-            title: 'Promotion approved: Sade Wren → Sergeant',
-            body: 'Congratulations to Sade Wren on their promotion. Roles updated in Discord.',
-            time: '3 days ago',
-        },
-    ];
-
-    constructor(
-        private eventsService: EventsService,
-        private galleryService: GalleryService,
-        private applicationsService: ApplicationsService,
-    ) {}
+    // The signed-in member's real honors (hydrated from /auth/me + /members/:id).
+    currentMember: {
+        name: string;
+        rank: string;
+        chevrons: number;
+        attendanceRate: number;
+        medals: HonorMedal[];
+    } = { name: '', rank: '—', chevrons: 0, attendanceRate: 0, medals: [] };
 
     ngOnInit(): void {
-        this.eventsService
-            .getAll()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((events) => {
-                this.upcomingEvents = events
-                    .filter((e) => e.status === 'upcoming')
-                    .slice(0, this.PREVIEW_COUNT);
-            });
+        const user = this.auth.currentUser();
+        if (user) {
+            this.currentMember.name = user.name;
+            this.currentMember.rank = user.rank ?? '—';
+        }
 
-        this.galleryService
-            .getAll()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((items) => {
-                this.recentGallery = items
-                    .filter((i) => i.status === 'approved' && i.thumbnailUrl)
-                    .slice(0, this.PREVIEW_COUNT);
-            });
+        // Load the caller's own roster record for chevrons/attendance/medals.
+        if (user?.isMember) {
+            this.membersService
+                .getById(user.id)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((m) => {
+                    this.currentMember = {
+                        name: m.name,
+                        rank: m.rank || '—',
+                        chevrons: m.chevrons,
+                        attendanceRate: m.attendanceRate ?? 0,
+                        medals: (m.medalAwards ?? []).map((a) => ({
+                            letter: a.glyph,
+                            ribbon: a.ribbon,
+                            title: a.title,
+                        })),
+                    };
+                });
+        }
 
-        this.applicationsService
-            .getAll()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((apps) => {
-                this.pendingApplications = apps
-                    .filter((a) => a.status === 'pending')
-                    .slice(0, this.PREVIEW_COUNT);
-            });
+        // Recruitment review preview — only meaningful for staff who can manage it.
+        if (this.auth.hasCapability('manage_applications')) {
+            this.applicationsService
+                .getAll('pending')
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((apps) => {
+                    this.pendingApplications = apps.slice(0, this.PREVIEW_COUNT);
+                });
+        }
     }
 }

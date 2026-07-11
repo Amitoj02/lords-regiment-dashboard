@@ -25,10 +25,9 @@ export class BottomNavComponent {
 
     @Output() navigate = new EventEmitter<string>();
 
+    // Events/Gallery are MVP-deferred (T-0026); omitted until wired.
     readonly items: BottomNavItem[] = [
         { label: 'Board', key: 'dashboard', route: '/dashboard', icon: 'home' },
-        { label: 'Orders', key: 'events', route: '/events', icon: 'calendar' },
-        { label: 'Gallery', key: 'gallery', route: '/gallery', icon: 'image' },
         { label: 'Roster', key: 'roster', route: '/roster', icon: 'users' },
         { label: 'Me', key: 'profile', route: '/profile', icon: 'profile' },
     ];

@@ -1,209 +1,100 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { Member } from '../models/member.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiMember, PaginatedResponse, mapMember } from '../models/api.model';
+import { Member, MemberRole } from '../models/member.model';
 
-const STUB_MEMBERS: Member[] = [
-    {
-        id: 'm1',
-        name: 'Alistair Holcombe',
-        discordTag: 'holcombe#0001',
-        inGameName: 'Alistair_Holcombe',
-        rank: 'Colonel',
-        chevrons: 6,
-        medals: ['gold', 'tricolor', 'red'],
-        role: 'Owner',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-04T10:00:00Z',
-        platform: 'steam',
-        timezone: 'America/New_York',
-        joinedAt: '2022-01-15T00:00:00Z',
-        eventsAttended: 142,
-        attendanceRate: 94,
-    },
-    {
-        id: 'm2',
-        name: 'Diego Vasquez',
-        discordTag: 'dvasquez#0042',
-        inGameName: 'D_Vasquez',
-        rank: 'Major',
-        chevrons: 5,
-        medals: ['gold', 'blue'],
-        role: 'Admin',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-04T09:30:00Z',
-        platform: 'steam',
-        timezone: 'America/Chicago',
-        joinedAt: '2022-03-10T00:00:00Z',
-        eventsAttended: 118,
-        attendanceRate: 88,
-    },
-    {
-        id: 'm3',
-        name: 'Rhett Asher',
-        discordTag: 'rasher#0117',
-        inGameName: 'Rhett_Asher',
-        rank: 'Captain',
-        chevrons: 4,
-        medals: ['red', 'green'],
-        role: 'Admin',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-03T20:15:00Z',
-        platform: 'steam',
-        timezone: 'Europe/London',
-        joinedAt: '2022-06-20T00:00:00Z',
-        eventsAttended: 97,
-        attendanceRate: 82,
-    },
-    {
-        id: 'm4',
-        name: 'Jameson Nolt',
-        discordTag: 'jnolt#0308',
-        inGameName: 'Jameson_Nolt',
-        rank: 'Lieutenant',
-        chevrons: 3,
-        medals: ['blue'],
-        role: 'Moderator',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-04T08:45:00Z',
-        platform: 'steam',
-        timezone: 'America/Toronto',
-        joinedAt: '2023-01-05T00:00:00Z',
-        eventsAttended: 74,
-        attendanceRate: 79,
-    },
-    {
-        id: 'm5',
-        name: 'Sade Wren',
-        discordTag: 'swren#0522',
-        inGameName: 'Sade_Wren',
-        rank: 'Sergeant',
-        chevrons: 3,
-        medals: ['green'],
-        role: 'Moderator',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-03T22:00:00Z',
-        platform: 'xbox',
-        timezone: 'America/Los_Angeles',
-        joinedAt: '2023-04-18T00:00:00Z',
-        eventsAttended: 61,
-        attendanceRate: 75,
-    },
-    {
-        id: 'm6',
-        name: 'Mara Erskine',
-        discordTag: 'merskine#0734',
-        inGameName: 'Mara_Erskine',
-        rank: 'Corporal',
-        chevrons: 2,
-        medals: [],
-        role: 'Member',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-04T07:00:00Z',
-        platform: 'steam',
-        timezone: 'Europe/Berlin',
-        joinedAt: '2023-09-12T00:00:00Z',
-        eventsAttended: 38,
-        attendanceRate: 70,
-    },
-    {
-        id: 'm7',
-        name: 'Bjorn Trager',
-        discordTag: 'btrager#0911',
-        inGameName: 'Bjorn_Trager',
-        rank: 'Private',
-        chevrons: 1,
-        medals: [],
-        role: 'Member',
-        discordLinked: false,
-        status: 'Active',
-        lastSeen: '2026-06-01T14:30:00Z',
-        platform: 'steam',
-        timezone: 'Europe/Stockholm',
-        joinedAt: '2024-02-28T00:00:00Z',
-        eventsAttended: 12,
-        attendanceRate: 55,
-    },
-    {
-        id: 'm8',
-        name: 'Petra Calder',
-        discordTag: 'pcalder#1204',
-        inGameName: 'Petra_Calder',
-        rank: 'Private',
-        chevrons: 1,
-        medals: [],
-        role: 'Member',
-        discordLinked: true,
-        status: 'Active',
-        lastSeen: '2026-06-03T19:00:00Z',
-        platform: 'ps',
-        timezone: 'America/Vancouver',
-        joinedAt: '2024-03-15T00:00:00Z',
-        eventsAttended: 9,
-        attendanceRate: 60,
-    },
-    {
-        id: 'm9',
-        name: 'Konstantin Soto',
-        discordTag: 'ksoto#1501',
-        inGameName: 'Konstantin_Soto',
-        rank: 'Mercenary',
-        chevrons: 0,
-        medals: [],
-        role: 'Mercenary',
-        discordLinked: false,
-        status: 'Active',
-        lastSeen: '2026-05-30T11:00:00Z',
-        platform: 'steam',
-        timezone: 'Europe/Madrid',
-        joinedAt: '2025-11-01T00:00:00Z',
-        eventsAttended: 5,
-        attendanceRate: 50,
-    },
-    {
-        id: 'm10',
-        name: 'Yusuf Bey',
-        discordTag: 'ybey#1789',
-        inGameName: 'Yusuf_Bey',
-        rank: 'Applicant',
-        chevrons: 0,
-        medals: [],
-        role: 'Applicant',
-        discordLinked: false,
-        status: 'Pending',
-        lastSeen: '2026-06-02T16:00:00Z',
-        platform: 'steam',
-        timezone: 'Europe/Istanbul',
-        joinedAt: '2026-06-02T00:00:00Z',
-        eventsAttended: 0,
-        attendanceRate: 0,
-    },
-];
+/** A member's service-record timeline entry (GET /members/:id/service-record). */
+export interface ServiceRecordEntry {
+    id: string;
+    occurredAt: string;
+    type: string;
+    event: string;
+    note: string | null;
+}
+
+/** Sensitive command info (GET /members/:id/command-info; view_audit_log only). */
+export interface CommandInfo {
+    memberId: string;
+    lastSignInAt: string | null;
+    lastSignInIp: string | null;
+    email: string | null;
+    discordUsername: string | null;
+    guildMember: boolean;
+    suspendedUntil: string | null;
+    bannedAt: string | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MembersService {
-    // TODO: replace with HttpClient calls to /api/members
+    private readonly http = inject(HttpClient);
+    private readonly base = `${environment.apiBaseUrl}/members`;
 
+    /** The roster (first page — the backend caps `limit` at 100). */
     getAll(): Observable<Member[]> {
-        return of(STUB_MEMBERS);
+        return this.http
+            .get<PaginatedResponse<ApiMember>>(`${this.base}?limit=100`)
+            .pipe(map((res) => res.data.map(mapMember)));
     }
 
-    getById(id: string): Observable<Member | undefined> {
-        return of(STUB_MEMBERS.find((m) => m.id === id));
+    getById(id: string): Observable<Member> {
+        return this.http.get<ApiMember>(`${this.base}/${id}`).pipe(map(mapMember));
     }
 
-    update(id: string, changes: Partial<Member>): Observable<Member | undefined> {
-        // TODO: PATCH /api/members/:id
-        const idx = STUB_MEMBERS.findIndex((m) => m.id === id);
-        if (idx !== -1) {
-            STUB_MEMBERS[idx] = { ...STUB_MEMBERS[idx], ...changes };
-            return of(STUB_MEMBERS[idx]);
-        }
-        return of(undefined);
+    /** Self-service profile edit (PATCH; only platform/timezone/inGameName/avatarUrl). */
+    update(id: string, changes: Partial<Member>): Observable<Member> {
+        const body: Record<string, unknown> = {};
+        if (changes.platform !== undefined) body['platform'] = changes.platform;
+        if (changes.timezone !== undefined) body['timezone'] = changes.timezone;
+        if (changes.inGameName !== undefined) body['inGameName'] = changes.inGameName;
+        return this.http.patch<ApiMember>(`${this.base}/${id}`, body).pipe(map(mapMember));
+    }
+
+    // ── Admin actions (each returns the updated member) ──────────────────────
+    changeRank(id: string, rankId: string, note?: string): Observable<Member> {
+        return this.http
+            .post<ApiMember>(`${this.base}/${id}/rank`, { rankId, note })
+            .pipe(map(mapMember));
+    }
+
+    changeRole(id: string, role: MemberRole, note?: string): Observable<Member> {
+        return this.http
+            .post<ApiMember>(`${this.base}/${id}/role`, { role, note })
+            .pipe(map(mapMember));
+    }
+
+    awardMedal(id: string, medalId: string, detail?: string): Observable<Member> {
+        return this.http
+            .post<ApiMember>(`${this.base}/${id}/medals`, { medalId, detail })
+            .pipe(map(mapMember));
+    }
+
+    removeMedal(id: string, medalId: string): Observable<Member> {
+        return this.http
+            .delete<ApiMember>(`${this.base}/${id}/medals/${medalId}`)
+            .pipe(map(mapMember));
+    }
+
+    suspend(id: string, until: string, reason?: string): Observable<Member> {
+        return this.http
+            .post<ApiMember>(`${this.base}/${id}/suspend`, { until, reason })
+            .pipe(map(mapMember));
+    }
+
+    ban(id: string, reason?: string): Observable<Member> {
+        return this.http.post<ApiMember>(`${this.base}/${id}/ban`, { reason }).pipe(map(mapMember));
+    }
+
+    unban(id: string): Observable<Member> {
+        return this.http.post<ApiMember>(`${this.base}/${id}/unban`, {}).pipe(map(mapMember));
+    }
+
+    getServiceRecord(id: string): Observable<ServiceRecordEntry[]> {
+        return this.http.get<ServiceRecordEntry[]>(`${this.base}/${id}/service-record`);
+    }
+
+    getCommandInfo(id: string): Observable<CommandInfo> {
+        return this.http.get<CommandInfo>(`${this.base}/${id}/command-info`);
     }
 }

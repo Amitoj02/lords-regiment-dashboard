@@ -24,6 +24,9 @@ export class ProfileComponent implements OnInit {
     isAdmin = false;
     isOwnProfile = false;
 
+    /** The target of the admin-action modal (null = closed). */
+    adminTarget: Member | null = null;
+
     private readonly destroyRef = inject(DestroyRef);
     private readonly maxGalleryItems = 6;
 
@@ -108,6 +111,14 @@ export class ProfileComponent implements OnInit {
 
     setTab(tab: 'gallery' | 'tagged' | 'events' | 'rsvps'): void {
         this.activeTab = tab;
+    }
+
+    openAdminActions(): void {
+        this.adminTarget = this.member;
+    }
+
+    onMemberUpdated(updated: Member): void {
+        this.member = updated;
     }
 
     getInitials(name: string): string {

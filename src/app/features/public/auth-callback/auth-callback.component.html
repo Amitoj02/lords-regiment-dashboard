@@ -1,0 +1,16 @@
+<div class="auth-callback">
+    @if (error) {
+    <div class="auth-callback__card notice err">
+        <h2>Sign-in failed</h2>
+        <p>
+            We couldn't complete your sign-in ({{ error }}). Redirecting you back to the login page…
+        </p>
+    </div>
+    } @else {
+    <div class="auth-callback__card">
+        <div class="auth-callback__spinner" aria-hidden="true"></div>
+        <h2>Signing you in…</h2>
+        <p>Verifying your Discord credentials with the regiment.</p>
+    </div>
+    }
+</div>
