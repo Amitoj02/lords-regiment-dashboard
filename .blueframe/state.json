@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
-  "lastSyncedAt": "2026-07-11T04:20:00Z",
-  "notesForNextSession": "MVP integration SHIPPED this session on branch feat/mvp-integration. Wired the stub service layer to the live NestJS API (same-origin /api, proxied): real Discord OAuth2->JWT (login->/auth/callback->interceptor->/auth/me hydrate; identity-only->/apply) [T-0012]; environment.ts + proxy.conf [T-0013]; HttpClient services for members/applications + NEW ranks/medals/regiment with DTO->view-model mappers in core/models/api.model.ts [T-0011]; member admin-action modal (rank/role/medal/suspend/ban/unban), capability-gated on /auth/me capabilities, launched from roster row menu + profile [T-0023]; coming-soon guard hides deferred surfaces events/gallery/audit/settings/bot so NO stub data ships [T-0026]; multi-stage Dockerfile dev(ng serve)/prod(nginx serving SPA + /api proxy) [T-0022]. Dashboard shows the real signed-in member; apply form posts to the API. `ng build` clean. Verified LIVE end-to-end in the backend's prod docker stack. NOTE: the roster/apply use ?limit=100 (the backend caps limit at 100). NEXT (post-MVP): FE T-0025 wire events/gallery/audit/notifications/settings services; FE T-0017 admin settings panes + announcement composer + invite; FE T-0024 Discord bot UI; FE T-0014 unit/component tests. CurrentUser now carries isMember + capabilities; Member carries rankId + medalAwards.",
+  "lastSyncedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
+  "lastSyncedAt": "2026-07-11T22:00:00Z",
+  "notesForNextSession": "POST-MVP FRONTEND COMPLETE (build+verify) on feat/post-mvp-integration → PR #4 (Amitoj02/lords-regiment-dashboard). Wired events/gallery/audit/notifications/settings + admin settings/announce/invite (T-0017) + Discord bot UI (T-0024) + service/guard tests (T-0014); un-guarded the deferred surfaces. Build+lint+format clean; 41 unit tests green; two adversarial-review passes (5 findings fixed: draft-actually-published, Dissolve capability gate, audit real requestId/discord-sync, audit load error). Browser-verified end-to-end vs the live dev stack: login(mock owner)→dashboard/settings render real seeded data; the Quartermaster pane shows the mock gateway ONLINE + the dormant bot settings + the kickOnBan warning; the audit ledger renders real entries with Discord-sync status. Backend counterpart: lords-dashboard-backend PR #4 (feat/post-mvp-features). NEXT: after both PRs merge, real Discord go-live together (backend T-0033) — owner brings creds, flip mocks off, re-review kickOnBan; then the events/gallery upload story (no real asset-upload backend yet — gallery-submit is link/metadata only for now).",
   "nextIdCounter": 27,
   "connections": [],
   "tasks": [
@@ -435,8 +435,8 @@
     {
       "id": "T-0011",
       "title": "Wire core MVP HTTP services",
-      "summary": "MVP HTTP wiring: register provideHttpClient and swap the of(stubData) implementations for real HttpClient calls to the core MVP endpoints \u2014 members, applications, ranks, medals and regiment stats. Events/gallery/audit/notifications/settings clients are deferred to T-0025 (post-MVP, as those backend modules land). Contracts live in lords-dashboard-backend (SCHEMA.md, Swagger at /api/docs) \u2014 read them rather than inventing endpoints.",
-      "status": "deploy_ready",
+      "summary": "MVP HTTP wiring: register provideHttpClient and swap the of(stubData) implementations for real HttpClient calls to the core MVP endpoints — members, applications, ranks, medals and regiment stats. Events/gallery/audit/notifications/settings clients are deferred to T-0025 (post-MVP, as those backend modules land). Contracts live in lords-dashboard-backend (SCHEMA.md, Swagger at /api/docs) — read them rather than inventing endpoints.",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -469,14 +469,17 @@
       "regressionRisk": [
         {
           "desc": "All feature screens consume these services; swapping stub->HTTP changes async timing and error surfaces app-wide",
-          "status": "open",
-          "notedAt": "2026-07-11T00:44:53Z"
+          "status": "resolved",
+          "notedAt": "2026-07-11T00:44:53Z",
+          "resolvedAt": "2026-07-11T22:00:00Z",
+          "resolvedBy": "claude",
+          "note": "FE T-0014 landed a regression net: HttpTestingController service specs + auth/admin guard specs (41 tests). Also browser-verified end-to-end against the live API (login→dashboard→admin surfaces render real data)."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T04:20:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -498,6 +501,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #3 (merge c8955b4); MVP HTTP services now live on the default branch. Regression risk #0 (stub->HTTP async/error surfaces) stays OPEN pending the T-0014 test net."
         }
       ]
     },
@@ -505,7 +515,7 @@
       "id": "T-0012",
       "title": "Real Discord OAuth2 -> JWT authentication",
       "summary": "Implement the real auth flow: initiate Discord OAuth2, handle the backend redirect to /auth/callback (success) or /login (failure), persist the JWT, hydrate currentUser from GET /api/auth/me (CurrentUser DTO), and add logout. Includes a JWT HttpInterceptor (attach token, handle 401) and identity-only sessions (isMember:false -> /apply). Replaces the stub AuthService user.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -536,14 +546,17 @@
       "regressionRisk": [
         {
           "desc": "AuthGuard/AdminGuard and every guarded route depend on AuthService shape; changing it affects all member/admin access",
-          "status": "open",
-          "notedAt": "2026-07-11T00:44:53Z"
+          "status": "resolved",
+          "notedAt": "2026-07-11T00:44:53Z",
+          "resolvedAt": "2026-07-11T22:00:00Z",
+          "resolvedBy": "claude",
+          "note": "FE T-0014 landed a regression net: HttpTestingController service specs + auth/admin guard specs (41 tests). Also browser-verified end-to-end against the live API (login→dashboard→admin surfaces render real data)."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T04:20:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -558,6 +571,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #3 (merge c8955b4); real Discord OAuth2->JWT auth now live on the default branch. Regression risk #0 (AuthService shape -> guards) stays OPEN pending the T-0014 test net."
         }
       ]
     },
@@ -565,7 +585,7 @@
       "id": "T-0013",
       "title": "Environment configuration for API base URL (Docker-aware)",
       "summary": "Add environment.ts / environment.prod.ts (+ angular.json fileReplacements) exposing the API base URL and OAuth config. Docker-aware: dev proxies /api to the api container (Angular proxy.conf or the web container's nginx) so the SPA is same-origin and CORS-free; prod resolves /api behind the reverse proxy. No hard-coded http://localhost:3000/api.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "infra",
       "size": "S",
       "sizeWeight": 2,
@@ -591,9 +611,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T04:20:00Z",
+      "updatedAt": "2026-07-11T18:40:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -615,6 +635,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #3 (merge c8955b4); environment files reformatted to repo Prettier style in e953f6c. Env/proxy config now live on the default branch."
         }
       ]
     },
@@ -622,7 +649,7 @@
       "id": "T-0014",
       "title": "Unit/component test coverage",
       "summary": "Only the default app.component.spec.ts exists, though the tech-debt cleanup added a test:ci script + CI. Add spec coverage for services (stub + eventual HTTP), guards (auth/admin redirects), and key components (avatar initials/colour, app-shell). Establishes a regression net before backend integration.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "M",
       "sizeWeight": 3,
@@ -639,14 +666,14 @@
       "testPlan": [
         {
           "desc": "ng test runs green with meaningful coverage of services and guards",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -654,6 +681,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; test coverage effectively absent"
+        },
+        {
+          "at": "2026-07-11T22:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Post-MVP: HttpTestingController specs for the six wired services + auth/admin guard specs. 41 unit tests green (Chrome headless). PR #4."
         }
       ]
     },
@@ -789,7 +823,7 @@
       "id": "T-0017",
       "title": "Admin settings, announcements & invite UI (post-MVP)",
       "summary": "Post-MVP admin surfaces: wire the Settings panes (Identity/Discord/Quartermaster-bot/Operations) and build the announcement/dispatch composer + invite-Mercenary flow, all wired to real backend endpoints with UI capability-gating. The member admin-action modal is split out to the MVP task T-0023; the Discord/bot-status wiring is split out to T-0024.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -810,14 +844,14 @@
       "testPlan": [
         {
           "desc": "each admin surface round-trips to its endpoint and hides actions the user lacks capability for",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
       "createdAt": "2026-07-11T01:15:00Z",
-      "updatedAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T01:15:00Z",
@@ -839,6 +873,13 @@
           "to": "planned",
           "by": "claude",
           "note": "bf-plan re-scope: member action modal split to MVP T-0023 and bot UI to T-0024; this task now = post-MVP settings/announcements/invite"
+        },
+        {
+          "at": "2026-07-11T22:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Post-MVP: admin Settings panes (profile/visibility/permission-matrix), announcement composer (notifications.compose + optional discord.announce), and a game-fun copyable Discord invite. Capability-gated. Dissolve gate corrected to transfer_ownership in review. PR #4."
         }
       ]
     },
@@ -907,14 +948,14 @@
       "testPlan": [
         {
           "desc": "npm run lint + format:check pass; CI workflow runs lint/build on push",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "c2e191e",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T01:45:00Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-11T18:40:00Z",
       "history": [
         {
           "at": "2026-07-11T01:45:00Z",
@@ -922,6 +963,13 @@
           "to": "deployed",
           "by": "claude",
           "note": "created via /bf-init rebuild; shipped in PR #2 (tech-debt cleanup)"
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deployed",
+          "to": "deployed",
+          "by": "claude",
+          "note": "sync: e953f6c (merged via PR #3) made frontend CI green — Prettier scope now excludes .blueframe/.claude/CLAUDE.md and MVP sources were reformatted, so lint + format:check pass (red on main since June). testPlan marked passed."
         }
       ]
     },
@@ -1012,7 +1060,7 @@
       "id": "T-0022",
       "title": "Frontend Docker container (dev + prod parity)",
       "summary": "Multi-stage Dockerfile for the Angular app: a dev stage running `ng serve --host 0.0.0.0` with hot reload, and a prod stage that builds the app and serves the static bundle via nginx (which also reverse-proxies /api to the api container). This image is the `web` service the backend's unified docker-compose builds (context ../lords-regiment-dashboard). No host Node needed.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "infra",
       "size": "M",
       "sizeWeight": 3,
@@ -1037,9 +1085,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T04:20:00Z",
+      "updatedAt": "2026-07-11T18:40:00Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1054,14 +1102,21 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #3 (merge c8955b4); the multi-stage web image is now on the default branch."
         }
       ]
     },
     {
       "id": "T-0023",
       "title": "Member admin-action modal (MVP)",
-      "summary": "Rebuild the admin-action modal removed in the tech-debt cleanup: change rank/role, award/remove medal, suspend/ban/unban \u2014 launched from the Roster row menu and Profile, wired to the real member endpoints and capability-gated in the UI via the capabilities array from /auth/me (lords-dashboard-backend:T-0006). The single biggest admin gap and part of the MVP core loop.",
-      "status": "deploy_ready",
+      "summary": "Rebuild the admin-action modal removed in the tech-debt cleanup: change rank/role, award/remove medal, suspend/ban/unban — launched from the Roster row menu and Profile, wired to the real member endpoints and capability-gated in the UI via the capabilities array from /auth/me (lords-dashboard-backend:T-0006). The single biggest admin gap and part of the MVP core loop.",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1086,11 +1141,17 @@
           "status": "passed"
         }
       ],
-      "regressionRisk": [],
+      "regressionRisk": [
+        {
+          "desc": "e953f6c renamed the modal's native @Output close->closed (roster + profile bindings updated) and added a document:keydown.escape @HostListener; any other/future binding to (close) silently no-ops, and the document-level Escape handler is guarded only by _member being set",
+          "status": "open",
+          "notedAt": "2026-07-11T18:40:00Z"
+        }
+      ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T04:20:00Z",
+      "updatedAt": "2026-07-11T18:40:00Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1112,6 +1173,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #3 (merge c8955b4). e953f6c added Escape-to-close keyboard support and renamed the native close @Output -> closed; logged as regression risk #0."
         }
       ]
     },
@@ -1119,7 +1187,7 @@
       "id": "T-0024",
       "title": "Discord bot admin UI wiring (post-MVP)",
       "summary": "Wire the existing bot-status screen + the Settings Discord-connection and Quartermaster-bot panes to the backend Discord control endpoints (connection/verify, settings, resync/reinvite, operations resolve). Part of the post-MVP Discord bot milestone; no-op until the backend bot lands.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1140,14 +1208,14 @@
       "testPlan": [
         {
           "desc": "bot-status + Discord settings panes round-trip to the /discord control endpoints and reflect live connection/operation state",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1155,6 +1223,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; split from T-0017 as the post-MVP bot admin UI"
+        },
+        {
+          "at": "2026-07-11T22:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Post-MVP: bot-status + Settings Discord/Quartermaster pane wired to /discord (connection/verify/settings incl. the sensitive kickOnBan toggle behind a warning, resync, operations+resolve). Browser-verified against the mock gateway (ONLINE, vmock-1.0.0). PR #4."
         }
       ]
     },
@@ -1162,7 +1237,7 @@
       "id": "T-0025",
       "title": "Wire remaining feature HTTP services (post-MVP)",
       "summary": "Swap the remaining stub services for real HttpClient calls as their backend modules land: events, gallery, audit, notifications, plus a new settings client. Follows the same of(stub)->http pattern as T-0011.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1186,14 +1261,14 @@
       "testPlan": [
         {
           "desc": "events/gallery/audit/notifications/settings services hit their /api endpoints and screens render live data",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T02:30:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1201,14 +1276,21 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; split from T-0011 to keep MVP HTTP wiring lean"
+        },
+        {
+          "at": "2026-07-11T22:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Post-MVP: wired events/gallery/audit services to HttpClient + added notifications/settings/discord services + Api* mappers in api.model. Build+lint+41 tests green; reviewed. On feat/post-mvp-integration (PR #4)."
         }
       ]
     },
     {
       "id": "T-0026",
       "title": "Guard un-wired MVP surfaces (no stub data in prod)",
-      "summary": "So the deployed MVP never shows fabricated data: hide or route-guard the surfaces whose HTTP wiring is deferred to T-0025 \u2014 public events + gallery, and admin audit/settings/bot-status \u2014 behind a feature flag or empty/coming-soon states, until their real services land. Only the MVP-wired surfaces (roster, profile, applications, ranks/medals, regiment stats) stay live.",
-      "status": "deploy_ready",
+      "summary": "So the deployed MVP never shows fabricated data: hide or route-guard the surfaces whose HTTP wiring is deferred to T-0025 — public events + gallery, and admin audit/settings/bot-status — behind a feature flag or empty/coming-soon states, until their real services land. Only the MVP-wired surfaces (roster, profile, applications, ranks/medals, regiment stats) stay live.",
+      "status": "deployed",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -1226,15 +1308,15 @@
       "questions": [],
       "testPlan": [
         {
-          "desc": "on the MVP build, events/gallery/audit/settings/bot-status render an empty/coming-soon state (or are route-guarded) \u2014 never stub data",
+          "desc": "on the MVP build, events/gallery/audit/settings/bot-status render an empty/coming-soon state (or are route-guarded) — never stub data",
           "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "8f4cc83fb25c38cbc10d66dbc53b2b9bdb5dd6b5",
+      "lastTouchedCommit": "c8955b4cccec756b8e32515a16f2b8fb6ed157d7",
       "createdAt": "2026-07-11T03:00:00Z",
-      "updatedAt": "2026-07-11T04:20:00Z",
+      "updatedAt": "2026-07-11T22:00:00Z",
       "history": [
         {
           "at": "2026-07-11T03:00:00Z",
@@ -1249,6 +1331,20 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "MVP session: wired to the live API and verified in the full prod docker stack (browser login->dashboard->roster->admin modal)."
+        },
+        {
+          "at": "2026-07-11T18:40:00Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #3 (merge c8955b4); coming-soon guards for events/gallery/audit/settings/bot now live on the default branch, so no stub data ships."
+        },
+        {
+          "at": "2026-07-11T22:00:00Z",
+          "from": "deployed",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Post-MVP: the guarded surfaces (events, gallery, audit, settings, bot) are now UN-guarded — their real services landed (T-0025) so they route to real components rather than ComingSoon. The guard now only covers anything still genuinely un-wired."
         }
       ]
     }
