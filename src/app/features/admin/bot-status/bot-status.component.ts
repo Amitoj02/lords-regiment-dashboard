@@ -1,17 +1,11 @@
-import { Component } from '@angular/core';
-
-interface BotOperation {
-    id: string;
-    timestamp: string;
-    success: boolean;
-    description: string;
-    needsResolve: boolean;
-}
-
-interface PermissionCheck {
-    permission: string;
-    granted: boolean;
-}
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+    BotOperation,
+    DiscordConnection,
+    DiscordService,
+} from '../../../core/services/discord.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-bot-status',
@@ -19,82 +13,137 @@ interface PermissionCheck {
     styleUrls: ['./bot-status.component.scss'],
     standalone: false,
 })
-export class BotStatusComponent {
+export class BotStatusComponent implements OnInit {
     crumbs = ['Settings', 'Quartermaster bot'];
 
-    operations: BotOperation[] = [
-        {
-            id: 'op1',
-            timestamp: '12:04',
-            success: true,
-            description: 'Role sync completed — 84 members updated',
-            needsResolve: false,
-        },
-        {
-            id: 'op2',
-            timestamp: '11:52',
-            success: true,
-            description: 'Event reminder dispatched — Grand Autumn Campaign',
-            needsResolve: false,
-        },
-        {
-            id: 'op3',
-            timestamp: '11:30',
-            success: false,
-            description: 'Role assign failed — Bjorn Trager account not linked',
-            needsResolve: true,
-        },
-        {
-            id: 'op4',
-            timestamp: '10:15',
-            success: true,
-            description: 'Application notification sent — Mara Erskine',
-            needsResolve: false,
-        },
-        {
-            id: 'op5',
-            timestamp: '09:42',
-            success: true,
-            description: 'Rank promotion synced — Corporal promotion broadcast',
-            needsResolve: false,
-        },
-        {
-            id: 'op6',
-            timestamp: '09:01',
-            success: false,
-            description: 'Heartbeat missed — reconnected after 8 seconds',
-            needsResolve: false,
-        },
-        {
-            id: 'op7',
-            timestamp: 'Yesterday',
-            success: true,
-            description: 'Daily roster verification — 0 discrepancies found',
-            needsResolve: false,
-        },
-    ];
+    connection: DiscordConnection | null = null;
+    operations: BotOperation[] = [];
+    verifying = false;
+    resyncing = false;
 
-    permissionChecks: PermissionCheck[] = [
-        { permission: 'Manage Roles', granted: true },
-        { permission: 'Send Messages', granted: true },
-        { permission: 'Embed Links', granted: true },
-        { permission: 'Manage Nicknames', granted: false },
-        { permission: 'View Audit Log', granted: true },
-        { permission: 'Mention Everyone', granted: false },
-    ];
+    private readonly destroyRef = inject(DestroyRef);
 
-    botInfo = {
-        version: '2.4.1',
-        serverName: 'Lords Regiment HQ',
-        serverId: '1084739201847362',
-        rolePosition: 4,
-        lastHeartbeat: '12:04:02',
-        totalRoles: 9,
-        membersVisible: 84,
-    };
+    constructor(
+        private discord: DiscordService,
+        private auth: AuthService,
+    ) {}
+
+    /** Capability gate for a template action (see the spec's capability keys). */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
+
+    ngOnInit(): void {
+        this.loadConnection();
+        this.loadOperations();
+    }
+
+    private loadConnection(): void {
+        this.discord
+            .getConnection()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (connection) => (this.connection = connection),
+                error: (err) => console.error('Failed to load bot connection', err),
+            });
+    }
+
+    private loadOperations(): void {
+        this.discord
+            .getOperations()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (operations) => (this.operations = operations),
+                error: (err) => console.error('Failed to load bot operations', err),
+            });
+    }
+
+    verify(): void {
+        if (this.verifying || !this.can('manage_settings')) {
+            return;
+        }
+        this.verifying = true;
+        this.discord
+            .verifyConnection()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (connection) => {
+                    this.connection = connection;
+                    this.verifying = false;
+                },
+                error: (err) => {
+                    console.error('Failed to verify bot connection', err);
+                    this.verifying = false;
+                },
+            });
+    }
+
+    resync(): void {
+        if (this.resyncing || !this.can('manage_settings')) {
+            return;
+        }
+        this.resyncing = true;
+        this.discord
+            .resync()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.resyncing = false;
+                    this.loadOperations();
+                },
+                error: (err) => {
+                    console.error('Failed to enqueue resync', err);
+                    this.resyncing = false;
+                },
+            });
+    }
 
     resolve(id: string): void {
-        const op = this.operations.find((o) => o.id === id);
-        if (op) op.needsResolve = false;
+        this.discord
+            .resolveOperation(id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (op) => {
+                    const idx = this.operations.findIndex((o) => o.id === id);
+                    if (idx > -1) {
+                        this.operations[idx] = op;
+                    }
+                },
+                error: (err) => console.error('Failed to resolve operation', err),
+            });
+    }
+
+    get membersLabel(): string {
+        return this.connection?.membersVisible != null
+            ? String(this.connection.membersVisible)
+            : '—';
+    }
+
+    get rolesLabel(): string {
+        return this.connection?.totalRoles != null ? String(this.connection.totalRoles) : '—';
+    }
+
+    get connectionLabel(): string {
+        const status = this.connection?.connectionStatus;
+        switch (status) {
+            case 'connected':
+                return 'Online';
+            case 'checking':
+                return 'Checking…';
+            case 'error':
+                return 'Error';
+            default:
+                return 'Offline';
+        }
+    }
+
+    formatTime(iso: string | null): string {
+        if (!iso) {
+            return '—';
+        }
+        return new Date(iso).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
     }
 }

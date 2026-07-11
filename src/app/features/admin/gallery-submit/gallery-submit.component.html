@@ -211,14 +211,25 @@
                     </div>
                 </div>
 
+                @if (can('submit_to_gallery')) {
                 <div class="submit-actions">
                     <button type="button" class="btn btn-ghost btn-block" (click)="saveDraft()">
                         Save draft
                     </button>
-                    <button type="button" class="btn btn-primary btn-block" (click)="submit()">
-                        Submit for review
+                    <button
+                        type="button"
+                        class="btn btn-primary btn-block"
+                        [disabled]="submitting || !submissionTitle"
+                        (click)="submit()"
+                    >
+                        {{ submitting ? 'Submitting…' : 'Submit for review' }}
                     </button>
                 </div>
+                } @else {
+                <hf-notice variant="info">
+                    You need the "Submit to gallery" permission to add submissions.
+                </hf-notice>
+                }
             </div>
         </div>
     </div>

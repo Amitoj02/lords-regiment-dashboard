@@ -1,6 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent, RsvpStatus } from '../../../core/models/event.model';
+import { EventsService } from '../../../core/services/events.service';
+import { AuthService } from '../../../core/services/auth.service';
+
+interface AttendeeVM {
+    name: string;
+    initials: string;
+}
 
 @Component({
     selector: 'app-event-detail',
@@ -13,62 +21,169 @@ export class EventDetailComponent implements OnInit {
     selectedRsvp: RsvpStatus | null = null;
     eventId: string | null = null;
 
-    event: RegimentEvent = {
-        id: 'ev1',
-        title: 'Grand Autumn Campaign — Line Battle',
-        description: `Soldiers of the Lords Regiment — this Saturday we take the field for the Grand Autumn Campaign Line Battle. Full regimental turnout is expected. All ranks from Corporal upwards are required to attend in dress uniform.\n\nFall in at 19:30 UTC for roll call. Battle commences at 20:00 UTC sharp. Officers are to report to the command tent fifteen minutes prior for briefing.\n\nBring honour to the regiment.`,
-        serverName: 'Lords Regiment Official #1',
-        serverPassword: 'LR2026au',
-        date: '2026-06-07',
-        startTime: '19:30',
-        endTime: '22:00',
-        timezone: 'UTC',
-        platforms: ['steam', 'xbox'],
-        status: 'upcoming',
-        recurring: 'Weekly — Saturdays',
-        tags: ['line-battle', 'campaign', 'mandatory'],
-        rsvpCounts: { interested: 24, tentative: 8, declined: 3, neutral: 5 },
-        attendees: [
-            'Jameson Nolt',
-            'Alistair Holcombe',
-            'Sade Wren',
-            'Diego Vasquez',
-            'Rhett Asher',
-            'Mara Erskine',
-            'Conrad Ashe',
-            'Theo Kiran',
-        ],
-        bannerUrl: '',
-        notifyBefore: ['1 hour', '30 minutes'],
-    };
+    event: RegimentEvent | null = null;
+    attendees: AttendeeVM[] = [];
 
-    attendees = [
-        { name: 'Jameson Nolt', initials: 'JN' },
-        { name: 'Alistair Holcombe', initials: 'AH' },
-        { name: 'Sade Wren', initials: 'SW' },
-        { name: 'Diego Vasquez', initials: 'DV' },
-        { name: 'Rhett Asher', initials: 'RA' },
-        { name: 'Mara Erskine', initials: 'ME' },
-        { name: 'Conrad Ashe', initials: 'CA' },
-        { name: 'Theo Kiran', initials: 'TK' },
-    ];
+    /** Populated by the dedicated reveal endpoint (RevealEventPasswords) — never in the event body. */
+    revealedPassword: string | null = null;
+    revealing = false;
+    working = false;
 
-    constructor(private route: ActivatedRoute) {}
+    private readonly destroyRef = inject(DestroyRef);
+
+    constructor(
+        private route: ActivatedRoute,
+        private eventsService: EventsService,
+        private auth: AuthService,
+        private router: Router,
+    ) {}
+
+    /** Capability gate for a template action (see the spec's capability keys). */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
 
     ngOnInit(): void {
         this.eventId = this.route.snapshot.paramMap.get('id');
-        // In production, load the event by this.eventId via EventsService.
+        if (!this.eventId) {
+            return;
+        }
+        this.eventsService
+            .getById(this.eventId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (event) => (this.event = event),
+                error: (err) => console.error('Failed to load event', err),
+            });
+
+        if (this.can('view_members_directory')) {
+            this.eventsService
+                .getAttendees(this.eventId)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (rows) => {
+                        this.attendees = rows.map((a) => {
+                            const name = a.name ?? a.memberId;
+                            return { name, initials: this.initials(name) };
+                        });
+                    },
+                    error: (err) => console.error('Failed to load attendees', err),
+                });
+        }
     }
 
+    private initials(name: string): string {
+        return name
+            .split(' ')
+            .map((s) => s[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+    }
+
+    /** Reveal the decrypted server password (once) then toggle its visibility. */
     togglePassword(): void {
-        this.showPassword = !this.showPassword;
+        if (this.revealedPassword !== null) {
+            this.showPassword = !this.showPassword;
+            return;
+        }
+        if (!this.eventId || this.revealing || !this.can('reveal_event_passwords')) {
+            return;
+        }
+        this.revealing = true;
+        this.eventsService
+            .revealPassword(this.eventId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res) => {
+                    this.revealedPassword = res.serverPassword ?? '';
+                    this.showPassword = true;
+                    this.revealing = false;
+                },
+                error: (err) => {
+                    console.error('Failed to reveal server password', err);
+                    this.revealing = false;
+                },
+            });
     }
 
     setRsvp(status: RsvpStatus): void {
-        this.selectedRsvp = status;
+        if (!this.eventId) {
+            return;
+        }
+        this.eventsService
+            .rsvp(this.eventId, status)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (event) => {
+                    this.event = event;
+                    this.selectedRsvp = status;
+                },
+                error: (err) => console.error('Failed to record RSVP', err),
+            });
+    }
+
+    archive(): void {
+        if (!this.eventId || this.working) {
+            return;
+        }
+        this.working = true;
+        this.eventsService
+            .archive(this.eventId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (event) => {
+                    this.event = event;
+                    this.working = false;
+                },
+                error: (err) => {
+                    console.error('Failed to archive event', err);
+                    this.working = false;
+                },
+            });
+    }
+
+    complete(): void {
+        if (!this.eventId || this.working) {
+            return;
+        }
+        this.working = true;
+        this.eventsService
+            .complete(this.eventId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (event) => {
+                    this.event = event;
+                    this.working = false;
+                },
+                error: (err) => {
+                    console.error('Failed to complete event', err);
+                    this.working = false;
+                },
+            });
+    }
+
+    remove(): void {
+        if (!this.eventId || this.working) {
+            return;
+        }
+        this.working = true;
+        this.eventsService
+            .delete(this.eventId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.router.navigateByUrl('/events'),
+                error: (err) => {
+                    console.error('Failed to delete event', err);
+                    this.working = false;
+                },
+            });
     }
 
     get rsvpTotal(): number {
+        if (!this.event) {
+            return 0;
+        }
         const c = this.event.rsvpCounts;
         return c.interested + c.tentative + c.declined + c.neutral;
     }

@@ -1,121 +1,120 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { RegimentEvent } from '../models/event.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiEvent, PaginatedResponse, mapEvent, parseNotifyOffset } from '../models/api.model';
+import { EventStatus, RegimentEvent, RsvpStatus } from '../models/event.model';
 
-const STUB_EVENTS: RegimentEvent[] = [
-    {
-        id: 'ev1',
-        title: 'Thursday Line Battle',
-        description:
-            'Weekly organised line battle against allied regiments. Full uniform required. Officers to coordinate flanks.',
-        serverName: 'HF | Organised Events',
-        serverPassword: 'holdfast2026',
-        date: '2026-06-06',
-        startTime: '20:00',
-        endTime: '23:00',
-        timezone: 'America/New_York',
-        platforms: ['steam'],
-        status: 'upcoming',
-        recurring: 'weekly',
-        tags: ['line-battle', 'required'],
-        rsvpCounts: { interested: 8, tentative: 2, declined: 1, neutral: 3 },
-        attendees: ['m1', 'm2', 'm3', 'm4', 'm5'],
-        notifyBefore: ['1h', '30m'],
-    },
-    {
-        id: 'ev2',
-        title: 'Saturday Siege Night',
-        description: 'Casual siege event. Mercenaries welcome. No formal uniform required.',
-        serverName: 'HF | Siege Server',
-        date: '2026-06-08',
-        startTime: '19:30',
-        endTime: '22:00',
-        timezone: 'America/New_York',
-        platforms: ['steam', 'xbox'],
-        status: 'upcoming',
-        tags: ['siege', 'casual', 'open'],
-        rsvpCounts: { interested: 5, tentative: 3, declined: 0, neutral: 6 },
-        notifyBefore: ['2h'],
-    },
-    {
-        id: 'ev3',
-        title: 'Officer Training Drill',
-        description:
-            'Command and communication drill for officers and NCOs. Mandatory for promotions.',
-        serverName: 'HF | Training Server',
-        serverPassword: 'officers',
-        date: '2026-06-04',
-        startTime: '18:00',
-        endTime: '19:30',
-        timezone: 'America/New_York',
-        platforms: ['steam'],
-        status: 'ongoing',
-        tags: ['training', 'officers'],
-        rsvpCounts: { interested: 4, tentative: 0, declined: 0, neutral: 0 },
-        attendees: ['m1', 'm2', 'm3', 'm4'],
-    },
-    {
-        id: 'ev4',
-        title: 'May Grand Campaign — Final Assault',
-        description: 'Epic 3-hour campaign finale. Regiment performed exceptionally.',
-        serverName: 'EU Campaign Server',
-        date: '2026-05-25',
-        startTime: '20:00',
-        endTime: '23:00',
-        timezone: 'America/New_York',
-        platforms: ['steam'],
-        status: 'previous',
-        tags: ['campaign', 'major-event'],
-        rsvpCounts: { interested: 10, tentative: 1, declined: 2, neutral: 1 },
-        attendees: ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'],
-    },
-    {
-        id: 'ev5',
-        title: 'Recruitment Open House',
-        description:
-            'Open server event for prospective members. Show off our drill and discipline.',
-        serverName: 'HF | Public Server',
-        date: '2026-06-15',
-        startTime: '17:00',
-        endTime: '19:00',
-        timezone: 'America/New_York',
-        platforms: ['steam', 'xbox', 'ps'],
-        status: 'upcoming',
-        tags: ['recruitment', 'open', 'casual'],
-        rsvpCounts: { interested: 6, tentative: 2, declined: 0, neutral: 4 },
-        notifyBefore: ['24h', '1h'],
-    },
-];
+/** A confirmed attendee row (GET/POST /events/:id/attendees). Mirrors AttendeeDto. */
+export interface EventAttendee {
+    memberId: string;
+    name: string | null;
+    checkedInAt: string | null;
+}
+
+/** Response of POST /events/:id/reveal-password (SENSITIVE — decrypted password). */
+export interface RevealedPassword {
+    serverName: string | null;
+    serverRegion: string | null;
+    serverPassword: string | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class EventsService {
-    // TODO: replace with HttpClient calls to /api/events
+    private readonly http = inject(HttpClient);
+    private readonly base = `${environment.apiBaseUrl}/events`;
 
-    getAll(): Observable<RegimentEvent[]> {
-        return of(STUB_EVENTS);
+    /** The event list (first page — the backend caps `limit` at 100). Public projection. */
+    getAll(status?: EventStatus): Observable<RegimentEvent[]> {
+        const q = status ? `?status=${status}&limit=100` : '?limit=100';
+        return this.http
+            .get<PaginatedResponse<ApiEvent>>(`${this.base}${q}`)
+            .pipe(map((res) => res.data.map(mapEvent)));
     }
 
-    getById(id: string): Observable<RegimentEvent | undefined> {
-        return of(STUB_EVENTS.find((e) => e.id === id));
+    getById(id: string): Observable<RegimentEvent> {
+        return this.http.get<ApiEvent>(`${this.base}/${id}`).pipe(map(mapEvent));
     }
 
+    /** Create an event (ManageEvents). Frontend fields are translated to the backend DTO. */
     create(event: Omit<RegimentEvent, 'id'>): Observable<RegimentEvent> {
-        // TODO: POST /api/events
-        const newEvent: RegimentEvent = {
-            ...event,
-            id: `ev${Date.now()}`,
-        };
-        STUB_EVENTS.push(newEvent);
-        return of(newEvent);
+        return this.http.post<ApiEvent>(this.base, this.toBody(event)).pipe(map(mapEvent));
     }
 
-    update(id: string, changes: Partial<RegimentEvent>): Observable<RegimentEvent | undefined> {
-        // TODO: PATCH /api/events/:id
-        const idx = STUB_EVENTS.findIndex((e) => e.id === id);
-        if (idx !== -1) {
-            STUB_EVENTS[idx] = { ...STUB_EVENTS[idx], ...changes };
-            return of(STUB_EVENTS[idx]);
+    update(id: string, changes: Partial<RegimentEvent>): Observable<RegimentEvent> {
+        return this.http
+            .patch<ApiEvent>(`${this.base}/${id}`, this.toBody(changes))
+            .pipe(map(mapEvent));
+    }
+
+    delete(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.base}/${id}`);
+    }
+
+    // ── Lifecycle transitions (each returns the updated event) ───────────────
+    publish(id: string): Observable<RegimentEvent> {
+        return this.http.post<ApiEvent>(`${this.base}/${id}/publish`, {}).pipe(map(mapEvent));
+    }
+
+    archive(id: string): Observable<RegimentEvent> {
+        return this.http.post<ApiEvent>(`${this.base}/${id}/archive`, {}).pipe(map(mapEvent));
+    }
+
+    complete(id: string, outcome?: string, inLineCount?: number): Observable<RegimentEvent> {
+        return this.http
+            .post<ApiEvent>(`${this.base}/${id}/complete`, { outcome, inLineCount })
+            .pipe(map(mapEvent));
+    }
+
+    // ── RSVP (member view; the returned event carries myRsvp) ────────────────
+    rsvp(
+        id: string,
+        status: RsvpStatus,
+        reminderOffsetMinutes?: number,
+    ): Observable<RegimentEvent> {
+        return this.http
+            .post<ApiEvent>(`${this.base}/${id}/rsvp`, { status, reminderOffsetMinutes })
+            .pipe(map(mapEvent));
+    }
+
+    removeRsvp(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.base}/${id}/rsvp`);
+    }
+
+    // ── Attendees ────────────────────────────────────────────────────────────
+    getAttendees(id: string): Observable<EventAttendee[]> {
+        return this.http.get<EventAttendee[]>(`${this.base}/${id}/attendees`);
+    }
+
+    setAttendees(id: string, memberIds: string[]): Observable<EventAttendee[]> {
+        return this.http.post<EventAttendee[]>(`${this.base}/${id}/attendees`, { memberIds });
+    }
+
+    /** Reveal the decrypted server password (RevealEventPasswords; must have RSVP'd). */
+    revealPassword(id: string): Observable<RevealedPassword> {
+        return this.http.post<RevealedPassword>(`${this.base}/${id}/reveal-password`, {});
+    }
+
+    /** Map the frontend view model onto the backend create/update DTO fields. */
+    private toBody(e: Partial<RegimentEvent>): Record<string, unknown> {
+        const body: Record<string, unknown> = {};
+        if (e.title !== undefined) body['title'] = e.title;
+        if (e.description !== undefined) body['description'] = e.description;
+        if (e.bannerUrl !== undefined) body['bannerUrl'] = e.bannerUrl;
+        if (e.date && e.startTime) body['startsAt'] = `${e.date}T${e.startTime}:00`;
+        if (e.date && e.endTime) body['endsAt'] = `${e.date}T${e.endTime}:00`;
+        if (e.timezone !== undefined) body['timezone'] = e.timezone;
+        if (e.serverName !== undefined) body['serverName'] = e.serverName;
+        if (e.serverPassword !== undefined) body['serverPassword'] = e.serverPassword;
+        if (e.platforms !== undefined) body['platforms'] = e.platforms;
+        if (e.tags !== undefined) body['tags'] = e.tags;
+        if (e.recurring !== undefined) {
+            body['isRecurring'] = !!e.recurring;
+            body['recurrenceRule'] = e.recurring;
         }
-        return of(undefined);
+        if (e.notifyBefore !== undefined) {
+            body['notifyOffsets'] = e.notifyBefore.map(parseNotifyOffset);
+        }
+        return body;
     }
 }

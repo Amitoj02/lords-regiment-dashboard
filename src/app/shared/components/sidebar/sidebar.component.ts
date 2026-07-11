@@ -39,14 +39,14 @@ export class SidebarComponent {
             adminOnly: false,
             enabled: true,
         },
-        // Events + Gallery are MVP-deferred (T-0026) — hidden until wired.
+        // Events + Gallery are wired to their API services (T-0025).
         {
             label: 'Events',
             key: 'events',
             route: '/events',
             icon: 'calendar',
             adminOnly: false,
-            enabled: false,
+            enabled: true,
         },
         {
             label: 'Gallery',
@@ -54,7 +54,7 @@ export class SidebarComponent {
             route: '/gallery',
             icon: 'image',
             adminOnly: false,
-            enabled: false,
+            enabled: true,
         },
         {
             label: 'Members',
@@ -80,14 +80,14 @@ export class SidebarComponent {
             adminOnly: true,
             enabled: true,
         },
-        // Audit + Settings are MVP-deferred (T-0026) — hidden until wired.
+        // Audit + Settings are wired (T-0025 / T-0017 / T-0024).
         {
             label: 'Audit Ledger',
             key: 'audit',
             route: '/admin/audit',
             icon: 'activity',
             adminOnly: true,
-            enabled: false,
+            enabled: true,
         },
         {
             label: 'Settings',
@@ -95,7 +95,7 @@ export class SidebarComponent {
             route: '/admin/settings',
             icon: 'settings',
             adminOnly: true,
-            enabled: false,
+            enabled: true,
         },
     ];
 

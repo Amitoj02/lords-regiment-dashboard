@@ -6,9 +6,16 @@
                 <h1 class="page-title serif-display">Audit Ledger</h1>
             </div>
             <div class="row gap-8">
-                <button type="button" class="btn btn-ghost btn-sm" (click)="exportCsv()">
-                    Export CSV
+                @if (can('view_audit_log')) {
+                <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    [disabled]="exporting"
+                    (click)="exportCsv()"
+                >
+                    {{ exporting ? 'Exporting…' : 'Export CSV' }}
                 </button>
+                }
                 <button type="button" class="btn btn-ghost btn-sm">Filters</button>
             </div>
         </div>

@@ -1,4 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EventsService } from '../../../core/services/events.service';
+import { GalleryFileInput, GalleryService } from '../../../core/services/gallery.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface UploadedFile {
     id: string;
@@ -14,48 +19,50 @@ interface UploadedFile {
     styleUrls: ['./gallery-submit.component.scss'],
     standalone: false,
 })
-export class GallerySubmitComponent {
+export class GallerySubmitComponent implements OnInit {
     activeTab: 'files' | 'link' = 'files';
 
-    uploadedFiles: UploadedFile[] = [
-        {
-            id: 'f1',
-            filename: 'siege_defense_01.jpg',
-            size: '2.4 MB',
-            caption: '',
-            thumbnailColor: '#3a4a5c',
-        },
-        {
-            id: 'f2',
-            filename: 'charge_left_flank.jpg',
-            size: '1.9 MB',
-            caption: '',
-            thumbnailColor: '#4a3a2c',
-        },
-        {
-            id: 'f3',
-            filename: 'artillery_volley.jpg',
-            size: '3.1 MB',
-            caption: '',
-            thumbnailColor: '#2c3a2c',
-        },
-    ];
+    uploadedFiles: UploadedFile[] = [];
 
     submissionTitle = '';
     selectedEvent = '';
     tagInput = '';
     tags: string[] = [];
 
-    readonly events = [
-        { value: 'ev1', label: 'Grand Autumn Campaign — Line Battle' },
-        { value: 'ev2', label: 'Officer Training Drill' },
-        { value: 'ev3', label: 'May Grand Campaign — Final Assault' },
-    ];
+    /** Populated from the real events list (GET /events) for the "linked event" picker. */
+    events: { value: string; label: string }[] = [];
 
     taggedMembers: string[] = [];
     tagMemberInput = '';
 
     linkUrl = '';
+    submitting = false;
+
+    private readonly destroyRef = inject(DestroyRef);
+
+    constructor(
+        private galleryService: GalleryService,
+        private eventsService: EventsService,
+        private auth: AuthService,
+        private router: Router,
+    ) {}
+
+    /** Capability gate for a template action (see the spec's capability keys). */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
+
+    ngOnInit(): void {
+        this.eventsService
+            .getAll()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (events) => {
+                    this.events = events.map((e) => ({ value: e.id, label: e.title }));
+                },
+                error: (err) => console.error('Failed to load events for tagging', err),
+            });
+    }
 
     removeFile(id: string): void {
         this.uploadedFiles = this.uploadedFiles.filter((f) => f.id !== id);
@@ -74,10 +81,44 @@ export class GallerySubmitComponent {
     }
 
     saveDraft(): void {
-        // No-op stub: persistence wired up when the gallery backend lands.
+        // No draft endpoint on the backend — submission is a single reviewed step.
     }
 
     submit(): void {
-        // No-op stub: submission wired up when the gallery backend lands.
+        const title = this.submissionTitle.trim();
+        if (!title || this.submitting) {
+            return;
+        }
+        const isLink = this.activeTab === 'link';
+        const files: GalleryFileInput[] = isLink
+            ? []
+            : this.uploadedFiles.map((f) => ({
+                  fileName: f.filename,
+                  mediaType: 'image',
+                  caption: f.caption || undefined,
+                  thumbnailColor: f.thumbnailColor,
+              }));
+
+        this.submitting = true;
+        this.galleryService
+            .submit({
+                title,
+                type: isLink ? 'link' : 'image',
+                linkUrl: isLink ? this.linkUrl.trim() || undefined : undefined,
+                eventId: this.selectedEvent || undefined,
+                files: files.length ? files : undefined,
+                taggedMemberIds: this.taggedMembers.length ? this.taggedMembers : undefined,
+            })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.submitting = false;
+                    this.router.navigateByUrl('/gallery');
+                },
+                error: (err) => {
+                    console.error('Failed to submit to gallery', err);
+                    this.submitting = false;
+                },
+            });
     }
 }

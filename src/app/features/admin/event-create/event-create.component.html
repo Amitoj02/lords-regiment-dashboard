@@ -305,19 +305,30 @@
 
                 <div class="divider"></div>
 
+                @if (can('manage_events')) {
                 <div class="create-actions">
-                    <button type="button" class="btn btn-ghost btn-block" (click)="saveDraft()">
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-block"
+                        [disabled]="saving"
+                        (click)="saveDraft()"
+                    >
                         Save draft
                     </button>
                     <button
                         type="button"
                         class="btn btn-primary btn-block"
                         (click)="publish()"
-                        [disabled]="form.invalid"
+                        [disabled]="form.invalid || saving"
                     >
-                        Publish
+                        {{ saving ? 'Working…' : 'Publish' }}
                     </button>
                 </div>
+                } @else {
+                <hf-notice variant="info">
+                    You need the "Manage events" permission to create events.
+                </hf-notice>
+                }
             </div>
         </form>
     </div>
