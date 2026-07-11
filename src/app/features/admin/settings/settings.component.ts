@@ -466,7 +466,9 @@ export class SettingsComponent implements OnInit {
     }
 
     dissolve(): void {
-        if (!this.can('manage_settings') || !this.settings) {
+        // Dissolution is the strongest hazard — gated on transfer_ownership to
+        // match the backend (POST /settings/dissolve requires TransferOwnership).
+        if (!this.can('transfer_ownership') || !this.settings) {
             return;
         }
         if (this.dissolveConfirmName.trim() !== this.settings.name) {

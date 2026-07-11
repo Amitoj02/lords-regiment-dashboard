@@ -21,6 +21,8 @@ function apiEntry(overrides: Partial<ApiAuditEntry> = {}): ApiAuditEntry {
         detail: 'Banned for cause',
         before: { status: 'Active' },
         after: { status: 'Banned' },
+        requestId: null,
+        discordSyncStatus: null,
         ...overrides,
     };
 }

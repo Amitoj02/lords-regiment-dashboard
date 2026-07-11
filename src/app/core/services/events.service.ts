@@ -36,9 +36,16 @@ export class EventsService {
         return this.http.get<ApiEvent>(`${this.base}/${id}`).pipe(map(mapEvent));
     }
 
-    /** Create an event (ManageEvents). Frontend fields are translated to the backend DTO. */
-    create(event: Omit<RegimentEvent, 'id'>): Observable<RegimentEvent> {
-        return this.http.post<ApiEvent>(this.base, this.toBody(event)).pipe(map(mapEvent));
+    /**
+     * Create an event (ManageEvents). Frontend fields are translated to the
+     * backend DTO. `isDraft` must be passed explicitly — the backend defaults it
+     * to false (published), so "Save draft" MUST send isDraft:true to keep the
+     * event off the public calendar.
+     */
+    create(event: Omit<RegimentEvent, 'id'>, isDraft = false): Observable<RegimentEvent> {
+        const body = this.toBody(event);
+        body['isDraft'] = isDraft;
+        return this.http.post<ApiEvent>(this.base, body).pipe(map(mapEvent));
     }
 
     update(id: string, changes: Partial<RegimentEvent>): Observable<RegimentEvent> {

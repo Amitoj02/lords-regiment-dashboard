@@ -24,6 +24,8 @@ export class AuditComponent implements OnInit {
     actions: string[] = [];
 
     exporting = false;
+    loading = true;
+    loadError = '';
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -38,15 +40,25 @@ export class AuditComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.loading = true;
+        this.loadError = '';
         this.auditService
             .getAll()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((logs) => {
-                this.logs = logs;
-                this.filteredLogs = logs;
-                this.selectedLog = logs[0] ?? null;
-                this.actors = [...new Set(logs.map((l) => l.actor))];
-                this.actions = [...new Set(logs.map((l) => l.action))];
+            .subscribe({
+                next: (logs) => {
+                    this.loading = false;
+                    this.logs = logs;
+                    this.filteredLogs = logs;
+                    this.selectedLog = logs[0] ?? null;
+                    this.actors = [...new Set(logs.map((l) => l.actor))];
+                    this.actions = [...new Set(logs.map((l) => l.action))];
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.loadError = 'Could not load the audit ledger — please try again.';
+                    console.error('Failed to load audit ledger', err);
+                },
             });
     }
 

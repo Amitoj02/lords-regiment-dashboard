@@ -589,6 +589,7 @@
                         </div>
                     </div>
 
+                    @if (can('transfer_ownership')) {
                     <div class="hazard-block">
                         <div class="hazard-label">Dissolve regiment</div>
                         <div class="field-hint">
@@ -612,6 +613,7 @@
                             </button>
                         </div>
                     </div>
+                    }
                 </div>
             </div>
             } }

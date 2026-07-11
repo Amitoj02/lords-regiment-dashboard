@@ -132,8 +132,9 @@ export class EventCreateComponent {
             return;
         }
         this.saving = true;
+        // isDraft:true keeps the event OFF the public calendar until published.
         this.eventsService
-            .create(this.buildEvent())
+            .create(this.buildEvent(), true)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (event) => {
@@ -152,8 +153,10 @@ export class EventCreateComponent {
             return;
         }
         this.saving = true;
+        // Create as a draft, then publish — so the event is never briefly public
+        // before the explicit publish step.
         this.eventsService
-            .create(this.buildEvent())
+            .create(this.buildEvent(), true)
             .pipe(
                 switchMap((event) => this.eventsService.publish(event.id)),
                 takeUntilDestroyed(this.destroyRef),

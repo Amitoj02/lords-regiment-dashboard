@@ -398,6 +398,8 @@ export interface ApiAuditEntry {
     detail: string | null;
     before: Record<string, unknown> | null;
     after: Record<string, unknown> | null;
+    requestId: string | null;
+    discordSyncStatus: 'pending' | 'synced' | 'failed' | 'not_applicable' | null;
 }
 
 export function mapAuditLog(a: ApiAuditEntry): AuditLog {
@@ -411,6 +413,8 @@ export function mapAuditLog(a: ApiAuditEntry): AuditLog {
         targetUser: a.targetLabel ?? undefined,
         beforeState: a.before ? JSON.stringify(a.before) : undefined,
         afterState: a.after ? JSON.stringify(a.after) : undefined,
+        requestId: a.requestId ?? undefined,
+        discordSynced: a.discordSyncStatus === 'synced',
     };
 }
 

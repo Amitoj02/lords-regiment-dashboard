@@ -20,6 +20,10 @@
             </div>
         </div>
 
+        @if (loadError) {
+        <hf-notice variant="warn" [body]="loadError"></hf-notice>
+        }
+
         <!-- Filter row -->
         <div class="filter-row">
             <input
@@ -101,7 +105,7 @@
             <div class="audit-detail">
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title mono">Entry #{{ selectedLog.requestId }}</span>
+                        <span class="panel-title mono">Entry #{{ selectedLog.id }}</span>
                     </div>
                     <div class="panel-body">
                         <!-- Actor info -->
@@ -151,10 +155,12 @@
                                     {{ selectedLog.discordSynced ? 'Synced' : 'Not synced' }}
                                 </span>
                             </div>
+                            @if (selectedLog.requestId) {
                             <div class="meta-item">
                                 <span class="field-label">Request ID</span>
                                 <span class="mono">{{ selectedLog.requestId }}</span>
                             </div>
+                            }
                             <div class="meta-item">
                                 <span class="field-label">Severity</span>
                                 <span
