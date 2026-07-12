@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
 import { GalleryService } from '../../../core/services/gallery.service';
 
@@ -31,10 +32,17 @@ export class LandingComponent implements OnInit {
         { name: 'Jameson Nolt', rank: 'Lieutenant', chevrons: 3, initials: 'JN' },
     ];
 
+    private readonly auth = inject(AuthService);
+
     constructor(
         private eventsService: EventsService,
         private galleryService: GalleryService,
     ) {}
+
+    /** "Apply to Join" = sign in with Discord (members go to the dashboard). */
+    applyToJoin(): void {
+        this.auth.applyToJoin();
+    }
 
     ngOnInit(): void {
         this.eventsService

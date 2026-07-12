@@ -15,6 +15,20 @@ export interface Application {
     submittedAt: string;
     status: ApplicationStatus;
     isPreviousApplicant?: boolean;
+    /** Officer note shown to the applicant when the application is on hold. */
     moderatorNote?: string;
+    /** Officer reason shown to the applicant when the application is declined. */
+    declineReason?: string;
+    decidedAt?: string;
     discordDmMessage?: string;
+}
+
+/**
+ * The caller's own application view (GET /applications/mine): their current
+ * application (or null if they have never applied) plus whether an officer has
+ * permanently blocked them from applying.
+ */
+export interface MyApplication {
+    application: Application | null;
+    blocked: boolean;
 }

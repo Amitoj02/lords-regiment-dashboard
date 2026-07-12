@@ -219,6 +219,30 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Applicant blocklist (T-0033): bar / re-enable this
+                         Discord identity from submitting future applications. -->
+                    <div class="moderation-row">
+                        <span class="moderation-label">Applicant moderation</span>
+                        <div class="action-btns">
+                            <button
+                                type="button"
+                                class="btn btn-destructive btn-sm"
+                                [disabled]="moderating"
+                                (click)="blockApplicant()"
+                            >
+                                Block from applying
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                [disabled]="moderating"
+                                (click)="unblockApplicant()"
+                            >
+                                Re-enable
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             } @else {

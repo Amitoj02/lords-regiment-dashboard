@@ -2,8 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiApplication, PaginatedResponse, mapApplication } from '../models/api.model';
-import { Application } from '../models/application.model';
+import {
+    ApiApplication,
+    ApiMyApplication,
+    PaginatedResponse,
+    mapApplication,
+} from '../models/api.model';
+import { Application, MyApplication } from '../models/application.model';
 
 /** Payload for the public recruitment intake (POST /applications). */
 export interface CreateApplicationPayload {
@@ -17,6 +22,9 @@ export interface CreateApplicationPayload {
     interestConfirmed: boolean;
     representativeNote?: string;
 }
+
+/** Editable fields for PATCH /applications/mine (a pending application). */
+export type UpdateApplicationPayload = Partial<CreateApplicationPayload>;
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationsService {
@@ -38,6 +46,41 @@ export class ApplicationsService {
     /** Public intake — the apply form. The submitter must be signed in (identity). */
     submit(payload: CreateApplicationPayload): Observable<Application> {
         return this.http.post<ApiApplication>(this.base, payload).pipe(map(mapApplication));
+    }
+
+    // ── Applicant self-service (the caller's own application) ────────────────────
+
+    /** The caller's current application (or null) + whether they are blocked. */
+    getMine(): Observable<MyApplication> {
+        return this.http.get<ApiMyApplication>(`${this.base}/mine`).pipe(
+            map((res) => ({
+                application: res.application ? mapApplication(res.application) : null,
+                blocked: res.blocked,
+            })),
+        );
+    }
+
+    /** Edit the caller's own PENDING application. */
+    updateMine(payload: UpdateApplicationPayload): Observable<Application> {
+        return this.http
+            .patch<ApiApplication>(`${this.base}/mine`, payload)
+            .pipe(map(mapApplication));
+    }
+
+    // ── Officer moderation of applicants ─────────────────────────────────────────
+
+    /** Permanently block the applicant behind an application from re-applying. */
+    blockApplicant(id: string, reason?: string): Observable<Application> {
+        return this.http
+            .post<ApiApplication>(`${this.base}/${id}/block`, { reason })
+            .pipe(map(mapApplication));
+    }
+
+    /** Re-enable a previously blocked applicant. */
+    unblockApplicant(id: string): Observable<Application> {
+        return this.http
+            .post<ApiApplication>(`${this.base}/${id}/unblock`, {})
+            .pipe(map(mapApplication));
     }
 
     approve(id: string): Observable<Application> {

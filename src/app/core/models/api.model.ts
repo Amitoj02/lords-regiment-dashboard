@@ -227,7 +227,15 @@ export function mapApplication(a: ApiApplication): Application {
         status: a.status,
         isPreviousApplicant: a.isReapplication,
         moderatorNote: a.moderatorNote ?? undefined,
+        declineReason: a.declineReason ?? undefined,
+        decidedAt: a.decidedAt ?? undefined,
     };
+}
+
+/** Wire shape of GET /applications/mine. */
+export interface ApiMyApplication {
+    application: ApiApplication | null;
+    blocked: boolean;
 }
 
 // ── Events ───────────────────────────────────────────────────────────────────

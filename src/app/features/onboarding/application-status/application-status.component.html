@@ -1,0 +1,105 @@
+<div class="apply-page">
+    <div class="apply-inner">
+        <div class="apply-header">
+            <img
+                src="assets/images/regiment-logo.png"
+                width="48"
+                height="48"
+                alt="Lord Regiment crest"
+                class="apply-logo"
+            />
+            <h1 class="serif-display apply-title">Application Status</h1>
+            <p class="apply-subtitle">The standing of your enlistment with the Lord Regiment.</p>
+        </div>
+
+        @if (loading()) {
+        <div class="panel apply-panel">
+            <div class="panel-body status-centre">Loading your application…</div>
+        </div>
+        } @else if (error()) {
+        <hf-notice variant="err">{{ error() }}</hf-notice>
+        } @else {
+
+        <!-- Blocked (an officer has barred further applications) -->
+        @if (blocked && application?.status !== 'declined') {
+        <div class="panel apply-panel">
+            <div class="panel-body status-centre">
+                <div class="status-icon">⛔</div>
+                <h2 class="serif status-title">Applications Closed</h2>
+                <p class="status-text">
+                    You are no longer able to submit an application to the Lord Regiment. If you
+                    believe this is a mistake, reach out to an officer on Discord.
+                </p>
+            </div>
+        </div>
+        }
+
+        <!-- The application itself -->
+        @if (application) {
+        <div class="panel apply-panel">
+            <div class="panel-header">
+                <span class="panel-title">Your Application</span>
+                @switch (application.status) { @case ('pending') {
+                <span class="badge blue">Under Review</span>
+                } @case ('held') {
+                <span class="badge amber">On Hold</span>
+                } @case ('declined') {
+                <span class="badge red">Not Accepted</span>
+                } }
+            </div>
+            <div class="panel-body">
+                <!-- Status message -->
+                @switch (application.status) { @case ('pending') {
+                <p class="status-text">
+                    Your application is in the officers' queue. We review all submissions within
+                    <strong>48 hours</strong> and will contact you on Discord with a decision.
+                </p>
+                } @case ('held') {
+                <p class="status-text">
+                    An officer has placed your application on hold while they gather more
+                    information.
+                </p>
+                @if (application.moderatorNote) {
+                <hf-notice variant="info">
+                    <strong>Officer note:</strong> {{ application.moderatorNote }}
+                </hf-notice>
+                } } @case ('declined') {
+                <p class="status-text">Your application was not accepted at this time.</p>
+                @if (application.declineReason) {
+                <hf-notice variant="warn">
+                    <strong>Reason:</strong> {{ application.declineReason }}
+                </hf-notice>
+                } @if (blocked) {
+                <hf-notice variant="err">
+                    You are no longer able to submit further applications.
+                </hf-notice>
+                } } }
+
+                <!-- Submitted details -->
+                <dl class="status-details">
+                    <div><dt>In-game name</dt><dd>{{ application.inGameName }}</dd></div>
+                    <div><dt>Current regiment</dt><dd>{{ application.currentRegiment }}</dd></div>
+                    <div><dt>Preferred classes</dt><dd>{{ application.preferredClasses }}</dd></div>
+                    <div>
+                        <dt>Submitted</dt>
+                        <dd>{{ application.submittedAt | date: 'medium' }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row gap-12 status-actions">
+            @if (application.status === 'pending') {
+            <button type="button" class="btn btn-primary" (click)="editApplication()">
+                Edit application
+            </button>
+            } @if (canReapply) {
+            <button type="button" class="btn btn-primary" (click)="reapply()">Reapply</button>
+            }
+            <a routerLink="/" class="btn btn-ghost">Return home</a>
+        </div>
+        }
+        }
+    </div>
+</div>
