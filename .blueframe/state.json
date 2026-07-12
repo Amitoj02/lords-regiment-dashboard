@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
-  "lastSyncedAt": "2026-07-11T22:00:00Z",
-  "notesForNextSession": "POST-MVP FRONTEND COMPLETE (build+verify) on feat/post-mvp-integration → PR #4 (Amitoj02/lords-regiment-dashboard). Wired events/gallery/audit/notifications/settings + admin settings/announce/invite (T-0017) + Discord bot UI (T-0024) + service/guard tests (T-0014); un-guarded the deferred surfaces. Build+lint+format clean; 41 unit tests green; two adversarial-review passes (5 findings fixed: draft-actually-published, Dissolve capability gate, audit real requestId/discord-sync, audit load error). Browser-verified end-to-end vs the live dev stack: login(mock owner)→dashboard/settings render real seeded data; the Quartermaster pane shows the mock gateway ONLINE + the dormant bot settings + the kickOnBan warning; the audit ledger renders real entries with Discord-sync status. Backend counterpart: lords-dashboard-backend PR #4 (feat/post-mvp-features). NEXT: after both PRs merge, real Discord go-live together (backend T-0033) — owner brings creds, flip mocks off, re-review kickOnBan; then the events/gallery upload story (no real asset-upload backend yet — gallery-submit is link/metadata only for now).",
-  "nextIdCounter": 35,
+  "lastSyncedCommit": "eafd8fffa81b33d1ab4a3aca5f24aa12d339ab06",
+  "lastSyncedAt": "2026-07-12T17:30:21Z",
+  "notesForNextSession": "POST-MVP HARDENING landed on main (PR #4 post-MVP integration → PR #5 hardening companions; HEAD eafd8ff). PR #5 (95b428b) synced the frontend lockstep with lords-dashboard-backend hardening: (1) Discord Settings — renamed the SENSITIVE kickOnBan toggle to applyBanRoleOnBan (strip managed roles + apply a configured Ban role, NO Discord kick), added live guild role pickers (join role, Ban role) + 5 channel pickers (announcement/welcome/enlistment/audit-log/event-announcement) populated from verify-connection, and mirrored the backend 'Ban role required' guard (T-0024/T-0017). (2) Applications — reshaped the enlistment contract end-to-end: rebuilt the apply form to the new fields (in-game name, current regiment, how-found, preferred classes, skills-to-improve, interest confirmation, optional representative note; age label 16→18, client-only T&C not sent), reshaped Application/CreateApplicationPayload/ApiApplication + mapApplication, and wired the admin applications view to live getAll() data with client-side tab filtering — replacing the hardcoded mock queue (T-0034 done + new T-0035). (3) Auth (backend T-0049) confirmed — role/regiment/membership derive solely from /auth/me; no client-side JWT claim decoding. Build+lint+41 specs green; browser-verified against the live stack. NOW deployed: T-0014/17/24/25/34 + new T-0035. NEXT: the applicant self-service arc is still PLANNED and unstarted — T-0028 (getMine/update/resubmit + surface declineReason/moderatorNote), T-0029 (application-status page), T-0030 (fix returning-applicant post-login redirect), T-0031 (edit pending), T-0032 (resubmit-after-decline), T-0033 (admin per-user disable; T-0034's live queue now unblocks it); several backend endpoints for these do not exist yet — plan the backend counterpart first. T-0027 (unify Apply-to-Join with Sign In) also still planned. Open regression risks to watch: T-0023#0 (modal close→closed / document Escape handler), T-0027#0 + T-0030#0 (shared auth sign-in/redirect path), T-0028#0 (Application model coupling to admin+status), T-0035#0 (reshaped model/contract drift vs backend).",
+  "nextIdCounter": 39,
   "connections": [],
   "tasks": [
     {
@@ -649,7 +649,7 @@
       "id": "T-0014",
       "title": "Unit/component test coverage",
       "summary": "Only the default app.component.spec.ts exists, though the tech-debt cleanup added a test:ci script + CI. Add spec coverage for services (stub + eventual HTTP), guards (auth/admin redirects), and key components (avatar initials/colour, app-shell). Establishes a regression net before backend integration.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "M",
       "sizeWeight": 3,
@@ -671,9 +671,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
+      "lastTouchedCommit": "95b428b8b4d8e315ba3c2b071827e71b0e271dea",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T22:00:00Z",
+      "updatedAt": "2026-07-12T17:30:21Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -688,6 +688,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Post-MVP: HttpTestingController specs for the six wired services + auth/admin guard specs. 41 unit tests green (Chrome headless). PR #4."
+        },
+        {
+          "at": "2026-07-12T17:30:21Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #4 (merge 10323ae); PR #5 (95b428b) updated discord.service.spec for the reshaped verify-connection/settings contract. Test net now live on the default branch; 41 specs green."
         }
       ]
     },
@@ -823,7 +830,7 @@
       "id": "T-0017",
       "title": "Admin settings, announcements & invite UI (post-MVP)",
       "summary": "Post-MVP admin surfaces: wire the Settings panes (Identity/Discord/Quartermaster-bot/Operations) and build the announcement/dispatch composer + invite-Mercenary flow, all wired to real backend endpoints with UI capability-gating. The member admin-action modal is split out to the MVP task T-0023; the Discord/bot-status wiring is split out to T-0024.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -849,9 +856,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
+      "lastTouchedCommit": "95b428b8b4d8e315ba3c2b071827e71b0e271dea",
       "createdAt": "2026-07-11T01:15:00Z",
-      "updatedAt": "2026-07-11T22:00:00Z",
+      "updatedAt": "2026-07-12T17:30:21Z",
       "history": [
         {
           "at": "2026-07-11T01:15:00Z",
@@ -880,6 +887,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Post-MVP: admin Settings panes (profile/visibility/permission-matrix), announcement composer (notifications.compose + optional discord.announce), and a game-fun copyable Discord invite. Capability-gated. Dissolve gate corrected to transfer_ownership in review. PR #4."
+        },
+        {
+          "at": "2026-07-12T17:30:21Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #4 (merge 10323ae); PR #5 (95b428b) hardened the Settings Discord pane (role/channel pickers + applyBanRoleOnBan rename). Admin settings now live on the default branch."
         }
       ]
     },
@@ -1187,7 +1201,7 @@
       "id": "T-0024",
       "title": "Discord bot admin UI wiring (post-MVP)",
       "summary": "Wire the existing bot-status screen + the Settings Discord-connection and Quartermaster-bot panes to the backend Discord control endpoints (connection/verify, settings, resync/reinvite, operations resolve). Part of the post-MVP Discord bot milestone; no-op until the backend bot lands.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1213,9 +1227,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
+      "lastTouchedCommit": "95b428b8b4d8e315ba3c2b071827e71b0e271dea",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T22:00:00Z",
+      "updatedAt": "2026-07-12T17:30:21Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1230,6 +1244,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Post-MVP: bot-status + Settings Discord/Quartermaster pane wired to /discord (connection/verify/settings incl. the sensitive kickOnBan toggle behind a warning, resync, operations+resolve). Browser-verified against the mock gateway (ONLINE, vmock-1.0.0). PR #4."
+        },
+        {
+          "at": "2026-07-12T17:30:21Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #4 (merge 10323ae), then hardened in PR #5 (95b428b): the SENSITIVE kickOnBan toggle is renamed applyBanRoleOnBan (strip managed roles + apply a configured Ban role, no Discord kick) — this resolves the deferred 'kickOnBan re-review' item; added live guild role pickers (join/Ban role) + 5 channel pickers populated from verify-connection (now DiscordVerifyConnection with roles+channels), and mirrored the backend 'Ban role required' guard. Browser-verified pickers populate from the real guild."
         }
       ]
     },
@@ -1237,7 +1258,7 @@
       "id": "T-0025",
       "title": "Wire remaining feature HTTP services (post-MVP)",
       "summary": "Swap the remaining stub services for real HttpClient calls as their backend modules land: events, gallery, audit, notifications, plus a new settings client. Follows the same of(stub)->http pattern as T-0011.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1266,9 +1287,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
+      "lastTouchedCommit": "10323ae1cb2f275db8000fab04059254851754b9",
       "createdAt": "2026-07-11T02:30:00Z",
-      "updatedAt": "2026-07-11T22:00:00Z",
+      "updatedAt": "2026-07-12T17:30:21Z",
       "history": [
         {
           "at": "2026-07-11T02:30:00Z",
@@ -1283,6 +1304,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Post-MVP: wired events/gallery/audit services to HttpClient + added notifications/settings/discord services + Api* mappers in api.model. Build+lint+41 tests green; reviewed. On feat/post-mvp-integration (PR #4)."
+        },
+        {
+          "at": "2026-07-12T17:30:21Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #4 (merge 10323ae); events/gallery/audit/notifications/settings/discord HTTP services now live on the default branch."
         }
       ]
     },
@@ -1758,7 +1786,7 @@
       "id": "T-0034",
       "title": "Wire admin applications review queue to live data",
       "summary": "The admin applications review screen renders a hardcoded mock queue and mock selected application (only the approve/decline/hold write paths are wired to the real service). Fetch the real queue via getAll(status) across the pending/approved/declined/reapply tabs and load the selected application from getById(), so bumped edits, reapplications and decline reasons are actually visible to the officer end-to-end.",
-      "status": "planned",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -1779,22 +1807,22 @@
       "testPlan": [
         {
           "desc": "Each tab (pending/approved/declined/reapply) lists real applications from GET /applications?status=",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Selecting an application loads its detail from the service (not mock data), including moderatorNote/declineReason",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Approving/declining/holding removes it from the queue and the change persists on refetch",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "95b428b8b4d8e315ba3c2b071827e71b0e271dea",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T17:30:21Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1802,6 +1830,265 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; replace the hardcoded mock queue with live getAll/getById so bumps and declines are visible end-to-end"
+        },
+        {
+          "at": "2026-07-12T17:30:21Z",
+          "from": "planned",
+          "to": "deployed",
+          "by": "claude",
+          "note": "PR #5 (95b428b, merged to main via eafd8ff) replaced the hardcoded mock queue + mock selected application with live getAll() data: the queue filters by tab (pending/approved/declined/reapply) client-side, selection reads from the loaded list, and each approve/decline/hold refetches so the decided app moves buckets. Browser-verified against the live stack. NOTE: filtering is client-side over one getAll() rather than a per-status query; declineReason surfacing is deferred to the T-0028/T-0029 self-service arc."
+        }
+      ]
+    },
+    {
+      "id": "T-0035",
+      "title": "Reshape enlistment application to the hardened backend contract (form + model + admin render)",
+      "summary": "Post-MVP hardening companion to lords-dashboard-backend applications tasks (T-0038/T-0039/T-0040): reshape the recruitment application end-to-end to the new enlistment contract. Rebuilt the public apply form to the new fields (in-game name, current regiment, how-found free text, preferred classes, skills-to-improve, interest confirmation, optional representative note; age label 16->18 as a client-only T&C, not sent), reshaped the shared Application + CreateApplicationPayload + ApiApplication DTO + mapApplication mapper (dropped platform/applicantType/whyJoin/priorExperience/timezone; added the enlistment fields), and updated the admin applications view to render the reshaped fields. Wraps the field-shape change that T-0034's live-queue wiring rendered.",
+      "status": "deployed",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "core-data",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/application.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/applications.service.ts",
+        "src/app/features/onboarding/application-form/",
+        "src/app/features/admin/applications/"
+      ],
+      "dependsOn": [
+        "T-0004",
+        "T-0025",
+        "T-0034",
+        "lords-dashboard-backend:T-0038",
+        "lords-dashboard-backend:T-0039",
+        "lords-dashboard-backend:T-0040"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Apply form submits the reshaped enlistment fields (in-game name, current regiment, how-found, preferred classes, skills-to-improve, interest confirmation, optional representative note)",
+          "status": "passed"
+        },
+        {
+          "desc": "mapApplication maps the reshaped ApiApplication DTO -> Application view model; admin applications screen renders the reshaped fields",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Reshaped the shared Application/CreateApplicationPayload models + ApiApplication DTO + mapApplication mapper (removed platform/applicantType/source/whyJoin/priorExperience/timezone; added currentRegiment/preferredClasses/skillsToImprove/interestConfirmed/representativeNote). These are consumed by the admin applications screen AND the apply form; any field-shape drift from the backend enlistment contract ripples to both. Covered by build+lint+41 specs+browser verification, but no dedicated application-model/apply-form spec pins the reshape.",
+          "status": "open",
+          "notedAt": "2026-07-12T17:30:21Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "95b428b8b4d8e315ba3c2b071827e71b0e271dea",
+      "createdAt": "2026-07-12T17:30:21Z",
+      "updatedAt": "2026-07-12T17:30:21Z",
+      "history": [
+        {
+          "at": "2026-07-12T17:30:21Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "created via bf-sync from PR #5 (95b428b, merged to main via eafd8ff); the enlistment reshape did not map to an existing task. Build+lint+41 specs green; browser-verified against the live stack (admin applications render real reshaped applications)."
+        }
+      ]
+    },
+    {
+      "id": "T-0036",
+      "title": "Verify the seeded Owner resolves to a full-access superadmin through the frontend auth flow",
+      "summary": "The backend ALREADY seeds a regiment Owner (dev-owner.seed.ts, run by MainSeeder) whose Discord snowflake comes from the OWNER_DISCORD_ID env var, and the frontend already has real Discord OAuth -> /auth/me -> capabilities (T-0012). Confirm end-to-end from the frontend that the seeded Owner signs in, /auth/me returns role=Owner with the full capability set, isAdmin()/isOwnerOrAdmin()/hasCapability('manage_settings') are true, and every 'set up the app' surface (admin Settings: profile/Discord/permissions/danger-zone) is reachable and correctly capability-gated. Also document the prod requirement: OWNER_DISCORD_ID (the real owner's snowflake) MUST be set before `npm run seed:prod`, otherwise the dev fixture snowflake is seeded and no real user can ever resolve as Owner.",
+      "status": "planned",
+      "type": "spike",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "auth",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/admin/settings/",
+        "src/app/core/guards/admin.guard.ts"
+      ],
+      "dependsOn": [
+        "T-0012"
+      ],
+      "blocks": [
+        "T-0037"
+      ],
+      "questions": [
+        {
+          "q": "Is signing in via the Discord OAuth mock owner persona (GET /api/auth/discord?as=owner, which resolves the seeded dev snowflake) acceptable for this verification, or should it be exercised against a real Discord app with OWNER_DISCORD_ID set to a real snowflake?",
+          "answer": "it should exercise with real OWNER_DISCORD_ID from .env file.",
+          "askedAt": "2026-07-12T18:15:00Z",
+          "answeredAt": "2026-07-12T17:59:19.825Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Signing in as the seeded Owner returns role=Owner with the full capability set on /auth/me; isAdmin(), isOwnerOrAdmin() and hasCapability('manage_settings') are all true",
+          "status": "pending"
+        },
+        {
+          "desc": "All admin Settings panes render and the Owner-only actions (permissions matrix, transfer ownership, dissolve) are visible for the Owner",
+          "status": "pending"
+        },
+        {
+          "desc": "A non-Owner member does NOT see the Owner-only setup/danger-zone actions (capability gating holds)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T18:15:00Z",
+      "updatedAt": "2026-07-12T17:59:19.825Z",
+      "history": [
+        {
+          "at": "2026-07-12T18:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the backend Owner seed already exists (dev-owner.seed.ts + OWNER_DISCORD_ID) -- this verifies the seeded superadmin resolves to full access through the real frontend auth flow"
+        }
+      ]
+    },
+    {
+      "id": "T-0037",
+      "title": "Route the seeded Owner into first-run setup (consume setupComplete)",
+      "summary": "Nothing in the frontend reads RegimentProfile.setupComplete today (it is dead code) and RegimentService is injected nowhere; after login the Owner lands on /dashboard like any member. Add first-run detection: after login read the regiment profile and, when the user is Owner and setupComplete is false, route them to the setup surface instead of the dashboard so the seeded superadmin is guided to configure the app. NOTE: the backend seed currently hard-codes regiment.setupComplete=true and exposes no endpoint to flip it, so a backend counterpart must be planned before this can ever fire.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "auth",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/public/auth-callback/auth-callback.component.ts",
+        "src/app/core/services/regiment.service.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "T-0012",
+        "T-0036"
+      ],
+      "blocks": [
+        "T-0038"
+      ],
+      "questions": [
+        {
+          "q": "What is the 'setup surface' the Owner should be routed to -- the existing /onboarding/setup wizard (currently a disconnected stub), or a deep-link into the already-wired admin Settings panel (which already covers profile/Discord/permissions with real endpoints)? This decides whether T-0038 rehabilitates or retires the wizard.",
+          "answer": "decide for me",
+          "askedAt": "2026-07-12T18:15:00Z",
+          "answeredAt": "2026-07-12T17:59:59.692Z"
+        },
+        {
+          "q": "The backend seed hard-codes regiment.setupComplete=true and there is no endpoint to seed it false or mark setup complete after the fact, so first-run detection can never fire today. Confirm the backend counterpart (seed setupComplete=false for a genuine first-run + add an endpoint to mark it complete) should be planned in lords-dashboard-backend first -- or should first-run instead be inferred another way (e.g. Owner + an empty/default regiment profile)?",
+          "answer": "please check on your own and address it",
+          "askedAt": "2026-07-12T18:15:00Z",
+          "answeredAt": "2026-07-12T18:00:21.616Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "An Owner session with setupComplete=false is routed to the chosen setup surface after login, not /dashboard",
+          "status": "pending"
+        },
+        {
+          "desc": "An Owner session with setupComplete=true lands on /dashboard as normal",
+          "status": "pending"
+        },
+        {
+          "desc": "Non-Owner members and non-member applicants are unaffected (dashboard / onboarding-apply as today)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the shared post-login redirect path (AuthService.completeLogin / auth-callback); a regression here breaks post-login navigation for members and applicants alike -- same risk family as T-0027#0 and T-0030#0",
+          "status": "open",
+          "notedAt": "2026-07-12T18:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T18:15:00Z",
+      "updatedAt": "2026-07-12T18:00:21.616Z",
+      "history": [
+        {
+          "at": "2026-07-12T18:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; first-run routing so the seeded Owner is funneled into app setup (consume the currently-dead setupComplete flag)"
+        }
+      ]
+    },
+    {
+      "id": "T-0038",
+      "title": "Rehabilitate or retire the disconnected owner-setup onboarding wizard",
+      "summary": "The /onboarding/setup + /onboarding/setup/discord wizard is a broken stub: only steps 2-3 exist, owner-setup.save() is empty, owner-discord.checkBotStatus() is faked with a setTimeout, continue() dead-ends at the nonexistent /onboarding/ranks route (falls through to /home), and the route is public/unguarded. Depending on T-0037's design answer, either (a) wire the wizard to the real SettingsService/DiscordService, build the missing steps 1/4/5, fix the dead-end, and guard it Owner-only; or (b) retire the wizard and redirect the setup flow to the already-wired admin Settings panel. Either way, remove the dead-end and the unguarded public access.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/onboarding.module.ts",
+        "src/app/features/onboarding/owner-setup/",
+        "src/app/features/onboarding/owner-discord/",
+        "src/app/core/guards/",
+        "src/app/features/admin/settings/settings.component.ts"
+      ],
+      "dependsOn": [
+        "T-0037"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Final disposition: WIRE the wizard (build it out against real endpoints + guard it) or RETIRE it (delete /onboarding/setup* and redirect setup to admin Settings)? The admin Settings panel already covers profile/Discord/permissions with real endpoints, so the wizard largely duplicates it as stubs. (Mirrors T-0037's first question.)",
+          "answer": "follow best practice, decide for me",
+          "askedAt": "2026-07-12T18:15:00Z",
+          "answeredAt": "2026-07-12T18:00:51.269Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "The setup flow no longer dead-ends at the nonexistent /onboarding/ranks route",
+          "status": "pending"
+        },
+        {
+          "desc": "/onboarding/setup is not reachable by a non-Owner (guarded), if the wizard is kept",
+          "status": "pending"
+        },
+        {
+          "desc": "Whichever path is chosen, the Owner can complete setup end-to-end against real endpoints -- no empty save() or faked bot-status check remain",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Edits the onboarding module routing; if the wizard is retired, any remaining links/navigations to /onboarding/setup* must be updated or they will fall through to the /home wildcard",
+          "status": "open",
+          "notedAt": "2026-07-12T18:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T18:15:00Z",
+      "updatedAt": "2026-07-12T18:00:51.269Z",
+      "history": [
+        {
+          "at": "2026-07-12T18:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the /onboarding/setup wizard is a broken, unguarded stub -- wire it to real endpoints or retire it in favour of admin Settings"
         }
       ]
     }
