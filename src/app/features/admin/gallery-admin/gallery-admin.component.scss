@@ -1,0 +1,37 @@
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.gallery-card {
+    border-radius: 8px;
+    border: 1px solid var(--rule-2);
+    overflow: hidden;
+    background: var(--parch-100);
+
+    &__thumb {
+        height: 120px;
+    }
+
+    &__info {
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__caption {
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__by {
+        font-size: 0.72rem;
+        color: var(--t-400);
+    }
+}

@@ -1,53 +1,157 @@
+// Application-status surface. The page shell (.apply-page/.apply-inner/
+// .apply-header/…) is provided globally by styles/_onboarding.scss; the rules
+// below are specific to this page. Small-screen behaviour that has to cross the
+// view-encapsulation boundary lives in the media query at the foot of this file.
+
+// ── Centred state (loading · applications-closed / blocked) ─────────────────
 .status-centre {
     text-align: center;
-    padding: 32px 24px;
+    padding: 40px 24px;
 }
 
+// Blocked / closed icon rendered as a circular accent tile.
 .status-icon {
-    font-size: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    font-size: 26px;
     line-height: 1;
-    margin-bottom: 12px;
+    border-radius: 999px;
+    color: var(--oxblood-300);
+    background: rgba(110, 42, 35, 0.16);
+    border: 1px solid var(--oxblood-600);
 }
 
 .status-title {
     font-size: 22px;
+    color: var(--t-100);
     margin: 0 0 8px;
 }
 
-.status-text {
-    color: var(--text-muted, #9aa4b2);
-    line-height: 1.55;
-    margin: 0 0 16px;
+// ── Status summary: icon tile + headline + copy ─────────────────────────────
+.status-summary {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
 }
 
+.status-summary-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    line-height: 1;
+    border-radius: 999px;
+    border: 1px solid var(--rule-3);
+    background: var(--ink-700);
+    color: var(--t-200);
+
+    // Per-state accents mirror the header badge colours.
+    &--pending {
+        color: var(--regblue-300);
+        border-color: var(--regblue-700);
+        background: rgba(43, 62, 85, 0.32);
+    }
+    &--held {
+        color: var(--brass-300);
+        border-color: var(--brass-700);
+        background: rgba(99, 73, 20, 0.18);
+    }
+    &--declined {
+        color: var(--oxblood-300);
+        border-color: var(--oxblood-600);
+        background: rgba(110, 42, 35, 0.16);
+    }
+}
+
+.status-summary-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.status-summary-title {
+    font-size: 19px;
+    color: var(--t-100);
+    line-height: 1.2;
+    margin: 2px 0 4px;
+}
+
+.status-text {
+    color: var(--t-300);
+    line-height: 1.55;
+    margin: 0;
+}
+
+// Officer note / decline reason notices sit below the summary.
+hf-notice {
+    display: block;
+    margin-top: 14px;
+}
+
+// ── Submitted details — a ruled definition list ─────────────────────────────
 .status-details {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
     margin: 20px 0 0;
 
     > div {
         display: flex;
         justify-content: space-between;
-        gap: 16px;
-        padding: 8px 0;
-        border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+        align-items: baseline;
+        gap: 24px;
+        padding: 11px 0;
+        border-top: 1px solid var(--rule);
     }
 
     dt {
-        color: var(--text-muted, #9aa4b2);
-        font-size: 13px;
+        flex: none;
         margin: 0;
+        color: var(--t-400);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
     }
 
     dd {
         margin: 0;
+        min-width: 0;
         text-align: right;
+        color: var(--t-100);
         font-weight: 600;
+        overflow-wrap: anywhere;
     }
 }
 
+// ── Actions ─────────────────────────────────────────────────────────────────
 .status-actions {
     margin-top: 20px;
     flex-wrap: wrap;
+}
+
+// ── Small screens ───────────────────────────────────────────────────────────
+// Encapsulated (0,3,1) row rules can only be re-stacked reliably from inside
+// the component's own SCSS, so the narrow-phone treatment for the detail list
+// lives here (page gutters + action stacking are handled globally in
+// styles/_responsive.scss).
+@media (max-width: 480px) {
+    .status-summary-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    // Stack the label above its value so neither side is crushed.
+    .status-details > div {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+    }
+
+    .status-details dd {
+        text-align: left;
+    }
 }

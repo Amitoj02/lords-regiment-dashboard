@@ -248,7 +248,9 @@
                     </div>
                     <div class="row gap-8 announce-actions">
                         @if (announceFlash) {
-                        <span class="field-hint flash">{{ announceFlash }}</span>
+                        <span class="field-hint flash" [ngClass]="{ 'flash--warn': announceWarn }"
+                            >{{ announceFlash }}</span
+                        >
                         }
                         <button
                             type="button"
@@ -375,6 +377,12 @@
                             }
                         </select>
                     </div>
+                    @if (!botSettings.announcementChannelId) {
+                    <hf-notice variant="warn">
+                        Announcement cross-posts will not reach Discord until an announcement
+                        channel is set.
+                    </hf-notice>
+                    }
                     <div class="field-row bot-field">
                         <label class="field-label" for="welcome-channel">Welcome channel</label>
                         <select
@@ -418,6 +426,11 @@
                             }
                         </select>
                     </div>
+                    @if (!botSettings.enlistmentChannelId) {
+                    <hf-notice variant="warn">
+                        Enlistment posts will not reach Discord until an enlistment channel is set.
+                    </hf-notice>
+                    }
                     <div class="field-row bot-field">
                         <label class="field-label" for="audit-channel">Audit log channel</label>
                         <select
@@ -439,6 +452,12 @@
                             }
                         </select>
                     </div>
+                    @if (!botSettings.auditLogChannelId || !botSettings.botEnabled) {
+                    <hf-notice variant="warn">
+                        Audit-log entries will not cross-post to Discord until the bot is enabled
+                        and an audit-log channel is set.
+                    </hf-notice>
+                    }
                     <div class="field-row bot-field">
                         <label class="field-label" for="event-channel"
                             >Event announcement channel</label
@@ -643,104 +662,6 @@
                 >
                     {{ savingPermissions ? 'Saving…' : 'Save permissions' }}
                 </button>
-            </div>
-            } }
-
-            <!-- ═══ Danger zone ═══ -->
-            @if (activeSection === 'danger') { @if (!can('manage_settings')) {
-            <hf-notice variant="info">
-                Only administrators with the "Manage settings" permission can reach these controls.
-            </hf-notice>
-            } @else {
-            <div class="panel panel--hazard">
-                <div class="panel-header">
-                    <span class="panel-title">Hazardous Operations</span>
-                </div>
-                <div class="panel-body">
-                    @if (dangerFlash) {
-                    <hf-notice variant="warn">{{ dangerFlash }}</hf-notice>
-                    } @if (can('transfer_ownership')) {
-                    <div class="hazard-block">
-                        <div class="hazard-label">Transfer ownership</div>
-                        <div class="field-hint">
-                            Hand the Owner role to another member. You will be demoted to Admin.
-                        </div>
-                        <div class="field-row hazard-form">
-                            <input
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="transferOwnerMemberId"
-                                placeholder="New owner member ID"
-                            />
-                            <label class="field-label toggle-inline">
-                                <input type="checkbox" [(ngModel)]="transferOwnerConfirm" />
-                                I understand this is irreversible
-                            </label>
-                            <button
-                                type="button"
-                                class="btn btn-destructive btn-sm"
-                                (click)="transferOwnership()"
-                            >
-                                Transfer
-                            </button>
-                        </div>
-                    </div>
-                    }
-
-                    <div class="hazard-block">
-                        <div class="hazard-label">Rebind Discord server</div>
-                        <div class="field-hint">
-                            Point the regiment at a different Discord guild.
-                        </div>
-                        <div class="field-row hazard-form">
-                            <input
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="transferDiscordServerId"
-                                placeholder="Discord server ID"
-                            />
-                            <input
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="transferDiscordServerName"
-                                placeholder="Server name (optional)"
-                            />
-                            <button
-                                type="button"
-                                class="btn btn-destructive btn-sm"
-                                (click)="transferDiscord()"
-                            >
-                                Rebind
-                            </button>
-                        </div>
-                    </div>
-
-                    @if (can('transfer_ownership')) {
-                    <div class="hazard-block">
-                        <div class="hazard-label">Dissolve regiment</div>
-                        <div class="field-hint">
-                            Permanently delete all regiment data. Type the regiment name (<strong
-                                >{{ settings?.name }}</strong
-                            >) to confirm.
-                        </div>
-                        <div class="field-row hazard-form">
-                            <input
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="dissolveConfirmName"
-                                placeholder="Regiment name"
-                            />
-                            <button
-                                type="button"
-                                class="btn btn-destructive btn-sm"
-                                (click)="dissolve()"
-                            >
-                                Dissolve
-                            </button>
-                        </div>
-                    </div>
-                    }
-                </div>
             </div>
             } }
         </main>

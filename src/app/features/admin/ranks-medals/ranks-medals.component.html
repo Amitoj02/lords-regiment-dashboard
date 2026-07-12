@@ -6,7 +6,13 @@
                 <h1 class="page-title serif-display">Ranks &amp; Medals</h1>
             </div>
             <div class="row gap-8">
-                <button type="button" class="btn btn-ghost btn-sm">
+                @if (botConnected) {
+                <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    [disabled]="syncing"
+                    (click)="syncWithDiscord()"
+                >
                     <svg
                         width="14"
                         height="14"
@@ -19,26 +25,51 @@
                         <circle cx="12" cy="12" r="10" />
                         <path d="M12 6v6l4 2" />
                     </svg>
-                    Sync with Discord
+                    {{ syncing ? 'Syncing…' : 'Sync with Discord' }}
                 </button>
-                <button type="button" class="btn btn-primary btn-sm">+ New</button>
+                }
+                <button type="button" class="btn btn-primary btn-sm" (click)="newRank()">
+                    + New
+                </button>
             </div>
         </div>
 
-        <hf-notice type="warn">
+        <hf-notice variant="warn">
             Rank changes here update your records and Discord roles, but do not affect portal
             permissions. Manage role permissions in Settings &rarr; Roles &amp; Permissions.
         </hf-notice>
 
+        @if (syncFlash) {
+        <hf-notice [variant]="syncWarn ? 'err' : 'ok'">{{ syncFlash }}</hf-notice>
+        } @if (loadError) {
+        <hf-notice variant="err">{{ loadError }}</hf-notice>
+        } @if (rowFlash) {
+        <hf-notice [variant]="rowWarn ? 'err' : 'ok'">{{ rowFlash }}</hf-notice>
+        }
+
         <div class="grid-2 ladder-grid">
             <!-- Rank Ladder -->
             <div class="panel">
-                <div class="panel-header">
+                <div class="panel-header between">
                     <span class="panel-title">Rank Ladder</span>
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="newRank()">
+                        + New
+                    </button>
                 </div>
                 <div class="panel-body rank-list">
-                    @for (rank of ranks; track rank) {
-                    <div class="rank-row">
+                    @if (loadingRanks) {
+                    <div class="empty">Loading ranks…</div>
+                    } @else if (!ranks.length) {
+                    <div class="empty">No ranks yet. Use "+ New" to add one.</div>
+                    } @else { @for (rank of ranks; track rank.id; let i = $index) {
+                    <div
+                        class="rank-row"
+                        draggable="true"
+                        (dragstart)="onRankDragStart(i)"
+                        (dragover)="onRankDragOver($event)"
+                        (drop)="onRankDrop(i)"
+                        (dragend)="onRankDragEnd()"
+                    >
                         <div class="rank-row__grip">
                             <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-300)">
                                 <circle cx="3" cy="3" r="1.5" />
@@ -50,35 +81,81 @@
                             </svg>
                         </div>
                         <hf-chevrons [count]="rank.chevrons" size="sm"></hf-chevrons>
-                        <div class="rank-row__info">
+                        <div
+                            class="rank-row__info"
+                            role="button"
+                            tabindex="0"
+                            (click)="selectRankEdit(rank)"
+                            (keydown.enter)="selectRankEdit(rank)"
+                        >
                             <span class="rank-row__name">{{ rank.name }}</span>
                             <span class="rank-row__holders">{{ rank.holders }} holders</span>
                         </div>
                         <div class="rank-row__role">
-                            <span class="badge" [ngClass]="rank.discordLinked ? 'blue' : ''"
-                                >{{ rank.discordRole }}</span
-                            >
+                            <span class="badge" [ngClass]="rank.discordLinked ? 'blue' : ''">
+                                {{ rank.discordLinked ? (rank.discordRole || 'Linked') : 'Unlinked'
+                                }}
+                            </span>
                         </div>
-                        <button type="button" class="btn btn-icon btn-ghost btn-sm" title="Options">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <circle cx="12" cy="5" r="1.5" />
-                                <circle cx="12" cy="12" r="1.5" />
-                                <circle cx="12" cy="19" r="1.5" />
-                            </svg>
-                        </button>
+                        <div class="row-menu-wrap">
+                            <button
+                                type="button"
+                                class="btn btn-icon btn-ghost btn-sm"
+                                title="Options"
+                                (click)="toggleMenu('rank:' + rank.id)"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="5" r="1.5" />
+                                    <circle cx="12" cy="12" r="1.5" />
+                                    <circle cx="12" cy="19" r="1.5" />
+                                </svg>
+                            </button>
+                            @if (openMenu === 'rank:' + rank.id) {
+                            <div class="row-menu">
+                                <button
+                                    type="button"
+                                    class="row-menu__item"
+                                    (click)="selectRankEdit(rank); closeMenu()"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    class="row-menu__item row-menu__item--danger"
+                                    (click)="deleteRank(rank); closeMenu()"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                            }
+                        </div>
                     </div>
-                    }
+                    } }
                 </div>
             </div>
 
             <!-- Medal Cabinet -->
             <div class="panel">
-                <div class="panel-header">
+                <div class="panel-header between">
                     <span class="panel-title">Medal Cabinet</span>
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="newMedal()">
+                        + New
+                    </button>
                 </div>
                 <div class="panel-body medal-list">
-                    @for (medal of medals; track medal) {
-                    <button type="button" class="medal-row" (click)="selectMedalEdit(medal)">
+                    @if (loadingMedals) {
+                    <div class="empty">Loading medals…</div>
+                    } @else if (!medals.length) {
+                    <div class="empty">No medals yet. Use "+ New" to add one.</div>
+                    } @else { @for (medal of medals; track medal.id; let i = $index) {
+                    <div
+                        class="medal-row"
+                        draggable="true"
+                        (dragstart)="onMedalDragStart(i)"
+                        (dragover)="onMedalDragOver($event)"
+                        (drop)="onMedalDrop(i)"
+                        (dragend)="onMedalDragEnd()"
+                    >
                         <div class="medal-row__grip">
                             <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-300)">
                                 <circle cx="3" cy="3" r="1.5" />
@@ -94,7 +171,13 @@
                             [ribbon]="medal.ribbon"
                             size="sm"
                         ></hf-medal>
-                        <div class="medal-row__info">
+                        <div
+                            class="medal-row__info"
+                            role="button"
+                            tabindex="0"
+                            (click)="selectMedalEdit(medal)"
+                            (keydown.enter)="selectMedalEdit(medal)"
+                        >
                             <span class="medal-row__name">{{ medal.title }}</span>
                             <span class="medal-row__desc">{{ medal.description }}</span>
                         </div>
@@ -102,32 +185,118 @@
                             {{ medal.discordLinked ? 'Linked' : 'Unlinked' }}
                         </span>
                         <span class="medal-row__holders">{{ medal.holders }}</span>
-                        <button
-                            type="button"
-                            class="btn btn-icon btn-ghost btn-sm"
-                            title="Options"
-                            (click)="$event.stopPropagation()"
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <circle cx="12" cy="5" r="1.5" />
-                                <circle cx="12" cy="12" r="1.5" />
-                                <circle cx="12" cy="19" r="1.5" />
-                            </svg>
-                        </button>
-                    </button>
-                    }
+                        <div class="row-menu-wrap">
+                            <button
+                                type="button"
+                                class="btn btn-icon btn-ghost btn-sm"
+                                title="Options"
+                                (click)="toggleMenu('medal:' + medal.id)"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="5" r="1.5" />
+                                    <circle cx="12" cy="12" r="1.5" />
+                                    <circle cx="12" cy="19" r="1.5" />
+                                </svg>
+                            </button>
+                            @if (openMenu === 'medal:' + medal.id) {
+                            <div class="row-menu">
+                                <button
+                                    type="button"
+                                    class="row-menu__item"
+                                    (click)="selectMedalEdit(medal); closeMenu()"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    class="row-menu__item row-menu__item--danger"
+                                    (click)="deleteMedal(medal); closeMenu()"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    } }
                 </div>
             </div>
         </div>
 
         <!-- Editor -->
+        @if (editorMode) {
         <div class="panel editor-panel">
-            <div class="panel-header">
-                <span class="panel-title">Editor &mdash; {{ editTitle }}</span>
+            <div class="panel-header between">
+                <span class="panel-title">Editor &mdash; {{ editorTitle }}</span>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="closeEditor()">
+                    Close
+                </button>
             </div>
             <div class="panel-body">
+                <!-- Rank editor -->
+                @if (editorMode === 'rank') {
                 <div class="editor-cols">
-                    <!-- Preview + ribbon picker -->
+                    <div class="editor-preview">
+                        <hf-chevrons [count]="editRankChevrons"></hf-chevrons>
+                    </div>
+
+                    <div class="editor-form">
+                        <div>
+                            <label class="field-label" for="rank-name">Name</label>
+                            <input
+                                id="rank-name"
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="editRankName"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="rank-chevrons">Chevrons</label>
+                            <input
+                                id="rank-chevrons"
+                                class="hf-input field-width-precedence"
+                                type="number"
+                                min="0"
+                                [(ngModel)]="editRankChevrons"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="rank-precedence">Precedence</label>
+                            <input
+                                id="rank-precedence"
+                                class="hf-input field-width-precedence"
+                                type="number"
+                                [(ngModel)]="editRankPrecedence"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="editor-discord">
+                        <ng-container [ngTemplateOutlet]="discordPanel"></ng-container>
+                        <div class="editor-actions">
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="closeEditor()"
+                            >
+                                Discard
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                [disabled]="saving"
+                                (click)="saveRank()"
+                            >
+                                {{ editingRankId ? 'Save rank' : 'Create rank' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Medal editor -->
+                @if (editorMode === 'medal') {
+                <div class="editor-cols">
                     <div class="editor-preview">
                         <hf-medal [letter]="editLetter" [ribbon]="editRibbon" size="lg"></hf-medal>
                         <div class="ribbon-picker">
@@ -149,7 +318,6 @@
                         </div>
                     </div>
 
-                    <!-- Form fields -->
                     <div class="editor-form">
                         <div>
                             <label class="field-label" for="medal-title">Title</label>
@@ -190,32 +358,76 @@
                         </div>
                     </div>
 
-                    <!-- Discord role panel -->
                     <div class="editor-discord">
-                        <div class="panel discord-link-panel">
-                            <div class="panel-header">
-                                <span class="panel-title">Discord role link</span>
-                            </div>
-                            <div class="panel-body">
-                                <label class="field-label" for="medal-discord-role">Role</label>
-                                <select id="medal-discord-role" class="hf-select">
-                                    <option>Marksman</option>
-                                    <option>Sharpshooter</option>
-                                    <option>No role</option>
-                                </select>
-                                <hf-notice type="info" class="discord-link-notice">
-                                    Linking awards this medal's Discord role when the medal is
-                                    granted to a member.
-                                </hf-notice>
-                            </div>
-                        </div>
+                        <ng-container [ngTemplateOutlet]="discordPanel"></ng-container>
                         <div class="editor-actions">
-                            <button type="button" class="btn btn-ghost btn-sm">Discard</button>
-                            <button type="button" class="btn btn-primary btn-sm">Save medal</button>
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="discardMedal()"
+                            >
+                                Discard
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                [disabled]="saving"
+                                (click)="saveMedal()"
+                            >
+                                {{ editingMedalId ? 'Save medal' : 'Create medal' }}
+                            </button>
                         </div>
                     </div>
                 </div>
+                }
             </div>
         </div>
+        }
     </div>
 </hf-app-shell>
+
+<!-- Shared Discord role-link panel (reused by both editor variants) -->
+<ng-template #discordPanel>
+    <div class="panel discord-link-panel">
+        <div class="panel-header">
+            <span class="panel-title">Discord role link</span>
+        </div>
+        <div class="panel-body">
+            <label class="field-label" for="editor-discord-role">Role</label>
+            <select
+                id="editor-discord-role"
+                class="hf-select"
+                [ngModel]="editDiscordRoleId"
+                (ngModelChange)="onRoleSelect($event)"
+                [disabled]="rolesUnavailable"
+            >
+                <option value="">— No role —</option>
+                @if (editDiscordRoleId && !roleLoaded(editDiscordRoleId)) {
+                <option [value]="editDiscordRoleId">
+                    {{ editDiscordRoleName || editDiscordRoleId }}
+                </option>
+                } @for (role of roles; track role.id) {
+                <option [value]="role.id">{{ role.name }}</option>
+                }
+            </select>
+            @if (editDiscordLinked) {
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm discord-unlink-btn"
+                (click)="unlinkCurrentRole()"
+            >
+                Unlink role
+            </button>
+            } @if (rolesUnavailable) {
+            <hf-notice variant="warn" class="discord-link-notice">
+                Connect the Discord bot (Settings &rarr; Discord) to load roles before linking.
+            </hf-notice>
+            } @else {
+            <hf-notice variant="info" class="discord-link-notice">
+                Linking grants this Discord role automatically when {{ editorMode === 'rank' ? 'a
+                member holds this rank' : 'this medal is awarded' }}.
+            </hf-notice>
+            }
+        </div>
+    </div>
+</ng-template>

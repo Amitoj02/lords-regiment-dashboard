@@ -38,7 +38,7 @@
     }
 
     &:hover {
-        background: var(--parch-50);
+        background: var(--ink-700);
     }
 
     &--active {
@@ -61,7 +61,9 @@
     &__name {
         font-weight: 600;
         font-size: 0.875rem;
-        color: var(--ink-800);
+        // Light text: the queue panel is a dark (--ink-800) surface, so the name
+        // must use a light token to read at rest and on the dark hover/active bg.
+        color: var(--t-100);
     }
 
     &__discord {
@@ -126,6 +128,38 @@
 .applicant-meta {
     font-size: 0.75rem;
     color: var(--t-400);
+    // Long discord tags shouldn't force the identity block wider than its column.
+    overflow-wrap: anywhere;
+}
+
+// Detail-panel identity header: avatar + name/status on the left, the
+// "Open in Discord" action on the right. Extends `.panel-header` (which already
+// supplies display:flex / align-items:center / justify-content:space-between).
+.detail-header {
+    flex-wrap: wrap;
+    gap: 12px 16px;
+
+    &__identity {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        // Grow to fill the row so space-between pushes the action to the right,
+        // and allow the text to shrink/wrap rather than overflow.
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    &__id-text {
+        min-width: 0;
+    }
+
+    &__name {
+        flex-wrap: wrap;
+    }
+
+    &__discord {
+        flex: 0 0 auto;
+    }
 }
 
 .row.discord-verify-row {
@@ -156,4 +190,51 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--text-muted, #9aa4b2);
+}
+
+// ── Phone reflow (360 / 390 / 414px) ─────────────────────────────────────────
+// The stacked single-column layout (grid → 1fr) and queue un-sticky are handled
+// in _responsive.scss; these rules keep the detail panel's controls, tab bar and
+// info grids from overflowing horizontally on narrow phones.
+@media (max-width: 560px) {
+    // Identity block takes the full first line so the Discord action wraps
+    // cleanly below it instead of crowding/overlapping the name.
+    .detail-header__identity {
+        flex: 1 1 100%;
+    }
+
+    // Navigation + decision buttons stack into full-width groups and wrap.
+    .decisions-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+
+        .nav-btns,
+        .action-btns {
+            flex-wrap: wrap;
+        }
+    }
+
+    // Info + moderator grids collapse to a single column and long mono values
+    // (in-game name, discord tag) wrap rather than push the page wide.
+    .info-grid,
+    .mod-tools {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid .mono {
+        overflow-wrap: anywhere;
+    }
+
+    // Tab bar scrolls horizontally instead of overflowing the viewport.
+    .tab-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+
+        .hf-tab {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+    }
 }

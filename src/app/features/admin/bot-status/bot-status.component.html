@@ -45,7 +45,9 @@
                     <span class="op-desc" [ngClass]="op.success ? '' : 'op-desc--err'"
                         >{{ op.operation }}</span
                     >
-                    @if (op.resolvable && can('manage_settings')) {
+                    @if (!op.success) {
+                    <span class="badge ox">Failed</span>
+                    } @if (op.resolvable && can('manage_settings')) {
                     <button type="button" class="btn btn-ghost btn-sm" (click)="resolve(op.id)">
                         Resolve
                     </button>

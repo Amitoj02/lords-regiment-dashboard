@@ -24,8 +24,18 @@
         }
 
         <div class="public-nav-cta">
+            @if (auth.isAuthenticated()) { @if (auth.isMember()) {
+            <a routerLink="/dashboard" class="btn btn-primary" (click)="closeMenu()">Dashboard</a>
+            } @else {
+            <a routerLink="/onboarding/status" class="btn btn-primary" (click)="closeMenu()"
+                >My Application</a
+            >
+            }
+            <button type="button" class="btn btn-ghost btn-sm" (click)="signOut()">Sign out</button>
+            } @else {
             <button type="button" class="btn btn-ghost btn-sm">Join Discord</button>
             <a routerLink="/login" class="btn btn-discord" (click)="closeMenu()">Sign in</a>
+            }
         </div>
     </div>
 

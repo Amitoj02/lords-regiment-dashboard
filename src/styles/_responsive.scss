@@ -94,6 +94,25 @@
         padding: 14px;
     }
 
+    // ───────── Onboarding · apply + status pages ─────────
+    // The public apply/status surfaces sit outside the app-shell. Tighten the
+    // page gutters and keep the status surface fluid at small widths. (The
+    // .status-details row internals are emulated-encapsulated, so their
+    // narrow-phone stacking lives in application-status.component.scss.)
+    .apply-page {
+        padding: 28px 16px;
+    }
+
+    // Stack the status actions full-width so they read as a clear column.
+    .apply-page .status-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .apply-page .status-actions .btn {
+        width: 100%;
+    }
+
     // NOTE: Page-specific multi-column layouts (.dashboard-grid, .profile-grid,
     // .event-body, etc.) are stacked inside each component's own SCSS. They use
     // emulated view-encapsulation (specificity 0,2,0), which a global rule here
@@ -125,7 +144,8 @@
 
         // Sticky side columns flow normally once stacked
         .audit-detail,
-        .settings-nav {
+        .settings-nav,
+        .queue-col {
             position: static;
             top: auto;
         }
@@ -140,5 +160,10 @@
 
     .grid-3 {
         grid-template-columns: 1fr 1fr;
+    }
+
+    // Onboarding shell: minimal gutters so panels use the full narrow width.
+    .apply-page {
+        padding: 22px 13px;
     }
 }

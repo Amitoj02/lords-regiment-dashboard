@@ -44,6 +44,16 @@ export class LandingComponent implements OnInit {
         this.auth.applyToJoin();
     }
 
+    /**
+     * Hero CTA label follows the session (the click target is handled by
+     * applyToJoin): member → dashboard, applicant → their application, anonymous
+     * → apply.
+     */
+    get applyLabel(): string {
+        if (!this.auth.isAuthenticated()) return 'Apply to Join';
+        return this.auth.isMember() ? 'Go to Dashboard' : 'View Application';
+    }
+
     ngOnInit(): void {
         this.eventsService
             .getAll()

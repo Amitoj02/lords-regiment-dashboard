@@ -1,5 +1,7 @@
 export type AuditSeverity = 'info' | 'warn' | 'err';
 
+export type DiscordSyncStatus = 'pending' | 'synced' | 'failed' | 'not_applicable';
+
 export interface AuditLog {
     id: string;
     timestamp: string;
@@ -11,5 +13,5 @@ export interface AuditLog {
     beforeState?: string;
     afterState?: string;
     requestId?: string;
-    discordSynced?: boolean;
+    discordSyncStatus?: DiscordSyncStatus | null;
 }

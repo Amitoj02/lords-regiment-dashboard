@@ -1,8 +1,9 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AuditLog } from '../../../core/models/audit-log.model';
+import { AuditLog, DiscordSyncStatus } from '../../../core/models/audit-log.model';
 import { AuditService } from '../../../core/services/audit.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { DiscordService } from '../../../core/services/discord.service';
 
 @Component({
     selector: 'app-audit',
@@ -27,11 +28,15 @@ export class AuditComponent implements OnInit {
     loading = true;
     loadError = '';
 
+    /** True when the bot is off or no audit-log channel is bound — entries won't cross-post. */
+    discordSyncDisabled = false;
+
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
         private auditService: AuditService,
         private auth: AuthService,
+        private discord: DiscordService,
     ) {}
 
     /** Capability gate for a template action (see the spec's capability keys). */
@@ -60,6 +65,22 @@ export class AuditComponent implements OnInit {
                     console.error('Failed to load audit ledger', err);
                 },
             });
+
+        // Surface why entries may read pending/not-applicable: the bot must be
+        // enabled AND an audit-log channel bound for entries to cross-post.
+        this.discord
+            .getSettings()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (settings) => {
+                    this.discordSyncDisabled =
+                        !settings.botEnabled || settings.auditLogChannelId === null;
+                },
+                error: (err) => {
+                    // Non-blocking: leave the banner hidden if settings can't be read.
+                    console.error('Failed to load Discord settings', err);
+                },
+            });
     }
 
     applyFilters(): void {
@@ -77,6 +98,44 @@ export class AuditComponent implements OnInit {
 
     selectLog(log: AuditLog): void {
         this.selectedLog = log;
+    }
+
+    /** Pin the ledger to a single actor (the detail panel's "All by …" affordance). */
+    filterByActor(actor: string): void {
+        this.filterActor = actor;
+        this.applyFilters();
+    }
+
+    /** Human label for the entry's Discord cross-post state. */
+    syncStatusLabel(status?: DiscordSyncStatus | null): string {
+        switch (status) {
+            case 'synced':
+                return 'Synced';
+            case 'pending':
+                return 'Pending';
+            case 'failed':
+                return 'Failed';
+            case 'not_applicable':
+                return 'Not applicable';
+            default:
+                // Historical rows recorded before sync tracking existed.
+                return 'Unknown';
+        }
+    }
+
+    /** Status-dot modifier for the entry's Discord cross-post state. */
+    syncStatusClass(status?: DiscordSyncStatus | null): string {
+        switch (status) {
+            case 'synced':
+                return 'sync-synced';
+            case 'pending':
+                return 'sync-pending';
+            case 'failed':
+                return 'sync-failed';
+            default:
+                // not_applicable + null/undefined read as muted (not a false "off").
+                return 'sync-muted';
+        }
     }
 
     formatTimestamp(ts: string): string {

@@ -22,6 +22,12 @@
 
         @if (loadError) {
         <hf-notice variant="warn" [body]="loadError"></hf-notice>
+        } @if (discordSyncDisabled) {
+        <hf-notice
+            variant="warn"
+            title="Discord cross-posting is off"
+            body="Audit entries aren't cross-posting to Discord until the bot is enabled and an audit-log channel is configured — until then, entries may read pending or not applicable."
+        ></hf-notice>
         }
 
         <!-- Filter row -->
@@ -146,13 +152,9 @@
                                 <span class="row sync-row">
                                     <span
                                         class="status-dot"
-                                        [ngClass]="
-                                                selectedLog.discordSynced
-                                                    ? 'discord-on'
-                                                    : 'discord-off'
-                                            "
+                                        [ngClass]="syncStatusClass(selectedLog.discordSyncStatus)"
                                     ></span>
-                                    {{ selectedLog.discordSynced ? 'Synced' : 'Not synced' }}
+                                    {{ syncStatusLabel(selectedLog.discordSyncStatus) }}
                                 </span>
                             </div>
                             @if (selectedLog.requestId) {
@@ -174,7 +176,11 @@
                             @if (selectedLog.targetUser) {
                             <button type="button" class="btn btn-ghost btn-sm">View profile</button>
                             }
-                            <button type="button" class="btn btn-ghost btn-sm">
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="filterByActor(selectedLog.actor)"
+                            >
                                 All by {{ selectedLog.actor.split(' ')[0] }}
                             </button>
                         </div>

@@ -39,21 +39,23 @@ export class SidebarComponent {
             adminOnly: false,
             enabled: true,
         },
-        // Events + Gallery are wired to their API services (T-0025).
+        // Events + Gallery point at the in-shell admin surfaces (index + manage).
+        // Admin-only: plain members reach the public /events + /gallery via the
+        // public site nav instead.
         {
             label: 'Events',
             key: 'events',
-            route: '/events',
+            route: '/admin/events',
             icon: 'calendar',
-            adminOnly: false,
+            adminOnly: true,
             enabled: true,
         },
         {
             label: 'Gallery',
             key: 'gallery',
-            route: '/gallery',
+            route: '/admin/gallery',
             icon: 'image',
-            adminOnly: false,
+            adminOnly: true,
             enabled: true,
         },
         {

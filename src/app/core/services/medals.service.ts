@@ -35,9 +35,22 @@ export class MedalsService {
         return this.http.delete<void>(`${this.base}/${id}`);
     }
 
+    /** Reorder the cabinet: `order` is medal ids top → bottom (precedence 1..N). */
+    reorder(order: string[]): Observable<Medal[]> {
+        return this.http
+            .post<ApiMedal[]>(`${this.base}/reorder`, { order })
+            .pipe(map((rows) => rows.map(mapMedal)));
+    }
+
     linkDiscord(id: string, discordRoleId: string, discordRoleName?: string): Observable<Medal> {
         return this.http
             .post<ApiMedal>(`${this.base}/${id}/link-discord`, { discordRoleId, discordRoleName })
+            .pipe(map(mapMedal));
+    }
+
+    unlinkDiscord(id: string): Observable<Medal> {
+        return this.http
+            .post<ApiMedal>(`${this.base}/${id}/unlink-discord`, {})
             .pipe(map(mapMedal));
     }
 }

@@ -121,10 +121,10 @@ export class ApplicationsComponent implements OnInit {
         if (!id) {
             return;
         }
-        // Approve takes no note server-side (it promotes to a member); the
-        // moderator note applies to decline/hold only.
+        // Approve takes no moderator note server-side (it promotes to a member),
+        // but the Discord DM message is sent to the applicant on approval too.
         this.applicationsService
-            .approve(id)
+            .approve(id, this.discordDmMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
@@ -138,7 +138,7 @@ export class ApplicationsComponent implements OnInit {
             return;
         }
         this.applicationsService
-            .decline(id, this.moderatorNote)
+            .decline(id, this.moderatorNote, this.discordDmMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
@@ -152,7 +152,7 @@ export class ApplicationsComponent implements OnInit {
             return;
         }
         this.applicationsService
-            .hold(id, this.moderatorNote)
+            .hold(id, this.moderatorNote, this.discordDmMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),

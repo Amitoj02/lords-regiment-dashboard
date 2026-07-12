@@ -172,7 +172,7 @@ export class EventDetailComponent implements OnInit {
             .delete(this.eventId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => this.router.navigateByUrl('/events'),
+                next: () => this.router.navigateByUrl('/admin/events'),
                 error: (err) => {
                     console.error('Failed to delete event', err);
                     this.working = false;

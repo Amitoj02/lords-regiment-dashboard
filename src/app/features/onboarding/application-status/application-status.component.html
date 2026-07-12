@@ -42,29 +42,60 @@
                 @switch (application.status) { @case ('pending') {
                 <span class="badge blue">Under Review</span>
                 } @case ('held') {
-                <span class="badge amber">On Hold</span>
+                <span class="badge brass">On Hold</span>
                 } @case ('declined') {
-                <span class="badge red">Not Accepted</span>
+                <span class="badge ox">Not Accepted</span>
                 } }
             </div>
             <div class="panel-body">
-                <!-- Status message -->
+                <!-- Status summary: icon · headline · explanation -->
                 @switch (application.status) { @case ('pending') {
-                <p class="status-text">
-                    Your application is in the officers' queue. We review all submissions within
-                    <strong>48 hours</strong> and will contact you on Discord with a decision.
-                </p>
+                <div class="status-summary">
+                    <div
+                        class="status-summary-icon status-summary-icon--pending"
+                        aria-hidden="true"
+                    >
+                        ⏳
+                    </div>
+                    <div class="status-summary-copy">
+                        <h2 class="serif status-summary-title">Under review</h2>
+                        <p class="status-text">
+                            Your application is in the officers' queue. We review all submissions
+                            within <strong>48 hours</strong> and will contact you on Discord with a
+                            decision.
+                        </p>
+                    </div>
+                </div>
                 } @case ('held') {
-                <p class="status-text">
-                    An officer has placed your application on hold while they gather more
-                    information.
-                </p>
+                <div class="status-summary">
+                    <div class="status-summary-icon status-summary-icon--held" aria-hidden="true">
+                        ✋
+                    </div>
+                    <div class="status-summary-copy">
+                        <h2 class="serif status-summary-title">On hold</h2>
+                        <p class="status-text">
+                            An officer has placed your application on hold while they gather more
+                            information.
+                        </p>
+                    </div>
+                </div>
                 @if (application.moderatorNote) {
                 <hf-notice variant="info">
                     <strong>Officer note:</strong> {{ application.moderatorNote }}
                 </hf-notice>
                 } } @case ('declined') {
-                <p class="status-text">Your application was not accepted at this time.</p>
+                <div class="status-summary">
+                    <div
+                        class="status-summary-icon status-summary-icon--declined"
+                        aria-hidden="true"
+                    >
+                        ✕
+                    </div>
+                    <div class="status-summary-copy">
+                        <h2 class="serif status-summary-title">Not accepted</h2>
+                        <p class="status-text">Your application was not accepted at this time.</p>
+                    </div>
+                </div>
                 @if (application.declineReason) {
                 <hf-notice variant="warn">
                     <strong>Reason:</strong> {{ application.declineReason }}

@@ -91,6 +91,20 @@ export class DiscordService {
         return this.http.post<DiscordVerifyConnection>(`${this.base}/verify-connection`, {});
     }
 
+    /**
+     * The guild's roles (GET /discord/roles). Gated on edit_ranks_medals, so the
+     * Ranks & Medals role picker can populate without needing manage_settings.
+     */
+    getRoles(): Observable<DiscordRole[]> {
+        return this.http
+            .get<DiscordRole[]>(`${this.base}/roles`)
+            .pipe(
+                map((roles) =>
+                    roles.map((r) => ({ id: r.id, name: r.name, position: r.position })),
+                ),
+            );
+    }
+
     getSettings(): Observable<DiscordBotSettings> {
         return this.http.get<DiscordBotSettings>(`${this.base}/settings`);
     }

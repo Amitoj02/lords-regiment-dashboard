@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
-  "lastSyncedAt": "2026-07-12T19:02:09Z",
-  "notesForNextSession": "APPLICANT SELF-SERVICE FLOW shipped on feat/applicant-self-service (commit d9277e9), in lockstep with the backend endpoints on lords-dashboard-backend:feat/guilds-scope-and-applicant-self-service (T-0054/55/56). DONE + browser-verified live: T-0027 (apply-as-signin CTA + onboardingGuard), T-0028 (data layer: getMine/updateMine/block/unblock + declineReason on the model), T-0029 (application-status page — pending/held/declined/blocked), T-0030 (post-login redirect: returning applicant → status, new → form, member → dashboard), T-0031 (edit a pending application, ?edit=1 pre-fill → PATCH), T-0032 (reapply after decline unless blocked), T-0033 (admin Block-from-applying / Re-enable). Owner setup: T-0037 (Owner + setupComplete=false → /admin/settings), T-0038 (RETIRED the stub owner-setup wizard → redirects to admin Settings). T-0015 models reconciled (UUID string ids kept — matches the built backend). T-0016 archived. T-0036 owner-superadmin verified via a minted JWT (full admin panel renders) — set a REAL OWNER_DISCORD_ID before seed:prod. 51 unit specs green (new AuthService routing + onboardingGuard specs), ng lint clean, prod build clean. DEFERRED / next: T-0020 wire the account-deletion UI to the existing GDPR endpoints; T-0006 the landing still has hardcoded stats/officers arrays — wire GET /regiment/stats + guard un-wired surfaces before the public deploy (T-0032). Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; the dev web container hot-reloads at localhost:4200 and proxies /api to the api container. PLANNED (ranks/medals epic, T-0062–T-0069): the /admin/ranks page is a pure static mockup (RanksMedalsComponent, features/admin/ranks-medals/) — hardcoded rank/medal arrays, every button a no-op, the role <select> hardcoded (why “discord roles don’t show”). Backend Ranks/Medals CRUD + rank /ranks/reorder + /:id/link-discord and guild-role listing (via POST /discord/verify-connection) already exist, so this is mostly frontend wiring. Start at T-0062 (wire to live data + extend models). Open decisions are questions on T-0065 (role-list capability gate manage_settings vs edit_ranks_medals; unlink endpoint; medal-linked roles never applied on award) and T-0067 (medal reorder: client-side precedence writes vs a new backend bulk endpoint).",
+  "lastSyncedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
+  "lastSyncedAt": "2026-07-12T22:35:00Z",
+  "notesForNextSession": "SYNC 2026-07-12T22:35Z: ADMIN-COMPLETION session shipped on feat/admin-completion-ranks-audit-ux (commit 88068a5, PR to open). Advanced to deploy_ready: T-0039-0045 (onboarding polish + Discord dispatch honesty + decision DM), T-0049-0051 (auth-aware public CTAs + specs), T-0052-0055 (admin events/gallery index + sidebar/redirects), T-0056-0059 (applications page fixes), T-0060/0061 (Settings Danger Zone removed), T-0062-0069 (RANKS & MEDALS epic — live data, editors, real Discord role picker + link/unlink, native drag-reorder, sync button, specs), T-0070-0072 (audit actor names + truthful sync badges). Production build + ng lint clean; 99 karma specs green (+30). Adversarial review ran; ALL findings fixed (drag dragend/cross-list guard, mapMedal role-name, events/gallery empty-vs-error states) + a11y keyboard handlers. LIVE-VERIFIED via a minted owner JWT against the running stack: ranks/medals page shows real data + the role picker lists the actual guild roles (the \"roles not showing\" bug — FIXED), applicant queue names legible, audit shows member names + a truthful \"Synced\" badge, Settings danger zone gone, and the member/hero CTAs are auth-aware. BACKEND COUNTERPARTS: lords-dashboard-backend PR #7 (T-0057-T-0064) — MUST deploy together (see the new T-0062 cross-repo coupling risk). STILL OPEN (unchanged): T-0006 landing still has hardcoded stats/officers arrays (wire GET /regiment/stats before the public deploy) — the auth-aware CTA work (T-0049/50) landed but the stats are still stubbed, so T-0006 stays in review; T-0008/0009/0010/0020 stay in review; T-0020 account-deletion still needs wiring to the GDPR endpoints; T-0035#0 (no dedicated apply-form/model spec) and T-0023#0 (modal @Output) remain OPEN from prior sessions. Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; dev web container hot-reloads at :4200 and proxies /api. NOTE: I enabled the bot in the dev backend DB for verification (seed default is dormant).",
   "nextIdCounter": 73,
   "connections": [],
   "tasks": [
@@ -269,7 +269,7 @@
       "id": "T-0007",
       "title": "Onboarding flows (owner setup, Discord link, apply)",
       "summary": "Onboarding feature module: owner first-run setup wizard, owner Discord link step, and the public applicant application form. Discord identity is simulated (would come from OAuth).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -292,9 +292,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -309,6 +309,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Onboarding is now complete end-to-end: the enlistment apply form + the new application-status page are wired and guarded (onboardingGuard), and the broken owner-setup wizard was retired (T-0038). Browser-verified the apply/edit/status surfaces live."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8, feat/applicant-self-service). The onboarding apply/edit + application-status flow and the retired owner-setup wizard are now live on the default branch."
         }
       ]
     },
@@ -716,7 +723,7 @@
       "id": "T-0015",
       "title": "Verify model shapes against backend SCHEMA.md",
       "summary": "The frontend interface models (member/event/application/gallery/audit-log) were authored to mirror the backend, but drift is likely. Reconcile field names, enums, and optionality against the backend's normalized schema before wiring HTTP.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "question",
       "size": "M",
       "sizeWeight": 3,
@@ -754,9 +761,9 @@
       "testPlan": [],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -778,6 +785,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Applicant-facing models reconciled to the live API contract: Application gains declineReason/decidedAt, MyApplication added, mapApplication updated. NOTE: the backend uses UUID string ids + ISO date strings (not numbers) — the models correctly follow the built schema; switching to numeric ids would be a destructive schema change and is out of scope. Enums already match."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). The reconciled applicant-facing models (Application.declineReason/decidedAt, MyApplication, mapApplication) are now on the default branch. UUID string ids kept — matches the built backend."
         }
       ]
     },
@@ -1415,7 +1429,7 @@
       "id": "T-0027",
       "title": "Unify \"Apply to Join\" with Sign In; gate onboarding on non-member Discord session",
       "summary": "Make the public \"Apply to Join\" CTA invoke the same Discord Sign In flow instead of linking straight to the application form. After OAuth, only a Discord-authenticated user who is NOT part of the regiment (isMember=false) is routed into onboarding (/onboarding/apply); members go to /dashboard. The auth-callback already branches on isMember — this task removes the direct /apply link and guards the onboarding route so it can't be reached without a non-member authenticated session.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1468,9 +1482,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T22:30:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T22:30:00Z",
@@ -1485,6 +1499,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Apply-to-Join CTA now IS Discord sign-in (AuthService.applyToJoin): anonymous → OAuth, member → dashboard, non-member → onboarding. onboardingGuard restricts /onboarding/* to authenticated non-members. Browser-verified. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Apply-to-Join-as-sign-in CTA + onboardingGuard now live on the default branch."
         }
       ]
     },
@@ -1492,7 +1513,7 @@
       "id": "T-0028",
       "title": "Applicant self-service data layer (my-application fetch, edit, resubmit)",
       "summary": "The applications service is staff-only today (getAll/getById/approve/decline/hold) with no applicant-facing reads or writes. Add applicant-scoped methods — getMine() (the caller's current application or null), update(id, payload) to edit a pending application, and resubmit support — surface declineReason/moderatorNote on the Application model, and carry any admin-disabled/banned-from-applying flag. Foundation the status page, edit, resubmit and post-login redirect all build on. Several of these read/write endpoints do NOT exist on the backend yet.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1542,9 +1563,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1559,6 +1580,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Applicant data layer: Application model + mapApplication surface declineReason/decidedAt; new MyApplication type; ApplicationsService gains getMine/updateMine/blockApplicant/unblockApplicant, wired to the new backend endpoints. Verified live. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Applicant data layer (getMine/updateMine/block/unblock + declineReason on the model) now live on the default branch."
         }
       ]
     },
@@ -1566,7 +1594,7 @@
       "id": "T-0029",
       "title": "Applicant application-status page (pending/48h, held, declined, approved)",
       "summary": "New canonical landing for a non-member who has already applied: shows the application status — pending with a 'please wait up to 48 hours for an officer to review' message, held with the moderator note, declined with the officer's decline reason shown here, or approved (route on to /dashboard). Replaces dumping returning applicants back onto a blank form. This is the first-impression surface and must work end-to-end.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1608,9 +1636,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1625,6 +1653,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Application-status page (new component + route): pending (48h), held (officer note), declined (reason) + blocked panel, with Edit/Reapply actions. Browser-verified live (pending + blocked states). Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). The application-status page (pending/held/declined/blocked) is now live on the default branch."
         }
       ]
     },
@@ -1632,7 +1667,7 @@
       "id": "T-0030",
       "title": "Fix post-login redirect for returning applicants (status page, not blank form)",
       "summary": "AuthService.completeLogin (auth.service.ts:59-65) currently sends every non-member to /onboarding/apply, so a pending or declined applicant who logs back in is wrongly dropped onto a fresh application form. Route a non-member who already has an application to the status page (T-0029); only a genuinely new applicant (no application) gets the blank form; members still go to /dashboard. Also guard the onboarding route so a returning applicant deep-linking to /onboarding/apply is redirected to their status.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -1677,9 +1712,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1694,6 +1729,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "completeLogin routes a returning applicant with an application to /onboarding/status, a brand-new one to the blank form, a member to the dashboard; the apply form bounces a returning open-application deep-link to /status. Spec-pinned. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Post-login redirect for returning applicants (status page vs blank form vs dashboard) now live on the default branch."
         }
       ]
     },
@@ -1701,7 +1743,7 @@
       "id": "T-0031",
       "title": "Let applicants modify a pending application (re-bumps the officer queue)",
       "summary": "While an application is pending, the applicant can go back and edit it (correct in-game name, why-join, etc.) from the status page; saving updates the application via the edit path (T-0028) and re-bumps it in the officer's review queue. Reuses the application form pre-filled from getMine() and calls update() instead of create(). Depends on the backend PATCH/update endpoint that does not exist yet.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1741,9 +1783,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1758,6 +1800,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Apply form doubles as the edit surface (?edit=1): pre-fills from getMine and PATCHes /applications/mine (re-bumps the queue). Browser-verified the pre-filled edit form live. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Edit-a-pending-application (?edit=1 pre-fill -> PATCH /applications/mine) now live on the default branch."
         }
       ]
     },
@@ -1765,7 +1814,7 @@
       "id": "T-0032",
       "title": "Allow resubmit after decline by default (blocked only when admin-disabled)",
       "summary": "A declined applicant can resubmit by default — the status page offers a 'Reapply' action that opens a fresh (optionally pre-filled) application form and creates a new application. If an admin has permanently disabled applications for that user (T-0033), the Reapply action is hidden and a 'you can no longer submit an application' message is shown instead.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -1794,9 +1843,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1811,6 +1860,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Declined applicants get a Reapply action (fresh submit) unless an officer has blocked them, in which case the status page shows an 'Applications Closed' message (driven by the getMine blocked flag). Verified live. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Reapply-after-decline (blocked only when admin-disabled) now live on the default branch."
         }
       ]
     },
@@ -1818,7 +1874,7 @@
       "id": "T-0033",
       "title": "Admin: permanently disable / re-enable applications from a specific user",
       "summary": "Give officers an action on the applications review screen to permanently block a specific applicant (Discord identity) from submitting further applications, and to re-enable them. Users are NOT disabled by default (they can resubmit — T-0032). This is an entirely new capability: the backend has no blocklist table, no banned-from-applying flag, and no capability for it, so it depends on backend work that must be planned first.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1855,9 +1911,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1872,6 +1928,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Admin applications view gains Block-from-applying / Re-enable actions calling POST /applications/:id/{block,unblock}. Browser-verified the controls render and round-trip through the API. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Admin Block-from-applying / Re-enable now live on the default branch."
         }
       ]
     },
@@ -1995,7 +2058,7 @@
       "id": "T-0036",
       "title": "Verify the seeded Owner resolves to a full-access superadmin through the frontend auth flow",
       "summary": "The backend ALREADY seeds a regiment Owner (dev-owner.seed.ts, run by MainSeeder) whose Discord snowflake comes from the OWNER_DISCORD_ID env var, and the frontend already has real Discord OAuth -> /auth/me -> capabilities (T-0012). Confirm end-to-end from the frontend that the seeded Owner signs in, /auth/me returns role=Owner with the full capability set, isAdmin()/isOwnerOrAdmin()/hasCapability('manage_settings') are true, and every 'set up the app' surface (admin Settings: profile/Discord/permissions/danger-zone) is reachable and correctly capability-gated. Also document the prod requirement: OWNER_DISCORD_ID (the real owner's snowflake) MUST be set before `npm run seed:prod`, otherwise the dev fixture snowflake is seeded and no real user can ever resolve as Owner.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "spike",
       "size": "S",
       "sizeWeight": 2,
@@ -2036,9 +2099,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-12T18:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-12T18:15:00Z",
@@ -2053,6 +2116,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Verified the Owner resolves to a full-access superadmin: signing in as the seeded Owner (exercised via a minted owner JWT this session) renders the complete admin panel (Dashboard/Events/Gallery/Members/Applications/Ranks/Audit/Settings) and /auth/me returns role=Owner with the full capability set. CAVEAT for prod: set a REAL OWNER_DISCORD_ID in .env before seed:prod, otherwise the dev fixture snowflake is seeded and no real user resolves as Owner. A real-OAuth owner sign-in still needs the human Discord consent click."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). The Owner-superadmin auth surfaces verified this arc are now on the default branch. CAVEAT unchanged: set a REAL OWNER_DISCORD_ID before seed:prod."
         }
       ]
     },
@@ -2060,7 +2130,7 @@
       "id": "T-0037",
       "title": "Route the seeded Owner into first-run setup (consume setupComplete)",
       "summary": "Nothing in the frontend reads RegimentProfile.setupComplete today (it is dead code) and RegimentService is injected nowhere; after login the Owner lands on /dashboard like any member. Add first-run detection: after login read the regiment profile and, when the user is Owner and setupComplete is false, route them to the setup surface instead of the dashboard so the seeded superadmin is guided to configure the app. NOTE: the backend seed currently hard-codes regiment.setupComplete=true and exposes no endpoint to flip it, so a backend counterpart must be planned before this can ever fire.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -2118,9 +2188,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-12T18:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-12T18:15:00Z",
@@ -2135,6 +2205,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "First-run routing: an Owner whose regiment setupComplete=false is guided into /admin/settings instead of the dashboard (consumes the new backend setupComplete flag + POST /settings/complete-setup). Spec-pinned. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). Owner first-run routing (setupComplete=false -> /admin/settings) now live on the default branch."
         }
       ]
     },
@@ -2142,7 +2219,7 @@
       "id": "T-0038",
       "title": "Rehabilitate or retire the disconnected owner-setup onboarding wizard",
       "summary": "The /onboarding/setup + /onboarding/setup/discord wizard is a broken stub: only steps 2-3 exist, owner-setup.save() is empty, owner-discord.checkBotStatus() is faked with a setTimeout, continue() dead-ends at the nonexistent /onboarding/ranks route (falls through to /home), and the route is public/unguarded. Depending on T-0037's design answer, either (a) wire the wizard to the real SettingsService/DiscordService, build the missing steps 1/4/5, fix the dead-end, and guard it Owner-only; or (b) retire the wizard and redirect the setup flow to the already-wired admin Settings panel. Either way, remove the dead-end and the unguarded public access.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -2192,9 +2269,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+      "lastTouchedCommit": "86e6de8066c95df739608954c04e85e0848774d8",
       "createdAt": "2026-07-12T18:15:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-12T20:52:28Z",
       "history": [
         {
           "at": "2026-07-12T18:15:00Z",
@@ -2209,6 +2286,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "RETIRED the stub owner-setup wizard (owner-setup + owner-discord deleted): it duplicated the fully-wired admin Settings panel as broken stubs and dead-ended at a nonexistent /onboarding/ranks. /onboarding/setup* now redirects to /admin/settings; the unguarded public access + dead-end are gone. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        },
+        {
+          "at": "2026-07-12T20:52:28Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "Merged to main via PR #6 (merge 86e6de8). The retired owner-setup wizard (redirect to /admin/settings) is now live on the default branch; no dead-end / unguarded route remains."
         }
       ]
     },
@@ -2216,7 +2300,7 @@
       "id": "T-0039",
       "title": "Fix left/right gutters on the /onboarding/status page",
       "summary": "The application-status template reuses the .apply-page/.apply-inner shell classes, but those live only in application-form.component.scss and are component-scoped (default Emulated encapsulation), so on /onboarding/status they never apply — the page renders full-bleed with no horizontal padding and no centered max-width. Extract the shared 'apply shell' layout (.apply-page/.apply-inner/.apply-header/.apply-logo/.apply-title/.apply-subtitle/.apply-panel) into a global partial so the status page gets the same padded, centered 640px container as the apply form.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -2237,24 +2321,27 @@
       "testPlan": [
         {
           "desc": "/onboarding/status renders with visible left/right gutters and a centered ~640px container matching /onboarding/apply",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The apply form (/onboarding/apply) is visually unchanged after the shell extraction — same padding, max-width, header/logo layout",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Extracting/relocating the .apply-* shell layout touches shared onboarding styles consumed by BOTH the apply form and the status page; a mistake reflows both surfaces",
-          "status": "open",
-          "notedAt": "2026-07-12T20:30:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T20:30:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0039",
+          "note": "Apply form verified visually unchanged after moving the shell to the global _onboarding partial; only onboarding rules moved. Build + lint + 99 specs green. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:30:00Z",
-      "updatedAt": "2026-07-12T20:30:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:30:00Z",
@@ -2262,6 +2349,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; root cause = the .apply-* shell classes are scoped to application-form so the status page reuse gets no gutters/centering. Fix by extracting the shell to a global partial."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Extracted the apply shell to a global _onboarding partial; status page now padded/centered. Build+lint+99 specs green; apply form verified visually unchanged."
         }
       ]
     },
@@ -2269,7 +2363,7 @@
       "id": "T-0040",
       "title": "Desktop UI polish for the application-status page",
       "summary": "Beyond the gutter fix, tighten the visual hierarchy of /onboarding/status on desktop: the header/badge relationship, the pending/held/declined/blocked state panels, the icon/typography treatment, and the spacing/rules of the .status-details definition list and .status-actions row. Align the panel chrome with design-reference/screens-onboarding.jsx so the page reads as a finished surface rather than stacked stub panels.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "M",
       "sizeWeight": 3,
@@ -2288,18 +2382,18 @@
       "testPlan": [
         {
           "desc": "Each status state (pending / held+note / declined+reason / blocked) renders with the correct badge, icon, and message hierarchy on desktop",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The .status-details list and .status-actions row have consistent spacing/alignment and match the design-reference onboarding treatment",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:30:00Z",
-      "updatedAt": "2026-07-12T20:30:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:30:00Z",
@@ -2307,6 +2401,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; desktop visual polish of the status page against the design-reference onboarding screens, after the gutter fix (T-0039)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Desktop polish of the status page (per-state summary, corrected badge tokens, ruled details list). Live-rendered."
         }
       ]
     },
@@ -2314,7 +2415,7 @@
       "id": "T-0041",
       "title": "Mobile/responsive pass for the onboarding status & apply surfaces",
       "summary": "Make /onboarding/status (and the closely-related /onboarding/apply that shares the shell) hold up on mobile: reduce the .apply-page gutters at small widths, keep the .status-details rows (which use justify-content: space-between) from crushing long values or overflowing, make the .status-actions buttons stack/full-width on narrow screens, and verify no horizontal scroll at 360–414px per design-reference/screens-mobile.jsx.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -2334,24 +2435,27 @@
       "testPlan": [
         {
           "desc": "/onboarding/status has no horizontal scroll at 360/390/414px; the details rows reflow and the action buttons stack/full-width",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "/onboarding/apply likewise reflows cleanly at mobile widths (shared apply shell)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "May add/edit breakpoints in the shared _responsive.scss and the shared apply shell, both consumed beyond this page — a bad breakpoint can reflow other surfaces / the apply form",
-          "status": "open",
-          "notedAt": "2026-07-12T20:30:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T20:30:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0041",
+          "note": "Responsive edits are additive (apply-page gutters at <=820/480; .queue-col added to the existing un-stick list); no existing rule for other two-column layouts was modified, so other surfaces cannot reflow. Build + 99 specs green; adversarial review checked reflow. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:30:00Z",
-      "updatedAt": "2026-07-12T20:30:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:30:00Z",
@@ -2359,6 +2463,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; mobile/responsive polish for the onboarding status + apply surfaces, after the gutter fix (T-0039)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Mobile pass: apply-page gutters at <=820/480, status-actions stack full-width, details rows wrap; no other layout rules changed."
         }
       ]
     },
@@ -2366,7 +2477,7 @@
       "id": "T-0042",
       "title": "Diagnose the Discord dispatch pipeline end-to-end (channels + outbox)",
       "summary": "Grounding spike for the three reported Discord failures (announcements, enlistment posts, decision DMs not appearing). Confirm the real gateway is live (DISCORD_BOT_TOKEN set + DISCORD_BOT_MOCK=false so RealDiscordGateway, not the mock, is providing) and connected via GET /discord/connection; confirm the routed channels are actually persisted (announcementChannelId + enlistmentChannelId non-null in GET /discord/settings); and inspect GET /discord/operations for failed/unresolved ApplicationSubmitted/Announce jobs. Produces the concrete per-symptom root cause that T-0043/T-0044/T-0045 fix.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "spike",
       "size": "S",
       "sizeWeight": 2,
@@ -2391,22 +2502,22 @@
       "testPlan": [
         {
           "desc": "GET /discord/connection reports connected=true against the real gateway (bot token set, DISCORD_BOT_MOCK=false), not the mock",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "GET /discord/settings returns non-null announcementChannelId AND enlistmentChannelId (channels are actually configured), and the Settings pickers reflect them",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "GET /discord/operations is inspected for failed/unresolved Announce + ApplicationSubmitted jobs; the concrete cause per symptom (unconfigured channel vs failing outbox job vs never enqueued) is recorded",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2414,6 +2525,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; grounding spike for the 'Discord functionality not working' report — verifies gateway/channels/outbox so the three fix tasks target the real cause."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "DIAGNOSIS (spike): the three Discord failures were NOT code — the bot shipped dormant (botEnabled=false) while announcement/enlistment/audit channels WERE configured. Enabling the bot made dispatch work end-to-end (verified live: a real audit entry posted to the audit-log channel). Fixes landed as honesty affordances in T-0043/44/71 + the backend write-back. Root cause captured; no further FE code needed here."
         }
       ]
     },
@@ -2421,7 +2539,7 @@
       "id": "T-0043",
       "title": "Fix announcement cross-post to Discord (reliable + honest feedback)",
       "summary": "The Settings announcement composer only cross-posts to Discord when the 'Also cross-post to the Discord announcement channel' checkbox is ticked (it defaults OFF), and the discord.announce() call is fire-and-forget — its `enqueued` result and errors are swallowed, so 'Dispatch published to the regiment' flashes even when nothing reached Discord (no announcement channel configured -> enqueued:false, or the call errored). Make cross-post the default (or clearly required), honour the enqueued boolean, and surface a distinct warning when the announcement channel is unconfigured or the enqueue returns false instead of a false success.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -2441,28 +2559,31 @@
       "testPlan": [
         {
           "desc": "Publishing a dispatch with cross-post enabled and an announcement channel configured actually posts to that Discord channel (announce() returns enqueued:true)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "When no announcement channel is configured (or announce() returns enqueued:false), the UI shows a clear warning — NOT the 'Dispatch published to the regiment' success flash",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A cross-post error surfaces to the admin (not just console.error) and the success message no longer appears when the Discord leg failed",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Edits the shared admin SettingsComponent (sendAnnouncement) which also hosts Discord/permissions/danger-zone panes; a regression in this handler affects the announcements pane only, but it shares the component's DestroyRef/subscription pattern",
-          "status": "open",
-          "notedAt": "2026-07-12T21:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T21:15:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0043",
+          "note": "sendAnnouncement rewritten to honor the enqueued flag + DestroyRef pattern preserved; the sibling Discord/permissions panes verified intact live. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2470,6 +2591,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; root cause = cross-post defaults off + fire-and-forget announce() with swallowed enqueued/errors, so announcements silently never reach the configured channel while the UI reports success."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Announcement cross-post defaults ON, honors the enqueued flag with a distinct warning instead of a false success. Verified against the live announce endpoint."
         }
       ]
     },
@@ -2477,7 +2605,7 @@
       "id": "T-0044",
       "title": "Enlistment posts not reaching Discord — surface channel config + outbox failures",
       "summary": "The backend already enqueues an enlistment post to enlistmentChannelId on every application submit (enqueueApplicationSubmitted), but it silently no-ops when no enlistment channel is configured, and a failing outbox job is invisible from the frontend. Frontend work: confirm the Settings enlistment channel picker actually persists enlistmentChannelId, add a visible warning on Settings/bot-status when it is unconfigured, and make failed ApplicationSubmitted operations visible + resolvable on the bot-status Operations panel so 'the enlistment never showed up' becomes diagnosable. The actual send is backend/config (real gateway is already live for this repo's env).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -2498,22 +2626,22 @@
       "testPlan": [
         {
           "desc": "Setting the enlistment channel in Settings persists enlistmentChannelId (PATCH /discord/settings) and it survives a reload",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "With an enlistment channel configured, submitting a new application posts the enlistment embed to that Discord channel (verified end-to-end against the live stack)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "When no enlistment channel is configured, Settings/bot-status shows a clear warning; a FAILED ApplicationSubmitted outbox job appears in the Operations panel with a resolve action",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2521,6 +2649,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; backend enqueue exists but no-ops on an unconfigured enlistment channel and outbox failures are invisible from the FE — surface both so the missing enlistment post is diagnosable/fixable."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Unconfigured enlistment-channel warning on Settings + failed-operation visibility on bot-status. Diagnosable now."
         }
       ]
     },
@@ -2528,7 +2663,7 @@
       "id": "T-0045",
       "title": "Wire the applicant decision DM end-to-end (send the customised message)",
       "summary": "The admin applications review shows a 'Discord DM message' textarea and a notice promising 'A Discord DM will be sent automatically to the applicant when you make a decision', but it is unimplemented end-to-end: discordDmMessage is bound via ngModel yet approve()/decline()/hold() never send it, ApplicationsService.approve/decline/hold carry no DM field, and the backend has NO decision-DM job type/enqueue/DTO at all (sendDirectMessage is only reachable from the Welcome job). Frontend: pass the customised DM message (and send on approve too, not just decline/hold) through the service to the new backend endpoint. Requires a backend counterpart (a decision-DM sync job + enqueue on approve/decline + a DM-message DTO field). Until the backend lands, also correct the misleading notice so the UI doesn't claim a DM is sent when none is.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -2556,28 +2691,31 @@
       "testPlan": [
         {
           "desc": "Deciding an application with text in the 'Discord DM message' field sends that message to the applicant's Discord DM (approve and decline both fire the DM)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Leaving the DM field blank sends the backend's default decision DM (approved/declined template), not nothing",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The applications review notice accurately reflects behaviour — no 'a DM will be sent' claim while the backend counterpart is unwired",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Adds a DM-message parameter to the shared ApplicationsService.approve/decline/hold signatures consumed by the admin applications screen; any signature/DTO drift from the backend decision-DM contract ripples to the decision flow (the core admin loop)",
-          "status": "open",
-          "notedAt": "2026-07-12T21:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T21:15:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0045",
+          "note": "approve/decline/hold signatures match the live backend decision-DM contract (lords-dashboard-backend PR #7, verified live); build + specs green. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2585,6 +2723,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the decision-DM feature is unimplemented end-to-end (FE never sends discordDmMessage; backend has no DM job) yet the UI promises it — wire it FE-side and depend on a new backend decision-DM counterpart."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Decision DM wired end-to-end: approve/decline/hold pass the customised discordDmMessage (approve included) to the new backend endpoints (lords-dashboard-backend:T-0059)."
         }
       ]
     },
@@ -2592,7 +2737,7 @@
       "id": "T-0049",
       "title": "Auth-aware public topbar CTA (Sign in → Dashboard / Sign out)",
       "summary": "The public topbar (hf-public-nav) currently always renders 'Join Discord' + 'Sign in' regardless of session. Inject AuthService and branch on the currentUser signal: a signed-in member sees a link into the app (Dashboard) plus a Sign out action; a signed-in non-member (applicant) is routed into onboarding rather than /login; anonymous visitors keep the existing pair.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -2612,28 +2757,31 @@
       "testPlan": [
         {
           "desc": "Anonymous visitor: topbar still shows 'Join Discord' + 'Sign in' on /, /events and /gallery (unchanged)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Signed-in member: topbar replaces 'Sign in' with a Dashboard link (+ name/avatar) and a Sign out action; Sign out clears the session and returns to /login",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Signed-in non-member (applicant): the topbar CTA routes into onboarding (status/apply), not /login",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "hf-public-nav is shared chrome rendered on landing, events AND gallery — any markup/logic change reflows the topbar on all three public pages, and injecting AuthService turns a purely presentational component stateful",
-          "status": "open",
-          "notedAt": "2026-07-12T21:00:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T21:00:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0049",
+          "note": "hf-public-nav change guarded (currentUser signal read via helpers, no crash when null); new public-nav specs cover anon/member/applicant; verified live on the landing topbar. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:00:00Z",
-      "updatedAt": "2026-07-12T21:00:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:00:00Z",
@@ -2641,6 +2789,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; logged-in visitors should see different buttons (auth-aware public CTAs)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Auth-aware public topbar (member -> Dashboard/Sign out, applicant -> My Application, anon -> Sign in). Verified live + specs."
         }
       ]
     },
@@ -2648,7 +2803,7 @@
       "id": "T-0050",
       "title": "Auth-aware landing hero CTAs (Apply to Join → Go to Dashboard / View Application)",
       "summary": "The hero 'Apply to Join' / 'View Orders' pair shows a fixed label even though applyToJoin() already routes by session. Make the primary CTA label follow the same branch: a signed-in member sees 'Go to Dashboard', a signed-in applicant sees 'View Application' (their status page), and anonymous visitors keep 'Apply to Join'.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -2668,22 +2823,24 @@
       "testPlan": [
         {
           "desc": "Anonymous: primary CTA reads 'Apply to Join' and starts Discord OAuth",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Signed-in member: primary CTA reads 'Go to Dashboard' and navigates to /dashboard",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Signed-in applicant: primary CTA reflects their application ('View Application') and lands on /onboarding/status (or /apply when none exists)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
-      "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "skippedByClaude": [
+        "Left the \"View/My Application\" label for an authenticated non-member with NO application on record — both paths still resolve to the apply form, so the reviewer judged it harmless. Not worth a conditional label lookup this pass."
+      ],
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:00:00Z",
-      "updatedAt": "2026-07-12T21:00:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:00:00Z",
@@ -2691,6 +2848,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; logged-in visitors should see different buttons (auth-aware public CTAs)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Auth-aware hero CTA label follows session (Go to Dashboard / View Application / Apply to Join). Verified live."
         }
       ]
     },
@@ -2698,7 +2862,7 @@
       "id": "T-0051",
       "title": "Unit specs for auth-aware public buttons",
       "summary": "Guard the branch logic added in the topbar and hero CTA tasks with specs that flip the mocked AuthService.currentUser signal (anonymous vs member vs applicant) and assert the button labels + targets change accordingly, matching the repo's regression-net pattern (T-0014).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -2717,18 +2881,18 @@
       "testPlan": [
         {
           "desc": "public-nav spec: renders 'Sign in' for an anonymous session and a Dashboard link + Sign out for a member (AuthService signal mocked)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "landing spec: hero primary CTA label switches by auth/membership state (Apply to Join / Go to Dashboard / View Application)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:00:00Z",
-      "updatedAt": "2026-07-12T21:00:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:00:00Z",
@@ -2736,6 +2900,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; logged-in visitors should see different buttons (auth-aware public CTAs)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Specs for the auth-aware topbar + hero (anon/member/applicant branches)."
         }
       ]
     },
@@ -2743,7 +2914,7 @@
       "id": "T-0052",
       "title": "Build EventsAdminComponent — in-shell admin events index at /admin/events",
       "summary": "New admin index screen wrapped in hf-app-shell with activeRoute='events' and crumbs ['Regiment','Events']. Lists ongoing/upcoming/previous events from EventsService.getAll(), with a 'New event' button routing to /admin/events/create and a per-row 'Manage' link to /admin/events/:id. Register the route (path 'events' — placed BEFORE 'events/create' and 'events/:id') and declaration in admin.module.ts. Reuses global .panel/.hf-table/.badge/.btn classes plus a small component scss; no new global styles.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -2765,32 +2936,35 @@
       "testPlan": [
         {
           "desc": "/admin/events renders inside hf-app-shell with the sidebar 'Events' item active; ongoing/upcoming/previous events populate from EventsService.getAll()",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "'New event' button routes to /admin/events/create; each row 'Manage' link routes to /admin/events/:id",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Empty and loading states render (no events -> 'Draft one' link; while loading -> placeholder text)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Render spec: component instantiates and lists events from a stubbed EventsService.getAll()",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "admin.module.ts routing table is shared and is also edited by T-0053; the new exact 'events' route must be ordered before 'events/create' and 'events/:id' so it does not shadow them (different segment counts, but verify the route table after both land)",
-          "status": "open",
-          "notedAt": "2026-07-12T21:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T21:15:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0052",
+          "note": "Verified the admin route table: exact \"events\" precedes events/create + events/:id; /admin/events renders live with no shadowing. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2798,6 +2972,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; root cause = sidebar Events pointed at public /events and no in-shell admin index existed. This builds the missing /admin/events index (design-reference screens-admin.jsx active='events')."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "EventsAdminComponent — in-shell /admin/events index (getAll, grouped, New/Manage). Route ordered before events/create + events/:id. Verified live."
         }
       ]
     },
@@ -2805,7 +2986,7 @@
       "id": "T-0053",
       "title": "Build GalleryAdminComponent — in-shell admin gallery index at /admin/gallery",
       "summary": "New admin index screen wrapped in hf-app-shell with activeRoute='gallery' and crumbs ['Regiment','Gallery']. Shows the approved archive grid from GalleryService.getAll(), a 'Moderation queue' link (with a pending count from GalleryService.moderationQueue()) routing to /admin/gallery/mod, and a 'Submit dispatch' link routing to /admin/gallery/submit. Register the route (path 'gallery' — placed BEFORE 'gallery/submit' and 'gallery/mod') and declaration in admin.module.ts.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -2827,32 +3008,35 @@
       "testPlan": [
         {
           "desc": "/admin/gallery renders inside hf-app-shell with the sidebar 'Gallery' item active; approved items grid populates from GalleryService.getAll()",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "'Moderation queue' link shows the pending count from GalleryService.moderationQueue() and routes to /admin/gallery/mod; 'Submit dispatch' routes to /admin/gallery/submit",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Empty and loading states render; a moderationQueue() error does NOT blank the approved archive grid",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Render spec: component instantiates and lists approved items + pending count from a stubbed GalleryService",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "admin.module.ts routing table is shared and is also edited by T-0052; the new exact 'gallery' route must be ordered before 'gallery/submit' and 'gallery/mod' so it does not shadow them",
-          "status": "open",
-          "notedAt": "2026-07-12T21:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T21:15:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0053",
+          "note": "Verified \"gallery\" precedes gallery/submit + gallery/mod in the route table; no shadowing. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2860,6 +3044,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; builds the missing /admin/gallery index so admins can reach submit + moderation from the nav (design-reference screens-admin.jsx active='gallery')."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "GalleryAdminComponent — in-shell /admin/gallery index (archive grid, moderation-queue count, submit). Route ordered before gallery/submit + gallery/mod."
         }
       ]
     },
@@ -2867,7 +3058,7 @@
       "id": "T-0054",
       "title": "Repoint sidebar Events/Gallery to the admin index screens (admin-only)",
       "summary": "In sidebar.component.ts change the Events nav item route from /events to /admin/events and Gallery from /gallery to /admin/gallery, and set adminOnly:true on both so plain members no longer see them in the dashboard sidebar (they still reach the public /events and /gallery via the public site nav). Update the sidebar spec for the new routes/adminOnly and visibleItems() filtering.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -2886,32 +3077,35 @@
       "testPlan": [
         {
           "desc": "Sidebar 'Events'/'Gallery' items route to /admin/events and /admin/gallery and are hidden for non-admin (plain member) users via visibleItems()",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Clicking Events/Gallery from /dashboard keeps the admin inside the dashboard shell (no public hf-public-nav swap / no bounce to /home)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Plain members can still reach the public /events and /gallery through the public site nav",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "sidebar.component.spec updated: asserts the two items are adminOnly and carry the /admin/* routes",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "hf-sidebar is a shared component rendered on every member+admin dashboard surface via hf-app-shell; changing item routes and adminOnly gating affects the nav on all of those screens and their active-highlight state",
-          "status": "open",
-          "notedAt": "2026-07-12T21:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T21:15:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0054",
+          "note": "Sidebar spec updated for the new /admin/* routes + adminOnly + visibleItems() filtering; build + specs green. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2919,6 +3113,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; user chose 'Admin-only management' — nav items become admin-only and target the in-shell index screens instead of the public pages. Depends on the index routes existing (T-0052/T-0053)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Sidebar Events/Gallery repointed to /admin/* and marked adminOnly; spec updated."
         }
       ]
     },
@@ -2926,7 +3127,7 @@
       "id": "T-0055",
       "title": "Fix post-action redirects that bounce admins to the public pages",
       "summary": "Two admin flows currently navigate to the public pages after a mutation, dropping the admin out of the dashboard shell: event-detail.component.ts redirects to '/events' after delete (should be '/admin/events'), and gallery-submit.component.ts redirects to '/gallery' after submit (should be '/admin/gallery'). Repoint both to the new in-shell index routes.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -2945,22 +3146,22 @@
       "testPlan": [
         {
           "desc": "Deleting an event from /admin/events/:id redirects to /admin/events (not the public /events page)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Submitting a gallery dispatch from /admin/gallery/submit redirects to /admin/gallery (not the public /gallery page)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Any existing event-detail / gallery-submit specs that assert the redirect target are updated to the /admin/* routes",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T21:15:00Z",
-      "updatedAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T21:15:00Z",
@@ -2968,6 +3169,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; keeps the admin create/delete loop inside the dashboard shell. Depends on the /admin/events and /admin/gallery index routes (T-0052/T-0053) existing as redirect targets."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Post-action redirects repointed to the /admin/* index screens (event delete, gallery submit)."
         }
       ]
     },
@@ -2975,7 +3183,7 @@
       "id": "T-0056",
       "title": "Fix invisible applicant names in the review queue (dark-on-dark)",
       "summary": "In the /admin/applications queue, applicant names are painted with --ink-800 (a dark surface token, #161b25) on the dark queue panel, so they are invisible until a row's hover/active state flips the background to light parchment. Repoint .queue-item__name (and any other dark-on-dark queue text) to a light text token (e.g. --t-100/--t-200) so names read at rest, while keeping the hover/active contrast correct.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -2992,18 +3200,18 @@
       "testPlan": [
         {
           "desc": "Queue applicant names are legible at rest (light-on-dark) without relying on hover to reveal them",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Hover and --active states still show correct contrast (text stays readable on the light parchment hover/active background)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:35:30Z",
-      "updatedAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:35:30Z",
@@ -3011,6 +3219,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; root cause: .queue-item__name uses --ink-800 (dark surface token) as text colour on the dark queue panel."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Applicant queue names repointed to a light token (rgb(239,233,216)) — legible at rest. Verified live on the Declined tab."
         }
       ]
     },
@@ -3018,7 +3233,7 @@
       "id": "T-0057",
       "title": "Align the applicant detail header (name + status + Open in Discord)",
       "summary": "The detail-panel header row on /admin/applications that holds the avatar, applicant name + status badge, and the 'Open in Discord' button is misaligned — the button is not vertically centred against the identity block and crowds the title. Centre the .panel-header .row.between items with a controlled gap, and let the Open-in-Discord action wrap cleanly below the identity block on narrow widths instead of overlapping the name.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -3036,18 +3251,18 @@
       "testPlan": [
         {
           "desc": "Detail header: avatar, name, status badge, and 'Open in Discord' button are vertically centred on one row at desktop width",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "At narrow widths the 'Open in Discord' action wraps below the identity block without overlapping the applicant name/title",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:35:30Z",
-      "updatedAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:35:30Z",
@@ -3055,6 +3270,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; .panel-header .row.between (avatar/name/badge vs. Discord button) needs vertical centring + responsive wrap."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Applicant detail header (avatar + name + status + Open-in-Discord) aligned with a controlled gap; wraps on narrow widths."
         }
       ]
     },
@@ -3062,7 +3284,7 @@
       "id": "T-0058",
       "title": "Fix mobile layout of the applications page (sticky queue + broken bottom)",
       "summary": "On phones the .queue-col stays position:sticky after the layout stacks to one column, so the queue pins over the scrolling detail content and the lower page appears broken. Un-sticky the queue column at the stacked breakpoint (it is absent from the _responsive.scss un-sticky list that already covers .audit-detail/.settings-nav) and reflow the decision/navigation controls, tab bar, and info grids so nothing overflows horizontally on small viewports.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -3080,24 +3302,27 @@
       "testPlan": [
         {
           "desc": "At <=820px the applications layout stacks to one column and .queue-col is NOT sticky — scrolling the detail no longer pins the queue over the content",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "No horizontal scroll at 360/390/414px; decision + navigation buttons and the tab bar reflow (stack/wrap) and the info/mod-tools grids collapse to one column",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "_responsive.scss is shared by every admin/member two-column layout (.settings-layout, .audit-layout, .mod-layout, .bot-layout, etc.); changing the stacked-breakpoint / un-sticky rules risks affecting those pages",
-          "status": "open",
-          "notedAt": "2026-07-12T20:35:30Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T20:35:30Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0058",
+          "note": "Only additive: .queue-col appended to the existing static-position (un-stick) list; no other layout selector changed. Build + 99 specs green. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:35:30Z",
-      "updatedAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:35:30Z",
@@ -3105,6 +3330,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; root cause: .queue-col{position:sticky} is never reset at the stacked breakpoint in _responsive.scss."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Applications queue un-stuck at the stacked breakpoint (.queue-col added to the un-stick list); decision/tab/info controls reflow without horizontal scroll."
         }
       ]
     },
@@ -3112,7 +3344,7 @@
       "id": "T-0059",
       "title": "Cross-breakpoint verification & polish of /admin/applications",
       "summary": "Verification gate for the applications review page after the three fixes: confirm the queue and detail panels render legibly and without horizontal scroll on desktop, at the 820px tablet stack point, and on 360/390/414px phones, and that queue selection, decision/navigation, and tab controls remain usable throughout. Browser-verify live and fix any remaining spacing/reflow rough edges.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -3131,18 +3363,18 @@
       "testPlan": [
         {
           "desc": "Desktop: two-column layout with legible queue names and an aligned detail header — no regressions from the three fixes",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "820px tablet + 360/390/414px phone: single column, no horizontal scroll, queue/decision/tab controls all reachable; browser-verified live at /admin/applications",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:35:30Z",
-      "updatedAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:35:30Z",
@@ -3150,6 +3382,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; QA gate depending on T-0056/T-0057/T-0058 to certify the page on desktop + mobile."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Cross-breakpoint verification of /admin/applications (desktop legible, names visible; production build + specs green)."
         }
       ]
     },
@@ -3157,7 +3396,7 @@
       "id": "T-0060",
       "title": "Remove the admin Settings \"Danger Zone\" UI + component logic",
       "summary": "Delete the Hazardous Operations pane (Transfer ownership / Rebind Discord server / Dissolve regiment) from admin Settings — these are developer-only operations that should not have a UI. Removes the 'danger' entry from the section list in settings.component.ts (empties the now-orphaned 'Compliance' nav group), the transfer/rebind/dissolve component state + handlers (transferOwnerMemberId/transferOwnerConfirm/transferDiscordServerId/transferDiscordServerName/dissolveConfirmName/dangerFlash + transferOwnership()/transferDiscord()/dissolve()), the Danger-zone template block in settings.component.html, and the .panel--hazard/.hazard-* styles in settings.component.scss. Paired with a backend removal (see the question); the frontend can ship first, leaving the endpoints simply unused until they are removed.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -3183,28 +3422,31 @@
       "testPlan": [
         {
           "desc": "The Settings left-nav no longer shows a 'Danger zone' item, and the now-empty 'Compliance' group header is gone; Settings still opens on a valid default section (Profile & visibility)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "No 'Hazardous Operations' panel renders anywhere under /admin/settings for any role (Owner included)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The remaining Settings panes (Profile & visibility, Announcements, Discord & Quartermaster, Roles & permissions) still render and round-trip; ng build + ng lint are clean",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "settings.component.{ts,html,scss} is the shared admin SettingsComponent hosting the profile/announcements/discord/permissions panes; editing the section list + template + styles to strip the danger pane risks reflowing or breaking the sibling panes and the activeSection router",
-          "status": "open",
-          "notedAt": "2026-07-12T20:40:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T20:40:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0060",
+          "note": "Danger pane removed; verified live that the profile/announcements/discord/roles panes still render and the activeSection router works. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:40:00Z",
-      "updatedAt": "2026-07-12T20:46:43.959Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:40:00Z",
@@ -3212,6 +3454,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; remove the developer-only Danger Zone (transfer ownership / rebind Discord / dissolve) from the admin Settings UI — these hazardous ops need no UI setup."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Removed the Settings Danger Zone UI + state + handlers; nav no longer shows a Compliance group. Verified live the profile/announce/discord/roles panes still work."
         }
       ]
     },
@@ -3219,7 +3468,7 @@
       "id": "T-0061",
       "title": "Remove the orphaned SettingsService danger-zone HTTP methods + specs",
       "summary": "After the Danger Zone UI is gone (T-0060), delete the now-unreferenced SettingsService methods that post to the hazardous endpoints — transferOwnership(), transferDiscord() and dissolve() (plus their base-URL comment) — and their unit specs in settings.service.spec.ts (the transferOwnership + dissolve tests). Keeps the frontend free of dead code that targets the /settings/transfer-ownership, /transfer-discord and /dissolve endpoints being removed backend-side (lords-dashboard-backend:T-0060).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -3237,18 +3486,18 @@
       "testPlan": [
         {
           "desc": "transferOwnership/transferDiscord/dissolve are removed from SettingsService and a repo-wide grep finds no remaining references to them",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The two danger-zone specs (transferOwnership + dissolve) are removed and the remaining SettingsService spec suite runs green",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T20:40:00Z",
-      "updatedAt": "2026-07-12T20:40:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T20:40:00Z",
@@ -3256,6 +3505,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; strip the dead SettingsService HTTP methods (transfer/rebind/dissolve) + specs once the UI caller is removed (T-0060)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Removed the orphaned SettingsService transfer/dissolve methods + their specs."
         }
       ]
     },
@@ -3263,7 +3519,7 @@
       "id": "T-0062",
       "title": "Wire the Ranks & Medals page to live data (retire the static mockup)",
       "summary": "The /admin/ranks page (RanksMedalsComponent, features/admin/ranks-medals/) is a pure static mockup: it injects no services and renders two hardcoded arrays (ranks ts:11-84, medals ts:86-127) — the root cause of 'this whole page is unfinished'. Inject RanksService + MedalsService, load getRanks()/getMedals() in ngOnInit with loading/empty/error states, delete the hardcoded arrays, and extend the shared Rank/Medal view models + mapRank/mapMedal so id, discordRoleId and (for medals) precedence survive mapping — all dropped today, so downstream edit/link/precedence work has no backing fields. Foundation for the create/edit/delete/link/reorder tasks.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -3291,28 +3547,36 @@
       "testPlan": [
         {
           "desc": "/admin/ranks renders the real rank ladder + medal cabinet from GET /api/ranks and GET /api/medals (no hardcoded arrays remain)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Loading, empty and error states render instead of a frozen mock while the services resolve/fail",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "mapRank/mapMedal carry id + discordRoleId (and medal precedence) into the view models; the member admin-action-modal (award medal / change rank) still renders correctly",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Extends the shared Rank/Medal view models (member.model.ts) + mapRank/mapMedal (api.model.ts) to retain id/discordRoleId/precedence; these are also consumed by the member admin-action-modal (award/remove medal, change rank) and roster/profile, so any field-shape change ripples beyond the ranks page",
+          "status": "resolved",
+          "notedAt": "2026-07-12T22:10:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0062",
+          "note": "mapRank/mapMedal + the Rank/Medal view models were only EXTENDED (id/discordRoleId/precedence added, discordRole retained); production build compiles all consumers (roster/profile/admin-action-modal) and 99 specs pass. Commit 88068a5."
+        },
+        {
+          "desc": "CROSS-REPO DEPLOY COUPLING: the ranks/medals wiring, decision DM, and audit honesty consume NEW backend endpoints in lords-dashboard-backend PR #7 (T-0059 decision DM, T-0062 /medals/reorder, T-0063 /discord/roles + unlink, T-0064 medal-role apply, T-0060/61 audit label + sync-status). Deploying this frontend WITHOUT that backend merged/deployed breaks reorder/unlink/role-picker/decision-DM and leaves audit labels/badges null. Deploy the two together.",
           "status": "open",
-          "notedAt": "2026-07-12T22:10:00Z"
+          "notedAt": "2026-07-12T22:35:00Z"
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3320,6 +3584,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the ranks/medals page is a static mockup with no service injection — wire it to the already-live RanksService/MedalsService and extend the models the rest of the plan needs."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Retired the static mockup: injected Ranks/Medals/Discord services, live load with states; extended shared Rank/Medal models + mapRank/mapMedal to retain id/discordRoleId/precedence (additive). Verified live."
         }
       ]
     },
@@ -3327,7 +3598,7 @@
       "id": "T-0063",
       "title": "Create, edit & delete ranks (rank editor + row actions)",
       "summary": "The editor panel is medal-only (selectMedalEdit) with no rank editor, so ranks can't be created or edited; the '+ New' button and the row kebab menus are dead no-ops. Add a rank editor variant (name, chevron count, precedence) reusing the editor shell, wire 'Add rank'/'New' -> RanksService.create(), Save -> RanksService.update(id), and a kebab Delete -> RanksService.delete(id) that handles the backend 409 when the rank still has holders. Refetch on each mutation.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -3348,22 +3619,22 @@
       "testPlan": [
         {
           "desc": "'Add rank'/'New' opens the rank editor and POST /api/ranks creates a rank that appears in the ladder",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Editing a rank (name/chevrons/precedence) PATCHes /api/ranks/:id and the row reflects the change",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Deleting a rank with no holders removes it; deleting one that still has holders surfaces the backend 409 as a readable error, not a silent failure",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3371,6 +3642,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; add the missing rank editor + wire create/update/delete to the ready RanksService (backend rank CRUD is deployed)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Rank editor + row actions (create/edit/delete) wired with 409 handling. Live."
         }
       ]
     },
@@ -3378,7 +3656,7 @@
       "id": "T-0064",
       "title": "Create, edit & delete medals (wire the medal editor + row actions)",
       "summary": "The medal editor binds to local component state only: 'Save medal'/'Discard' are dead no-ops (html:212-215), the ribbon swatch picker and Precedence field never persist, '+ New'/'Add medal' do nothing, and the kebab menus are dead. Wire Save -> MedalsService.create()/update() (title, glyph/disk letter, ribbon, description, precedence), Discard to reset from the loaded medal, 'Add medal'/'New' to a blank create form, and kebab Delete -> MedalsService.delete(id) handling the backend 409 once a medal has been awarded. Fix selectMedalEdit not populating editPrecedence.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -3400,22 +3678,22 @@
       "testPlan": [
         {
           "desc": "'Save medal' POST/PATCHes to /api/medals with title, glyph, ribbon, description and precedence; the cabinet row + preview reflect the saved values",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The ribbon swatch picker and Precedence field round-trip (selecting a swatch + editing precedence persists and re-renders)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "'Add medal' creates a new medal; kebab Delete removes an un-awarded medal and surfaces the backend 409 for an awarded one",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3423,6 +3701,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the medal editor Save/Discard/create/delete are dead — wire them to the ready MedalsService (backend medal CRUD is deployed)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Medal editor + row actions wired (create/edit/delete, precedence populated on select) with 409 handling."
         }
       ]
     },
@@ -3430,7 +3715,7 @@
       "id": "T-0065",
       "title": "Fix Discord role linking (populate real roles; show live linked state)",
       "summary": "The editor's ROLE control is a hardcoded <select> of three literal options (Marksman/Sharpshooter/No role, html:200-205) with no binding — the direct cause of 'the discord roles are not showing correctly'; the list rows' LINKED/UNLINKED badges and rank @role tags are driven by mock flags. Populate the role picker from DiscordService.verifyConnection().roles (mirroring SettingsComponent's roles/isKnownRole/roleName pattern), bind it, and wire MedalsService.linkDiscord(id,{discordRoleId,discordRoleName}) + RanksService.linkDiscord(...) so selecting a role links it; render the real linked flag + role name in rows and editor, preselect the currently-linked role by discordRoleId, and handle the bot-offline case (verify-connection returns empty roles).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -3472,22 +3757,22 @@
       "testPlan": [
         {
           "desc": "The role picker lists the guild's real Discord roles (from verify-connection), not the three hardcoded placeholders; the currently-linked role is preselected",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Selecting a role and saving calls POST /api/{medals|ranks}/:id/link-discord and the row LINKED badge + role name reflect the real persisted link",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "When the bot is disconnected (verify-connection returns no roles) the picker shows a clear 'connect the bot' empty state instead of blank/placeholder options",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T20:47:37.462Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3495,6 +3780,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; root cause of 'discord roles not showing correctly' = a hardcoded, unbound <select>. Populate it from verify-connection roles and wire the link-discord endpoints."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Discord role picker populated from GET /discord/roles (real guild roles) + link/unlink via the services; preselect by discordRoleId; bot-offline handled. Verified live (real guild roles show)."
         }
       ]
     },
@@ -3502,7 +3794,7 @@
       "id": "T-0066",
       "title": "Drag-to-reorder ranks (persist precedence via /ranks/reorder)",
       "summary": "Rank rows show grip handles and the design's core interaction is drag-to-reorder (senior at top), but the grips are decorative — no drag is wired. Add drag-and-drop to the rank ladder (introduce @angular/cdk DragDropModule, which is NOT yet a dependency, or a lightweight native-DnD equivalent) and on drop call RanksService.reorder({order: ids-top-to-bottom}) -> POST /api/ranks/reorder, then reflect the returned precedence. The backend bulk reorder already exists and is ready.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -3524,18 +3816,18 @@
       "testPlan": [
         {
           "desc": "Dragging a rank to a new position calls POST /api/ranks/reorder with the full id list in the new top->bottom order and the ladder reflects the new precedence",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The persisted order survives a page reload (re-fetched precedence matches the drop)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3543,6 +3835,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; wire the decorative grip handles to real drag-reorder against the ready POST /api/ranks/reorder (needs @angular/cdk DragDrop, not currently installed)."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Native HTML5 drag-to-reorder for ranks -> POST /ranks/reorder (no @angular/cdk dependency). dragend/cross-list guard added in review."
         }
       ]
     },
@@ -3550,7 +3849,7 @@
       "id": "T-0067",
       "title": "Reorder medals by precedence",
       "summary": "The medal cabinet is 'Ordered by precedence' and the design shows medals as drag-reorderable, but unlike ranks the backend has NO medal reorder endpoint and MedalsService has no reorder() method. Implement medal reordering — default: on a CDK drag-drop, write the new precedence per medal via sequential MedalsService.update({precedence}) calls (no backend change); alternative: add a backend POST /medals/reorder bulk endpoint mirroring ranks. Reflect the new order after persisting.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -3578,18 +3877,18 @@
       "testPlan": [
         {
           "desc": "Reordering medals persists the new precedence (via the chosen approach) and the cabinet re-renders in the new order",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The new precedence order survives a reload and matches how medals sort in a member's row elsewhere",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3597,6 +3896,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; medals need reordering but there is no backend reorder endpoint (unlike ranks) — decide client-side precedence writes vs a new backend bulk endpoint."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Native drag-to-reorder for medals -> POST /medals/reorder (new backend bulk endpoint lords-dashboard-backend:T-0062)."
         }
       ]
     },
@@ -3604,7 +3910,7 @@
       "id": "T-0068",
       "title": "Wire the 'Sync with Discord' button",
       "summary": "The top-right 'Sync with Discord' ghost button is a no-op. Wire it to DiscordService.resync() so an admin can push rank/medal role state to Discord on demand, with in-progress + success/failure feedback, and disable/hide it when the bot is disconnected.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -3626,18 +3932,18 @@
       "testPlan": [
         {
           "desc": "Clicking 'Sync with Discord' calls DiscordService.resync() and shows in-progress then a success/failure result",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The button is disabled or hidden when the Discord bot is not connected",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3645,6 +3951,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the 'Sync with Discord' button is a no-op — wire it to the ready DiscordService.resync()."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Sync-with-Discord button wired to DiscordService.resync() with in-progress/feedback; hidden when the bot is disconnected."
         }
       ]
     },
@@ -3652,7 +3965,7 @@
       "id": "T-0069",
       "title": "Unit specs for the Ranks & Medals page + ranks/medals services",
       "summary": "No specs exist for the ranks/medals surface (no ranks-medals.component.spec, ranks.service.spec or medals.service.spec). Add a regression net matching the repo pattern (T-0014): HttpTestingController specs for RanksService/MedalsService (getAll/create/update/delete/reorder/linkDiscord hit the right method+URL) and a component spec covering the live-data load and the create/edit/delete/link/reorder handlers (mocking the services + DiscordService.verifyConnection roles).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -3676,18 +3989,18 @@
       "testPlan": [
         {
           "desc": "ranks.service.spec + medals.service.spec assert each method issues the correct HTTP verb + URL (incl. /reorder and /:id/link-discord) via HttpTestingController",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "ranks-medals.component.spec covers the live load + the create/edit/delete/link/reorder handlers against mocked services; ng test stays green",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:10:00Z",
-      "updatedAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:10:00Z",
@@ -3695,6 +4008,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; add the regression net (service + component specs) for the finished ranks/medals page, matching the T-0014 test-net pattern."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Specs for RanksService/MedalsService (getAll/create/update/delete/reorder/link/unlink) + the ranks-medals component (load/create/edit/delete/link/reorder)."
         }
       ]
     },
@@ -3702,7 +4022,7 @@
       "id": "T-0070",
       "title": "Fix audit actor names rendered as raw member UUIDs",
       "summary": "On /admin/audit the ACTOR column (and the entry-detail heading + the 'All by …' filter button) shows raw member UUIDs like 00000000-0000-4000-8000-000000000010 instead of names. Root cause is backend: GET /audit returns actorLabel:null for human actors — the writer never sets a label (AuditService.actorFromUser's label arg is unused at every call site) and the read path does no members join — so the frontend's correct `actorLabel ?? actorMemberId` fallback (mapAuditLog) degrades to the UUID. The fix is backend-side (populate actorLabel at write time, or join actorMember→member.name on read); the frontend needs no mapping change, only verification once the label is populated.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -3727,22 +4047,22 @@
       "testPlan": [
         {
           "desc": "Human-actor rows on /admin/audit show the member's display name (e.g. 'Lord Commander'), not a UUID",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Bot-actor rows still read 'Quartermaster bot' and system rows still read 'System' (no regression to the non-member actors)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The entry-detail heading and the 'All by …' filter button use the resolved name, not the raw member UUID",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:30:00Z",
-      "updatedAt": "2026-07-12T22:30:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:30:00Z",
@@ -3750,6 +4070,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; diagnosed root cause = backend returns actorLabel:null (writer never sets it, read does no members join) so the FE's correct UUID fallback shows. Fix is a backend counterpart; FE is verification-only."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Audit ACTOR column shows member names (no raw UUIDs) once the backend populates actorLabel (lords-dashboard-backend:T-0060). Verified live: \"Regiment Owner\", no UUIDs."
         }
       ]
     },
@@ -3757,7 +4084,7 @@
       "id": "T-0071",
       "title": "Enable & verify audit-log cross-posting to Discord (config + unconfigured warning)",
       "summary": "Audit entries never appear in Discord even though the audit→Discord pipeline is fully built backend-side (DiscordSyncJobType.AuditLog, the auditLogChannelId setting, AuditService.mirrorToDiscord, and the outbox worker send). It ships DORMANT: the seed sets botEnabled=false with no auditLogChannelId, and enqueueAuditLog no-ops when the channel is unset. The frontend Settings Discord pane already exposes the audit-log channel picker (auditLogChannelId). Work: enable the bot + set the audit-log channel via the existing Settings pane and verify entries post to that channel end-to-end, and add a clear 'audit-log cross-post is off / no channel configured' affordance on Settings and/or the audit page so admins understand why entries read 'not synced' — mirroring the T-0044 unconfigured-channel warning pattern.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -3779,28 +4106,31 @@
       "testPlan": [
         {
           "desc": "With the bot enabled and an audit-log channel set in Settings, a newly recorded audit event (e.g. an announcement or an application decline) posts to that Discord channel — verified end-to-end against the live stack",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Setting the audit-log channel in Settings persists auditLogChannelId (PATCH /discord/settings) and survives a reload",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "When the bot is disabled or no audit-log channel is configured, Settings/audit shows a clear warning instead of silently emitting 'not synced' entries",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Adds an audit-log-channel warning/affordance to the shared admin SettingsComponent (Discord pane), which also hosts announcements/permissions/danger-zone; shares the component's DestroyRef/subscription pattern with T-0043/T-0044",
-          "status": "open",
-          "notedAt": "2026-07-12T22:30:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T22:30:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0071",
+          "note": "Audit-log-channel warning added to the shared SettingsComponent Discord pane with the DestroyRef pattern; sibling panes verified intact. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:30:00Z",
-      "updatedAt": "2026-07-12T22:30:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:30:00Z",
@@ -3808,6 +4138,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the audit→Discord feature exists end-to-end backend-side but is dormant (seed ships botEnabled=false + no auditLogChannelId). FE picker already exists — enable/configure/verify + warn when unconfigured."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Audit-log cross-post enabled + verified end-to-end (entry posted to the Discord audit channel); unconfigured/bot-off warning affordance added."
         }
       ]
     },
@@ -3815,7 +4152,7 @@
       "id": "T-0072",
       "title": "Show the true Discord-sync state on audit entries (honest badge)",
       "summary": "Every audit entry's detail panel shows 'Discord sync: Not synced' even for entries that were (or would be) cross-posted, because the backend hardcodes discordSyncStatus=null and never writes it back (the mirror is fire-and-forget; the saved audit-entry id is never threaded into the outbox job) and the frontend collapses the four-state discordSyncStatus enum ('pending'|'synced'|'failed'|'not_applicable') into a single discordSynced boolean in mapAuditLog. Work (frontend): carry the raw discordSyncStatus through the AuditLog model + mapAuditLog and render distinct badges (pending/synced/failed/not-applicable) so the panel is truthful; depends on a backend counterpart that threads the audit id through mirrorToDiscord/enqueueAuditLog and writes back synced/failed. Until the backend lands, render 'not applicable'/'unknown' rather than a false 'Not synced'.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -3843,28 +4180,31 @@
       "testPlan": [
         {
           "desc": "The audit-entry detail panel shows a distinct badge per discordSyncStatus (pending / synced / failed / not-applicable), not a synced/not-synced boolean",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A cross-posted entry reads 'Synced' once the backend writes the status back; a failed cross-post reads 'Failed'",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "An entry that was never eligible for cross-post reads 'Not applicable'/blank rather than a misleading 'Not synced'",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Reshapes the shared AuditLog model + mapAuditLog (discordSynced boolean → discordSyncStatus enum) consumed by audit.service.spec and the audit component; any consumer reading discordSynced must be migrated",
-          "status": "open",
-          "notedAt": "2026-07-12T22:30:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T22:30:00Z",
+          "resolvedAt": "2026-07-12T22:35:00Z",
+          "resolvedBy": "T-0072",
+          "note": "AuditLog model + mapAuditLog migrated discordSynced->discordSyncStatus and EVERY consumer (audit component + audit.service.spec) migrated; build + specs green; badge verified live. Commit 88068a5."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
       "createdAt": "2026-07-12T22:30:00Z",
-      "updatedAt": "2026-07-12T22:30:00Z",
+      "updatedAt": "2026-07-12T22:35:00Z",
       "history": [
         {
           "at": "2026-07-12T22:30:00Z",
@@ -3872,6 +4212,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; discovered the 'Not synced' badge is always false — backend hardcodes discordSyncStatus=null and never writes back, and FE collapses the enum to a boolean. Needs a backend write-back counterpart + FE enum rendering."
+        },
+        {
+          "at": "2026-07-12T22:35:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Truthful discordSyncStatus badges (pending/synced/failed/not-applicable/unknown); AuditLog model + mapAuditLog migrated off the discordSynced boolean. Verified live: detail shows \"Synced\"."
         }
       ]
     }

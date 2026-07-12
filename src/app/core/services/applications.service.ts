@@ -83,21 +83,33 @@ export class ApplicationsService {
             .pipe(map(mapApplication));
     }
 
-    approve(id: string): Observable<Application> {
+    /**
+     * Approve → promotes the applicant to a member. A Discord DM is sent to the
+     * applicant (empty `discordDmMessage` falls back to the backend default).
+     */
+    approve(id: string, discordDmMessage?: string): Observable<Application> {
         return this.http
-            .post<ApiApplication>(`${this.base}/${id}/approve`, {})
+            .post<ApiApplication>(`${this.base}/${id}/approve`, { discordDmMessage })
             .pipe(map(mapApplication));
     }
 
-    decline(id: string, reason?: string): Observable<Application> {
+    /**
+     * Decline → `reason` is the internal/applicant-facing decline reason;
+     * `discordDmMessage` is the (optional) personalised DM body sent to the applicant.
+     */
+    decline(id: string, reason?: string, discordDmMessage?: string): Observable<Application> {
         return this.http
-            .post<ApiApplication>(`${this.base}/${id}/decline`, { reason })
+            .post<ApiApplication>(`${this.base}/${id}/decline`, { reason, discordDmMessage })
             .pipe(map(mapApplication));
     }
 
-    hold(id: string, note?: string): Observable<Application> {
+    /**
+     * Hold → `note` is the officer note; `discordDmMessage` is the (optional)
+     * personalised DM body sent to the applicant.
+     */
+    hold(id: string, note?: string, discordDmMessage?: string): Observable<Application> {
         return this.http
-            .post<ApiApplication>(`${this.base}/${id}/hold`, { note })
+            .post<ApiApplication>(`${this.base}/${id}/hold`, { note, discordDmMessage })
             .pipe(map(mapApplication));
     }
 }

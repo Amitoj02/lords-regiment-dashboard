@@ -189,37 +189,6 @@
     }
 }
 
-.panel--hazard {
-    border-color: var(--oxblood-600) !important;
-
-    .panel-header {
-        border-bottom-color: var(--oxblood-600) !important;
-        background: color-mix(in srgb, var(--oxblood-400) 8%, transparent);
-    }
-
-    .panel-title {
-        color: var(--oxblood-300);
-    }
-}
-
-.hazard-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--oxblood-600) 30%, transparent);
-
-    &:last-child {
-        border-bottom: none;
-    }
-}
-
-.hazard-label {
-    font-weight: 600;
-    font-size: 0.875rem;
-    margin-bottom: 2px;
-}
-
 .settings-footer {
     display: flex;
     justify-content: flex-end;
@@ -229,10 +198,14 @@
     border-top: 1px solid var(--rule);
 }
 
-// ── Post-MVP wiring (announce / invite / discord / danger) ───────────────────
+// ── Post-MVP wiring (announce / invite / discord) ────────────────────────────
 .flash {
     margin-right: auto;
     color: var(--brass-700);
+
+    &--warn {
+        color: var(--oxblood-500);
+    }
 }
 
 .invite-blurb {
@@ -278,27 +251,4 @@
     align-items: center;
     gap: 6px;
     margin: 0;
-}
-
-.hazard-block {
-    padding: 14px 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--oxblood-600) 30%, transparent);
-
-    &:last-child {
-        border-bottom: none;
-    }
-}
-
-.hazard-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    margin-bottom: 0;
-
-    .hf-input {
-        flex: 1;
-        min-width: 180px;
-    }
 }
