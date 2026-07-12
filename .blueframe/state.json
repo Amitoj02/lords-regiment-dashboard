@@ -4,7 +4,7 @@
   "lastSyncedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
   "lastSyncedAt": "2026-07-12T19:02:09Z",
   "notesForNextSession": "APPLICANT SELF-SERVICE FLOW shipped on feat/applicant-self-service (commit d9277e9), in lockstep with the backend endpoints on lords-dashboard-backend:feat/guilds-scope-and-applicant-self-service (T-0054/55/56). DONE + browser-verified live: T-0027 (apply-as-signin CTA + onboardingGuard), T-0028 (data layer: getMine/updateMine/block/unblock + declineReason on the model), T-0029 (application-status page — pending/held/declined/blocked), T-0030 (post-login redirect: returning applicant → status, new → form, member → dashboard), T-0031 (edit a pending application, ?edit=1 pre-fill → PATCH), T-0032 (reapply after decline unless blocked), T-0033 (admin Block-from-applying / Re-enable). Owner setup: T-0037 (Owner + setupComplete=false → /admin/settings), T-0038 (RETIRED the stub owner-setup wizard → redirects to admin Settings). T-0015 models reconciled (UUID string ids kept — matches the built backend). T-0016 archived. T-0036 owner-superadmin verified via a minted JWT (full admin panel renders) — set a REAL OWNER_DISCORD_ID before seed:prod. 51 unit specs green (new AuthService routing + onboardingGuard specs), ng lint clean, prod build clean. DEFERRED / next: T-0020 wire the account-deletion UI to the existing GDPR endpoints; T-0006 the landing still has hardcoded stats/officers arrays — wire GET /regiment/stats + guard un-wired surfaces before the public deploy (T-0032). Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; the dev web container hot-reloads at localhost:4200 and proxies /api to the api container.",
-  "nextIdCounter": 42,
+  "nextIdCounter": 56,
   "connections": [],
   "tasks": [
     {
@@ -2359,6 +2359,615 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; mobile/responsive polish for the onboarding status + apply surfaces, after the gutter fix (T-0039)."
+        }
+      ]
+    },
+    {
+      "id": "T-0042",
+      "title": "Diagnose the Discord dispatch pipeline end-to-end (channels + outbox)",
+      "summary": "Grounding spike for the three reported Discord failures (announcements, enlistment posts, decision DMs not appearing). Confirm the real gateway is live (DISCORD_BOT_TOKEN set + DISCORD_BOT_MOCK=false so RealDiscordGateway, not the mock, is providing) and connected via GET /discord/connection; confirm the routed channels are actually persisted (announcementChannelId + enlistmentChannelId non-null in GET /discord/settings); and inspect GET /discord/operations for failed/unresolved ApplicationSubmitted/Announce jobs. Produces the concrete per-symptom root cause that T-0043/T-0044/T-0045 fix.",
+      "status": "planned",
+      "type": "spike",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/bot-status/",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/discord.service.ts",
+        "src/app/core/services/notifications.service.ts",
+        "src/app/core/services/applications.service.ts"
+      ],
+      "dependsOn": [
+        "T-0024"
+      ],
+      "blocks": [
+        "T-0043",
+        "T-0044",
+        "T-0045"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "GET /discord/connection reports connected=true against the real gateway (bot token set, DISCORD_BOT_MOCK=false), not the mock",
+          "status": "pending"
+        },
+        {
+          "desc": "GET /discord/settings returns non-null announcementChannelId AND enlistmentChannelId (channels are actually configured), and the Settings pickers reflect them",
+          "status": "pending"
+        },
+        {
+          "desc": "GET /discord/operations is inspected for failed/unresolved Announce + ApplicationSubmitted jobs; the concrete cause per symptom (unconfigured channel vs failing outbox job vs never enqueued) is recorded",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; grounding spike for the 'Discord functionality not working' report — verifies gateway/channels/outbox so the three fix tasks target the real cause."
+        }
+      ]
+    },
+    {
+      "id": "T-0043",
+      "title": "Fix announcement cross-post to Discord (reliable + honest feedback)",
+      "summary": "The Settings announcement composer only cross-posts to Discord when the 'Also cross-post to the Discord announcement channel' checkbox is ticked (it defaults OFF), and the discord.announce() call is fire-and-forget — its `enqueued` result and errors are swallowed, so 'Dispatch published to the regiment' flashes even when nothing reached Discord (no announcement channel configured -> enqueued:false, or the call errored). Make cross-post the default (or clearly required), honour the enqueued boolean, and surface a distinct warning when the announcement channel is unconfigured or the enqueue returns false instead of a false success.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "T-0017",
+        "T-0042"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Publishing a dispatch with cross-post enabled and an announcement channel configured actually posts to that Discord channel (announce() returns enqueued:true)",
+          "status": "pending"
+        },
+        {
+          "desc": "When no announcement channel is configured (or announce() returns enqueued:false), the UI shows a clear warning — NOT the 'Dispatch published to the regiment' success flash",
+          "status": "pending"
+        },
+        {
+          "desc": "A cross-post error surfaces to the admin (not just console.error) and the success message no longer appears when the Discord leg failed",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Edits the shared admin SettingsComponent (sendAnnouncement) which also hosts Discord/permissions/danger-zone panes; a regression in this handler affects the announcements pane only, but it shares the component's DestroyRef/subscription pattern",
+          "status": "open",
+          "notedAt": "2026-07-12T21:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; root cause = cross-post defaults off + fire-and-forget announce() with swallowed enqueued/errors, so announcements silently never reach the configured channel while the UI reports success."
+        }
+      ]
+    },
+    {
+      "id": "T-0044",
+      "title": "Enlistment posts not reaching Discord — surface channel config + outbox failures",
+      "summary": "The backend already enqueues an enlistment post to enlistmentChannelId on every application submit (enqueueApplicationSubmitted), but it silently no-ops when no enlistment channel is configured, and a failing outbox job is invisible from the frontend. Frontend work: confirm the Settings enlistment channel picker actually persists enlistmentChannelId, add a visible warning on Settings/bot-status when it is unconfigured, and make failed ApplicationSubmitted operations visible + resolvable on the bot-status Operations panel so 'the enlistment never showed up' becomes diagnosable. The actual send is backend/config (real gateway is already live for this repo's env).",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/bot-status/bot-status.component.ts",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "T-0024",
+        "T-0042"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Setting the enlistment channel in Settings persists enlistmentChannelId (PATCH /discord/settings) and it survives a reload",
+          "status": "pending"
+        },
+        {
+          "desc": "With an enlistment channel configured, submitting a new application posts the enlistment embed to that Discord channel (verified end-to-end against the live stack)",
+          "status": "pending"
+        },
+        {
+          "desc": "When no enlistment channel is configured, Settings/bot-status shows a clear warning; a FAILED ApplicationSubmitted outbox job appears in the Operations panel with a resolve action",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; backend enqueue exists but no-ops on an unconfigured enlistment channel and outbox failures are invisible from the FE — surface both so the missing enlistment post is diagnosable/fixable."
+        }
+      ]
+    },
+    {
+      "id": "T-0045",
+      "title": "Wire the applicant decision DM end-to-end (send the customised message)",
+      "summary": "The admin applications review shows a 'Discord DM message' textarea and a notice promising 'A Discord DM will be sent automatically to the applicant when you make a decision', but it is unimplemented end-to-end: discordDmMessage is bound via ngModel yet approve()/decline()/hold() never send it, ApplicationsService.approve/decline/hold carry no DM field, and the backend has NO decision-DM job type/enqueue/DTO at all (sendDirectMessage is only reachable from the Welcome job). Frontend: pass the customised DM message (and send on approve too, not just decline/hold) through the service to the new backend endpoint. Requires a backend counterpart (a decision-DM sync job + enqueue on approve/decline + a DM-message DTO field). Until the backend lands, also correct the misleading notice so the UI doesn't claim a DM is sent when none is.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/core/services/applications.service.ts",
+        "src/app/core/models/application.model.ts"
+      ],
+      "dependsOn": [
+        "T-0009",
+        "T-0042",
+        "lords-dashboard-backend:T-0059"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "The backend has NO decision-DM path (no DiscordSyncJobType for it, no enqueue in approve/decline/hold, no DTO field). A backend counterpart (new decision-DM outbox job + enqueue on approve/decline accepting an optional custom message + DTO field) must be planned in lords-dashboard-backend first — referenced here as lords-dashboard-backend:T-0059 (its next free id). Confirm that task should be allocated, and whether the DM fires on approve+decline only or also on hold; and whether an empty custom message falls back to a default templated DM.",
+          "answer": null,
+          "askedAt": "2026-07-12T21:15:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Deciding an application with text in the 'Discord DM message' field sends that message to the applicant's Discord DM (approve and decline both fire the DM)",
+          "status": "pending"
+        },
+        {
+          "desc": "Leaving the DM field blank sends the backend's default decision DM (approved/declined template), not nothing",
+          "status": "pending"
+        },
+        {
+          "desc": "The applications review notice accurately reflects behaviour — no 'a DM will be sent' claim while the backend counterpart is unwired",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds a DM-message parameter to the shared ApplicationsService.approve/decline/hold signatures consumed by the admin applications screen; any signature/DTO drift from the backend decision-DM contract ripples to the decision flow (the core admin loop)",
+          "status": "open",
+          "notedAt": "2026-07-12T21:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the decision-DM feature is unimplemented end-to-end (FE never sends discordDmMessage; backend has no DM job) yet the UI promises it — wire it FE-side and depend on a new backend decision-DM counterpart."
+        }
+      ]
+    },
+    {
+      "id": "T-0049",
+      "title": "Auth-aware public topbar CTA (Sign in → Dashboard / Sign out)",
+      "summary": "The public topbar (hf-public-nav) currently always renders 'Join Discord' + 'Sign in' regardless of session. Inject AuthService and branch on the currentUser signal: a signed-in member sees a link into the app (Dashboard) plus a Sign out action; a signed-in non-member (applicant) is routed into onboarding rather than /login; anonymous visitors keep the existing pair.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/public-nav/public-nav.component.ts",
+        "src/app/features/public/public-nav/public-nav.component.html",
+        "src/app/features/public/public-nav/public-nav.component.scss"
+      ],
+      "dependsOn": [
+        "T-0006",
+        "T-0012"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Anonymous visitor: topbar still shows 'Join Discord' + 'Sign in' on /, /events and /gallery (unchanged)",
+          "status": "pending"
+        },
+        {
+          "desc": "Signed-in member: topbar replaces 'Sign in' with a Dashboard link (+ name/avatar) and a Sign out action; Sign out clears the session and returns to /login",
+          "status": "pending"
+        },
+        {
+          "desc": "Signed-in non-member (applicant): the topbar CTA routes into onboarding (status/apply), not /login",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-public-nav is shared chrome rendered on landing, events AND gallery — any markup/logic change reflows the topbar on all three public pages, and injecting AuthService turns a purely presentational component stateful",
+          "status": "open",
+          "notedAt": "2026-07-12T21:00:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:00:00Z",
+      "updatedAt": "2026-07-12T21:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; logged-in visitors should see different buttons (auth-aware public CTAs)."
+        }
+      ]
+    },
+    {
+      "id": "T-0050",
+      "title": "Auth-aware landing hero CTAs (Apply to Join → Go to Dashboard / View Application)",
+      "summary": "The hero 'Apply to Join' / 'View Orders' pair shows a fixed label even though applyToJoin() already routes by session. Make the primary CTA label follow the same branch: a signed-in member sees 'Go to Dashboard', a signed-in applicant sees 'View Application' (their status page), and anonymous visitors keep 'Apply to Join'.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.ts",
+        "src/app/features/public/landing/landing.component.html"
+      ],
+      "dependsOn": [
+        "T-0006",
+        "T-0012",
+        "T-0027"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Anonymous: primary CTA reads 'Apply to Join' and starts Discord OAuth",
+          "status": "pending"
+        },
+        {
+          "desc": "Signed-in member: primary CTA reads 'Go to Dashboard' and navigates to /dashboard",
+          "status": "pending"
+        },
+        {
+          "desc": "Signed-in applicant: primary CTA reflects their application ('View Application') and lands on /onboarding/status (or /apply when none exists)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:00:00Z",
+      "updatedAt": "2026-07-12T21:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; logged-in visitors should see different buttons (auth-aware public CTAs)."
+        }
+      ]
+    },
+    {
+      "id": "T-0051",
+      "title": "Unit specs for auth-aware public buttons",
+      "summary": "Guard the branch logic added in the topbar and hero CTA tasks with specs that flip the mocked AuthService.currentUser signal (anonymous vs member vs applicant) and assert the button labels + targets change accordingly, matching the repo's regression-net pattern (T-0014).",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "testing",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/public-nav/public-nav.component.spec.ts",
+        "src/app/features/public/landing/landing.component.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0049",
+        "T-0050"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "public-nav spec: renders 'Sign in' for an anonymous session and a Dashboard link + Sign out for a member (AuthService signal mocked)",
+          "status": "pending"
+        },
+        {
+          "desc": "landing spec: hero primary CTA label switches by auth/membership state (Apply to Join / Go to Dashboard / View Application)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:00:00Z",
+      "updatedAt": "2026-07-12T21:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; logged-in visitors should see different buttons (auth-aware public CTAs)."
+        }
+      ]
+    },
+    {
+      "id": "T-0052",
+      "title": "Build EventsAdminComponent — in-shell admin events index at /admin/events",
+      "summary": "New admin index screen wrapped in hf-app-shell with activeRoute='events' and crumbs ['Regiment','Events']. Lists ongoing/upcoming/previous events from EventsService.getAll(), with a 'New event' button routing to /admin/events/create and a per-row 'Manage' link to /admin/events/:id. Register the route (path 'events' — placed BEFORE 'events/create' and 'events/:id') and declaration in admin.module.ts. Reuses global .panel/.hf-table/.badge/.btn classes plus a small component scss; no new global styles.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/events-admin/events-admin.component.ts",
+        "src/app/features/admin/events-admin/events-admin.component.html",
+        "src/app/features/admin/events-admin/events-admin.component.scss",
+        "src/app/features/admin/events-admin/events-admin.component.spec.ts",
+        "src/app/features/admin/admin.module.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0054",
+        "T-0055"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/admin/events renders inside hf-app-shell with the sidebar 'Events' item active; ongoing/upcoming/previous events populate from EventsService.getAll()",
+          "status": "pending"
+        },
+        {
+          "desc": "'New event' button routes to /admin/events/create; each row 'Manage' link routes to /admin/events/:id",
+          "status": "pending"
+        },
+        {
+          "desc": "Empty and loading states render (no events -> 'Draft one' link; while loading -> placeholder text)",
+          "status": "pending"
+        },
+        {
+          "desc": "Render spec: component instantiates and lists events from a stubbed EventsService.getAll()",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "admin.module.ts routing table is shared and is also edited by T-0053; the new exact 'events' route must be ordered before 'events/create' and 'events/:id' so it does not shadow them (different segment counts, but verify the route table after both land)",
+          "status": "open",
+          "notedAt": "2026-07-12T21:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; root cause = sidebar Events pointed at public /events and no in-shell admin index existed. This builds the missing /admin/events index (design-reference screens-admin.jsx active='events')."
+        }
+      ]
+    },
+    {
+      "id": "T-0053",
+      "title": "Build GalleryAdminComponent — in-shell admin gallery index at /admin/gallery",
+      "summary": "New admin index screen wrapped in hf-app-shell with activeRoute='gallery' and crumbs ['Regiment','Gallery']. Shows the approved archive grid from GalleryService.getAll(), a 'Moderation queue' link (with a pending count from GalleryService.moderationQueue()) routing to /admin/gallery/mod, and a 'Submit dispatch' link routing to /admin/gallery/submit. Register the route (path 'gallery' — placed BEFORE 'gallery/submit' and 'gallery/mod') and declaration in admin.module.ts.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-admin/gallery-admin.component.ts",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.html",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.scss",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.spec.ts",
+        "src/app/features/admin/admin.module.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0054",
+        "T-0055"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/admin/gallery renders inside hf-app-shell with the sidebar 'Gallery' item active; approved items grid populates from GalleryService.getAll()",
+          "status": "pending"
+        },
+        {
+          "desc": "'Moderation queue' link shows the pending count from GalleryService.moderationQueue() and routes to /admin/gallery/mod; 'Submit dispatch' routes to /admin/gallery/submit",
+          "status": "pending"
+        },
+        {
+          "desc": "Empty and loading states render; a moderationQueue() error does NOT blank the approved archive grid",
+          "status": "pending"
+        },
+        {
+          "desc": "Render spec: component instantiates and lists approved items + pending count from a stubbed GalleryService",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "admin.module.ts routing table is shared and is also edited by T-0052; the new exact 'gallery' route must be ordered before 'gallery/submit' and 'gallery/mod' so it does not shadow them",
+          "status": "open",
+          "notedAt": "2026-07-12T21:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; builds the missing /admin/gallery index so admins can reach submit + moderation from the nav (design-reference screens-admin.jsx active='gallery')."
+        }
+      ]
+    },
+    {
+      "id": "T-0054",
+      "title": "Repoint sidebar Events/Gallery to the admin index screens (admin-only)",
+      "summary": "In sidebar.component.ts change the Events nav item route from /events to /admin/events and Gallery from /gallery to /admin/gallery, and set adminOnly:true on both so plain members no longer see them in the dashboard sidebar (they still reach the public /events and /gallery via the public site nav). Update the sidebar spec for the new routes/adminOnly and visibleItems() filtering.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0052",
+        "T-0053"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Sidebar 'Events'/'Gallery' items route to /admin/events and /admin/gallery and are hidden for non-admin (plain member) users via visibleItems()",
+          "status": "pending"
+        },
+        {
+          "desc": "Clicking Events/Gallery from /dashboard keeps the admin inside the dashboard shell (no public hf-public-nav swap / no bounce to /home)",
+          "status": "pending"
+        },
+        {
+          "desc": "Plain members can still reach the public /events and /gallery through the public site nav",
+          "status": "pending"
+        },
+        {
+          "desc": "sidebar.component.spec updated: asserts the two items are adminOnly and carry the /admin/* routes",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-sidebar is a shared component rendered on every member+admin dashboard surface via hf-app-shell; changing item routes and adminOnly gating affects the nav on all of those screens and their active-highlight state",
+          "status": "open",
+          "notedAt": "2026-07-12T21:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; user chose 'Admin-only management' — nav items become admin-only and target the in-shell index screens instead of the public pages. Depends on the index routes existing (T-0052/T-0053)."
+        }
+      ]
+    },
+    {
+      "id": "T-0055",
+      "title": "Fix post-action redirects that bounce admins to the public pages",
+      "summary": "Two admin flows currently navigate to the public pages after a mutation, dropping the admin out of the dashboard shell: event-detail.component.ts redirects to '/events' after delete (should be '/admin/events'), and gallery-submit.component.ts redirects to '/gallery' after submit (should be '/admin/gallery'). Repoint both to the new in-shell index routes.",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.ts"
+      ],
+      "dependsOn": [
+        "T-0052",
+        "T-0053"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Deleting an event from /admin/events/:id redirects to /admin/events (not the public /events page)",
+          "status": "pending"
+        },
+        {
+          "desc": "Submitting a gallery dispatch from /admin/gallery/submit redirects to /admin/gallery (not the public /gallery page)",
+          "status": "pending"
+        },
+        {
+          "desc": "Any existing event-detail / gallery-submit specs that assert the redirect target are updated to the /admin/* routes",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T21:15:00Z",
+      "updatedAt": "2026-07-12T21:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T21:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; keeps the admin create/delete loop inside the dashboard shell. Depends on the /admin/events and /admin/gallery index routes (T-0052/T-0053) existing as redirect targets."
         }
       ]
     }
