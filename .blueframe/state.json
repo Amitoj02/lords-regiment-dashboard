@@ -3,8 +3,8 @@
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
   "lastSyncedAt": "2026-07-12T19:02:09Z",
-  "notesForNextSession": "APPLICANT SELF-SERVICE FLOW shipped on feat/applicant-self-service (commit d9277e9), in lockstep with the backend endpoints on lords-dashboard-backend:feat/guilds-scope-and-applicant-self-service (T-0054/55/56). DONE + browser-verified live: T-0027 (apply-as-signin CTA + onboardingGuard), T-0028 (data layer: getMine/updateMine/block/unblock + declineReason on the model), T-0029 (application-status page — pending/held/declined/blocked), T-0030 (post-login redirect: returning applicant → status, new → form, member → dashboard), T-0031 (edit a pending application, ?edit=1 pre-fill → PATCH), T-0032 (reapply after decline unless blocked), T-0033 (admin Block-from-applying / Re-enable). Owner setup: T-0037 (Owner + setupComplete=false → /admin/settings), T-0038 (RETIRED the stub owner-setup wizard → redirects to admin Settings). T-0015 models reconciled (UUID string ids kept — matches the built backend). T-0016 archived. T-0036 owner-superadmin verified via a minted JWT (full admin panel renders) — set a REAL OWNER_DISCORD_ID before seed:prod. 51 unit specs green (new AuthService routing + onboardingGuard specs), ng lint clean, prod build clean. DEFERRED / next: T-0020 wire the account-deletion UI to the existing GDPR endpoints; T-0006 the landing still has hardcoded stats/officers arrays — wire GET /regiment/stats + guard un-wired surfaces before the public deploy (T-0032). Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; the dev web container hot-reloads at localhost:4200 and proxies /api to the api container.",
-  "nextIdCounter": 56,
+  "notesForNextSession": "APPLICANT SELF-SERVICE FLOW shipped on feat/applicant-self-service (commit d9277e9), in lockstep with the backend endpoints on lords-dashboard-backend:feat/guilds-scope-and-applicant-self-service (T-0054/55/56). DONE + browser-verified live: T-0027 (apply-as-signin CTA + onboardingGuard), T-0028 (data layer: getMine/updateMine/block/unblock + declineReason on the model), T-0029 (application-status page — pending/held/declined/blocked), T-0030 (post-login redirect: returning applicant → status, new → form, member → dashboard), T-0031 (edit a pending application, ?edit=1 pre-fill → PATCH), T-0032 (reapply after decline unless blocked), T-0033 (admin Block-from-applying / Re-enable). Owner setup: T-0037 (Owner + setupComplete=false → /admin/settings), T-0038 (RETIRED the stub owner-setup wizard → redirects to admin Settings). T-0015 models reconciled (UUID string ids kept — matches the built backend). T-0016 archived. T-0036 owner-superadmin verified via a minted JWT (full admin panel renders) — set a REAL OWNER_DISCORD_ID before seed:prod. 51 unit specs green (new AuthService routing + onboardingGuard specs), ng lint clean, prod build clean. DEFERRED / next: T-0020 wire the account-deletion UI to the existing GDPR endpoints; T-0006 the landing still has hardcoded stats/officers arrays — wire GET /regiment/stats + guard un-wired surfaces before the public deploy (T-0032). Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; the dev web container hot-reloads at localhost:4200 and proxies /api to the api container. PLANNED (ranks/medals epic, T-0062–T-0069): the /admin/ranks page is a pure static mockup (RanksMedalsComponent, features/admin/ranks-medals/) — hardcoded rank/medal arrays, every button a no-op, the role <select> hardcoded (why “discord roles don’t show”). Backend Ranks/Medals CRUD + rank /ranks/reorder + /:id/link-discord and guild-role listing (via POST /discord/verify-connection) already exist, so this is mostly frontend wiring. Start at T-0062 (wire to live data + extend models). Open decisions are questions on T-0065 (role-list capability gate manage_settings vs edit_ranks_medals; unlink endpoint; medal-linked roles never applied on award) and T-0067 (medal reorder: client-side precedence writes vs a new backend bulk endpoint).",
+  "nextIdCounter": 73,
   "connections": [],
   "tasks": [
     {
@@ -2968,6 +2968,910 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; keeps the admin create/delete loop inside the dashboard shell. Depends on the /admin/events and /admin/gallery index routes (T-0052/T-0053) existing as redirect targets."
+        }
+      ]
+    },
+    {
+      "id": "T-0056",
+      "title": "Fix invisible applicant names in the review queue (dark-on-dark)",
+      "summary": "In the /admin/applications queue, applicant names are painted with --ink-800 (a dark surface token, #161b25) on the dark queue panel, so they are invisible until a row's hover/active state flips the background to light parchment. Repoint .queue-item__name (and any other dark-on-dark queue text) to a light text token (e.g. --t-100/--t-200) so names read at rest, while keeping the hover/active contrast correct.",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0059"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Queue applicant names are legible at rest (light-on-dark) without relying on hover to reveal them",
+          "status": "pending"
+        },
+        {
+          "desc": "Hover and --active states still show correct contrast (text stays readable on the light parchment hover/active background)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T20:35:30Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:35:30Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; root cause: .queue-item__name uses --ink-800 (dark surface token) as text colour on the dark queue panel."
+        }
+      ]
+    },
+    {
+      "id": "T-0057",
+      "title": "Align the applicant detail header (name + status + Open in Discord)",
+      "summary": "The detail-panel header row on /admin/applications that holds the avatar, applicant name + status badge, and the 'Open in Discord' button is misaligned — the button is not vertically centred against the identity block and crowds the title. Centre the .panel-header .row.between items with a controlled gap, and let the Open-in-Discord action wrap cleanly below the identity block on narrow widths instead of overlapping the name.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0059"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Detail header: avatar, name, status badge, and 'Open in Discord' button are vertically centred on one row at desktop width",
+          "status": "pending"
+        },
+        {
+          "desc": "At narrow widths the 'Open in Discord' action wraps below the identity block without overlapping the applicant name/title",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T20:35:30Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:35:30Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; .panel-header .row.between (avatar/name/badge vs. Discord button) needs vertical centring + responsive wrap."
+        }
+      ]
+    },
+    {
+      "id": "T-0058",
+      "title": "Fix mobile layout of the applications page (sticky queue + broken bottom)",
+      "summary": "On phones the .queue-col stays position:sticky after the layout stacks to one column, so the queue pins over the scrolling detail content and the lower page appears broken. Un-sticky the queue column at the stacked breakpoint (it is absent from the _responsive.scss un-sticky list that already covers .audit-detail/.settings-nav) and reflow the decision/navigation controls, tab bar, and info grids so nothing overflows horizontally on small viewports.",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/styles/_responsive.scss",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0059"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "At <=820px the applications layout stacks to one column and .queue-col is NOT sticky — scrolling the detail no longer pins the queue over the content",
+          "status": "pending"
+        },
+        {
+          "desc": "No horizontal scroll at 360/390/414px; decision + navigation buttons and the tab bar reflow (stack/wrap) and the info/mod-tools grids collapse to one column",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "_responsive.scss is shared by every admin/member two-column layout (.settings-layout, .audit-layout, .mod-layout, .bot-layout, etc.); changing the stacked-breakpoint / un-sticky rules risks affecting those pages",
+          "status": "open",
+          "notedAt": "2026-07-12T20:35:30Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T20:35:30Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:35:30Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; root cause: .queue-col{position:sticky} is never reset at the stacked breakpoint in _responsive.scss."
+        }
+      ]
+    },
+    {
+      "id": "T-0059",
+      "title": "Cross-breakpoint verification & polish of /admin/applications",
+      "summary": "Verification gate for the applications review page after the three fixes: confirm the queue and detail panels render legibly and without horizontal scroll on desktop, at the 820px tablet stack point, and on 360/390/414px phones, and that queue selection, decision/navigation, and tab controls remain usable throughout. Browser-verify live and fix any remaining spacing/reflow rough edges.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/"
+      ],
+      "dependsOn": [
+        "T-0056",
+        "T-0057",
+        "T-0058"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Desktop: two-column layout with legible queue names and an aligned detail header — no regressions from the three fixes",
+          "status": "pending"
+        },
+        {
+          "desc": "820px tablet + 360/390/414px phone: single column, no horizontal scroll, queue/decision/tab controls all reachable; browser-verified live at /admin/applications",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:35:30Z",
+      "updatedAt": "2026-07-12T20:35:30Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:35:30Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; QA gate depending on T-0056/T-0057/T-0058 to certify the page on desktop + mobile."
+        }
+      ]
+    },
+    {
+      "id": "T-0060",
+      "title": "Remove the admin Settings \"Danger Zone\" UI + component logic",
+      "summary": "Delete the Hazardous Operations pane (Transfer ownership / Rebind Discord server / Dissolve regiment) from admin Settings — these are developer-only operations that should not have a UI. Removes the 'danger' entry from the section list in settings.component.ts (empties the now-orphaned 'Compliance' nav group), the transfer/rebind/dissolve component state + handlers (transferOwnerMemberId/transferOwnerConfirm/transferDiscordServerId/transferDiscordServerName/dissolveConfirmName/dangerFlash + transferOwnership()/transferDiscord()/dissolve()), the Danger-zone template block in settings.component.html, and the .panel--hazard/.hazard-* styles in settings.component.scss. Paired with a backend removal (see the question); the frontend can ship first, leaving the endpoints simply unused until they are removed.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0061"
+      ],
+      "questions": [
+        {
+          "q": "Removing the Danger Zone leaves the 'transfer_ownership' capability orphaned in the frontend (its only consumer) and the backend POST /settings/{transfer-ownership,transfer-discord,dissolve} endpoints unused. Confirm the backend counterpart lords-dashboard-backend:T-0060 (its next free id — backend T-0059 is earmarked for the decision-DM task referenced by T-0045) should be allocated to remove those endpoints + settings.service methods + settings-actions DTO + the regiments.service transfer/dissolve logic + seeds, and whether the now-orphaned TransferOwnership capability should also be dropped from the role-permissions seed / Capability enum or kept for audit history.",
+          "answer": "yes adapt the changes everywhere, remove all, we will never use it",
+          "askedAt": "2026-07-12T20:40:00Z",
+          "answeredAt": "2026-07-12T20:46:43.959Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "The Settings left-nav no longer shows a 'Danger zone' item, and the now-empty 'Compliance' group header is gone; Settings still opens on a valid default section (Profile & visibility)",
+          "status": "pending"
+        },
+        {
+          "desc": "No 'Hazardous Operations' panel renders anywhere under /admin/settings for any role (Owner included)",
+          "status": "pending"
+        },
+        {
+          "desc": "The remaining Settings panes (Profile & visibility, Announcements, Discord & Quartermaster, Roles & permissions) still render and round-trip; ng build + ng lint are clean",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "settings.component.{ts,html,scss} is the shared admin SettingsComponent hosting the profile/announcements/discord/permissions panes; editing the section list + template + styles to strip the danger pane risks reflowing or breaking the sibling panes and the activeSection router",
+          "status": "open",
+          "notedAt": "2026-07-12T20:40:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:40:00Z",
+      "updatedAt": "2026-07-12T20:46:43.959Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:40:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; remove the developer-only Danger Zone (transfer ownership / rebind Discord / dissolve) from the admin Settings UI — these hazardous ops need no UI setup."
+        }
+      ]
+    },
+    {
+      "id": "T-0061",
+      "title": "Remove the orphaned SettingsService danger-zone HTTP methods + specs",
+      "summary": "After the Danger Zone UI is gone (T-0060), delete the now-unreferenced SettingsService methods that post to the hazardous endpoints — transferOwnership(), transferDiscord() and dissolve() (plus their base-URL comment) — and their unit specs in settings.service.spec.ts (the transferOwnership + dissolve tests). Keeps the frontend free of dead code that targets the /settings/transfer-ownership, /transfer-discord and /dissolve endpoints being removed backend-side (lords-dashboard-backend:T-0060).",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "core-data",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/settings.service.ts",
+        "src/app/core/services/settings.service.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0060"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "transferOwnership/transferDiscord/dissolve are removed from SettingsService and a repo-wide grep finds no remaining references to them",
+          "status": "pending"
+        },
+        {
+          "desc": "The two danger-zone specs (transferOwnership + dissolve) are removed and the remaining SettingsService spec suite runs green",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:40:00Z",
+      "updatedAt": "2026-07-12T20:40:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:40:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; strip the dead SettingsService HTTP methods (transfer/rebind/dissolve) + specs once the UI caller is removed (T-0060)."
+        }
+      ]
+    },
+    {
+      "id": "T-0062",
+      "title": "Wire the Ranks & Medals page to live data (retire the static mockup)",
+      "summary": "The /admin/ranks page (RanksMedalsComponent, features/admin/ranks-medals/) is a pure static mockup: it injects no services and renders two hardcoded arrays (ranks ts:11-84, medals ts:86-127) — the root cause of 'this whole page is unfinished'. Inject RanksService + MedalsService, load getRanks()/getMedals() in ngOnInit with loading/empty/error states, delete the hardcoded arrays, and extend the shared Rank/Medal view models + mapRank/mapMedal so id, discordRoleId and (for medals) precedence survive mapping — all dropped today, so downstream edit/link/precedence work has no backing fields. Foundation for the create/edit/delete/link/reorder tasks.",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/core/models/member.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "T-0009",
+        "T-0011"
+      ],
+      "blocks": [
+        "T-0063",
+        "T-0064",
+        "T-0065",
+        "T-0066",
+        "T-0067",
+        "T-0068"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/admin/ranks renders the real rank ladder + medal cabinet from GET /api/ranks and GET /api/medals (no hardcoded arrays remain)",
+          "status": "pending"
+        },
+        {
+          "desc": "Loading, empty and error states render instead of a frozen mock while the services resolve/fail",
+          "status": "pending"
+        },
+        {
+          "desc": "mapRank/mapMedal carry id + discordRoleId (and medal precedence) into the view models; the member admin-action-modal (award medal / change rank) still renders correctly",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Extends the shared Rank/Medal view models (member.model.ts) + mapRank/mapMedal (api.model.ts) to retain id/discordRoleId/precedence; these are also consumed by the member admin-action-modal (award/remove medal, change rank) and roster/profile, so any field-shape change ripples beyond the ranks page",
+          "status": "open",
+          "notedAt": "2026-07-12T22:10:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the ranks/medals page is a static mockup with no service injection — wire it to the already-live RanksService/MedalsService and extend the models the rest of the plan needs."
+        }
+      ]
+    },
+    {
+      "id": "T-0063",
+      "title": "Create, edit & delete ranks (rank editor + row actions)",
+      "summary": "The editor panel is medal-only (selectMedalEdit) with no rank editor, so ranks can't be created or edited; the '+ New' button and the row kebab menus are dead no-ops. Add a rank editor variant (name, chevron count, precedence) reusing the editor shell, wire 'Add rank'/'New' -> RanksService.create(), Save -> RanksService.update(id), and a kebab Delete -> RanksService.delete(id) that handles the backend 409 when the rank still has holders. Refetch on each mutation.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/core/services/ranks.service.ts"
+      ],
+      "dependsOn": [
+        "T-0062"
+      ],
+      "blocks": [
+        "T-0069"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "'Add rank'/'New' opens the rank editor and POST /api/ranks creates a rank that appears in the ladder",
+          "status": "pending"
+        },
+        {
+          "desc": "Editing a rank (name/chevrons/precedence) PATCHes /api/ranks/:id and the row reflects the change",
+          "status": "pending"
+        },
+        {
+          "desc": "Deleting a rank with no holders removes it; deleting one that still has holders surfaces the backend 409 as a readable error, not a silent failure",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; add the missing rank editor + wire create/update/delete to the ready RanksService (backend rank CRUD is deployed)."
+        }
+      ]
+    },
+    {
+      "id": "T-0064",
+      "title": "Create, edit & delete medals (wire the medal editor + row actions)",
+      "summary": "The medal editor binds to local component state only: 'Save medal'/'Discard' are dead no-ops (html:212-215), the ribbon swatch picker and Precedence field never persist, '+ New'/'Add medal' do nothing, and the kebab menus are dead. Wire Save -> MedalsService.create()/update() (title, glyph/disk letter, ribbon, description, precedence), Discard to reset from the loaded medal, 'Add medal'/'New' to a blank create form, and kebab Delete -> MedalsService.delete(id) handling the backend 409 once a medal has been awarded. Fix selectMedalEdit not populating editPrecedence.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/core/services/medals.service.ts"
+      ],
+      "dependsOn": [
+        "T-0062"
+      ],
+      "blocks": [
+        "T-0067",
+        "T-0069"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "'Save medal' POST/PATCHes to /api/medals with title, glyph, ribbon, description and precedence; the cabinet row + preview reflect the saved values",
+          "status": "pending"
+        },
+        {
+          "desc": "The ribbon swatch picker and Precedence field round-trip (selecting a swatch + editing precedence persists and re-renders)",
+          "status": "pending"
+        },
+        {
+          "desc": "'Add medal' creates a new medal; kebab Delete removes an un-awarded medal and surfaces the backend 409 for an awarded one",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the medal editor Save/Discard/create/delete are dead — wire them to the ready MedalsService (backend medal CRUD is deployed)."
+        }
+      ]
+    },
+    {
+      "id": "T-0065",
+      "title": "Fix Discord role linking (populate real roles; show live linked state)",
+      "summary": "The editor's ROLE control is a hardcoded <select> of three literal options (Marksman/Sharpshooter/No role, html:200-205) with no binding — the direct cause of 'the discord roles are not showing correctly'; the list rows' LINKED/UNLINKED badges and rank @role tags are driven by mock flags. Populate the role picker from DiscordService.verifyConnection().roles (mirroring SettingsComponent's roles/isKnownRole/roleName pattern), bind it, and wire MedalsService.linkDiscord(id,{discordRoleId,discordRoleName}) + RanksService.linkDiscord(...) so selecting a role links it; render the real linked flag + role name in rows and editor, preselect the currently-linked role by discordRoleId, and handle the bot-offline case (verify-connection returns empty roles).",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/core/services/discord.service.ts",
+        "src/app/core/services/medals.service.ts",
+        "src/app/core/services/ranks.service.ts"
+      ],
+      "dependsOn": [
+        "T-0062",
+        "T-0024",
+        "lords-dashboard-backend:T-0020"
+      ],
+      "blocks": [
+        "T-0069"
+      ],
+      "questions": [
+        {
+          "q": "Guild roles are only listable via POST /discord/verify-connection, which the backend gates on the manage_settings capability, whereas rank/medal editing is gated on edit_ranks_medals. An admin with edit_ranks_medals but NOT manage_settings cannot populate the role picker. Reuse verify-connection (effectively requiring both capabilities to link) or add a lighter role-list endpoint scoped to edit_ranks_medals (backend counterpart)?",
+          "answer": null,
+          "askedAt": "2026-07-12T22:10:00Z"
+        },
+        {
+          "q": "The backend `linked` flag only goes false->true (no unlink/clear endpoint; medal/rank update ignores discordRoleId+linked). Do we need an explicit 'Unlink role' action — which requires a new backend unlink endpoint — or is re-linking to a different role sufficient for now?",
+          "answer": null,
+          "askedAt": "2026-07-12T22:10:00Z"
+        },
+        {
+          "q": "Linking a Discord role to a MEDAL is currently cosmetic: the sync worker only applies a member's RANK role on award; medal-linked roles are never granted (medals are excluded from managedRoleIds). Should awarding a linked medal also apply its Discord role (requires a backend worker change), or is medal<->role linking display-only for this pass?",
+          "answer": "medal and \"role\" will have their own discord roles",
+          "askedAt": "2026-07-12T22:10:00Z",
+          "answeredAt": "2026-07-12T20:47:37.462Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "The role picker lists the guild's real Discord roles (from verify-connection), not the three hardcoded placeholders; the currently-linked role is preselected",
+          "status": "pending"
+        },
+        {
+          "desc": "Selecting a role and saving calls POST /api/{medals|ranks}/:id/link-discord and the row LINKED badge + role name reflect the real persisted link",
+          "status": "pending"
+        },
+        {
+          "desc": "When the bot is disconnected (verify-connection returns no roles) the picker shows a clear 'connect the bot' empty state instead of blank/placeholder options",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T20:47:37.462Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; root cause of 'discord roles not showing correctly' = a hardcoded, unbound <select>. Populate it from verify-connection roles and wire the link-discord endpoints."
+        }
+      ]
+    },
+    {
+      "id": "T-0066",
+      "title": "Drag-to-reorder ranks (persist precedence via /ranks/reorder)",
+      "summary": "Rank rows show grip handles and the design's core interaction is drag-to-reorder (senior at top), but the grips are decorative — no drag is wired. Add drag-and-drop to the rank ladder (introduce @angular/cdk DragDropModule, which is NOT yet a dependency, or a lightweight native-DnD equivalent) and on drop call RanksService.reorder({order: ids-top-to-bottom}) -> POST /api/ranks/reorder, then reflect the returned precedence. The backend bulk reorder already exists and is ready.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/features/admin/admin.module.ts",
+        "package.json"
+      ],
+      "dependsOn": [
+        "T-0062"
+      ],
+      "blocks": [
+        "T-0069"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Dragging a rank to a new position calls POST /api/ranks/reorder with the full id list in the new top->bottom order and the ladder reflects the new precedence",
+          "status": "pending"
+        },
+        {
+          "desc": "The persisted order survives a page reload (re-fetched precedence matches the drop)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; wire the decorative grip handles to real drag-reorder against the ready POST /api/ranks/reorder (needs @angular/cdk DragDrop, not currently installed)."
+        }
+      ]
+    },
+    {
+      "id": "T-0067",
+      "title": "Reorder medals by precedence",
+      "summary": "The medal cabinet is 'Ordered by precedence' and the design shows medals as drag-reorderable, but unlike ranks the backend has NO medal reorder endpoint and MedalsService has no reorder() method. Implement medal reordering — default: on a CDK drag-drop, write the new precedence per medal via sequential MedalsService.update({precedence}) calls (no backend change); alternative: add a backend POST /medals/reorder bulk endpoint mirroring ranks. Reflect the new order after persisting.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/core/services/medals.service.ts"
+      ],
+      "dependsOn": [
+        "T-0062",
+        "T-0064"
+      ],
+      "blocks": [
+        "T-0069"
+      ],
+      "questions": [
+        {
+          "q": "The backend has no medal reorder endpoint (medals only carry a per-record precedence). Reorder medals client-side via sequential updateMedal({precedence}) writes (no backend change), or add a backend POST /medals/reorder bulk endpoint (backend counterpart) mirroring /ranks/reorder to avoid N writes?",
+          "answer": null,
+          "askedAt": "2026-07-12T22:10:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Reordering medals persists the new precedence (via the chosen approach) and the cabinet re-renders in the new order",
+          "status": "pending"
+        },
+        {
+          "desc": "The new precedence order survives a reload and matches how medals sort in a member's row elsewhere",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; medals need reordering but there is no backend reorder endpoint (unlike ranks) — decide client-side precedence writes vs a new backend bulk endpoint."
+        }
+      ]
+    },
+    {
+      "id": "T-0068",
+      "title": "Wire the 'Sync with Discord' button",
+      "summary": "The top-right 'Sync with Discord' ghost button is a no-op. Wire it to DiscordService.resync() so an admin can push rank/medal role state to Discord on demand, with in-progress + success/failure feedback, and disable/hide it when the bot is disconnected.",
+      "status": "planned",
+      "type": "feature",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "T-0062",
+        "T-0024"
+      ],
+      "blocks": [
+        "T-0069"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Clicking 'Sync with Discord' calls DiscordService.resync() and shows in-progress then a success/failure result",
+          "status": "pending"
+        },
+        {
+          "desc": "The button is disabled or hidden when the Discord bot is not connected",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the 'Sync with Discord' button is a no-op — wire it to the ready DiscordService.resync()."
+        }
+      ]
+    },
+    {
+      "id": "T-0069",
+      "title": "Unit specs for the Ranks & Medals page + ranks/medals services",
+      "summary": "No specs exist for the ranks/medals surface (no ranks-medals.component.spec, ranks.service.spec or medals.service.spec). Add a regression net matching the repo pattern (T-0014): HttpTestingController specs for RanksService/MedalsService (getAll/create/update/delete/reorder/linkDiscord hit the right method+URL) and a component spec covering the live-data load and the create/edit/delete/link/reorder handlers (mocking the services + DiscordService.verifyConnection roles).",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/ranks.service.spec.ts",
+        "src/app/core/services/medals.service.spec.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0063",
+        "T-0064",
+        "T-0065",
+        "T-0066",
+        "T-0067",
+        "T-0068"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "ranks.service.spec + medals.service.spec assert each method issues the correct HTTP verb + URL (incl. /reorder and /:id/link-discord) via HttpTestingController",
+          "status": "pending"
+        },
+        {
+          "desc": "ranks-medals.component.spec covers the live load + the create/edit/delete/link/reorder handlers against mocked services; ng test stays green",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:10:00Z",
+      "updatedAt": "2026-07-12T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; add the regression net (service + component specs) for the finished ranks/medals page, matching the T-0014 test-net pattern."
+        }
+      ]
+    },
+    {
+      "id": "T-0070",
+      "title": "Fix audit actor names rendered as raw member UUIDs",
+      "summary": "On /admin/audit the ACTOR column (and the entry-detail heading + the 'All by …' filter button) shows raw member UUIDs like 00000000-0000-4000-8000-000000000010 instead of names. Root cause is backend: GET /audit returns actorLabel:null for human actors — the writer never sets a label (AuditService.actorFromUser's label arg is unused at every call site) and the read path does no members join — so the frontend's correct `actorLabel ?? actorMemberId` fallback (mapAuditLog) degrades to the UUID. The fix is backend-side (populate actorLabel at write time, or join actorMember→member.name on read); the frontend needs no mapping change, only verification once the label is populated.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/api.model.ts",
+        "src/app/features/admin/audit/audit.component.ts",
+        "src/app/features/admin/audit/audit.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0060"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "The fix is backend-only: the audit writer persists actorLabel=null for human actors and the read path never joins members. A backend counterpart (populate actorLabel at write time OR left-join actorMember→member.name on read) must be planned in lords-dashboard-backend — referenced here as lords-dashboard-backend:T-0060 (its next free id after T-0045's reserved T-0059). Confirm that backend task should be allocated, and which approach is preferred (write-time label vs read-time join).",
+          "answer": null,
+          "askedAt": "2026-07-12T22:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Human-actor rows on /admin/audit show the member's display name (e.g. 'Lord Commander'), not a UUID",
+          "status": "pending"
+        },
+        {
+          "desc": "Bot-actor rows still read 'Quartermaster bot' and system rows still read 'System' (no regression to the non-member actors)",
+          "status": "pending"
+        },
+        {
+          "desc": "The entry-detail heading and the 'All by …' filter button use the resolved name, not the raw member UUID",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:30:00Z",
+      "updatedAt": "2026-07-12T22:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; diagnosed root cause = backend returns actorLabel:null (writer never sets it, read does no members join) so the FE's correct UUID fallback shows. Fix is a backend counterpart; FE is verification-only."
+        }
+      ]
+    },
+    {
+      "id": "T-0071",
+      "title": "Enable & verify audit-log cross-posting to Discord (config + unconfigured warning)",
+      "summary": "Audit entries never appear in Discord even though the audit→Discord pipeline is fully built backend-side (DiscordSyncJobType.AuditLog, the auditLogChannelId setting, AuditService.mirrorToDiscord, and the outbox worker send). It ships DORMANT: the seed sets botEnabled=false with no auditLogChannelId, and enqueueAuditLog no-ops when the channel is unset. The frontend Settings Discord pane already exposes the audit-log channel picker (auditLogChannelId). Work: enable the bot + set the audit-log channel via the existing Settings pane and verify entries post to that channel end-to-end, and add a clear 'audit-log cross-post is off / no channel configured' affordance on Settings and/or the audit page so admins understand why entries read 'not synced' — mirroring the T-0044 unconfigured-channel warning pattern.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/audit/audit.component.ts",
+        "src/app/features/admin/audit/audit.component.html",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "T-0024",
+        "T-0042"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "With the bot enabled and an audit-log channel set in Settings, a newly recorded audit event (e.g. an announcement or an application decline) posts to that Discord channel — verified end-to-end against the live stack",
+          "status": "pending"
+        },
+        {
+          "desc": "Setting the audit-log channel in Settings persists auditLogChannelId (PATCH /discord/settings) and survives a reload",
+          "status": "pending"
+        },
+        {
+          "desc": "When the bot is disabled or no audit-log channel is configured, Settings/audit shows a clear warning instead of silently emitting 'not synced' entries",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds an audit-log-channel warning/affordance to the shared admin SettingsComponent (Discord pane), which also hosts announcements/permissions/danger-zone; shares the component's DestroyRef/subscription pattern with T-0043/T-0044",
+          "status": "open",
+          "notedAt": "2026-07-12T22:30:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:30:00Z",
+      "updatedAt": "2026-07-12T22:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the audit→Discord feature exists end-to-end backend-side but is dormant (seed ships botEnabled=false + no auditLogChannelId). FE picker already exists — enable/configure/verify + warn when unconfigured."
+        }
+      ]
+    },
+    {
+      "id": "T-0072",
+      "title": "Show the true Discord-sync state on audit entries (honest badge)",
+      "summary": "Every audit entry's detail panel shows 'Discord sync: Not synced' even for entries that were (or would be) cross-posted, because the backend hardcodes discordSyncStatus=null and never writes it back (the mirror is fire-and-forget; the saved audit-entry id is never threaded into the outbox job) and the frontend collapses the four-state discordSyncStatus enum ('pending'|'synced'|'failed'|'not_applicable') into a single discordSynced boolean in mapAuditLog. Work (frontend): carry the raw discordSyncStatus through the AuditLog model + mapAuditLog and render distinct badges (pending/synced/failed/not-applicable) so the panel is truthful; depends on a backend counterpart that threads the audit id through mirrorToDiscord/enqueueAuditLog and writes back synced/failed. Until the backend lands, render 'not applicable'/'unknown' rather than a false 'Not synced'.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/audit-log.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/features/admin/audit/audit.component.ts",
+        "src/app/features/admin/audit/audit.component.html",
+        "src/app/core/services/audit.service.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0071",
+        "lords-dashboard-backend:T-0061"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Making the badge truthful requires the backend to actually set discordSyncStatus: today record() hardcodes it null and the mirror never writes back. A backend counterpart (thread the saved audit-entry id through mirrorToDiscord/enqueueAuditLog, set pending/not_applicable at record time, and have the worker write back synced/failed) must be planned in lords-dashboard-backend — referenced here as lords-dashboard-backend:T-0061 (next free after T-0060). Confirm that backend task should be allocated.",
+          "answer": null,
+          "askedAt": "2026-07-12T22:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "The audit-entry detail panel shows a distinct badge per discordSyncStatus (pending / synced / failed / not-applicable), not a synced/not-synced boolean",
+          "status": "pending"
+        },
+        {
+          "desc": "A cross-posted entry reads 'Synced' once the backend writes the status back; a failed cross-post reads 'Failed'",
+          "status": "pending"
+        },
+        {
+          "desc": "An entry that was never eligible for cross-post reads 'Not applicable'/blank rather than a misleading 'Not synced'",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Reshapes the shared AuditLog model + mapAuditLog (discordSynced boolean → discordSyncStatus enum) consumed by audit.service.spec and the audit component; any consumer reading discordSynced must be migrated",
+          "status": "open",
+          "notedAt": "2026-07-12T22:30:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T22:30:00Z",
+      "updatedAt": "2026-07-12T22:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T22:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; discovered the 'Not synced' badge is always false — backend hardcodes discordSyncStatus=null and never writes back, and FE collapses the enum to a boolean. Needs a backend write-back counterpart + FE enum rendering."
         }
       ]
     }
