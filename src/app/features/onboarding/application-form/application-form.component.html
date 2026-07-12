@@ -9,11 +9,21 @@
                 alt="Lord Regiment crest"
                 class="apply-logo"
             />
-            <h1 class="serif-display apply-title">Apply to the Lord Regiment</h1>
+            <h1 class="serif-display apply-title">
+                {{ editing ? 'Edit Your Application' : 'Apply to the Lord Regiment' }}
+            </h1>
             <p class="apply-subtitle">
-                Submit your application to join. Officers review all submissions within 48 hours.
+                @if (editing) { Update your answers — your application returns to the top of the
+                officers' queue. } @else { Submit your application to join. Officers review all
+                submissions within 48 hours. }
             </p>
         </div>
+
+        @if (loading) {
+        <div class="panel apply-panel">
+            <div class="panel-body" style="text-align: center; padding: 32px">Loading…</div>
+        </div>
+        }
 
         <!-- Success State -->
         @if (submitted) {
@@ -31,7 +41,7 @@
         }
 
         <!-- Form -->
-        @if (!submitted) {
+        @if (!submitted && !loading) {
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
             <!-- Discord Identity -->
             <div class="panel apply-panel">
@@ -229,9 +239,9 @@
                     [disabled]="submitting"
                 >
                     @if (submitting) {
-                    <span>Submitting…</span>
+                    <span>{{ editing ? 'Saving…' : 'Submitting…' }}</span>
                     } @if (!submitting) {
-                    <span>Submit Application</span>
+                    <span>{{ editing ? 'Save Changes' : 'Submit Application' }}</span>
                     }
                 </button>
             </div>

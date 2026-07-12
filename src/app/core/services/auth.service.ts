@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { Observable, catchError, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Member } from '../models/member.model';
+import { ApplicationsService } from './applications.service';
+import { RegimentService } from './regiment.service';
 
 /**
  * The `CurrentUser` projection returned by `GET /api/auth/me`. Mirrors the
@@ -29,6 +31,8 @@ const TOKEN_KEY = 'lords_access_token';
 export class AuthService {
     private readonly http = inject(HttpClient);
     private readonly router = inject(Router);
+    private readonly applications = inject(ApplicationsService);
+    private readonly regiment = inject(RegimentService);
 
     /** Null until hydrated from `/auth/me` (see hydrate()). */
     readonly currentUser = signal<CurrentUser | null>(null);
@@ -53,15 +57,63 @@ export class AuthService {
     }
 
     /**
+     * The public "Apply to Join" CTA (T-0027). Applying IS signing in with
+     * Discord: an anonymous visitor starts OAuth; a signed-in member is already
+     * enrolled (→ dashboard); a signed-in non-member is routed into onboarding
+     * (their status page or the blank form).
+     */
+    applyToJoin(): void {
+        if (!this.isAuthenticated()) {
+            this.initiateDiscordLogin();
+            return;
+        }
+        if (this.isMember()) {
+            this.router.navigateByUrl('/dashboard');
+            return;
+        }
+        this.routeAfterLogin(this.currentUser(), false);
+    }
+
+    /**
      * Called by the /auth/callback route: persist the handed-off JWT, hydrate the
-     * current user, then route (members → dashboard, identity-only → apply).
+     * current user, then route to the right place (T-0030/T-0037).
      */
     completeLogin(token: string, isMember: boolean): void {
         this.setToken(token);
-        this.loadCurrentUser().subscribe((user) => {
-            const enrolled = user?.isMember ?? isMember;
-            this.router.navigateByUrl(enrolled ? '/dashboard' : '/onboarding/apply');
-        });
+        this.loadCurrentUser().subscribe((user) => this.routeAfterLogin(user, isMember));
+    }
+
+    /**
+     * Decide where a freshly-authenticated caller lands:
+     *  - enrolled member → dashboard, EXCEPT an Owner whose regiment setup is not
+     *    complete, who is guided into first-run setup (admin settings) — T-0037;
+     *  - non-member who already has an application → their status page (T-0030);
+     *  - brand-new non-member → the blank application form.
+     */
+    private routeAfterLogin(user: CurrentUser | null, isMemberHint: boolean): void {
+        const enrolled = user?.isMember ?? isMemberHint;
+        if (enrolled) {
+            if (user?.role === 'Owner') {
+                this.regiment
+                    .getProfile()
+                    .pipe(catchError(() => of(null)))
+                    .subscribe((profile) => {
+                        const firstRun = profile?.setupComplete === false;
+                        this.router.navigateByUrl(firstRun ? '/admin/settings' : '/dashboard');
+                    });
+                return;
+            }
+            this.router.navigateByUrl('/dashboard');
+            return;
+        }
+        this.applications
+            .getMine()
+            .pipe(catchError(() => of(null)))
+            .subscribe((mine) => {
+                this.router.navigateByUrl(
+                    mine?.application ? '/onboarding/status' : '/onboarding/apply',
+                );
+            });
     }
 
     /** GET /auth/me → set the currentUser signal. Clears the session on failure. */

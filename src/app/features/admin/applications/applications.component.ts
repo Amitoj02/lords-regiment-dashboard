@@ -159,4 +159,51 @@ export class ApplicationsComponent implements OnInit {
                 error: (err) => console.error('Failed to hold application', err),
             });
     }
+
+    // ── Applicant blocklist (T-0033) ─────────────────────────────────────────────
+    moderating = false;
+
+    /** Permanently block the selected applicant from submitting further applications. */
+    blockApplicant(): void {
+        const id = this.selectedId;
+        if (!id) {
+            return;
+        }
+        this.moderating = true;
+        this.applicationsService
+            .blockApplicant(id, this.moderatorNote || undefined)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.moderating = false;
+                    this.loadApplications();
+                },
+                error: (err) => {
+                    this.moderating = false;
+                    console.error('Failed to block applicant', err);
+                },
+            });
+    }
+
+    /** Re-enable a previously blocked applicant. */
+    unblockApplicant(): void {
+        const id = this.selectedId;
+        if (!id) {
+            return;
+        }
+        this.moderating = true;
+        this.applicationsService
+            .unblockApplicant(id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.moderating = false;
+                    this.loadApplications();
+                },
+                error: (err) => {
+                    this.moderating = false;
+                    console.error('Failed to unblock applicant', err);
+                },
+            });
+    }
 }

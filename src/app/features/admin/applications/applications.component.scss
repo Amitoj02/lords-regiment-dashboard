@@ -139,3 +139,21 @@
 .tab-bar {
     margin-top: 16px;
 }
+
+/* Applicant blocklist controls (T-0033) */
+.moderation-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.moderation-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #9aa4b2);
+}
