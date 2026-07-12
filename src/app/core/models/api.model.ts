@@ -4,7 +4,7 @@
  * whole app) lets the existing components stay unchanged while the services swap
  * `of(stub)` for real HTTP. Field names mirror the NestJS DTOs exactly.
  */
-import { Application, ApplicantType, ApplicationStatus } from './application.model';
+import { Application, ApplicationStatus } from './application.model';
 import { AuditLog, AuditSeverity } from './audit-log.model';
 import { EventStatus, RegimentEvent, RsvpStatus } from './event.model';
 import { GalleryItem, GalleryItemStatus, GalleryItemType } from './gallery.model';
@@ -104,15 +104,14 @@ export interface ApiApplication {
     applicantName: string;
     discordTag: string | null;
     inGameName: string;
-    platform: Platform;
-    applicantType: ApplicantType;
-    timezone: string | null;
-    whyJoin: string;
+    currentRegiment: string;
     howFound: string;
-    priorExperience: string | null;
+    preferredClasses: string;
+    skillsToImprove: string;
+    interestConfirmed: boolean;
+    representativeNote: string | null;
     status: ApplicationStatus;
     isReapplication: boolean;
-    ageConfirmed: boolean;
     mutualEventsCount: number;
     moderatorNote: string | null;
     declineReason: string | null;
@@ -218,15 +217,14 @@ export function mapApplication(a: ApiApplication): Application {
         applicantName: a.applicantName,
         discordTag: a.discordTag ?? '',
         inGameName: a.inGameName,
-        platform: a.platform,
-        applicantType: a.applicantType,
-        source: a.howFound ?? '',
+        currentRegiment: a.currentRegiment,
+        howFound: a.howFound,
+        preferredClasses: a.preferredClasses,
+        skillsToImprove: a.skillsToImprove,
+        interestConfirmed: a.interestConfirmed,
+        representativeNote: a.representativeNote ?? undefined,
         submittedAt: a.submittedAt,
         status: a.status,
-        whyJoin: a.whyJoin,
-        howFound: a.howFound,
-        priorExperience: a.priorExperience ?? undefined,
-        timezone: a.timezone ?? undefined,
         isPreviousApplicant: a.isReapplication,
         moderatorNote: a.moderatorNote ?? undefined,
     };

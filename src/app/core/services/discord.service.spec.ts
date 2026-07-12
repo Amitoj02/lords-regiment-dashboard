@@ -25,19 +25,26 @@ describe('DiscordService', () => {
         req.flush({ connected: true, connectionStatus: 'connected' });
     });
 
-    it('verifyConnection() re-probes the gateway', () => {
-        service.verifyConnection().subscribe();
+    it('verifyConnection() re-probes the gateway and returns roles + channels', () => {
+        let roles: { id: string; name: string }[] | undefined;
+        service.verifyConnection().subscribe((c) => (roles = c.roles));
         const req = httpMock.expectOne('/api/discord/verify-connection');
         expect(req.request.method).toBe('POST');
-        req.flush({ connected: true, connectionStatus: 'connected' });
+        req.flush({
+            connected: true,
+            connectionStatus: 'connected',
+            roles: [{ id: 'r1', name: 'Recruit', position: 1 }],
+            channels: [{ id: 'c1', name: 'general' }],
+        });
+        expect(roles?.[0].name).toBe('Recruit');
     });
 
-    it('updateSettings() PATCHes the sensitive kickOnBan flag', () => {
-        service.updateSettings({ kickOnBan: true }).subscribe();
+    it('updateSettings() PATCHes the sensitive applyBanRoleOnBan flag', () => {
+        service.updateSettings({ applyBanRoleOnBan: true, banRoleId: 'r9' }).subscribe();
         const req = httpMock.expectOne('/api/discord/settings');
         expect(req.request.method).toBe('PATCH');
-        expect(req.request.body).toEqual({ kickOnBan: true });
-        req.flush({ kickOnBan: true, joinRoleName: '', botEnabled: true });
+        expect(req.request.body).toEqual({ applyBanRoleOnBan: true, banRoleId: 'r9' });
+        req.flush({ applyBanRoleOnBan: true, joinRoleName: '', botEnabled: true });
     });
 
     it('resync() unwraps the enqueued count', () => {

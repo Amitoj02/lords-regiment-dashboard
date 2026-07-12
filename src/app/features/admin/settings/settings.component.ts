@@ -14,7 +14,9 @@ import { NotificationsService } from '../../../core/services/notifications.servi
 import {
     BotOperation,
     DiscordBotSettings,
+    DiscordChannel,
     DiscordConnection,
+    DiscordRole,
     DiscordService,
 } from '../../../core/services/discord.service';
 
@@ -70,6 +72,9 @@ export class SettingsComponent implements OnInit {
     connection: DiscordConnection | null = null;
     botSettings: DiscordBotSettings | null = null;
     operations: BotOperation[] = [];
+    // Guild roles + channels for the pickers — populated by verifyConnection().
+    roles: DiscordRole[] = [];
+    channels: DiscordChannel[] = [];
     verifying = false;
     resyncing = false;
     savingBot = false;
@@ -314,6 +319,8 @@ export class SettingsComponent implements OnInit {
             .subscribe({
                 next: (connection) => {
                     this.connection = connection;
+                    this.roles = connection.roles ?? [];
+                    this.channels = connection.channels ?? [];
                     this.verifying = false;
                 },
                 error: (err) => {
@@ -321,6 +328,71 @@ export class SettingsComponent implements OnInit {
                     this.verifying = false;
                 },
             });
+    }
+
+    /** Whether a role/channel id is present in the loaded picker lists. */
+    roleLoaded(id: string | null): boolean {
+        return !!id && this.roles.some((r) => r.id === id);
+    }
+
+    channelLoaded(id: string | null): boolean {
+        return !!id && this.channels.some((c) => c.id === id);
+    }
+
+    private roleName(id: string): string | null {
+        return this.roles.find((r) => r.id === id)?.name ?? null;
+    }
+
+    private channelName(id: string): string | null {
+        return this.channels.find((c) => c.id === id)?.name ?? null;
+    }
+
+    // ── Picker handlers: set both the id and its cached display name ──────────
+    setJoinRole(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.joinRoleId = id || null;
+        this.botSettings.joinRoleName = id
+            ? (this.roleName(id) ?? this.botSettings.joinRoleName)
+            : '';
+    }
+
+    setBanRole(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.banRoleId = id || null;
+        this.botSettings.banRoleName = id ? this.roleName(id) : null;
+    }
+
+    setAnnouncementChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.announcementChannelId = id || null;
+    }
+
+    setWelcomeChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.welcomeChannelId = id || null;
+    }
+
+    setEnlistmentChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.enlistmentChannelId = id || null;
+        this.botSettings.enlistmentChannelName = id ? this.channelName(id) : null;
+    }
+
+    setAuditLogChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.auditLogChannelId = id || null;
+        this.botSettings.auditLogChannelName = id ? this.channelName(id) : null;
+    }
+
+    setEventAnnouncementChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.eventAnnouncementChannelId = id || null;
+        this.botSettings.eventAnnouncementChannelName = id ? this.channelName(id) : null;
+    }
+
+    /** The backend rejects applyBanRoleOnBan unless a Ban role is configured. */
+    get banRoleMissing(): boolean {
+        return !!this.botSettings?.applyBanRoleOnBan && !this.botSettings?.banRoleId;
     }
 
     resync(): void {
@@ -372,6 +444,11 @@ export class SettingsComponent implements OnInit {
         if (!this.botSettings || this.savingBot || !this.can('manage_settings')) {
             return;
         }
+        // Mirror the backend guard: applyBanRoleOnBan needs a configured Ban role.
+        if (this.banRoleMissing) {
+            this.botFlash = 'Pick a Ban role before enabling "Apply Ban role on ban".';
+            return;
+        }
         const b = this.botSettings;
         this.savingBot = true;
         this.botFlash = '';
@@ -381,9 +458,18 @@ export class SettingsComponent implements OnInit {
                 announcementChannelId: b.announcementChannelId,
                 welcomeChannelId: b.welcomeChannelId,
                 welcomeMessage: b.welcomeMessage,
+                enlistmentChannelId: b.enlistmentChannelId,
+                enlistmentChannelName: b.enlistmentChannelName,
+                auditLogChannelId: b.auditLogChannelId,
+                auditLogChannelName: b.auditLogChannelName,
+                eventAnnouncementChannelId: b.eventAnnouncementChannelId,
+                eventAnnouncementChannelName: b.eventAnnouncementChannelName,
                 joinRoleId: b.joinRoleId,
+                joinRoleName: b.joinRoleName,
+                banRoleId: b.banRoleId,
+                banRoleName: b.banRoleName,
                 syncRolesOnChange: b.syncRolesOnChange,
-                kickOnBan: b.kickOnBan,
+                applyBanRoleOnBan: b.applyBanRoleOnBan,
             })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
@@ -395,7 +481,7 @@ export class SettingsComponent implements OnInit {
                 error: (err) => {
                     console.error('Failed to save bot settings', err);
                     this.savingBot = false;
-                    this.botFlash = 'Could not save — try again.';
+                    this.botFlash = err?.error?.message ?? 'Could not save — try again.';
                 },
             });
     }

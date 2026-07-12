@@ -9,14 +9,13 @@ import { Application } from '../models/application.model';
 export interface CreateApplicationPayload {
     applicantName: string;
     inGameName: string;
-    platform: string;
-    applicantType?: 'Applicant' | 'Mercenary';
     discordTag?: string;
-    timezone?: string;
-    whyJoin: string;
+    currentRegiment: string;
     howFound: string;
-    priorExperience?: string;
-    ageConfirmed: boolean;
+    preferredClasses: string;
+    skillsToImprove: string;
+    interestConfirmed: boolean;
+    representativeNote?: string;
 }
 
 @Injectable({ providedIn: 'root' })
