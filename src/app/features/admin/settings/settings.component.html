@@ -354,63 +354,189 @@
                             <span class="toggle-track"></span>
                         </label>
                     </div>
+                    <!-- Channel pickers (populated by "Verify connection") -->
                     <div class="field-row bot-field">
-                        <label class="field-label" for="ann-channel">Announcement channel ID</label>
-                        <input
+                        <label class="field-label" for="ann-channel">Announcement channel</label>
+                        <select
                             id="ann-channel"
-                            class="hf-input"
-                            type="text"
+                            class="hf-select"
                             [ngModel]="botSettings.announcementChannelId ?? ''"
-                            (ngModelChange)="botSettings.announcementChannelId = $event"
+                            (ngModelChange)="setAnnouncementChannel($event)"
                             [disabled]="!can('manage_settings')"
-                        />
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.announcementChannelId &&
+                            !channelLoaded(botSettings.announcementChannelId)) {
+                            <option [value]="botSettings.announcementChannelId">
+                                {{ botSettings.announcementChannelId }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
                     </div>
                     <div class="field-row bot-field">
-                        <label class="field-label" for="welcome-channel">Welcome channel ID</label>
-                        <input
+                        <label class="field-label" for="welcome-channel">Welcome channel</label>
+                        <select
                             id="welcome-channel"
-                            class="hf-input"
-                            type="text"
+                            class="hf-select"
                             [ngModel]="botSettings.welcomeChannelId ?? ''"
-                            (ngModelChange)="botSettings.welcomeChannelId = $event"
+                            (ngModelChange)="setWelcomeChannel($event)"
                             [disabled]="!can('manage_settings')"
-                        />
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.welcomeChannelId &&
+                            !channelLoaded(botSettings.welcomeChannelId)) {
+                            <option [value]="botSettings.welcomeChannelId">
+                                {{ botSettings.welcomeChannelId }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
                     </div>
                     <div class="field-row bot-field">
-                        <label class="field-label" for="join-role">Join role ID</label>
-                        <input
-                            id="join-role"
-                            class="hf-input"
-                            type="text"
-                            [ngModel]="botSettings.joinRoleId ?? ''"
-                            (ngModelChange)="botSettings.joinRoleId = $event"
+                        <label class="field-label" for="enlistment-channel"
+                            >Enlistment channel</label
+                        >
+                        <select
+                            id="enlistment-channel"
+                            class="hf-select"
+                            [ngModel]="botSettings.enlistmentChannelId ?? ''"
+                            (ngModelChange)="setEnlistmentChannel($event)"
                             [disabled]="!can('manage_settings')"
-                        />
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.enlistmentChannelId &&
+                            !channelLoaded(botSettings.enlistmentChannelId)) {
+                            <option [value]="botSettings.enlistmentChannelId">
+                                {{ botSettings.enlistmentChannelName ||
+                                botSettings.enlistmentChannelId }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="audit-channel">Audit log channel</label>
+                        <select
+                            id="audit-channel"
+                            class="hf-select"
+                            [ngModel]="botSettings.auditLogChannelId ?? ''"
+                            (ngModelChange)="setAuditLogChannel($event)"
+                            [disabled]="!can('manage_settings')"
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.auditLogChannelId &&
+                            !channelLoaded(botSettings.auditLogChannelId)) {
+                            <option [value]="botSettings.auditLogChannelId">
+                                {{ botSettings.auditLogChannelName || botSettings.auditLogChannelId
+                                }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="event-channel"
+                            >Event announcement channel</label
+                        >
+                        <select
+                            id="event-channel"
+                            class="hf-select"
+                            [ngModel]="botSettings.eventAnnouncementChannelId ?? ''"
+                            (ngModelChange)="setEventAnnouncementChannel($event)"
+                            [disabled]="!can('manage_settings')"
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.eventAnnouncementChannelId &&
+                            !channelLoaded(botSettings.eventAnnouncementChannelId)) {
+                            <option [value]="botSettings.eventAnnouncementChannelId">
+                                {{ botSettings.eventAnnouncementChannelName ||
+                                botSettings.eventAnnouncementChannelId }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
                     </div>
 
-                    <!-- SENSITIVE: kick-on-ban -->
+                    <!-- Role pickers (populated by "Verify connection") -->
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="join-role">Join role</label>
+                        <select
+                            id="join-role"
+                            class="hf-select"
+                            [ngModel]="botSettings.joinRoleId ?? ''"
+                            (ngModelChange)="setJoinRole($event)"
+                            [disabled]="!can('manage_settings')"
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.joinRoleId && !roleLoaded(botSettings.joinRoleId)) {
+                            <option [value]="botSettings.joinRoleId">
+                                {{ botSettings.joinRoleName || botSettings.joinRoleId }}
+                            </option>
+                            } @for (role of roles; track role.id) {
+                            <option [value]="role.id">{{ role.name }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="ban-role">Ban role</label>
+                        <select
+                            id="ban-role"
+                            class="hf-select"
+                            [ngModel]="botSettings.banRoleId ?? ''"
+                            (ngModelChange)="setBanRole($event)"
+                            [disabled]="!can('manage_settings')"
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.banRoleId && !roleLoaded(botSettings.banRoleId)) {
+                            <option [value]="botSettings.banRoleId">
+                                {{ botSettings.banRoleName || botSettings.banRoleId }}
+                            </option>
+                            } @for (role of roles; track role.id) {
+                            <option [value]="role.id">{{ role.name }}</option>
+                            }
+                        </select>
+                    </div>
+                    @if (!roles.length || !channels.length) {
+                    <div class="field-hint">
+                        Click "Verify connection" above to load your Discord roles and channels into
+                        these pickers.
+                    </div>
+                    }
+
+                    <!-- SENSITIVE: apply-ban-role-on-ban -->
                     <div class="toggle-row">
                         <div>
-                            <div class="toggle-label">Kick on ban</div>
+                            <div class="toggle-label">Apply Ban role on ban</div>
                             <div class="field-hint">
-                                When an app ban is issued, also remove the member from the Discord
-                                server
+                                When an app ban is issued, strip the member's managed Discord roles
+                                and apply the configured Ban role
                             </div>
                         </div>
                         <label class="toggle-switch">
                             <input
                                 type="checkbox"
-                                [(ngModel)]="botSettings.kickOnBan"
+                                [(ngModel)]="botSettings.applyBanRoleOnBan"
                                 [disabled]="!can('manage_settings')"
                             />
                             <span class="toggle-track"></span>
                         </label>
                     </div>
-                    @if (botSettings.kickOnBan) {
+                    @if (banRoleMissing) {
+                    <hf-notice variant="err">
+                        Pick a Ban role above before enabling "Apply Ban role on ban" — the backend
+                        requires a Ban role to be configured first.
+                    </hf-notice>
+                    } @if (botSettings.applyBanRoleOnBan) {
                     <hf-notice variant="warn">
-                        With "Kick on ban" enabled, banning a member here will also kick them from
-                        your Discord server. This is irreversible from the app — they must be
-                        re-invited manually.
+                        With "Apply Ban role on ban" enabled, banning a member here strips their
+                        managed Discord roles and applies the configured Ban role. This is
+                        reversible via unban → resync; the bot never kicks.
                     </hf-notice>
                     } @if (can('manage_settings')) {
                     <div class="row gap-8 bot-save">

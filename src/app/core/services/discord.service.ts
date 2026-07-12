@@ -19,17 +19,49 @@ export interface DiscordConnection {
     lastFullSyncAt: string | null;
 }
 
+/** A guild role, for the role pickers (join role, Ban role). */
+export interface DiscordRole {
+    id: string;
+    name: string;
+    position: number;
+}
+
+/** A guild text channel, for the channel pickers. */
+export interface DiscordChannel {
+    id: string;
+    name: string;
+}
+
+/**
+ * verify-connection response: the connection snapshot plus the guild's roles and
+ * text channels, so the Settings pickers populate from a single call.
+ */
+export interface DiscordVerifyConnection extends DiscordConnection {
+    roles: DiscordRole[];
+    channels: DiscordChannel[];
+}
+
 /** The regiment's Discord bot configuration (GET /discord/settings). */
 export interface DiscordBotSettings {
     botEnabled: boolean;
     announcementChannelId: string | null;
     welcomeChannelId: string | null;
     welcomeMessage: string | null;
+    /** Per-purpose routed channels (admin-picked). */
+    enlistmentChannelId: string | null;
+    enlistmentChannelName: string | null;
+    auditLogChannelId: string | null;
+    auditLogChannelName: string | null;
+    eventAnnouncementChannelId: string | null;
+    eventAnnouncementChannelName: string | null;
     joinRoleId: string | null;
     joinRoleName: string;
+    /** Role applied on an app-side ban (required before applyBanRoleOnBan). */
+    banRoleId: string | null;
+    banRoleName: string | null;
     syncRolesOnChange: boolean;
-    /** SENSITIVE: when true, an app ban also kicks the member from Discord. */
-    kickOnBan: boolean;
+    /** SENSITIVE: when true, an app ban strips managed roles and applies the Ban role. */
+    applyBanRoleOnBan: boolean;
 }
 
 /** Partial update of the bot configuration (PATCH /discord/settings). */
@@ -54,9 +86,9 @@ export class DiscordService {
         return this.http.get<DiscordConnection>(`${this.base}/connection`);
     }
 
-    /** Re-probe the gateway and refresh the connection snapshot. */
-    verifyConnection(): Observable<DiscordConnection> {
-        return this.http.post<DiscordConnection>(`${this.base}/verify-connection`, {});
+    /** Re-probe the gateway; returns the snapshot plus the guild roles + channels. */
+    verifyConnection(): Observable<DiscordVerifyConnection> {
+        return this.http.post<DiscordVerifyConnection>(`${this.base}/verify-connection`, {});
     }
 
     getSettings(): Observable<DiscordBotSettings> {

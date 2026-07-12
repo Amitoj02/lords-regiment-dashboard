@@ -72,55 +72,29 @@
                         @if ( form.get('inGameName')?.touched &&
                         form.get('inGameName')?.hasError('required') ) {
                         <div class="field-hint field-error">In-game name is required.</div>
+                        } @if ( form.get('inGameName')?.touched &&
+                        form.get('inGameName')?.hasError('minlength') ) {
+                        <div class="field-hint field-error">
+                            Please enter at least 2 characters.
+                        </div>
                         }
                     </div>
-                    <!-- Platform -->
+                    <!-- Current Regiment -->
                     <div class="field-group">
-                        <label class="field-label" for="platform">Platform</label>
-                        <select id="platform" class="hf-select" formControlName="platform">
-                            @for (opt of platformOptions; track opt) {
-                            <option [value]="opt.value">{{ opt.label }}</option>
-                            }
-                        </select>
-                    </div>
-                    <!-- Applicant Type -->
-                    <div>
-                        <div class="field-label">Joining As</div>
-                        <div class="field-hint type-card-hint">
-                            Members are full regiment participants. Mercenaries join for events
-                            without long-term commitment.
+                        <label class="field-label" for="currentRegiment">Current Regiment</label>
+                        <input
+                            id="currentRegiment"
+                            class="hf-input"
+                            formControlName="currentRegiment"
+                            placeholder='Your current regiment, or "None"'
+                        />
+                        <div class="field-hint">
+                            Enter your present regiment. If unaligned, write "None".
                         </div>
-                        <div class="row gap-12">
-                            <button
-                                type="button"
-                                class="type-card"
-                                [ngClass]="{
-                                        'type-card--active':
-                                            form.get('applicantType')?.value === 'Applicant',
-                                    }"
-                                (click)="setApplicantType('Applicant')"
-                            >
-                                <div class="type-card-title">⚔️ Member</div>
-                                <div class="type-card-desc">
-                                    Full regiment membership. Attend events, earn rank and medals.
-                                </div>
-                            </button>
-                            <button
-                                type="button"
-                                class="type-card"
-                                [ngClass]="{
-                                        'type-card--active':
-                                            form.get('applicantType')?.value === 'Mercenary',
-                                    }"
-                                (click)="setApplicantType('Mercenary')"
-                            >
-                                <div class="type-card-title">🗡️ Mercenary</div>
-                                <div class="type-card-desc">
-                                    Occasional participation. No rank progression or regiment
-                                    obligations.
-                                </div>
-                            </button>
-                        </div>
+                        @if ( form.get('currentRegiment')?.touched &&
+                        form.get('currentRegiment')?.hasError('required') ) {
+                        <div class="field-hint field-error">This field is required.</div>
+                        }
                     </div>
                 </div>
             </div>
@@ -130,77 +104,94 @@
                     <span class="panel-title">Application Details</span>
                 </div>
                 <div class="panel-body">
-                    <!-- Why Join -->
-                    <div class="field-group">
-                        <label class="field-label" for="whyJoin">Why do you want to join?</label>
-                        <textarea
-                            id="whyJoin"
-                            class="hf-textarea"
-                            formControlName="whyJoin"
-                            rows="4"
-                            placeholder="Tell us what draws you to the Lord Regiment and what kind of player you are…"
-                        ></textarea>
-                        <div class="field-hint">Minimum 30 characters. Max 800.</div>
-                        @if ( form.get('whyJoin')?.touched &&
-                        form.get('whyJoin')?.hasError('required') ) {
-                        <div class="field-hint field-error">This field is required.</div>
-                        } @if ( form.get('whyJoin')?.touched &&
-                        form.get('whyJoin')?.hasError('minlength') ) {
-                        <div class="field-hint field-error">
-                            Please write at least 30 characters.
-                        </div>
-                        }
-                    </div>
                     <!-- How Found -->
                     <div class="field-group">
                         <label class="field-label" for="howFound">How did you find us?</label>
-                        <select id="howFound" class="hf-select" formControlName="howFound">
-                            <option value="">— Select —</option>
-                            @for (opt of howFoundOptions; track opt) {
-                            <option [value]="opt.value">{{ opt.label }}</option>
-                            }
-                        </select>
+                        <input
+                            id="howFound"
+                            class="hf-input"
+                            formControlName="howFound"
+                            placeholder="e.g. Discord server listing, a friend, YouTube…"
+                        />
                         @if ( form.get('howFound')?.touched &&
                         form.get('howFound')?.hasError('required') ) {
-                        <div class="field-hint field-error">Please select an option.</div>
+                        <div class="field-hint field-error">This field is required.</div>
                         }
                     </div>
-                    <!-- Prior Experience -->
-                    <div>
-                        <label class="field-label" for="priorExp">Prior Regiment Experience</label>
+                    <!-- Preferred Classes -->
+                    <div class="field-group">
+                        <label class="field-label" for="preferredClasses">Preferred Classes</label>
+                        <input
+                            id="preferredClasses"
+                            class="hf-input"
+                            formControlName="preferredClasses"
+                            placeholder="e.g. Line Infantry, Rifleman"
+                        />
+                        <div class="field-hint">
+                            The roles you enjoy playing most, comma separated.
+                        </div>
+                        @if ( form.get('preferredClasses')?.touched &&
+                        form.get('preferredClasses')?.hasError('required') ) {
+                        <div class="field-hint field-error">This field is required.</div>
+                        }
+                    </div>
+                    <!-- Skills To Improve -->
+                    <div class="field-group">
+                        <label class="field-label" for="skillsToImprove"
+                            >What skills would you like to improve?</label
+                        >
                         <textarea
-                            id="priorExp"
+                            id="skillsToImprove"
                             class="hf-textarea"
-                            formControlName="priorExperience"
+                            formControlName="skillsToImprove"
                             rows="3"
-                            placeholder="List any previous regiments, milsim groups, or relevant game experience (optional)…"
+                            placeholder="Tell us what you're hoping to work on with the regiment…"
                         ></textarea>
-                        <div class="field-hint">Optional. Max 600 characters.</div>
+                        @if ( form.get('skillsToImprove')?.touched &&
+                        form.get('skillsToImprove')?.hasError('required') ) {
+                        <div class="field-hint field-error">This field is required.</div>
+                        }
+                    </div>
+                    <!-- Representative Note (optional) -->
+                    <div>
+                        <label class="field-label" for="representativeNote"
+                            >Note to the recruiting officer</label
+                        >
+                        <textarea
+                            id="representativeNote"
+                            class="hf-textarea"
+                            formControlName="representativeNote"
+                            rows="3"
+                            placeholder="Anything else you'd like the reviewing officer to know (optional)…"
+                        ></textarea>
+                        <div class="field-hint">Optional.</div>
                     </div>
                 </div>
             </div>
             <!-- Final Details -->
             <div class="panel apply-panel">
                 <div class="panel-header">
-                    <span class="panel-title">Preferences & Confirmation</span>
+                    <span class="panel-title">Confirmation</span>
                 </div>
                 <div class="panel-body">
-                    <!-- Timezone -->
-                    <div class="field-group">
-                        <label class="field-label" for="timezone">Your Timezone</label>
-                        <select id="timezone" class="hf-select" formControlName="timezone">
-                            <option value="">— Select your timezone —</option>
-                            @for (tz of timezoneOptions; track tz) {
-                            <option [value]="tz.value">{{ tz.label }}</option>
-                            }
-                        </select>
-                        @if ( form.get('timezone')?.touched &&
-                        form.get('timezone')?.hasError('required') ) {
-                        <div class="field-hint field-error">
-                            Timezone is required for scheduling purposes.
-                        </div>
-                        }
+                    <!-- Interest Confirm -->
+                    <div class="row gap-12 age-confirm-row">
+                        <input
+                            type="checkbox"
+                            id="interestConfirm"
+                            class="hf-check age-confirm-check"
+                            formControlName="interestConfirm"
+                        />
+                        <label for="interestConfirm" class="age-confirm-label">
+                            I confirm I am interested in joining and will enlist in-game.
+                        </label>
                     </div>
+                    @if ( form.get('interestConfirm')?.touched &&
+                    form.get('interestConfirm')?.hasError('required') ) {
+                    <div class="field-hint field-error age-confirm-error">
+                        Please confirm your interest in joining.
+                    </div>
+                    }
                     <!-- Age Confirm -->
                     <div class="row gap-12 age-confirm-row">
                         <input
@@ -210,7 +201,7 @@
                             formControlName="ageConfirm"
                         />
                         <label for="ageConfirm" class="age-confirm-label">
-                            I confirm that I am 16 years of age or older and agree to abide by the
+                            I confirm that I am 18 years of age or older and agree to abide by the
                             regiment's
                             <a href="#" class="age-confirm-link">Code of Conduct</a> and
                             <a href="#" class="age-confirm-link">Charter</a>.
@@ -224,6 +215,9 @@
                     }
                 </div>
             </div>
+            @if (error) {
+            <hf-notice variant="err" class="apply-error">{{ error }}</hf-notice>
+            }
             <!-- Actions -->
             <div class="row gap-12">
                 <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>

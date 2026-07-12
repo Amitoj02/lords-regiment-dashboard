@@ -5,7 +5,7 @@
             <div class="panel">
                 <div class="panel-header between">
                     <span class="panel-title">Queue</span>
-                    <span class="badge brass">7</span>
+                    <span class="badge brass">{{ queue.length }}</span>
                 </div>
                 <div class="panel-body queue-list">
                     @for (item of queue; track item.id) {
@@ -16,29 +16,36 @@
                         (click)="selectApplication(item.id)"
                     >
                         <div class="queue-item__avatar">
-                            <hf-avatar [name]="item.name" [size]="28"></hf-avatar>
+                            <hf-avatar [name]="item.applicantName" [size]="28"></hf-avatar>
                         </div>
                         <div class="queue-item__body">
                             <div class="row between">
-                                <span class="queue-item__name">{{ item.name }}</span>
+                                <span class="queue-item__name">{{ item.applicantName }}</span>
                                 <span
                                     class="badge"
-                                    [ngClass]="
-                                            item.applicantType === 'Mercenary' ? 'ox' : 'laurel'
-                                        "
+                                    [ngClass]="{
+                                        brass: item.status === 'pending',
+                                        laurel: item.status === 'approved',
+                                        ox: item.status === 'declined',
+                                        blue: item.status === 'held'
+                                    }"
                                 >
-                                    {{ item.applicantType }}
+                                    {{ item.status | titlecase }}
                                 </span>
                             </div>
                             <div class="row between">
                                 <span class="queue-item__discord mono">{{ item.discordTag }}</span>
-                                <span class="queue-item__time">{{ item.timeAgo }}</span>
+                                <span class="queue-item__time"
+                                    >{{ item.submittedAt | date: 'MMM d' }}</span
+                                >
                             </div>
-                            @if (item.isReapply) {
+                            @if (item.isPreviousApplicant) {
                             <span class="badge blue sp">Re-apply</span>
                             }
                         </div>
                     </button>
+                    } @empty {
+                    <div class="empty-state empty-state--md">No applications in this view.</div>
                     }
                 </div>
             </div>
@@ -46,22 +53,34 @@
 
         <!-- Detail Column -->
         <div class="detail-col">
+            @if (selectedApplication) {
             <div class="panel">
                 <div class="panel-header">
                     <div class="row between">
                         <div class="row gap-12">
-                            <hf-avatar name="Mara Erskine" [size]="36"></hf-avatar>
+                            <hf-avatar
+                                [name]="selectedApplication.applicantName"
+                                [size]="36"
+                            ></hf-avatar>
                             <div>
                                 <div class="row gap-8">
                                     <span class="panel-title"
                                         >{{ selectedApplication.applicantName }}</span
                                     >
-                                    <span class="badge laurel"
-                                        >{{ selectedApplication.applicantType }}</span
+                                    <span
+                                        class="badge"
+                                        [ngClass]="{
+                                            brass: selectedApplication.status === 'pending',
+                                            laurel: selectedApplication.status === 'approved',
+                                            ox: selectedApplication.status === 'declined',
+                                            blue: selectedApplication.status === 'held'
+                                        }"
+                                        >{{ selectedApplication.status | titlecase }}</span
                                     >
                                 </div>
                                 <span class="mono applicant-meta"
-                                    >{{ selectedApplication.discordTag }} &middot; 2h ago</span
+                                    >{{ selectedApplication.discordTag }} &middot; {{
+                                    selectedApplication.submittedAt | date: 'MMM d, y' }}</span
                                 >
                             </div>
                         </div>
@@ -83,36 +102,22 @@
                             <div class="mono">{{ selectedApplication.inGameName }}</div>
                         </div>
                         <div>
-                            <div class="field-label">Discord verification</div>
-                            <div class="row discord-verify-row">
-                                <span class="status-dot discord-on"></span>
-                                <span>In server &middot; 4 mutual events</span>
-                            </div>
+                            <div class="field-label">Current regiment</div>
+                            <div>{{ selectedApplication.currentRegiment }}</div>
                         </div>
                         <div>
-                            <div class="field-label">Platform</div>
-                            <hf-platform-badges
-                                [platforms]="[selectedApplication.platform]"
-                            ></hf-platform-badges>
+                            <div class="field-label">Discord tag</div>
+                            <div class="mono">{{ selectedApplication.discordTag || '—' }}</div>
                         </div>
                         <div>
-                            <div class="field-label">Timezone</div>
-                            <span>{{ selectedApplication.timezone }}</span>
+                            <div class="field-label">Interest confirmed</div>
+                            <span>{{ selectedApplication.interestConfirmed ? 'Yes' : 'No' }}</span>
                         </div>
                     </div>
 
                     <hf-crest-divider label="Enlistment Answers"></hf-crest-divider>
 
                     <!-- Q&A -->
-                    <div class="qa-section">
-                        <div class="admin-label brass">
-                            Why do you want to join the Lords Regiment?
-                        </div>
-                        <div class="qa-answer parchment serif">
-                            {{ selectedApplication.whyJoin }}
-                        </div>
-                    </div>
-
                     <div class="qa-section">
                         <div class="admin-label brass">How did you find us?</div>
                         <div class="qa-answer parchment serif">
@@ -121,13 +126,27 @@
                     </div>
 
                     <div class="qa-section">
-                        <div class="admin-label brass">
-                            Describe any prior regiment or milsim experience.
-                        </div>
+                        <div class="admin-label brass">Preferred classes</div>
                         <div class="qa-answer parchment serif">
-                            {{ selectedApplication.priorExperience }}
+                            {{ selectedApplication.preferredClasses }}
                         </div>
                     </div>
+
+                    <div class="qa-section">
+                        <div class="admin-label brass">Skills they want to improve</div>
+                        <div class="qa-answer parchment serif">
+                            {{ selectedApplication.skillsToImprove }}
+                        </div>
+                    </div>
+
+                    @if (selectedApplication.representativeNote) {
+                    <div class="qa-section">
+                        <div class="admin-label brass">Note to the recruiting officer</div>
+                        <div class="qa-answer parchment serif">
+                            {{ selectedApplication.representativeNote }}
+                        </div>
+                    </div>
+                    }
 
                     <!-- Moderator tools -->
                     <div class="grid-2 mod-tools">
@@ -155,7 +174,7 @@
                         </div>
                     </div>
 
-                    <hf-notice type="info" class="decision-notice">
+                    <hf-notice variant="info" class="decision-notice">
                         A Discord DM will be sent automatically to the applicant when you make a
                         decision. You may customise the message above.
                     </hf-notice>
@@ -167,7 +186,7 @@
                                 type="button"
                                 class="btn btn-ghost btn-sm"
                                 (click)="prev()"
-                                [disabled]="selectedIndex === 0"
+                                [disabled]="selectedIndex <= 0"
                             >
                                 &#8592; Previous
                             </button>
@@ -202,6 +221,15 @@
                     </div>
                 </div>
             </div>
+            } @else {
+            <div class="panel">
+                <div class="panel-body">
+                    <div class="empty-state empty-state--md">
+                        Select an application from the queue to review it.
+                    </div>
+                </div>
+            </div>
+            }
 
             <!-- Tab bar -->
             <div class="hf-tabs tab-bar">
@@ -211,7 +239,7 @@
                     [ngClass]="{ active: activeTab === 'pending' }"
                     (click)="setTab('pending')"
                 >
-                    Pending <span class="badge brass">7</span>
+                    Pending <span class="badge brass">{{ tabCount('pending') }}</span>
                 </button>
                 <button
                     type="button"
@@ -219,7 +247,7 @@
                     [ngClass]="{ active: activeTab === 'approved' }"
                     (click)="setTab('approved')"
                 >
-                    Approved <span class="badge">142</span>
+                    Approved <span class="badge">{{ tabCount('approved') }}</span>
                 </button>
                 <button
                     type="button"
@@ -227,7 +255,7 @@
                     [ngClass]="{ active: activeTab === 'declined' }"
                     (click)="setTab('declined')"
                 >
-                    Declined <span class="badge">28</span>
+                    Declined <span class="badge">{{ tabCount('declined') }}</span>
                 </button>
                 <button
                     type="button"
@@ -235,7 +263,7 @@
                     [ngClass]="{ active: activeTab === 'reapply' }"
                     (click)="setTab('reapply')"
                 >
-                    Re-applications <span class="badge blue">4</span>
+                    Re-applications <span class="badge blue">{{ tabCount('reapply') }}</span>
                 </button>
             </div>
         </div>
