@@ -1,0 +1,47 @@
+<hf-app-shell [activeRoute]="'gallery'" [crumbs]="['Regiment', 'Gallery']">
+    <div class="page">
+        <div class="page-head between">
+            <div>
+                <div class="page-sub">Field Dispatches</div>
+                <h1 class="page-title serif-display">Gallery Archive</h1>
+            </div>
+            <div class="row gap-8">
+                <a routerLink="/admin/gallery/mod" class="btn btn-ghost btn-sm">
+                    Moderation queue @if (pendingCount > 0) {
+                    <span class="badge ox">{{ pendingCount }}</span>
+                    }
+                </a>
+                <a routerLink="/admin/gallery/submit" class="btn btn-primary btn-sm"
+                    >Submit dispatch</a
+                >
+            </div>
+        </div>
+
+        @if (loadError) {
+        <hf-notice variant="err" [body]="loadError"></hf-notice>
+        } @else if (loading) {
+        <div class="empty">
+            <div class="e-body">Loading the archive…</div>
+        </div>
+        } @else if (items.length === 0) {
+        <div class="empty">
+            <div class="e-title">The archive is empty</div>
+            <div class="e-body">
+                Approved submissions appear here. Submit a dispatch to get started.
+            </div>
+        </div>
+        } @else {
+        <div class="gallery-grid">
+            @for (item of items; track item.id) {
+            <div class="gallery-card">
+                <div class="gallery-card__thumb" [ngStyle]="{ background: thumb(item) }"></div>
+                <div class="gallery-card__info">
+                    <span class="gallery-card__caption">{{ item.caption || item.title }}</span>
+                    <span class="gallery-card__by">by {{ item.submittedBy }}</span>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+</hf-app-shell>

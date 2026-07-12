@@ -72,6 +72,21 @@ describe('AuditService', () => {
         expect(log?.afterState).toBe(JSON.stringify({ status: 'Banned' }));
     });
 
+    it('getAll() maps discordSyncStatus through (populated + null)', () => {
+        let result: AuditLog[] | undefined;
+        service.getAll().subscribe((logs) => (result = logs));
+        const req = httpMock.expectOne((r) => r.url === '/api/audit');
+        req.flush(
+            page([
+                apiEntry({ discordSyncStatus: 'failed' }),
+                apiEntry({ id: 'a2', discordSyncStatus: null }),
+            ]),
+        );
+
+        expect(result?.[0].discordSyncStatus).toBe('failed');
+        expect(result?.[1].discordSyncStatus).toBeNull();
+    });
+
     it('getAll(filters) forwards the severity + action params', () => {
         service.getAll({ severity: 'err', action: 'member.ban' }).subscribe();
         const req = httpMock.expectOne(

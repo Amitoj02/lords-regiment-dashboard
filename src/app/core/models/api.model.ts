@@ -5,7 +5,7 @@
  * `of(stub)` for real HTTP. Field names mirror the NestJS DTOs exactly.
  */
 import { Application, ApplicationStatus } from './application.model';
-import { AuditLog, AuditSeverity } from './audit-log.model';
+import { AuditLog, AuditSeverity, DiscordSyncStatus } from './audit-log.model';
 import { EventStatus, RegimentEvent, RsvpStatus } from './event.model';
 import { GalleryItem, GalleryItemStatus, GalleryItemType } from './gallery.model';
 import {
@@ -193,6 +193,7 @@ export function mapRank(r: ApiRank): Rank {
         chevrons: r.chevrons,
         holders: r.holdersCount,
         discordRole: r.discordRoleName ?? '',
+        discordRoleId: r.discordRoleId,
         discordLinked: r.linked,
         order: r.precedence,
     };
@@ -207,6 +208,9 @@ export function mapMedal(m: ApiMedal): Medal {
         description: m.description ?? '',
         holders: m.holdersCount,
         awards: m.awardsCount,
+        precedence: m.precedence,
+        discordRoleId: m.discordRoleId,
+        discordRole: m.discordRoleName ?? '',
         discordLinked: m.linked,
     };
 }
@@ -405,7 +409,7 @@ export interface ApiAuditEntry {
     before: Record<string, unknown> | null;
     after: Record<string, unknown> | null;
     requestId: string | null;
-    discordSyncStatus: 'pending' | 'synced' | 'failed' | 'not_applicable' | null;
+    discordSyncStatus: DiscordSyncStatus | null;
 }
 
 export function mapAuditLog(a: ApiAuditEntry): AuditLog {
@@ -420,7 +424,7 @@ export function mapAuditLog(a: ApiAuditEntry): AuditLog {
         beforeState: a.before ? JSON.stringify(a.before) : undefined,
         afterState: a.after ? JSON.stringify(a.after) : undefined,
         requestId: a.requestId ?? undefined,
-        discordSynced: a.discordSyncStatus === 'synced',
+        discordSyncStatus: a.discordSyncStatus ?? null,
     };
 }
 

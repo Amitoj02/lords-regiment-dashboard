@@ -1,0 +1,51 @@
+// =========================================================
+// HOLDFAST · Onboarding shell
+// ---------------------------------------------------------
+// The centred, padded page frame shared by the public onboarding surfaces —
+// the application form (/onboarding/apply) and the application-status page
+// (/onboarding/status). These live in the global layer (rather than a single
+// component's SCSS) so BOTH pages get the same shell: without this, the status
+// page — which reuses these class names — rendered full-bleed because the
+// form's emulated-encapsulated copies never reached it.
+// Form- and status-specific rules stay in their component SCSS.
+// =========================================================
+
+.apply-page {
+    min-height: 100vh;
+    background: var(--ink-900);
+    padding: 48px 24px;
+}
+
+.apply-inner {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.apply-header {
+    margin-bottom: 32px;
+}
+
+.apply-logo {
+    border-radius: 999px;
+    margin-bottom: 16px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.apply-title {
+    font-size: 26px;
+    text-align: center;
+    margin: 0 0 6px;
+}
+
+.apply-subtitle {
+    font-size: 14px;
+    color: var(--t-400);
+    text-align: center;
+    margin: 0;
+}
+
+.apply-panel {
+    margin-bottom: 24px;
+}

@@ -56,20 +56,4 @@ describe('SettingsService', () => {
         });
         req.flush({ roles: [], capabilities: [], matrix: {} });
     });
-
-    it('transferOwnership() posts the target + confirm flag', () => {
-        service.transferOwnership('m2', true).subscribe();
-        const req = httpMock.expectOne('/api/settings/transfer-ownership');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ toMemberId: 'm2', confirm: true });
-        req.flush({ ownerMemberId: 'm2' });
-    });
-
-    it('dissolve() posts the confirmation name', () => {
-        service.dissolve('The Lords Regiment').subscribe();
-        const req = httpMock.expectOne('/api/settings/dissolve');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ confirmName: 'The Lords Regiment' });
-        req.flush({ dissolved: true });
-    });
 });

@@ -45,4 +45,8 @@ export class RanksService {
             .post<ApiRank>(`${this.base}/${id}/link-discord`, { discordRoleId, discordRoleName })
             .pipe(map(mapRank));
     }
+
+    unlinkDiscord(id: string): Observable<Rank> {
+        return this.http.post<ApiRank>(`${this.base}/${id}/unlink-discord`, {}).pipe(map(mapRank));
+    }
 }

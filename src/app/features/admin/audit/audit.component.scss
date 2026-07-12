@@ -67,8 +67,27 @@
 }
 
 .sync-row {
-    gap: 4px;
+    gap: 6px;
     align-items: center;
+    font-size: 0.8rem;
+    color: var(--t-300);
+}
+
+// Discord cross-post state — distinct dots per DiscordSyncStatus (base
+// geometry comes from the global .status-dot in _base.scss).
+.status-dot {
+    &.sync-synced {
+        background: var(--ok);
+    }
+    &.sync-pending {
+        background: var(--regblue-500);
+    }
+    &.sync-failed {
+        background: var(--err);
+    }
+    &.sync-muted {
+        background: var(--t-400);
+    }
 }
 
 .detail-actor-name {

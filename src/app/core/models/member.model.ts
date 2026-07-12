@@ -13,7 +13,13 @@ export interface Medal {
     holders?: number;
     /** Total awards (repeatable medals may exceed `holders`). */
     awards?: number;
+    /** Display order in the cabinet (lower = shown first). */
+    precedence?: number;
     discordLinked?: boolean;
+    /** Discord role id linked to this medal (drives the role picker preselect). */
+    discordRoleId?: string | null;
+    /** Linked Discord role NAME (offline-safe fallback when the roles list is empty). */
+    discordRole?: string;
 }
 
 export interface Rank {
@@ -25,6 +31,8 @@ export interface Rank {
     discordRole: string;
     discordLinked: boolean;
     order: number;
+    /** Discord role id linked to this rank (drives the role picker preselect). */
+    discordRoleId?: string | null;
 }
 
 /** A single medal award held by a member (medals are repeatable). */

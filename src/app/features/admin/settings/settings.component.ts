@@ -40,9 +40,8 @@ export class SettingsComponent implements OnInit {
         { id: 'announce', label: 'Announcements', group: 'Regiment' },
         { id: 'discord', label: 'Discord & Quartermaster', group: 'Regiment' },
         { id: 'roles', label: 'Roles & permissions', group: 'Regiment' },
-        { id: 'danger', label: 'Danger zone', group: 'Compliance' },
     ];
-    navGroups = ['Regiment', 'Compliance'];
+    navGroups = ['Regiment'];
 
     // ── Regiment profile + visibility ────────────────────────────────────────
     settings: SettingsDto | null = null;
@@ -60,10 +59,12 @@ export class SettingsComponent implements OnInit {
         title: '',
         body: '',
         tone: 'info' as NotificationTone,
-        crossPostToDiscord: false,
+        crossPostToDiscord: true,
     };
     sendingAnnouncement = false;
     announceFlash = '';
+    /** True when announceFlash is a warning (e.g. the Discord cross-post did not send). */
+    announceWarn = false;
 
     // ── Invite (T-0017) ──────────────────────────────────────────────────────
     inviteCopied = false;
@@ -79,14 +80,6 @@ export class SettingsComponent implements OnInit {
     resyncing = false;
     savingBot = false;
     botFlash = '';
-
-    // ── Danger zone ──────────────────────────────────────────────────────────
-    transferOwnerMemberId = '';
-    transferOwnerConfirm = false;
-    transferDiscordServerId = '';
-    transferDiscordServerName = '';
-    dissolveConfirmName = '';
-    dangerFlash = '';
 
     readonly tones: { value: NotificationTone; label: string }[] = [
         { value: 'info', label: 'Info' },
@@ -250,28 +243,22 @@ export class SettingsComponent implements OnInit {
         if (!title || !body || this.sendingAnnouncement) {
             return;
         }
+        // Decide cross-posting up front — the form is reset once publishing lands.
+        const crossPost = this.announce.crossPostToDiscord && this.can('manage_notifications');
         this.sendingAnnouncement = true;
         this.announceFlash = '';
+        this.announceWarn = false;
         this.notifications
             .compose({ title, body, tone: this.announce.tone })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    if (this.announce.crossPostToDiscord && this.can('manage_notifications')) {
-                        this.discord
-                            .announce(`**${title}**\n\n${body}`)
-                            .pipe(takeUntilDestroyed(this.destroyRef))
-                            .subscribe({
-                                error: (err) =>
-                                    console.error('Failed to cross-post to Discord', err),
-                            });
+                    if (crossPost) {
+                        // Keep the guard raised until Discord confirms (or fails).
+                        this.crossPostAnnouncement(title, body);
+                        return;
                     }
-                    this.announce = {
-                        title: '',
-                        body: '',
-                        tone: 'info',
-                        crossPostToDiscord: false,
-                    };
+                    this.resetAnnounceForm();
                     this.sendingAnnouncement = false;
                     this.announceFlash = 'Dispatch published to the regiment.';
                 },
@@ -279,8 +266,48 @@ export class SettingsComponent implements OnInit {
                     console.error('Failed to publish announcement', err);
                     this.sendingAnnouncement = false;
                     this.announceFlash = 'Could not publish — try again.';
+                    this.announceWarn = true;
                 },
             });
+    }
+
+    /**
+     * Cross-post a freshly published dispatch to Discord and report honestly.
+     * `announce()` resolves to the backend `enqueued` flag — false means no
+     * announcement channel is configured (or the enqueue failed), so the message
+     * never reached Discord even though the site publish succeeded.
+     */
+    private crossPostAnnouncement(title: string, body: string): void {
+        this.discord
+            .announce(`**${title}**\n\n${body}`)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (enqueued) => {
+                    this.resetAnnounceForm();
+                    this.sendingAnnouncement = false;
+                    this.announceWarn = !enqueued;
+                    this.announceFlash = enqueued
+                        ? 'Dispatch published to the regiment.'
+                        : 'Published to the site, but the Discord cross-post did not send — no announcement channel is configured.';
+                },
+                error: (err) => {
+                    console.error('Failed to cross-post to Discord', err);
+                    this.resetAnnounceForm();
+                    this.sendingAnnouncement = false;
+                    this.announceWarn = true;
+                    this.announceFlash =
+                        'Published to the site, but the Discord cross-post did not send — try again.';
+                },
+            });
+    }
+
+    private resetAnnounceForm(): void {
+        this.announce = {
+            title: '',
+            body: '',
+            tone: 'info',
+            crossPostToDiscord: true,
+        };
     }
 
     // ── Discord + Quartermaster (T-0024) ─────────────────────────────────────
@@ -497,82 +524,5 @@ export class SettingsComponent implements OnInit {
             default:
                 return 'Offline';
         }
-    }
-
-    // ── Danger zone ──────────────────────────────────────────────────────────
-    transferOwnership(): void {
-        if (!this.can('transfer_ownership')) {
-            return;
-        }
-        const memberId = this.transferOwnerMemberId.trim();
-        if (!memberId || !this.transferOwnerConfirm) {
-            this.dangerFlash = 'Enter the new owner and confirm before transferring.';
-            return;
-        }
-        this.settingsService
-            .transferOwnership(memberId, this.transferOwnerConfirm)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    this.transferOwnerMemberId = '';
-                    this.transferOwnerConfirm = false;
-                    this.dangerFlash = 'Ownership transferred.';
-                },
-                error: (err) => {
-                    console.error('Failed to transfer ownership', err);
-                    this.dangerFlash = 'Could not transfer ownership.';
-                },
-            });
-    }
-
-    transferDiscord(): void {
-        if (!this.can('manage_settings')) {
-            return;
-        }
-        const serverId = this.transferDiscordServerId.trim();
-        if (!serverId) {
-            this.dangerFlash = 'Enter the Discord server ID to rebind.';
-            return;
-        }
-        this.settingsService
-            .transferDiscord(serverId, this.transferDiscordServerName.trim() || undefined)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    this.transferDiscordServerId = '';
-                    this.transferDiscordServerName = '';
-                    this.dangerFlash = 'Discord server rebound.';
-                    this.loadDiscord();
-                },
-                error: (err) => {
-                    console.error('Failed to rebind Discord server', err);
-                    this.dangerFlash = 'Could not rebind the Discord server.';
-                },
-            });
-    }
-
-    dissolve(): void {
-        // Dissolution is the strongest hazard — gated on transfer_ownership to
-        // match the backend (POST /settings/dissolve requires TransferOwnership).
-        if (!this.can('transfer_ownership') || !this.settings) {
-            return;
-        }
-        if (this.dissolveConfirmName.trim() !== this.settings.name) {
-            this.dangerFlash = 'Type the regiment name exactly to confirm dissolution.';
-            return;
-        }
-        this.settingsService
-            .dissolve(this.dissolveConfirmName.trim())
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    this.dissolveConfirmName = '';
-                    this.dangerFlash = 'Regiment dissolved.';
-                },
-                error: (err) => {
-                    console.error('Failed to dissolve regiment', err);
-                    this.dangerFlash = 'Could not dissolve the regiment.';
-                },
-            });
     }
 }

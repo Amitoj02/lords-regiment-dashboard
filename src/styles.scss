@@ -13,5 +13,8 @@
 @use 'styles/components';
 @use 'styles/layout';
 
+// Onboarding shell — shared page frame for the public apply + status surfaces
+@use 'styles/onboarding';
+
 // Responsive / mobile layer — loaded last so it overrides desktop rules
 @use 'styles/responsive';

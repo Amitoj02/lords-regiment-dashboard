@@ -29,6 +29,7 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
+        cursor: pointer;
     }
     &__name {
         font-weight: 600;
@@ -55,7 +56,7 @@
     color: inherit;
     font: inherit;
     text-align: inherit;
-    cursor: pointer;
+    cursor: grab;
     transition: background 0.12s;
 
     &:last-child {
@@ -74,6 +75,7 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
+        cursor: pointer;
     }
     &__name {
         font-weight: 600;
@@ -194,4 +196,57 @@
 
 .discord-link-notice {
     margin-top: 10px;
+}
+
+.discord-unlink-btn {
+    margin-top: 10px;
+}
+
+.empty {
+    padding: 28px 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--t-400);
+}
+
+// Per-row kebab menu (drop-down anchored to the options button).
+.row-menu-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.row-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    background: var(--parch-100);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-2);
+    box-shadow: var(--shadow-2);
+
+    &__item {
+        display: block;
+        width: 100%;
+        padding: 7px 10px;
+        border: 0;
+        border-radius: var(--r-1);
+        background: none;
+        color: inherit;
+        font: inherit;
+        font-size: 0.8rem;
+        text-align: left;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--parch-50);
+        }
+        &--danger {
+            color: var(--oxblood-400);
+        }
+    }
 }

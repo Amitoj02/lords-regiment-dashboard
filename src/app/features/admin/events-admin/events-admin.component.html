@@ -1,0 +1,69 @@
+<hf-app-shell [activeRoute]="'events'" [crumbs]="['Regiment', 'Events']">
+    <div class="page">
+        <div class="page-head between">
+            <div>
+                <div class="page-sub">Field Orders</div>
+                <h1 class="page-title serif-display">Events</h1>
+            </div>
+            <div class="row gap-8">
+                <a routerLink="/admin/events/create" class="btn btn-primary btn-sm">+ New event</a>
+            </div>
+        </div>
+
+        @if (loadError) {
+        <hf-notice variant="err" [body]="loadError"></hf-notice>
+        } @else if (loading) {
+        <div class="empty">
+            <div class="e-body">Loading events…</div>
+        </div>
+        } @else if (totalCount === 0) {
+        <div class="empty">
+            <div class="e-title">No events yet</div>
+            <div class="e-body">Schedule the regiment's first operation to see it listed here.</div>
+        </div>
+        } @else { @for (group of groups; track group.label) {
+        <section class="event-group">
+            <h2 class="serif group-heading">{{ group.label }}</h2>
+            <div class="panel">
+                <div class="event-table-wrap">
+                    <table class="hf-table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date &amp; Time</th>
+                                <th>Status</th>
+                                <th>RSVPs</th>
+                                <th class="col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (event of group.events; track event.id) {
+                            <tr>
+                                <td>
+                                    <div class="event-name">{{ event.title }}</div>
+                                    <div class="event-server mono">{{ event.serverName }}</div>
+                                </td>
+                                <td class="mono date-cell">
+                                    {{ event.date | date: 'MMM d, yyyy' }} · {{ event.startTime }}
+                                </td>
+                                <td>
+                                    <hf-event-status [status]="event.status"></hf-event-status>
+                                </td>
+                                <td>{{ totalRsvps(event) }}</td>
+                                <td class="col-action">
+                                    <a
+                                        [routerLink]="['/admin/events', event.id]"
+                                        class="btn btn-ghost btn-sm"
+                                        >Manage</a
+                                    >
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        } }
+    </div>
+</hf-app-shell>

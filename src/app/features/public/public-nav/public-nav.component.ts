@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'hf-public-nav',
@@ -8,6 +9,10 @@ import { Component, Input } from '@angular/core';
 })
 export class PublicNavComponent {
     @Input() activeLink = '';
+
+    /** Drives the auth-aware CTA: member → Dashboard, applicant → status,
+     *  anonymous → Join Discord + Sign in. */
+    protected readonly auth = inject(AuthService);
 
     /** Mobile collapsible menu state. */
     menuOpen = false;
@@ -30,5 +35,11 @@ export class PublicNavComponent {
 
     closeMenu(): void {
         this.menuOpen = false;
+    }
+
+    /** Drop the session (AuthService clears state + redirects to /login). */
+    signOut(): void {
+        this.closeMenu();
+        this.auth.logout();
     }
 }
