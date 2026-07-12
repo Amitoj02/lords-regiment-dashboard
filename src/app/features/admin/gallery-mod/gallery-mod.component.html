@@ -14,7 +14,7 @@
                 [ngClass]="{ active: activeTab === 'pending' }"
                 (click)="activeTab = 'pending'"
             >
-                Pending <span class="badge ox">9</span>
+                Pending <span class="badge ox">{{ items.length }}</span>
             </button>
             <button
                 type="button"
@@ -22,7 +22,7 @@
                 [ngClass]="{ active: activeTab === 'approved' }"
                 (click)="activeTab = 'approved'"
             >
-                Recently approved <span class="badge">41</span>
+                Recently approved
             </button>
             <button
                 type="button"
@@ -30,9 +30,20 @@
                 [ngClass]="{ active: activeTab === 'declined' }"
                 (click)="activeTab = 'declined'"
             >
-                Declined <span class="badge">6</span>
+                Declined
             </button>
         </div>
+
+        @if (activeTab !== 'pending') {
+        <hf-notice variant="info">
+            Approved and declined submissions live in the public gallery and audit ledger. This
+            queue shows items still awaiting a decision.
+        </hf-notice>
+        } @else if (!loading && items.length === 0) {
+        <hf-notice variant="ok"
+            >The moderation queue is clear — no submissions are waiting.</hf-notice
+        >
+        }
 
         <div class="mod-layout">
             <!-- Left: gallery grid -->
@@ -45,10 +56,8 @@
                         [ngClass]="{ 'gallery-card--selected': item.id === selectedId }"
                         (click)="selectedId = item.id"
                     >
-                        <div
-                            class="gallery-card__thumb"
-                            [ngStyle]="{ background: item.thumbnailColor }"
-                        >
+                        <div class="gallery-card__thumb" [ngStyle]="{ background: thumb(item) }">
+                            @if (can('moderate_gallery')) {
                             <div class="gallery-card__actions">
                                 <button
                                     type="button"
@@ -65,9 +74,12 @@
                                     &times;
                                 </button>
                             </div>
+                            }
                         </div>
                         <div class="gallery-card__info">
-                            <span class="gallery-card__caption">{{ item.caption }}</span>
+                            <span class="gallery-card__caption"
+                                >{{ item.caption || item.title }}</span
+                            >
                             <span class="gallery-card__by">by {{ item.submittedBy }}</span>
                         </div>
                     </button>
@@ -86,38 +98,40 @@
                         <!-- Main preview -->
                         <div
                             class="detail-main-preview"
-                            [ngStyle]="{ background: selected.thumbnailColor }"
+                            [ngStyle]="{ background: thumb(selected) }"
                         ></div>
-                        <!-- Thumbnail strip -->
-                        <div class="detail-thumbnails">
-                            @for (t of selected.thumbnails; track t) {
-                            <div class="detail-thumb" [ngStyle]="{ background: t }"></div>
-                            }
-                        </div>
                         <!-- Metadata -->
                         <div class="detail-meta">
+                            <div class="meta-row">
+                                <span class="field-label">Title</span>
+                                <span>{{ selected.title }}</span>
+                            </div>
+                            @if (selected.caption) {
                             <div class="meta-row">
                                 <span class="field-label">Caption</span>
                                 <span>{{ selected.caption }}</span>
                             </div>
+                            }
+                            <div class="meta-row">
+                                <span class="field-label">Type</span>
+                                <span class="badge">{{ selected.type }}</span>
+                            </div>
+                            @if (selected.linkedEvent) {
                             <div class="meta-row">
                                 <span class="field-label">Linked event</span>
-                                <span class="badge brass">{{ selected.event }}</span>
+                                <span class="badge brass">{{ selected.linkedEvent }}</span>
                             </div>
+                            }
                             <div class="meta-row">
-                                <span class="field-label">Tags</span>
-                                <div class="row row--wrap-4">
-                                    @for (tag of selected.tags; track tag) {
-                                    <span class="badge">{{ tag }}</span>
-                                    }
-                                </div>
+                                <span class="field-label">Files</span>
+                                <span>{{ selected.fileCount ?? 0 }}</span>
                             </div>
                             <div class="meta-row">
                                 <span class="field-label">Tagged members</span>
                                 <div class="row row--wrap-4">
-                                    @for (m of selected.taggedMembers; track m) {
+                                    @for (m of selected.taggedMembers ?? []; track m) {
                                     <span class="badge laurel">{{ m }}</span>
-                                    } @if (selected.taggedMembers.length === 0) {
+                                    } @if ((selected.taggedMembers ?? []).length === 0) {
                                     <span class="field-hint">None</span>
                                     }
                                 </div>
@@ -127,6 +141,7 @@
                                 <span>{{ selected.submittedBy }}</span>
                             </div>
                         </div>
+                        @if (can('moderate_gallery')) {
                         <!-- Decline reason -->
                         <div class="field-row">
                             <label class="field-label" for="gm-decline-reason"
@@ -160,6 +175,7 @@
                                 Approve
                             </button>
                         </div>
+                        }
                     </div>
                 </div>
             </div>

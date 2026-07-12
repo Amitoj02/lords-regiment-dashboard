@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditLog } from '../../../core/models/audit-log.model';
 import { AuditService } from '../../../core/services/audit.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-audit',
@@ -22,20 +23,42 @@ export class AuditComponent implements OnInit {
     actors: string[] = [];
     actions: string[] = [];
 
+    exporting = false;
+    loading = true;
+    loadError = '';
+
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(private auditService: AuditService) {}
+    constructor(
+        private auditService: AuditService,
+        private auth: AuthService,
+    ) {}
+
+    /** Capability gate for a template action (see the spec's capability keys). */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
 
     ngOnInit(): void {
+        this.loading = true;
+        this.loadError = '';
         this.auditService
             .getAll()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((logs) => {
-                this.logs = logs;
-                this.filteredLogs = logs;
-                this.selectedLog = logs[0] ?? null;
-                this.actors = [...new Set(logs.map((l) => l.actor))];
-                this.actions = [...new Set(logs.map((l) => l.action))];
+            .subscribe({
+                next: (logs) => {
+                    this.loading = false;
+                    this.logs = logs;
+                    this.filteredLogs = logs;
+                    this.selectedLog = logs[0] ?? null;
+                    this.actors = [...new Set(logs.map((l) => l.actor))];
+                    this.actions = [...new Set(logs.map((l) => l.action))];
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.loadError = 'Could not load the audit ledger — please try again.';
+                    console.error('Failed to load audit ledger', err);
+                },
             });
     }
 
@@ -71,7 +94,35 @@ export class AuditComponent implements OnInit {
         return 'badge';
     }
 
+    /** Download the filtered ledger as a CSV (ViewAuditLog). */
     exportCsv(): void {
-        // TODO: export CSV
+        if (this.exporting) {
+            return;
+        }
+        this.exporting = true;
+        this.auditService
+            .exportCsv({
+                action: this.filterAction || undefined,
+            })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (blob) => {
+                    this.triggerDownload(blob);
+                    this.exporting = false;
+                },
+                error: (err) => {
+                    console.error('Failed to export audit ledger', err);
+                    this.exporting = false;
+                },
+            });
+    }
+
+    private triggerDownload(blob: Blob): void {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `audit-ledger-${new Date().toISOString().slice(0, 10)}.csv`;
+        anchor.click();
+        URL.revokeObjectURL(url);
     }
 }

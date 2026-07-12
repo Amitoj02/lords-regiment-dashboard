@@ -1,10 +1,31 @@
 <hf-app-shell [activeRoute]="'settings'" [crumbs]="crumbs">
     <!-- Stat tiles row -->
     <div class="stat-tiles">
-        <hf-stat-tile label="Connection" value="Online"></hf-stat-tile>
-        <hf-stat-tile label="Server members visible" value="84 / 84"></hf-stat-tile>
-        <hf-stat-tile label="Roles under bot" value="9"></hf-stat-tile>
+        <hf-stat-tile label="Connection" [value]="connectionLabel"></hf-stat-tile>
+        <hf-stat-tile label="Server members visible" [value]="membersLabel"></hf-stat-tile>
+        <hf-stat-tile label="Roles under bot" [value]="rolesLabel"></hf-stat-tile>
     </div>
+
+    @if (can('manage_settings')) {
+    <div class="row gap-8 bot-toolbar">
+        <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            [disabled]="verifying"
+            (click)="verify()"
+        >
+            {{ verifying ? 'Verifying…' : 'Verify connection' }}
+        </button>
+        <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            [disabled]="resyncing"
+            (click)="resync()"
+        >
+            {{ resyncing ? 'Enqueuing…' : 'Resync roles' }}
+        </button>
+    </div>
+    }
 
     <!-- Two-column -->
     <div class="bot-layout">
@@ -16,20 +37,22 @@
             <div class="panel-body operations-list">
                 @for (op of operations; track op) {
                 <div class="op-row">
-                    <span class="op-ts mono">{{ op.timestamp }}</span>
+                    <span class="op-ts mono">{{ formatTime(op.occurredAt) }}</span>
                     <span
                         class="status-dot"
                         [ngClass]="op.success ? 'discord-on' : 'discord-off'"
                     ></span>
                     <span class="op-desc" [ngClass]="op.success ? '' : 'op-desc--err'"
-                        >{{ op.description }}</span
+                        >{{ op.operation }}</span
                     >
-                    @if (op.needsResolve) {
+                    @if (op.resolvable && can('manage_settings')) {
                     <button type="button" class="btn btn-ghost btn-sm" (click)="resolve(op.id)">
                         Resolve
                     </button>
                     }
                 </div>
+                } @empty {
+                <span class="field-hint">No bot operations recorded yet.</span>
                 }
             </div>
         </div>
@@ -51,75 +74,39 @@
                 <div class="panel-body bot-info">
                     <div class="info-row">
                         <span class="field-label">Version</span>
-                        <span class="mono">v{{ botInfo.version }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="field-label">Server</span>
-                        <span>{{ botInfo.serverName }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="field-label">Server ID</span>
-                        <span class="mono">{{ botInfo.serverId }}</span>
+                        <span class="mono"
+                            >{{ connection?.botVersion ? 'v' + connection?.botVersion : '—' }}</span
+                        >
                     </div>
                     <div class="info-row">
                         <span class="field-label">Bot role position</span>
-                        <span class="mono">#{{ botInfo.rolePosition }}</span>
+                        <span class="mono"
+                            >{{ connection?.botRolePosition !== null && connection?.botRolePosition
+                            !== undefined ? '#' + connection?.botRolePosition : '—' }}</span
+                        >
                     </div>
                     <div class="info-row">
                         <span class="field-label">Last heartbeat</span>
-                        <span class="mono">{{ botInfo.lastHeartbeat }}</span>
+                        <span class="mono"
+                            >{{ formatTime(connection?.lastHeartbeatAt ?? null) }}</span
+                        >
+                    </div>
+                    <div class="info-row">
+                        <span class="field-label">Last full sync</span>
+                        <span class="mono"
+                            >{{ formatTime(connection?.lastFullSyncAt ?? null) }}</span
+                        >
                     </div>
                 </div>
             </div>
 
             <!-- Warning notice -->
-            <hf-notice type="warn">
-                One role sits above the bot in the hierarchy. Members with that role cannot have
-                their Discord role managed by Quartermaster.
+            @if (connection && !connection.connected) {
+            <hf-notice variant="warn">
+                Quartermaster is not currently connected to Discord. Role and announcement syncs are
+                paused until the connection is restored — use "Verify connection" to re-probe.
             </hf-notice>
-
-            <!-- Permissions check -->
-            <div class="panel">
-                <div class="panel-header">
-                    <span class="panel-title">Permissions Check</span>
-                </div>
-                <div class="panel-body perm-list">
-                    @for (p of permissionChecks; track p) {
-                    <div class="perm-row">
-                        <span
-                            class="perm-icon"
-                            [ngClass]="p.granted ? 'perm-icon--ok' : 'perm-icon--err'"
-                        >
-                            @if (p.granted) {
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                            >
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            } @if (!p.granted) {
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                            >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                            }
-                        </span>
-                        <span class="perm-name">{{ p.permission }}</span>
-                    </div>
-                    }
-                </div>
-            </div>
+            }
         </div>
     </div>
 </hf-app-shell>

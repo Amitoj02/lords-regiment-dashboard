@@ -1,132 +1,93 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { GalleryItem } from '../models/gallery.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiGalleryItem, PaginatedResponse, mapGalleryItem } from '../models/api.model';
+import { GalleryItem, GalleryItemType } from '../models/gallery.model';
 
-const STUB_GALLERY: GalleryItem[] = [
-    {
-        id: 'g1',
-        title: 'May Campaign — Final Charge',
-        type: 'image',
-        thumbnailUrl: '/assets/images/bg-1.jpg',
-        mediaUrl: '/assets/images/bg-1.jpg',
-        submittedBy: 'Rhett Asher',
-        submittedAt: '2026-05-26T08:00:00Z',
-        status: 'approved',
-        likes: 14,
-        tags: ['campaign', 'battle'],
-        linkedEvent: 'ev4',
-        taggedMembers: ['m1', 'm2', 'm3'],
-        caption: 'The regiment charges at full strength during the final campaign assault.',
-    },
-    {
-        id: 'g2',
-        title: 'Formation Drill Screenshot',
-        type: 'image',
-        thumbnailUrl: '/assets/images/bg-2.jpg',
-        mediaUrl: '/assets/images/bg-2.jpg',
-        submittedBy: 'Mara Erskine',
-        submittedAt: '2026-06-01T15:30:00Z',
-        status: 'approved',
-        likes: 7,
-        tags: ['training', 'formation'],
-        taggedMembers: ['m4', 'm5', 'm6'],
-        caption: 'Perfect line formation during Thursday drill.',
-    },
-    {
-        id: 'g3',
-        title: 'Siege Defense Highlights',
-        type: 'video',
-        thumbnailUrl: '/assets/images/bg-1.jpg',
-        mediaUrl: 'https://www.youtube.com/watch?v=example',
-        submittedBy: 'Diego Vasquez',
-        submittedAt: '2026-06-03T10:00:00Z',
-        status: 'approved',
-        likes: 22,
-        tags: ['siege', 'highlight'],
-        linkedEvent: 'ev2',
-        fileCount: 1,
-    },
-    {
-        id: 'g4',
-        title: 'Regiment Banner at Waterloo Reenactment',
-        type: 'image',
-        thumbnailUrl: '/assets/images/banner.png',
-        mediaUrl: '/assets/images/banner.png',
-        submittedBy: 'Bjorn Trager',
-        submittedAt: '2026-06-04T07:00:00Z',
-        status: 'pending',
-        likes: 0,
-        tags: ['banner', 'ceremony'],
-    },
-    {
-        id: 'g5',
-        title: 'Discord Recap Thread Link',
-        type: 'link',
-        thumbnailUrl: '',
-        mediaUrl: 'https://discord.com/channels/example',
-        submittedBy: 'Sade Wren',
-        submittedAt: '2026-05-28T20:00:00Z',
-        status: 'approved',
-        likes: 3,
-        tags: ['discord', 'recap'],
-        linkedEvent: 'ev4',
-    },
-    {
-        id: 'g6',
-        title: 'Questionable Content Submission',
-        type: 'image',
-        thumbnailUrl: '',
-        mediaUrl: '',
-        submittedBy: 'Unknown',
-        submittedAt: '2026-06-02T22:00:00Z',
-        status: 'declined',
-        likes: 0,
-        tags: [],
-        caption: 'Declined by moderator.',
-    },
-];
+/** One file in a multi-file submission (POST /gallery). `sizeBytes` is a numeric string. */
+export interface GalleryFileInput {
+    fileName: string;
+    url?: string;
+    mediaType: 'image' | 'video';
+    sizeBytes?: string;
+    width?: number;
+    height?: number;
+    durationSeconds?: number;
+    caption?: string;
+    thumbnailColor?: string;
+}
+
+/** Body for POST /gallery (SubmitToGallery). Author + regiment come from the JWT. */
+export interface GallerySubmitPayload {
+    title: string;
+    caption?: string;
+    type: GalleryItemType;
+    linkUrl?: string;
+    thumbnailUrl?: string;
+    eventId?: string;
+    files?: GalleryFileInput[];
+    taggedMemberIds?: string[];
+}
+
+/** Response of the like/unlike endpoints. */
+export interface GalleryLikeState {
+    likesCount: number;
+    liked: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GalleryService {
-    // TODO: replace with HttpClient calls to /api/gallery
+    private readonly http = inject(HttpClient);
+    private readonly base = `${environment.apiBaseUrl}/gallery`;
 
-    getAll(): Observable<GalleryItem[]> {
-        return of(STUB_GALLERY);
+    /** Public feed (approved only). Optional type / event filters. */
+    getAll(type?: GalleryItemType, eventId?: string): Observable<GalleryItem[]> {
+        let params = new HttpParams().set('limit', '100');
+        if (type) params = params.set('type', type);
+        if (eventId) params = params.set('eventId', eventId);
+        return this.http
+            .get<PaginatedResponse<ApiGalleryItem>>(this.base, { params })
+            .pipe(map((res) => res.data.map(mapGalleryItem)));
     }
 
-    getById(id: string): Observable<GalleryItem | undefined> {
-        return of(STUB_GALLERY.find((g) => g.id === id));
+    getById(id: string): Observable<GalleryItem> {
+        return this.http.get<ApiGalleryItem>(`${this.base}/${id}`).pipe(map(mapGalleryItem));
     }
 
-    approve(id: string): Observable<GalleryItem | undefined> {
-        // TODO: POST /api/gallery/:id/approve
-        const idx = STUB_GALLERY.findIndex((g) => g.id === id);
-        if (idx !== -1) {
-            STUB_GALLERY[idx] = { ...STUB_GALLERY[idx], status: 'approved' };
-            return of(STUB_GALLERY[idx]);
-        }
-        return of(undefined);
+    /** The pending moderation queue (ModerateGallery). */
+    moderationQueue(): Observable<GalleryItem[]> {
+        return this.http
+            .get<PaginatedResponse<ApiGalleryItem>>(`${this.base}/moderation/queue?limit=100`)
+            .pipe(map((res) => res.data.map(mapGalleryItem)));
     }
 
-    decline(id: string): Observable<GalleryItem | undefined> {
-        // TODO: POST /api/gallery/:id/decline
-        const idx = STUB_GALLERY.findIndex((g) => g.id === id);
-        if (idx !== -1) {
-            STUB_GALLERY[idx] = { ...STUB_GALLERY[idx], status: 'declined' };
-            return of(STUB_GALLERY[idx]);
-        }
-        return of(undefined);
+    /** Submit a new item (SubmitToGallery) — lands in the moderation queue. */
+    submit(payload: GallerySubmitPayload): Observable<GalleryItem> {
+        return this.http.post<ApiGalleryItem>(this.base, payload).pipe(map(mapGalleryItem));
     }
 
-    submit(item: Omit<GalleryItem, 'id' | 'status' | 'likes'>): Observable<GalleryItem> {
-        // TODO: POST /api/gallery
-        const newItem: GalleryItem = {
-            ...item,
-            id: `g${Date.now()}`,
-            status: 'pending',
-            likes: 0,
-        };
-        STUB_GALLERY.push(newItem);
-        return of(newItem);
+    approve(id: string): Observable<GalleryItem> {
+        return this.http
+            .post<ApiGalleryItem>(`${this.base}/${id}/approve`, {})
+            .pipe(map(mapGalleryItem));
+    }
+
+    decline(id: string, reason?: string): Observable<GalleryItem> {
+        return this.http
+            .post<ApiGalleryItem>(`${this.base}/${id}/decline`, { reason })
+            .pipe(map(mapGalleryItem));
+    }
+
+    like(id: string): Observable<GalleryLikeState> {
+        return this.http.post<GalleryLikeState>(`${this.base}/${id}/like`, {});
+    }
+
+    unlike(id: string): Observable<GalleryLikeState> {
+        return this.http.delete<GalleryLikeState>(`${this.base}/${id}/like`);
+    }
+
+    delete(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.base}/${id}`);
     }
 }

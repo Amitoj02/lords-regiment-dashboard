@@ -21,8 +21,8 @@
 
         <!-- Main content -->
         <main class="settings-main">
-            <!-- Identity panel -->
-            @if (activeSection === 'profile') {
+            <!-- ═══ Profile & visibility ═══ -->
+            @if (activeSection === 'profile') { @if (settings) {
             <div class="panel">
                 <div class="panel-header">
                     <span class="panel-title">Identity</span>
@@ -34,7 +34,8 @@
                             id="regiment-name"
                             class="hf-input"
                             type="text"
-                            [(ngModel)]="regimentName"
+                            [(ngModel)]="settings.name"
+                            [disabled]="!can('manage_settings')"
                         />
                     </div>
                     <div class="field-row">
@@ -43,7 +44,8 @@
                             id="short-tag"
                             class="hf-input short-tag-input"
                             type="text"
-                            [(ngModel)]="shortTag"
+                            [(ngModel)]="settings.shortTag"
+                            [disabled]="!can('manage_settings')"
                         />
                         <span class="field-hint"
                             >Displayed in brackets before member names, e.g. [LR] Jameson Nolt</span
@@ -55,192 +57,566 @@
                             id="mission-statement"
                             class="hf-textarea"
                             rows="3"
-                            [(ngModel)]="missionStatement"
+                            [ngModel]="settings.missionStatement ?? ''"
+                            (ngModelChange)="settings.missionStatement = $event"
+                            [disabled]="!can('manage_settings')"
                         ></textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="field-row">
-                            <label class="field-label" for="upload-crest">Crest</label>
-                            <button id="upload-crest" type="button" class="upload-target">
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.5"
-                                    aria-hidden="true"
-                                >
-                                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                    <path d="M3 16l5-5 4 4 3-3 4 4" />
-                                </svg>
-                                <span>Upload crest</span>
-                            </button>
-                        </div>
-                        <div class="field-row">
-                            <label class="field-label" for="upload-banner">Banner</label>
-                            <button id="upload-banner" type="button" class="upload-target">
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.5"
-                                    aria-hidden="true"
-                                >
-                                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                    <path d="M3 16l5-5 4 4 3-3 4 4" />
-                                </svg>
-                                <span>Upload banner</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
-            }
 
-            <!-- Visibility panel -->
-            @if (activeSection === 'profile') {
+            <!-- Visibility -->
             <div class="panel">
                 <div class="panel-header">
                     <span class="panel-title">Visibility</span>
                 </div>
                 <div class="panel-body toggle-list">
-                    @for (toggle of visibilityToggles; track toggle) {
                     <div class="toggle-row">
                         <div>
-                            <div class="toggle-label">{{ toggle.label }}</div>
-                            <div class="field-hint">{{ toggle.hint }}</div>
+                            <div class="toggle-label">Public roster</div>
+                            <div class="field-hint">Show the member list to non-members</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" [(ngModel)]="toggle.value" />
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="settings.publicRoster"
+                                [disabled]="!can('manage_settings')"
+                            />
                             <span class="toggle-track"></span>
                         </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Public gallery</div>
+                            <div class="field-hint">Show the gallery to non-members</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="settings.publicGallery"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Public events</div>
+                            <div class="field-hint">Show upcoming events publicly</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="settings.publicEvents"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Regiment statistics</div>
+                            <div class="field-hint">Show attendance stats publicly</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="settings.publicStats"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Open recruitment</div>
+                            <div class="field-hint">Accept new applications</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="settings.openRecruitment"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Allow mercenaries</div>
+                            <div class="field-hint">Let non-members ride along as mercenaries</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="settings.allowMercenaries"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invite (T-0017) — keep it game-fun: just share the Discord invite -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Muster a mercenary</span>
+                </div>
+                <div class="panel-body">
+                    <p class="field-hint invite-blurb">
+                        No paperwork, no enlistment forms — just send a mate the regiment's Discord
+                        invite and let them fall in.
+                    </p>
+                    @if (inviteUrl) {
+                    <div class="row gap-8 invite-row">
+                        <input class="hf-input" type="text" [value]="inviteUrl" readonly />
+                        <button type="button" class="btn btn-primary btn-sm" (click)="copyInvite()">
+                            {{ inviteCopied ? 'Copied!' : 'Copy invite link' }}
+                        </button>
+                    </div>
+                    } @else {
+                    <hf-notice variant="info">
+                        No Discord invite link is set yet — add one under Discord &amp;
+                        Quartermaster.
+                    </hf-notice>
+                    }
+                </div>
+            </div>
+
+            @if (can('manage_settings')) {
+            <div class="settings-footer">
+                @if (profileFlash) {
+                <span class="field-hint flash">{{ profileFlash }}</span>
+                }
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="savingProfile"
+                    (click)="saveProfile()"
+                >
+                    {{ savingProfile ? 'Saving…' : 'Save settings' }}
+                </button>
+            </div>
+            } } }
+
+            <!-- ═══ Announcements (T-0017) ═══ -->
+            @if (activeSection === 'announce') {
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Compose a Field Dispatch</span>
+                </div>
+                <div class="panel-body">
+                    @if (!can('manage_notifications')) {
+                    <hf-notice variant="info">
+                        You need the "Manage notifications" permission to publish dispatches.
+                    </hf-notice>
+                    } @else {
+                    <div class="field-row">
+                        <label class="field-label" for="ann-title">Title</label>
+                        <input
+                            id="ann-title"
+                            class="hf-input"
+                            type="text"
+                            [(ngModel)]="announce.title"
+                            placeholder="e.g. Muster for the Autumn Campaign"
+                        />
+                    </div>
+                    <div class="field-row">
+                        <label class="field-label" for="ann-body">Message</label>
+                        <textarea
+                            id="ann-body"
+                            class="hf-textarea"
+                            rows="5"
+                            [(ngModel)]="announce.body"
+                            placeholder="Write the dispatch to the regiment…"
+                        ></textarea>
+                    </div>
+                    <div class="field-row">
+                        <label class="field-label" for="ann-tone">Tone</label>
+                        <select id="ann-tone" class="hf-select" [(ngModel)]="announce.tone">
+                            @for (t of tones; track t.value) {
+                            <option [value]="t.value">{{ t.label }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field-row">
+                        <label class="field-label toggle-inline">
+                            <input type="checkbox" [(ngModel)]="announce.crossPostToDiscord" />
+                            Also cross-post to the Discord announcement channel
+                        </label>
+                    </div>
+                    <div class="row gap-8 announce-actions">
+                        @if (announceFlash) {
+                        <span class="field-hint flash">{{ announceFlash }}</span>
+                        }
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            [disabled]="sendingAnnouncement || !announce.title || !announce.body"
+                            (click)="sendAnnouncement()"
+                        >
+                            {{ sendingAnnouncement ? 'Publishing…' : 'Publish dispatch' }}
+                        </button>
                     </div>
                     }
                 </div>
             </div>
             }
 
-            <!-- Permission Matrix panel -->
-            @if (activeSection === 'profile' || activeSection === 'roles') {
+            <!-- ═══ Discord & Quartermaster (T-0024) ═══ -->
+            @if (activeSection === 'discord') {
+            <div class="panel">
+                <div class="panel-header between">
+                    <span class="panel-title">Discord connection</span>
+                    <span class="badge">{{ connectionLabel }}</span>
+                </div>
+                <div class="panel-body">
+                    @if (connection && !connection.connected) {
+                    <hf-notice variant="warn">
+                        Quartermaster is not currently connected to Discord — role and announcement
+                        syncs are paused until the connection is restored.
+                    </hf-notice>
+                    }
+                    <div class="toggle-row">
+                        <div class="toggle-label">Bot version</div>
+                        <span class="mono"
+                            >{{ connection?.botVersion ? 'v' + connection?.botVersion : '—' }}</span
+                        >
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">Members visible</div>
+                        <span class="mono">{{ connection?.membersVisible ?? '—' }}</span>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">Roles under bot</div>
+                        <span class="mono">{{ connection?.totalRoles ?? '—' }}</span>
+                    </div>
+                    @if (can('manage_settings')) {
+                    <div class="row gap-8 discord-actions">
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm"
+                            [disabled]="verifying"
+                            (click)="verifyConnection()"
+                        >
+                            {{ verifying ? 'Verifying…' : 'Verify connection' }}
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm"
+                            [disabled]="resyncing"
+                            (click)="resync()"
+                        >
+                            {{ resyncing ? 'Enqueuing…' : 'Resync roles' }}
+                        </button>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quartermaster bot settings -->
+            @if (botSettings) {
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Quartermaster bot</span>
+                </div>
+                <div class="panel-body toggle-list">
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Bot enabled</div>
+                            <div class="field-hint">
+                                Master switch for all Quartermaster activity
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="botSettings.botEnabled"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Sync roles on change</div>
+                            <div class="field-hint">
+                                Push rank/role changes to Discord automatically
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="botSettings.syncRolesOnChange"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="ann-channel">Announcement channel ID</label>
+                        <input
+                            id="ann-channel"
+                            class="hf-input"
+                            type="text"
+                            [ngModel]="botSettings.announcementChannelId ?? ''"
+                            (ngModelChange)="botSettings.announcementChannelId = $event"
+                            [disabled]="!can('manage_settings')"
+                        />
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="welcome-channel">Welcome channel ID</label>
+                        <input
+                            id="welcome-channel"
+                            class="hf-input"
+                            type="text"
+                            [ngModel]="botSettings.welcomeChannelId ?? ''"
+                            (ngModelChange)="botSettings.welcomeChannelId = $event"
+                            [disabled]="!can('manage_settings')"
+                        />
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="join-role">Join role ID</label>
+                        <input
+                            id="join-role"
+                            class="hf-input"
+                            type="text"
+                            [ngModel]="botSettings.joinRoleId ?? ''"
+                            (ngModelChange)="botSettings.joinRoleId = $event"
+                            [disabled]="!can('manage_settings')"
+                        />
+                    </div>
+
+                    <!-- SENSITIVE: kick-on-ban -->
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Kick on ban</div>
+                            <div class="field-hint">
+                                When an app ban is issued, also remove the member from the Discord
+                                server
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                type="checkbox"
+                                [(ngModel)]="botSettings.kickOnBan"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    @if (botSettings.kickOnBan) {
+                    <hf-notice variant="warn">
+                        With "Kick on ban" enabled, banning a member here will also kick them from
+                        your Discord server. This is irreversible from the app — they must be
+                        re-invited manually.
+                    </hf-notice>
+                    } @if (can('manage_settings')) {
+                    <div class="row gap-8 bot-save">
+                        @if (botFlash) {
+                        <span class="field-hint flash">{{ botFlash }}</span>
+                        }
+                        <button
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            [disabled]="savingBot"
+                            (click)="saveBotSettings()"
+                        >
+                            {{ savingBot ? 'Saving…' : 'Save bot settings' }}
+                        </button>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Recent operations -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Recent operations</span>
+                </div>
+                <div class="panel-body">
+                    @for (op of operations; track op) {
+                    <div class="row gap-8 op-line">
+                        <span
+                            class="status-dot"
+                            [ngClass]="op.success ? 'discord-on' : 'discord-off'"
+                        ></span>
+                        <span class="op-line__text">{{ op.operation }}</span>
+                        @if (op.resolvable && can('manage_settings')) {
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm"
+                            (click)="resolveOperation(op.id)"
+                        >
+                            Resolve
+                        </button>
+                        }
+                    </div>
+                    } @empty {
+                    <span class="field-hint">No bot operations recorded yet.</span>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- ═══ Roles & permissions ═══ -->
+            @if (activeSection === 'roles') {
             <div class="panel">
                 <div class="panel-header">
                     <span class="panel-title">Permission Matrix</span>
                 </div>
                 <div class="panel-body perm-matrix-wrap">
+                    @if (matrix) {
                     <table class="hf-table perm-table">
                         <thead>
                             <tr>
                                 <th>Capability</th>
-                                @for (col of roleColumns; track col) {
-                                <th class="role-col">{{ col | titlecase }}</th>
+                                @for (role of matrix.roles; track role) {
+                                <th class="role-col">{{ label(role) }}</th>
                                 }
                             </tr>
                         </thead>
                         <tbody>
-                            @for (row of permissionMatrix; track row) {
+                            @for (cap of matrix.capabilities; track cap) {
                             <tr>
-                                <td>{{ row.capability }}</td>
-                                <!-- Owner: locked, brass check -->
-                                <td class="perm-cell perm-cell--locked">
-                                    @if (row.owner) {
-                                    <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="var(--brass-400)"
-                                        stroke="none"
-                                    >
-                                        <path d="M20 6L9 17l-5-5" />
-                                    </svg>
-                                    } @if (!row.owner) {
-                                    <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="var(--t-300)"
-                                        stroke-width="2"
-                                    >
-                                        <line x1="18" y1="6" x2="6" y2="18" />
-                                        <line x1="6" y1="6" x2="18" y2="18" />
-                                    </svg>
-                                    }
+                                <td>{{ label(cap) }}</td>
+                                @for (role of matrix.roles; track role) {
+                                <td
+                                    class="perm-cell"
+                                    [ngClass]="{ 'perm-cell--locked': role === 'Owner' }"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        [ngModel]="isGranted(role, cap)"
+                                        (ngModelChange)="onPermissionToggle(role, cap, $event)"
+                                        [disabled]="role === 'Owner' || !can('manage_settings')"
+                                    />
                                 </td>
-                                <td class="perm-cell">
-                                    <input type="checkbox" [(ngModel)]="row.admin" />
-                                </td>
-                                <td class="perm-cell">
-                                    <input type="checkbox" [(ngModel)]="row.moderator" />
-                                </td>
-                                <td class="perm-cell">
-                                    <input type="checkbox" [(ngModel)]="row.member" />
-                                </td>
-                                <td class="perm-cell">
-                                    <input type="checkbox" [(ngModel)]="row.mercenary" />
-                                </td>
-                                <td class="perm-cell">
-                                    <input type="checkbox" [(ngModel)]="row.applicant" />
-                                </td>
+                                }
                             </tr>
                             }
                         </tbody>
                     </table>
+                    } @else {
+                    <span class="field-hint">Loading the authorization matrix…</span>
+                    }
                 </div>
             </div>
-            }
+            @if (can('manage_settings')) {
+            <div class="settings-footer">
+                @if (permissionsFlash) {
+                <span class="field-hint flash">{{ permissionsFlash }}</span>
+                }
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="savingPermissions"
+                    (click)="savePermissions()"
+                >
+                    {{ savingPermissions ? 'Saving…' : 'Save permissions' }}
+                </button>
+            </div>
+            } }
 
-            <!-- Hazardous Operations panel -->
-            @if (activeSection === 'profile') {
+            <!-- ═══ Danger zone ═══ -->
+            @if (activeSection === 'danger') { @if (!can('manage_settings')) {
+            <hf-notice variant="info">
+                Only administrators with the "Manage settings" permission can reach these controls.
+            </hf-notice>
+            } @else {
             <div class="panel panel--hazard">
                 <div class="panel-header">
                     <span class="panel-title">Hazardous Operations</span>
                 </div>
                 <div class="panel-body">
-                    <div class="hazard-row">
-                        <div>
-                            <div class="hazard-label">Purge declined applications</div>
-                            <div class="field-hint">
-                                Permanently delete all declined applications older than 90 days.
-                            </div>
+                    @if (dangerFlash) {
+                    <hf-notice variant="warn">{{ dangerFlash }}</hf-notice>
+                    } @if (can('transfer_ownership')) {
+                    <div class="hazard-block">
+                        <div class="hazard-label">Transfer ownership</div>
+                        <div class="field-hint">
+                            Hand the Owner role to another member. You will be demoted to Admin.
                         </div>
-                        <button type="button" class="btn btn-destructive btn-sm">Purge</button>
-                    </div>
-                    <div class="hazard-row">
-                        <div>
-                            <div class="hazard-label">Reset all event RSVPs</div>
-                            <div class="field-hint">
-                                Clear RSVP data for all future events. Cannot be undone.
-                            </div>
+                        <div class="field-row hazard-form">
+                            <input
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="transferOwnerMemberId"
+                                placeholder="New owner member ID"
+                            />
+                            <label class="field-label toggle-inline">
+                                <input type="checkbox" [(ngModel)]="transferOwnerConfirm" />
+                                I understand this is irreversible
+                            </label>
+                            <button
+                                type="button"
+                                class="btn btn-destructive btn-sm"
+                                (click)="transferOwnership()"
+                            >
+                                Transfer
+                            </button>
                         </div>
-                        <button type="button" class="btn btn-destructive btn-sm">Reset</button>
                     </div>
-                    <div class="hazard-row">
-                        <div>
-                            <div class="hazard-label">Dissolve regiment</div>
-                            <div class="field-hint">
-                                Permanently delete all regiment data. This is final.
-                            </div>
+                    }
+
+                    <div class="hazard-block">
+                        <div class="hazard-label">Rebind Discord server</div>
+                        <div class="field-hint">
+                            Point the regiment at a different Discord guild.
                         </div>
-                        <button type="button" class="btn btn-destructive btn-sm">Dissolve</button>
+                        <div class="field-row hazard-form">
+                            <input
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="transferDiscordServerId"
+                                placeholder="Discord server ID"
+                            />
+                            <input
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="transferDiscordServerName"
+                                placeholder="Server name (optional)"
+                            />
+                            <button
+                                type="button"
+                                class="btn btn-destructive btn-sm"
+                                (click)="transferDiscord()"
+                            >
+                                Rebind
+                            </button>
+                        </div>
                     </div>
+
+                    @if (can('transfer_ownership')) {
+                    <div class="hazard-block">
+                        <div class="hazard-label">Dissolve regiment</div>
+                        <div class="field-hint">
+                            Permanently delete all regiment data. Type the regiment name (<strong
+                                >{{ settings?.name }}</strong
+                            >) to confirm.
+                        </div>
+                        <div class="field-row hazard-form">
+                            <input
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="dissolveConfirmName"
+                                placeholder="Regiment name"
+                            />
+                            <button
+                                type="button"
+                                class="btn btn-destructive btn-sm"
+                                (click)="dissolve()"
+                            >
+                                Dissolve
+                            </button>
+                        </div>
+                    </div>
+                    }
                 </div>
             </div>
-            }
-
-            <!-- Save footer -->
-            <div class="settings-footer">
-                <button type="button" class="btn btn-ghost" (click)="discard()">
-                    Discard changes
-                </button>
-                <button type="button" class="btn btn-primary" (click)="save()">
-                    Save settings
-                </button>
-            </div>
+            } }
         </main>
     </div>
 </hf-app-shell>

@@ -1,26 +1,27 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MemberRole } from '../../../core/models/member.model';
+import { NotificationTone } from '../../../core/models/notification.model';
+import { AuthService } from '../../../core/services/auth.service';
+import {
+    PermissionChange,
+    PermissionsMatrix,
+    SettingsDto,
+    SettingsService,
+    UpdateSettingsPayload,
+} from '../../../core/services/settings.service';
+import { NotificationsService } from '../../../core/services/notifications.service';
+import {
+    BotOperation,
+    DiscordBotSettings,
+    DiscordConnection,
+    DiscordService,
+} from '../../../core/services/discord.service';
 
 interface NavItem {
     id: string;
     label: string;
     group: string;
-}
-
-interface ToggleSetting {
-    id: string;
-    label: string;
-    hint: string;
-    value: boolean;
-}
-
-interface PermissionRow {
-    capability: string;
-    owner: boolean;
-    admin: boolean;
-    moderator: boolean;
-    member: boolean;
-    mercenary: boolean;
-    applicant: boolean;
 }
 
 @Component({
@@ -29,167 +30,463 @@ interface PermissionRow {
     styleUrls: ['./settings.component.scss'],
     standalone: false,
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
     activeSection = 'profile';
 
-    regimentName = 'The Lords Regiment';
-    shortTag = 'LR';
-    missionStatement =
-        'A disciplined line infantry regiment competing in organised Holdfast: Nations at War events since 2022.';
-
     navItems: NavItem[] = [
-        { id: 'profile', label: 'Profile', group: 'Regiment' },
-        { id: 'discord', label: 'Discord connection', group: 'Regiment' },
-        { id: 'bot', label: 'Quartermaster bot', group: 'Regiment' },
+        { id: 'profile', label: 'Profile & visibility', group: 'Regiment' },
+        { id: 'announce', label: 'Announcements', group: 'Regiment' },
+        { id: 'discord', label: 'Discord & Quartermaster', group: 'Regiment' },
         { id: 'roles', label: 'Roles & permissions', group: 'Regiment' },
-        { id: 'gallery', label: 'Gallery limits', group: 'Operations' },
-        { id: 'event-defaults', label: 'Event defaults', group: 'Operations' },
-        { id: 'hf-server', label: 'Holdfast server', group: 'Operations' },
-        { id: 'backups', label: 'Backups & exports', group: 'Operations' },
-        { id: 'gdpr', label: 'Privacy & data', group: 'Compliance' },
-        { id: 'transfer-discord', label: 'Transfer Discord server', group: 'Compliance' },
-        { id: 'transfer-ownership', label: 'Transfer ownership', group: 'Compliance' },
+        { id: 'danger', label: 'Danger zone', group: 'Compliance' },
+    ];
+    navGroups = ['Regiment', 'Compliance'];
+
+    // ── Regiment profile + visibility ────────────────────────────────────────
+    settings: SettingsDto | null = null;
+    savingProfile = false;
+    profileFlash = '';
+
+    // ── Permission matrix ────────────────────────────────────────────────────
+    matrix: PermissionsMatrix | null = null;
+    savingPermissions = false;
+    permissionsFlash = '';
+    private readonly permissionChanges = new Map<string, PermissionChange>();
+
+    // ── Announcements (T-0017) ───────────────────────────────────────────────
+    announce = {
+        title: '',
+        body: '',
+        tone: 'info' as NotificationTone,
+        crossPostToDiscord: false,
+    };
+    sendingAnnouncement = false;
+    announceFlash = '';
+
+    // ── Invite (T-0017) ──────────────────────────────────────────────────────
+    inviteCopied = false;
+
+    // ── Discord + Quartermaster bot (T-0024) ─────────────────────────────────
+    connection: DiscordConnection | null = null;
+    botSettings: DiscordBotSettings | null = null;
+    operations: BotOperation[] = [];
+    verifying = false;
+    resyncing = false;
+    savingBot = false;
+    botFlash = '';
+
+    // ── Danger zone ──────────────────────────────────────────────────────────
+    transferOwnerMemberId = '';
+    transferOwnerConfirm = false;
+    transferDiscordServerId = '';
+    transferDiscordServerName = '';
+    dissolveConfirmName = '';
+    dangerFlash = '';
+
+    readonly tones: { value: NotificationTone; label: string }[] = [
+        { value: 'info', label: 'Info' },
+        { value: 'ok', label: 'Good news' },
+        { value: 'warn', label: 'Warning' },
     ];
 
-    navGroups = ['Regiment', 'Operations', 'Compliance'];
+    private readonly destroyRef = inject(DestroyRef);
+
+    constructor(
+        private settingsService: SettingsService,
+        private notifications: NotificationsService,
+        private discord: DiscordService,
+        private auth: AuthService,
+    ) {}
+
+    /** Capability gate for a template action (see the spec's capability keys). */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
+
+    ngOnInit(): void {
+        this.settingsService
+            .getSettings()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (settings) => (this.settings = settings),
+                error: (err) => console.error('Failed to load settings', err),
+            });
+
+        this.settingsService
+            .getPermissions()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (matrix) => (this.matrix = this.normalizeMatrix(matrix)),
+                error: (err) => console.error('Failed to load permissions', err),
+            });
+
+        this.loadDiscord();
+    }
 
     getNavByGroup(group: string): NavItem[] {
         return this.navItems.filter((n) => n.group === group);
     }
 
-    visibilityToggles: ToggleSetting[] = [
-        {
-            id: 'roster',
-            label: 'Public roster',
-            hint: 'Show member list to non-members',
-            value: true,
-        },
-        {
-            id: 'gallery',
-            label: 'Public gallery',
-            hint: 'Show gallery to non-members',
-            value: true,
-        },
-        {
-            id: 'events',
-            label: 'Public events',
-            hint: 'Show upcoming events publicly',
-            value: false,
-        },
-        {
-            id: 'stats',
-            label: 'Regiment statistics',
-            hint: 'Show event attendance stats publicly',
-            value: false,
-        },
-        {
-            id: 'recruitment',
-            label: 'Open recruitment',
-            hint: 'Accept new applications',
-            value: true,
-        },
-    ];
-
-    permissionMatrix: PermissionRow[] = [
-        {
-            capability: 'View roster',
-            owner: true,
-            admin: true,
-            moderator: true,
-            member: true,
-            mercenary: true,
-            applicant: false,
-        },
-        {
-            capability: 'Apply to join',
-            owner: false,
-            admin: false,
-            moderator: false,
-            member: false,
-            mercenary: false,
-            applicant: true,
-        },
-        {
-            capability: 'RSVP to events',
-            owner: true,
-            admin: true,
-            moderator: true,
-            member: true,
-            mercenary: true,
-            applicant: false,
-        },
-        {
-            capability: 'Submit to gallery',
-            owner: true,
-            admin: true,
-            moderator: true,
-            member: true,
-            mercenary: true,
-            applicant: false,
-        },
-        {
-            capability: 'View audit log',
-            owner: true,
-            admin: true,
-            moderator: false,
-            member: false,
-            mercenary: false,
-            applicant: false,
-        },
-        {
-            capability: 'Manage applications',
-            owner: true,
-            admin: true,
-            moderator: true,
-            member: false,
-            mercenary: false,
-            applicant: false,
-        },
-        {
-            capability: 'Create events',
-            owner: true,
-            admin: true,
-            moderator: true,
-            member: false,
-            mercenary: false,
-            applicant: false,
-        },
-        {
-            capability: 'Moderate gallery',
-            owner: true,
-            admin: true,
-            moderator: true,
-            member: false,
-            mercenary: false,
-            applicant: false,
-        },
-        {
-            capability: 'Edit ranks & medals',
-            owner: true,
-            admin: true,
-            moderator: false,
-            member: false,
-            mercenary: false,
-            applicant: false,
-        },
-        {
-            capability: 'Manage settings',
-            owner: true,
-            admin: false,
-            moderator: false,
-            member: false,
-            mercenary: false,
-            applicant: false,
-        },
-    ];
-
-    roleColumns = ['owner', 'admin', 'moderator', 'member', 'mercenary', 'applicant'] as const;
-
-    save(): void {
-        // TODO: persist settings once the backend is wired up.
+    // ── Profile + visibility ─────────────────────────────────────────────────
+    saveProfile(): void {
+        if (!this.settings || this.savingProfile) {
+            return;
+        }
+        const s = this.settings;
+        const payload: UpdateSettingsPayload = {
+            name: s.name,
+            shortTag: s.shortTag,
+            missionStatement: s.missionStatement,
+            publicRoster: s.publicRoster,
+            publicGallery: s.publicGallery,
+            publicEvents: s.publicEvents,
+            publicStats: s.publicStats,
+            openRecruitment: s.openRecruitment,
+            allowMercenaries: s.allowMercenaries,
+        };
+        this.savingProfile = true;
+        this.profileFlash = '';
+        this.settingsService
+            .updateSettings(payload)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (settings) => {
+                    this.settings = settings;
+                    this.savingProfile = false;
+                    this.profileFlash = 'Settings saved.';
+                },
+                error: (err) => {
+                    console.error('Failed to save settings', err);
+                    this.savingProfile = false;
+                    this.profileFlash = 'Could not save — try again.';
+                },
+            });
     }
 
-    discard(): void {
-        // TODO: reset settings to last-saved state once the backend is wired up.
+    // ── Invite ───────────────────────────────────────────────────────────────
+    get inviteUrl(): string {
+        return this.settings?.discordInviteUrl ?? '';
+    }
+
+    copyInvite(): void {
+        const url = this.inviteUrl;
+        if (!url || !navigator.clipboard) {
+            return;
+        }
+        navigator.clipboard.writeText(url).then(
+            () => {
+                this.inviteCopied = true;
+                setTimeout(() => (this.inviteCopied = false), 2000);
+            },
+            () => console.error('Clipboard write was blocked'),
+        );
+    }
+
+    // ── Permission matrix ────────────────────────────────────────────────────
+    private normalizeMatrix(matrix: PermissionsMatrix): PermissionsMatrix {
+        const grid = matrix.matrix;
+        for (const role of matrix.roles) {
+            const row = grid[role] ?? {};
+            for (const cap of matrix.capabilities) {
+                row[cap] = !!row[cap];
+            }
+            grid[role] = row;
+        }
+        return matrix;
+    }
+
+    isGranted(role: MemberRole, capability: string): boolean {
+        return this.matrix?.matrix[role]?.[capability] ?? false;
+    }
+
+    onPermissionToggle(role: MemberRole, capability: string, granted: boolean): void {
+        if (!this.matrix) {
+            return;
+        }
+        this.matrix.matrix[role][capability] = granted;
+        this.permissionChanges.set(`${role}:${capability}`, { role, capability, granted });
+    }
+
+    savePermissions(): void {
+        if (!this.matrix || this.savingPermissions || this.permissionChanges.size === 0) {
+            return;
+        }
+        const changes = [...this.permissionChanges.values()];
+        this.savingPermissions = true;
+        this.permissionsFlash = '';
+        this.settingsService
+            .updatePermissions(changes)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (matrix) => {
+                    this.matrix = this.normalizeMatrix(matrix);
+                    this.permissionChanges.clear();
+                    this.savingPermissions = false;
+                    this.permissionsFlash = 'Permission matrix updated.';
+                },
+                error: (err) => {
+                    console.error('Failed to update permissions', err);
+                    this.savingPermissions = false;
+                    this.permissionsFlash = 'Could not update the matrix — try again.';
+                },
+            });
+    }
+
+    /** Humanise a capability/role key ('manage_settings' → 'Manage settings'). */
+    label(key: string): string {
+        const spaced = key.replace(/_/g, ' ');
+        return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+    }
+
+    // ── Announcements (T-0017) ───────────────────────────────────────────────
+    sendAnnouncement(): void {
+        const title = this.announce.title.trim();
+        const body = this.announce.body.trim();
+        if (!title || !body || this.sendingAnnouncement) {
+            return;
+        }
+        this.sendingAnnouncement = true;
+        this.announceFlash = '';
+        this.notifications
+            .compose({ title, body, tone: this.announce.tone })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    if (this.announce.crossPostToDiscord && this.can('manage_notifications')) {
+                        this.discord
+                            .announce(`**${title}**\n\n${body}`)
+                            .pipe(takeUntilDestroyed(this.destroyRef))
+                            .subscribe({
+                                error: (err) =>
+                                    console.error('Failed to cross-post to Discord', err),
+                            });
+                    }
+                    this.announce = {
+                        title: '',
+                        body: '',
+                        tone: 'info',
+                        crossPostToDiscord: false,
+                    };
+                    this.sendingAnnouncement = false;
+                    this.announceFlash = 'Dispatch published to the regiment.';
+                },
+                error: (err) => {
+                    console.error('Failed to publish announcement', err);
+                    this.sendingAnnouncement = false;
+                    this.announceFlash = 'Could not publish — try again.';
+                },
+            });
+    }
+
+    // ── Discord + Quartermaster (T-0024) ─────────────────────────────────────
+    private loadDiscord(): void {
+        this.discord
+            .getConnection()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (connection) => (this.connection = connection),
+                error: (err) => console.error('Failed to load bot connection', err),
+            });
+        this.discord
+            .getSettings()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (settings) => (this.botSettings = settings),
+                error: (err) => console.error('Failed to load bot settings', err),
+            });
+        this.discord
+            .getOperations()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (operations) => (this.operations = operations),
+                error: (err) => console.error('Failed to load bot operations', err),
+            });
+    }
+
+    verifyConnection(): void {
+        if (this.verifying || !this.can('manage_settings')) {
+            return;
+        }
+        this.verifying = true;
+        this.discord
+            .verifyConnection()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (connection) => {
+                    this.connection = connection;
+                    this.verifying = false;
+                },
+                error: (err) => {
+                    console.error('Failed to verify connection', err);
+                    this.verifying = false;
+                },
+            });
+    }
+
+    resync(): void {
+        if (this.resyncing || !this.can('manage_settings')) {
+            return;
+        }
+        this.resyncing = true;
+        this.discord
+            .resync()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.resyncing = false;
+                    this.reloadOperations();
+                },
+                error: (err) => {
+                    console.error('Failed to enqueue resync', err);
+                    this.resyncing = false;
+                },
+            });
+    }
+
+    private reloadOperations(): void {
+        this.discord
+            .getOperations()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (operations) => (this.operations = operations),
+                error: (err) => console.error('Failed to reload operations', err),
+            });
+    }
+
+    resolveOperation(id: string): void {
+        this.discord
+            .resolveOperation(id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (op) => {
+                    const idx = this.operations.findIndex((o) => o.id === id);
+                    if (idx > -1) {
+                        this.operations[idx] = op;
+                    }
+                },
+                error: (err) => console.error('Failed to resolve operation', err),
+            });
+    }
+
+    saveBotSettings(): void {
+        if (!this.botSettings || this.savingBot || !this.can('manage_settings')) {
+            return;
+        }
+        const b = this.botSettings;
+        this.savingBot = true;
+        this.botFlash = '';
+        this.discord
+            .updateSettings({
+                botEnabled: b.botEnabled,
+                announcementChannelId: b.announcementChannelId,
+                welcomeChannelId: b.welcomeChannelId,
+                welcomeMessage: b.welcomeMessage,
+                joinRoleId: b.joinRoleId,
+                syncRolesOnChange: b.syncRolesOnChange,
+                kickOnBan: b.kickOnBan,
+            })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (settings) => {
+                    this.botSettings = settings;
+                    this.savingBot = false;
+                    this.botFlash = 'Quartermaster settings saved.';
+                },
+                error: (err) => {
+                    console.error('Failed to save bot settings', err);
+                    this.savingBot = false;
+                    this.botFlash = 'Could not save — try again.';
+                },
+            });
+    }
+
+    get connectionLabel(): string {
+        switch (this.connection?.connectionStatus) {
+            case 'connected':
+                return 'Online';
+            case 'checking':
+                return 'Checking…';
+            case 'error':
+                return 'Error';
+            default:
+                return 'Offline';
+        }
+    }
+
+    // ── Danger zone ──────────────────────────────────────────────────────────
+    transferOwnership(): void {
+        if (!this.can('transfer_ownership')) {
+            return;
+        }
+        const memberId = this.transferOwnerMemberId.trim();
+        if (!memberId || !this.transferOwnerConfirm) {
+            this.dangerFlash = 'Enter the new owner and confirm before transferring.';
+            return;
+        }
+        this.settingsService
+            .transferOwnership(memberId, this.transferOwnerConfirm)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.transferOwnerMemberId = '';
+                    this.transferOwnerConfirm = false;
+                    this.dangerFlash = 'Ownership transferred.';
+                },
+                error: (err) => {
+                    console.error('Failed to transfer ownership', err);
+                    this.dangerFlash = 'Could not transfer ownership.';
+                },
+            });
+    }
+
+    transferDiscord(): void {
+        if (!this.can('manage_settings')) {
+            return;
+        }
+        const serverId = this.transferDiscordServerId.trim();
+        if (!serverId) {
+            this.dangerFlash = 'Enter the Discord server ID to rebind.';
+            return;
+        }
+        this.settingsService
+            .transferDiscord(serverId, this.transferDiscordServerName.trim() || undefined)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.transferDiscordServerId = '';
+                    this.transferDiscordServerName = '';
+                    this.dangerFlash = 'Discord server rebound.';
+                    this.loadDiscord();
+                },
+                error: (err) => {
+                    console.error('Failed to rebind Discord server', err);
+                    this.dangerFlash = 'Could not rebind the Discord server.';
+                },
+            });
+    }
+
+    dissolve(): void {
+        // Dissolution is the strongest hazard — gated on transfer_ownership to
+        // match the backend (POST /settings/dissolve requires TransferOwnership).
+        if (!this.can('transfer_ownership') || !this.settings) {
+            return;
+        }
+        if (this.dissolveConfirmName.trim() !== this.settings.name) {
+            this.dangerFlash = 'Type the regiment name exactly to confirm dissolution.';
+            return;
+        }
+        this.settingsService
+            .dissolve(this.dissolveConfirmName.trim())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.dissolveConfirmName = '';
+                    this.dangerFlash = 'Regiment dissolved.';
+                },
+                error: (err) => {
+                    console.error('Failed to dissolve regiment', err);
+                    this.dangerFlash = 'Could not dissolve the regiment.';
+                },
+            });
     }
 }

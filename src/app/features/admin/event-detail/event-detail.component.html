@@ -1,13 +1,15 @@
 <hf-app-shell [activeRoute]="'events'">
+    @if (event) {
     <div class="event-detail">
         <!-- Banner -->
         <div class="event-banner">
             <div class="event-banner__overlay">
                 <div class="event-banner__badges">
                     <hf-event-status [status]="event.status"></hf-event-status>
-                    <span class="badge blue">5 days</span>
                     <hf-platform-badges [platforms]="event.platforms"></hf-platform-badges>
-                    <span class="badge">Weekly</span>
+                    @if (event.recurring) {
+                    <span class="badge">{{ event.recurring }}</span>
+                    }
                 </div>
                 <h1 class="event-banner__title serif-display">{{ event.title }}</h1>
                 <div class="event-banner__meta">
@@ -15,7 +17,9 @@
                         >{{ event.date }} &middot; {{ event.startTime }} &ndash; {{ event.endTime }}
                         {{ event.timezone }}</span
                     >
+                    @if (event.serverName) {
                     <span>&middot; {{ event.serverName }}</span>
+                    }
                 </div>
             </div>
         </div>
@@ -44,24 +48,27 @@
                     <div class="panel-body server-details">
                         <div class="field-group">
                             <div class="field-label">Server name</div>
-                            <div class="mono">{{ event.serverName }}</div>
+                            <div class="mono">{{ event.serverName || '—' }}</div>
                         </div>
+                        @if (can('reveal_event_passwords')) {
                         <div class="field-group">
                             <div class="field-label">Password</div>
                             <div class="row gap-8">
                                 <span class="mono"
-                                    >{{ showPassword ? event.serverPassword :
-                                    '&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;' }}</span
+                                    >{{ showPassword && revealedPassword !== null ? revealedPassword
+                                    || '—' : '••••••••' }}</span
                                 >
                                 <button
                                     type="button"
                                     class="btn btn-ghost btn-sm"
+                                    [disabled]="revealing"
                                     (click)="togglePassword()"
                                 >
-                                    {{ showPassword ? 'Hide' : 'Reveal' }}
+                                    {{ revealing ? '…' : showPassword ? 'Hide' : 'Reveal' }}
                                 </button>
                             </div>
                         </div>
+                        } @if (event.notifyBefore?.length) {
                         <div class="field-group">
                             <div class="field-label">Notify before</div>
                             <div class="row field-row-tight">
@@ -70,6 +77,7 @@
                                 }
                             </div>
                         </div>
+                        } @if (event.tags.length) {
                         <div class="field-group">
                             <div class="field-label">Tags</div>
                             <div class="row field-row-tight">
@@ -78,6 +86,7 @@
                                 }
                             </div>
                         </div>
+                        }
                     </div>
                 </div>
 
@@ -88,6 +97,7 @@
                         <span class="badge">{{ rsvpTotal }}</span>
                     </div>
                     <div class="panel-body">
+                        @if (attendees.length) {
                         <div class="attendees-grid">
                             @for (a of attendees; track a) {
                             <div class="attendee-item">
@@ -96,9 +106,9 @@
                             </div>
                             }
                         </div>
-                        <button type="button" class="btn btn-ghost btn-sm attendees-more">
-                            +16 more
-                        </button>
+                        } @else {
+                        <span class="field-hint">No confirmed attendees yet.</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -106,6 +116,7 @@
             <!-- Right column -->
             <div class="event-right">
                 <!-- RSVP -->
+                @if (can('rsvp_to_events')) {
                 <div class="panel">
                     <div class="panel-header">
                         <span class="panel-title">Your RSVP</span>
@@ -155,6 +166,7 @@
                         </button>
                     </div>
                 </div>
+                }
 
                 <!-- Roll-up -->
                 <div class="panel">
@@ -178,25 +190,40 @@
                             <span class="rollup-label">Neutral</span>
                             <span class="rollup-count">{{ event.rsvpCounts.neutral }}</span>
                         </div>
-                        <div class="divider"></div>
-                        <div class="rollup-row">
-                            <span class="rollup-label">Goal</span>
-                            <span class="rollup-count">32</span>
-                        </div>
                     </div>
                 </div>
 
                 <!-- Action buttons -->
+                @if (can('manage_events')) {
                 <div class="event-actions">
-                    <button type="button" class="btn btn-ghost btn-sm btn-block">Archive</button>
-                    <button type="button" class="btn btn-destructive btn-sm btn-block">
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm btn-block"
+                        [disabled]="working"
+                        (click)="archive()"
+                    >
+                        Archive
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm btn-block"
+                        [disabled]="working"
+                        (click)="complete()"
+                    >
+                        Mark complete
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-destructive btn-sm btn-block"
+                        [disabled]="working"
+                        (click)="remove()"
+                    >
                         Delete
                     </button>
-                    <button type="button" class="btn btn-primary btn-sm btn-block">
-                        Edit orders
-                    </button>
                 </div>
+                }
             </div>
         </div>
     </div>
+    }
 </hf-app-shell>

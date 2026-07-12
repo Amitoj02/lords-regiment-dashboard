@@ -223,7 +223,82 @@
 .settings-footer {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
     gap: 10px;
     padding: 16px 0;
     border-top: 1px solid var(--rule);
+}
+
+// ── Post-MVP wiring (announce / invite / discord / danger) ───────────────────
+.flash {
+    margin-right: auto;
+    color: var(--brass-700);
+}
+
+.invite-blurb {
+    margin-bottom: 12px;
+}
+
+.invite-row {
+    align-items: center;
+
+    .hf-input {
+        flex: 1;
+    }
+}
+
+.announce-actions,
+.discord-actions,
+.bot-save {
+    align-items: center;
+    margin-top: 12px;
+}
+
+.bot-field {
+    margin-top: 14px;
+}
+
+.op-line {
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &__text {
+        flex: 1;
+        font-size: 0.875rem;
+    }
+}
+
+.toggle-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.hazard-block {
+    padding: 14px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--oxblood-600) 30%, transparent);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.hazard-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 0;
+
+    .hf-input {
+        flex: 1;
+        min-width: 180px;
+    }
 }

@@ -4,7 +4,6 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { SharedModule } from '../../shared/shared.module';
 
-import { ComingSoonComponent } from '../../shared/components/coming-soon/coming-soon.component';
 import { LandingComponent } from './landing/landing.component';
 import { EventsPageComponent } from './events-page/events-page.component';
 import { GalleryPageComponent } from './gallery-page/gallery-page.component';
@@ -16,9 +15,9 @@ import { PublicFooterComponent } from './public-footer/public-footer.component';
 const routes: Routes = [
     { path: '', component: LandingComponent },
     { path: 'home', component: LandingComponent },
-    // Public events + gallery are MVP-deferred — placeholder, no stub data (T-0026).
-    { path: 'events', component: ComingSoonComponent, data: { feature: 'Events' } },
-    { path: 'gallery', component: ComingSoonComponent, data: { feature: 'Gallery' } },
+    // Public events + gallery are now wired to their API services (T-0025).
+    { path: 'events', component: EventsPageComponent },
+    { path: 'gallery', component: GalleryPageComponent },
     { path: 'login', component: LoginPageComponent },
     // Discord OAuth handoff target (backend redirects here with ?token=…).
     { path: 'auth/callback', component: AuthCallbackComponent },
