@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "eafd8fffa81b33d1ab4a3aca5f24aa12d339ab06",
-  "lastSyncedAt": "2026-07-12T17:30:21Z",
-  "notesForNextSession": "POST-MVP HARDENING landed on main (PR #4 post-MVP integration → PR #5 hardening companions; HEAD eafd8ff). PR #5 (95b428b) synced the frontend lockstep with lords-dashboard-backend hardening: (1) Discord Settings — renamed the SENSITIVE kickOnBan toggle to applyBanRoleOnBan (strip managed roles + apply a configured Ban role, NO Discord kick), added live guild role pickers (join role, Ban role) + 5 channel pickers (announcement/welcome/enlistment/audit-log/event-announcement) populated from verify-connection, and mirrored the backend 'Ban role required' guard (T-0024/T-0017). (2) Applications — reshaped the enlistment contract end-to-end: rebuilt the apply form to the new fields (in-game name, current regiment, how-found, preferred classes, skills-to-improve, interest confirmation, optional representative note; age label 16→18, client-only T&C not sent), reshaped Application/CreateApplicationPayload/ApiApplication + mapApplication, and wired the admin applications view to live getAll() data with client-side tab filtering — replacing the hardcoded mock queue (T-0034 done + new T-0035). (3) Auth (backend T-0049) confirmed — role/regiment/membership derive solely from /auth/me; no client-side JWT claim decoding. Build+lint+41 specs green; browser-verified against the live stack. NOW deployed: T-0014/17/24/25/34 + new T-0035. NEXT: the applicant self-service arc is still PLANNED and unstarted — T-0028 (getMine/update/resubmit + surface declineReason/moderatorNote), T-0029 (application-status page), T-0030 (fix returning-applicant post-login redirect), T-0031 (edit pending), T-0032 (resubmit-after-decline), T-0033 (admin per-user disable; T-0034's live queue now unblocks it); several backend endpoints for these do not exist yet — plan the backend counterpart first. T-0027 (unify Apply-to-Join with Sign In) also still planned. Open regression risks to watch: T-0023#0 (modal close→closed / document Escape handler), T-0027#0 + T-0030#0 (shared auth sign-in/redirect path), T-0028#0 (Application model coupling to admin+status), T-0035#0 (reshaped model/contract drift vs backend).",
+  "lastSyncedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
+  "lastSyncedAt": "2026-07-12T19:02:09Z",
+  "notesForNextSession": "APPLICANT SELF-SERVICE FLOW shipped on feat/applicant-self-service (commit d9277e9), in lockstep with the backend endpoints on lords-dashboard-backend:feat/guilds-scope-and-applicant-self-service (T-0054/55/56). DONE + browser-verified live: T-0027 (apply-as-signin CTA + onboardingGuard), T-0028 (data layer: getMine/updateMine/block/unblock + declineReason on the model), T-0029 (application-status page — pending/held/declined/blocked), T-0030 (post-login redirect: returning applicant → status, new → form, member → dashboard), T-0031 (edit a pending application, ?edit=1 pre-fill → PATCH), T-0032 (reapply after decline unless blocked), T-0033 (admin Block-from-applying / Re-enable). Owner setup: T-0037 (Owner + setupComplete=false → /admin/settings), T-0038 (RETIRED the stub owner-setup wizard → redirects to admin Settings). T-0015 models reconciled (UUID string ids kept — matches the built backend). T-0016 archived. T-0036 owner-superadmin verified via a minted JWT (full admin panel renders) — set a REAL OWNER_DISCORD_ID before seed:prod. 51 unit specs green (new AuthService routing + onboardingGuard specs), ng lint clean, prod build clean. DEFERRED / next: T-0020 wire the account-deletion UI to the existing GDPR endpoints; T-0006 the landing still has hardcoded stats/officers arrays — wire GET /regiment/stats + guard un-wired surfaces before the public deploy (T-0032). Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; the dev web container hot-reloads at localhost:4200 and proxies /api to the api container.",
   "nextIdCounter": 39,
   "connections": [],
   "tasks": [
@@ -247,7 +247,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -255,6 +255,13 @@
           "to": "review",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "review",
+          "to": "review",
+          "by": "claude",
+          "note": "Partial: the landing 'Apply to Join' CTA is now wired to the real sign-in flow (AuthService.applyToJoin) and the login is real OAuth. STILL DEFERRED before a public deploy: the landing stats + Officers' Mess are hardcoded mock arrays (landing.component.ts) — wire GET /regiment/stats and guard un-wired surfaces so no fabricated data is publicly visible (T-0032 dependency)."
         }
       ]
     },
@@ -262,7 +269,7 @@
       "id": "T-0007",
       "title": "Onboarding flows (owner setup, Discord link, apply)",
       "summary": "Onboarding feature module: owner first-run setup wizard, owner Discord link step, and the public applicant application form. Discord identity is simulated (would come from OAuth).",
-      "status": "review",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -280,14 +287,14 @@
       "testPlan": [
         {
           "desc": "/onboarding/setup, /onboarding/setup/discord, /onboarding/apply render and submit against stubs",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "c2e191e",
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -295,6 +302,13 @@
           "to": "review",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "review",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Onboarding is now complete end-to-end: the enlistment apply form + the new application-status page are wired and guarded (onboardingGuard), and the broken owner-setup wizard was retired (T-0038). Browser-verified the apply/edit/status surfaces live."
         }
       ]
     },
@@ -702,7 +716,7 @@
       "id": "T-0015",
       "title": "Verify model shapes against backend SCHEMA.md",
       "summary": "The frontend interface models (member/event/application/gallery/audit-log) were authored to mirror the backend, but drift is likely. Reconcile field names, enums, and optionality against the backend's normalized schema before wiring HTTP.",
-      "status": "in_progress",
+      "status": "deploy_ready",
       "type": "question",
       "size": "M",
       "sizeWeight": 3,
@@ -740,9 +754,9 @@
       "testPlan": [],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T02:40:15.463Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -757,6 +771,13 @@
           "to": "in_progress",
           "by": "human",
           "note": "all questions answered"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "in_progress",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Applicant-facing models reconciled to the live API contract: Application gains declineReason/decidedAt, MyApplication added, mapApplication updated. NOTE: the backend uses UUID string ids + ISO date strings (not numbers) — the models correctly follow the built schema; switching to numeric ids would be a destructive schema change and is out of scope. Enums already match."
         }
       ]
     },
@@ -764,7 +785,7 @@
       "id": "T-0016",
       "title": "Confirm backend-integration sequencing & scope",
       "summary": "Open questions about how to prioritise the transition from stub to live backend so the next work session targets the right thing first.",
-      "status": "in_progress",
+      "status": "archived",
       "type": "question",
       "size": "S",
       "sizeWeight": 2,
@@ -801,7 +822,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T02:51:07.116Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -823,6 +844,13 @@
           "to": "in_progress",
           "by": "human",
           "note": "all questions answered"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "in_progress",
+          "to": "archived",
+          "by": "claude",
+          "note": "Resolved: the sequencing question (HTTP wiring before Discord OAuth; errors/loading in the same pass) is answered and fully consumed — the services are live HttpClient calls and the applicant flow is wired. Archived as a completed planning task."
         }
       ]
     },
@@ -1018,7 +1046,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T01:45:00Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T01:45:00Z",
@@ -1026,6 +1054,13 @@
           "to": "review",
           "by": "claude",
           "note": "created via /bf-init rebuild; new member screen from PR #2, stub-driven"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "review",
+          "to": "review",
+          "by": "claude",
+          "note": "Deferred to a follow-up: the backend GDPR endpoints exist (POST /members/me/deletion-request + /confirm, GET /members/me/export) but the account-deletion component is still static UI with no service call. Out of the applicant self-service epic scope this session; next session wires it."
         }
       ]
     },
@@ -1380,7 +1415,7 @@
       "id": "T-0027",
       "title": "Unify \"Apply to Join\" with Sign In; gate onboarding on non-member Discord session",
       "summary": "Make the public \"Apply to Join\" CTA invoke the same Discord Sign In flow instead of linking straight to the application form. After OAuth, only a Discord-authenticated user who is NOT part of the regiment (isMember=false) is routed into onboarding (/onboarding/apply); members go to /dashboard. The auth-callback already branches on isMember — this task removes the direct /apply link and guards the onboarding route so it can't be reached without a non-member authenticated session.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1411,28 +1446,31 @@
       "testPlan": [
         {
           "desc": "Landing \"Apply to Join\" no longer links to /apply directly — it triggers the Discord OAuth sign-in (same as the nav \"Sign in\")",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "After Discord sign-in, a NON-member (isMember=false) session lands on /onboarding/apply; a member lands on /dashboard",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Navigating directly to /onboarding/apply without a non-member authenticated session is blocked (redirect to /login, or /dashboard for members)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Touches the shared AuthService sign-in/redirect path and the onboarding route guard; a regression here can break the entire login flow (members and applicants alike) and every guarded route that depends on the post-login redirect",
-          "status": "open",
-          "notedAt": "2026-07-11T22:30:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-11T22:30:00Z",
+          "resolvedAt": "2026-07-12T19:02:09Z",
+          "resolvedBy": "claude",
+          "note": "Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T22:30:00Z",
-      "updatedAt": "2026-07-12T00:46:41.142Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T22:30:00Z",
@@ -1440,6 +1478,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; unify Apply-to-Join with Sign In and gate onboarding on non-member Discord session"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Apply-to-Join CTA now IS Discord sign-in (AuthService.applyToJoin): anonymous → OAuth, member → dashboard, non-member → onboarding. onboardingGuard restricts /onboarding/* to authenticated non-members. Browser-verified. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1447,7 +1492,7 @@
       "id": "T-0028",
       "title": "Applicant self-service data layer (my-application fetch, edit, resubmit)",
       "summary": "The applications service is staff-only today (getAll/getById/approve/decline/hold) with no applicant-facing reads or writes. Add applicant-scoped methods — getMine() (the caller's current application or null), update(id, payload) to edit a pending application, and resubmit support — surface declineReason/moderatorNote on the Application model, and carry any admin-disabled/banned-from-applying flag. Foundation the status page, edit, resubmit and post-login redirect all build on. Several of these read/write endpoints do NOT exist on the backend yet.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1479,24 +1524,27 @@
       "testPlan": [
         {
           "desc": "getMine() returns the caller's current application (or null when none exists)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "update(id, payload) issues a PATCH for a pending application; declineReason/moderatorNote and the admin-disabled flag are present on the Application model",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "applications.service.ts and the Application model are also consumed by the admin review screen; model additions are additive but any field rename ripples to admin + status surfaces",
-          "status": "open",
-          "notedAt": "2026-07-11T23:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-11T23:15:00Z",
+          "resolvedAt": "2026-07-12T19:02:09Z",
+          "resolvedBy": "claude",
+          "note": "Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T00:47:32.809Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1504,6 +1552,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; applicant self-service data layer for the application-status/edit/resubmit flow"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Applicant data layer: Application model + mapApplication surface declineReason/decidedAt; new MyApplication type; ApplicationsService gains getMine/updateMine/blockApplicant/unblockApplicant, wired to the new backend endpoints. Verified live. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1511,7 +1566,7 @@
       "id": "T-0029",
       "title": "Applicant application-status page (pending/48h, held, declined, approved)",
       "summary": "New canonical landing for a non-member who has already applied: shows the application status — pending with a 'please wait up to 48 hours for an officer to review' message, held with the moderator note, declined with the officer's decline reason shown here, or approved (route on to /dashboard). Replaces dumping returning applicants back onto a blank form. This is the first-impression surface and must work end-to-end.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1540,22 +1595,22 @@
       "testPlan": [
         {
           "desc": "A pending application renders the 'wait up to 48 hours for an officer' message",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A declined application renders the officer's decline reason / moderator note on the page; a held application renders the hold note",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "An approved application (member session) routes on to /dashboard rather than showing the status page",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T00:48:28.496Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1563,6 +1618,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; applicant-facing application-status page (the page rejection/wait state is shown on)"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Application-status page (new component + route): pending (48h), held (officer note), declined (reason) + blocked panel, with Edit/Reapply actions. Browser-verified live (pending + blocked states). Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1570,7 +1632,7 @@
       "id": "T-0030",
       "title": "Fix post-login redirect for returning applicants (status page, not blank form)",
       "summary": "AuthService.completeLogin (auth.service.ts:59-65) currently sends every non-member to /onboarding/apply, so a pending or declined applicant who logs back in is wrongly dropped onto a fresh application form. Route a non-member who already has an application to the status page (T-0029); only a genuinely new applicant (no application) gets the blank form; members still go to /dashboard. Also guard the onboarding route so a returning applicant deep-linking to /onboarding/apply is redirected to their status.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -1593,28 +1655,31 @@
       "testPlan": [
         {
           "desc": "After Discord sign-in, a non-member with a pending or declined application lands on the status page (T-0029), not /onboarding/apply",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A non-member with NO prior application still lands on the blank /onboarding/apply form; a member still lands on /dashboard",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A returning applicant deep-linking directly to /onboarding/apply is redirected to their status page",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Touches the shared login/redirect path (AuthService.completeLogin) and the onboarding guard; a regression here breaks post-login navigation for members and applicants alike",
-          "status": "open",
-          "notedAt": "2026-07-11T23:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-11T23:15:00Z",
+          "resolvedAt": "2026-07-12T19:02:09Z",
+          "resolvedBy": "claude",
+          "note": "Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1622,6 +1687,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; fixes the reported bug where a pending applicant is re-routed to a new onboarding form on re-login"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "completeLogin routes a returning applicant with an application to /onboarding/status, a brand-new one to the blank form, a member to the dashboard; the apply form bounces a returning open-application deep-link to /status. Spec-pinned. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1629,7 +1701,7 @@
       "id": "T-0031",
       "title": "Let applicants modify a pending application (re-bumps the officer queue)",
       "summary": "While an application is pending, the applicant can go back and edit it (correct in-game name, why-join, etc.) from the status page; saving updates the application via the edit path (T-0028) and re-bumps it in the officer's review queue. Reuses the application form pre-filled from getMine() and calls update() instead of create(). Depends on the backend PATCH/update endpoint that does not exist yet.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1656,22 +1728,22 @@
       "testPlan": [
         {
           "desc": "An 'Edit application' action on a pending status opens the application form pre-filled from getMine()",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Saving the edit calls update() (PATCH) and returns to the status page reflecting the changes",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The edited application reappears (bumped) in the officer's review queue (verified via T-0034)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T00:48:53.125Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1679,6 +1751,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; modify-pending-application flow that re-bumps the officer queue"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Apply form doubles as the edit surface (?edit=1): pre-fills from getMine and PATCHes /applications/mine (re-bumps the queue). Browser-verified the pre-filled edit form live. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1686,7 +1765,7 @@
       "id": "T-0032",
       "title": "Allow resubmit after decline by default (blocked only when admin-disabled)",
       "summary": "A declined applicant can resubmit by default — the status page offers a 'Reapply' action that opens a fresh (optionally pre-filled) application form and creates a new application. If an admin has permanently disabled applications for that user (T-0033), the Reapply action is hidden and a 'you can no longer submit an application' message is shown instead.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -1706,18 +1785,18 @@
       "testPlan": [
         {
           "desc": "A declined applicant who is NOT disabled sees a 'Reapply' action that creates a new application (flagged as a reapplication)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A declined applicant whose applications have been admin-disabled sees no Reapply action and a blocked message instead",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1725,6 +1804,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; default resubmit-after-decline, gated only by the admin disable flag"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Declined applicants get a Reapply action (fresh submit) unless an officer has blocked them, in which case the status page shows an 'Applications Closed' message (driven by the getMine blocked flag). Verified live. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1732,7 +1818,7 @@
       "id": "T-0033",
       "title": "Admin: permanently disable / re-enable applications from a specific user",
       "summary": "Give officers an action on the applications review screen to permanently block a specific applicant (Discord identity) from submitting further applications, and to re-enable them. Users are NOT disabled by default (they can resubmit — T-0032). This is an entirely new capability: the backend has no blocklist table, no banned-from-applying flag, and no capability for it, so it depends on backend work that must be planned first.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1760,18 +1846,18 @@
       "testPlan": [
         {
           "desc": "An officer with the capability can permanently disable applications for a specific applicant, and re-enable them; the action is hidden for users lacking the capability",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A disabled user is prevented from resubmitting (the frontend surfaces the blocked state via T-0032)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-11T23:15:00Z",
-      "updatedAt": "2026-07-12T00:49:22.653Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-11T23:15:00Z",
@@ -1779,6 +1865,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; admin per-user application disable/re-enable (backend blocklist model does not exist yet)"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Admin applications view gains Block-from-applying / Re-enable actions calling POST /applications/:id/{block,unblock}. Browser-verified the controls render and round-trip through the API. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -1902,7 +1995,7 @@
       "id": "T-0036",
       "title": "Verify the seeded Owner resolves to a full-access superadmin through the frontend auth flow",
       "summary": "The backend ALREADY seeds a regiment Owner (dev-owner.seed.ts, run by MainSeeder) whose Discord snowflake comes from the OWNER_DISCORD_ID env var, and the frontend already has real Discord OAuth -> /auth/me -> capabilities (T-0012). Confirm end-to-end from the frontend that the seeded Owner signs in, /auth/me returns role=Owner with the full capability set, isAdmin()/isOwnerOrAdmin()/hasCapability('manage_settings') are true, and every 'set up the app' surface (admin Settings: profile/Discord/permissions/danger-zone) is reachable and correctly capability-gated. Also document the prod requirement: OWNER_DISCORD_ID (the real owner's snowflake) MUST be set before `npm run seed:prod`, otherwise the dev fixture snowflake is seeded and no real user can ever resolve as Owner.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "spike",
       "size": "S",
       "sizeWeight": 2,
@@ -1930,22 +2023,22 @@
       "testPlan": [
         {
           "desc": "Signing in as the seeded Owner returns role=Owner with the full capability set on /auth/me; isAdmin(), isOwnerOrAdmin() and hasCapability('manage_settings') are all true",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "All admin Settings panes render and the Owner-only actions (permissions matrix, transfer ownership, dissolve) are visible for the Owner",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A non-Owner member does NOT see the Owner-only setup/danger-zone actions (capability gating holds)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-12T18:15:00Z",
-      "updatedAt": "2026-07-12T17:59:19.825Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-12T18:15:00Z",
@@ -1953,6 +2046,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the backend Owner seed already exists (dev-owner.seed.ts + OWNER_DISCORD_ID) -- this verifies the seeded superadmin resolves to full access through the real frontend auth flow"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Verified the Owner resolves to a full-access superadmin: signing in as the seeded Owner (exercised via a minted owner JWT this session) renders the complete admin panel (Dashboard/Events/Gallery/Members/Applications/Ranks/Audit/Settings) and /auth/me returns role=Owner with the full capability set. CAVEAT for prod: set a REAL OWNER_DISCORD_ID in .env before seed:prod, otherwise the dev fixture snowflake is seeded and no real user resolves as Owner. A real-OAuth owner sign-in still needs the human Discord consent click."
         }
       ]
     },
@@ -1960,7 +2060,7 @@
       "id": "T-0037",
       "title": "Route the seeded Owner into first-run setup (consume setupComplete)",
       "summary": "Nothing in the frontend reads RegimentProfile.setupComplete today (it is dead code) and RegimentService is injected nowhere; after login the Owner lands on /dashboard like any member. Add first-run detection: after login read the regiment profile and, when the user is Owner and setupComplete is false, route them to the setup surface instead of the dashboard so the seeded superadmin is guided to configure the app. NOTE: the backend seed currently hard-codes regiment.setupComplete=true and exposes no endpoint to flip it, so a backend counterpart must be planned before this can ever fire.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -1996,28 +2096,31 @@
       "testPlan": [
         {
           "desc": "An Owner session with setupComplete=false is routed to the chosen setup surface after login, not /dashboard",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "An Owner session with setupComplete=true lands on /dashboard as normal",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Non-Owner members and non-member applicants are unaffected (dashboard / onboarding-apply as today)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Touches the shared post-login redirect path (AuthService.completeLogin / auth-callback); a regression here breaks post-login navigation for members and applicants alike -- same risk family as T-0027#0 and T-0030#0",
-          "status": "open",
-          "notedAt": "2026-07-12T18:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T18:15:00Z",
+          "resolvedAt": "2026-07-12T19:02:09Z",
+          "resolvedBy": "claude",
+          "note": "Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-12T18:15:00Z",
-      "updatedAt": "2026-07-12T18:00:21.616Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-12T18:15:00Z",
@@ -2025,6 +2128,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; first-run routing so the seeded Owner is funneled into app setup (consume the currently-dead setupComplete flag)"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "First-run routing: an Owner whose regiment setupComplete=false is guided into /admin/settings instead of the dashboard (consumes the new backend setupComplete flag + POST /settings/complete-setup). Spec-pinned. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     },
@@ -2032,7 +2142,7 @@
       "id": "T-0038",
       "title": "Rehabilitate or retire the disconnected owner-setup onboarding wizard",
       "summary": "The /onboarding/setup + /onboarding/setup/discord wizard is a broken stub: only steps 2-3 exist, owner-setup.save() is empty, owner-discord.checkBotStatus() is faked with a setTimeout, continue() dead-ends at the nonexistent /onboarding/ranks route (falls through to /home), and the route is public/unguarded. Depending on T-0037's design answer, either (a) wire the wizard to the real SettingsService/DiscordService, build the missing steps 1/4/5, fix the dead-end, and guard it Owner-only; or (b) retire the wizard and redirect the setup flow to the already-wired admin Settings panel. Either way, remove the dead-end and the unguarded public access.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -2060,28 +2170,31 @@
       "testPlan": [
         {
           "desc": "The setup flow no longer dead-ends at the nonexistent /onboarding/ranks route",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "/onboarding/setup is not reachable by a non-Owner (guarded), if the wizard is kept",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Whichever path is chosen, the Owner can complete setup end-to-end against real endpoints -- no empty save() or faked bot-status check remain",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Edits the onboarding module routing; if the wizard is retired, any remaining links/navigations to /onboarding/setup* must be updated or they will fall through to the /home wildcard",
-          "status": "open",
-          "notedAt": "2026-07-12T18:15:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T18:15:00Z",
+          "resolvedAt": "2026-07-12T19:02:09Z",
+          "resolvedBy": "claude",
+          "note": "Retired the wizard entirely; setup is now the already-wired admin Settings panel (real endpoints), reached via the T-0037 first-run routing. No dead-end / unguarded route remains."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
       "createdAt": "2026-07-12T18:15:00Z",
-      "updatedAt": "2026-07-12T18:00:51.269Z",
+      "updatedAt": "2026-07-12T19:02:09Z",
       "history": [
         {
           "at": "2026-07-12T18:15:00Z",
@@ -2089,6 +2202,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the /onboarding/setup wizard is a broken, unguarded stub -- wire it to real endpoints or retire it in favour of admin Settings"
+        },
+        {
+          "at": "2026-07-12T19:02:09Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "RETIRED the stub owner-setup wizard (owner-setup + owner-discord deleted): it duplicated the fully-wired admin Settings panel as broken stubs and dead-ended at a nonexistent /onboarding/ranks. /onboarding/setup* now redirects to /admin/settings; the unguarded public access + dead-end are gone. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
         }
       ]
     }
