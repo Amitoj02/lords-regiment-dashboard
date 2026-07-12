@@ -4,7 +4,7 @@
   "lastSyncedCommit": "c8cea4c4350e3cb7bc12da889ffb024b683648e8",
   "lastSyncedAt": "2026-07-11T22:00:00Z",
   "notesForNextSession": "POST-MVP FRONTEND COMPLETE (build+verify) on feat/post-mvp-integration → PR #4 (Amitoj02/lords-regiment-dashboard). Wired events/gallery/audit/notifications/settings + admin settings/announce/invite (T-0017) + Discord bot UI (T-0024) + service/guard tests (T-0014); un-guarded the deferred surfaces. Build+lint+format clean; 41 unit tests green; two adversarial-review passes (5 findings fixed: draft-actually-published, Dissolve capability gate, audit real requestId/discord-sync, audit load error). Browser-verified end-to-end vs the live dev stack: login(mock owner)→dashboard/settings render real seeded data; the Quartermaster pane shows the mock gateway ONLINE + the dormant bot settings + the kickOnBan warning; the audit ledger renders real entries with Discord-sync status. Backend counterpart: lords-dashboard-backend PR #4 (feat/post-mvp-features). NEXT: after both PRs merge, real Discord go-live together (backend T-0033) — owner brings creds, flip mocks off, re-review kickOnBan; then the events/gallery upload story (no real asset-upload backend yet — gallery-submit is link/metadata only for now).",
-  "nextIdCounter": 27,
+  "nextIdCounter": 35,
   "connections": [],
   "tasks": [
     {
@@ -1345,6 +1345,463 @@
           "to": "deployed",
           "by": "claude",
           "note": "Post-MVP: the guarded surfaces (events, gallery, audit, settings, bot) are now UN-guarded — their real services landed (T-0025) so they route to real components rather than ComingSoon. The guard now only covers anything still genuinely un-wired."
+        }
+      ]
+    },
+    {
+      "id": "T-0027",
+      "title": "Unify \"Apply to Join\" with Sign In; gate onboarding on non-member Discord session",
+      "summary": "Make the public \"Apply to Join\" CTA invoke the same Discord Sign In flow instead of linking straight to the application form. After OAuth, only a Discord-authenticated user who is NOT part of the regiment (isMember=false) is routed into onboarding (/onboarding/apply); members go to /dashboard. The auth-callback already branches on isMember — this task removes the direct /apply link and guards the onboarding route so it can't be reached without a non-member authenticated session.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "auth",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.html",
+        "src/app/features/public/public-nav/public-nav.component.html",
+        "src/app/features/public/login/login.component.ts",
+        "src/app/core/services/auth.service.ts",
+        "src/app/core/guards/",
+        "src/app/features/onboarding/onboarding.module.ts",
+        "src/app/features/public/auth-callback/auth-callback.component.ts"
+      ],
+      "dependsOn": [
+        "T-0010",
+        "T-0012"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "When an already-signed-in MEMBER clicks \"Apply to Join\", should the CTA be hidden/relabelled (they're already enrolled) or silently route them to /dashboard?",
+          "answer": "If its MEMBER, just taake them to dashboard",
+          "askedAt": "2026-07-11T22:30:00Z",
+          "answeredAt": "2026-07-12T00:46:41.142Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Landing \"Apply to Join\" no longer links to /apply directly — it triggers the Discord OAuth sign-in (same as the nav \"Sign in\")",
+          "status": "pending"
+        },
+        {
+          "desc": "After Discord sign-in, a NON-member (isMember=false) session lands on /onboarding/apply; a member lands on /dashboard",
+          "status": "pending"
+        },
+        {
+          "desc": "Navigating directly to /onboarding/apply without a non-member authenticated session is blocked (redirect to /login, or /dashboard for members)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the shared AuthService sign-in/redirect path and the onboarding route guard; a regression here can break the entire login flow (members and applicants alike) and every guarded route that depends on the post-login redirect",
+          "status": "open",
+          "notedAt": "2026-07-11T22:30:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T22:30:00Z",
+      "updatedAt": "2026-07-12T00:46:41.142Z",
+      "history": [
+        {
+          "at": "2026-07-11T22:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; unify Apply-to-Join with Sign In and gate onboarding on non-member Discord session"
+        }
+      ]
+    },
+    {
+      "id": "T-0028",
+      "title": "Applicant self-service data layer (my-application fetch, edit, resubmit)",
+      "summary": "The applications service is staff-only today (getAll/getById/approve/decline/hold) with no applicant-facing reads or writes. Add applicant-scoped methods — getMine() (the caller's current application or null), update(id, payload) to edit a pending application, and resubmit support — surface declineReason/moderatorNote on the Application model, and carry any admin-disabled/banned-from-applying flag. Foundation the status page, edit, resubmit and post-login redirect all build on. Several of these read/write endpoints do NOT exist on the backend yet.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "core-data",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/application.model.ts",
+        "src/app/core/services/applications.service.ts",
+        "src/app/core/services/auth.service.ts"
+      ],
+      "dependsOn": [
+        "T-0004",
+        "T-0011"
+      ],
+      "blocks": [
+        "T-0029",
+        "T-0030",
+        "T-0031",
+        "T-0032"
+      ],
+      "questions": [
+        {
+          "q": "The backend has no applicant-scoped GET (my current application), no PATCH/update for a pending application, and exposes no application status on /auth/me — these must be planned in lords-dashboard-backend before this can wire live. Confirm the backend counterpart will be added, and whether 'my application' should be a dedicated identity-scoped endpoint or a new field on /auth/me?",
+          "answer": "Yes, it should be added first, if it is not added, look up for the blueframe task for the backend that does and finish it first",
+          "askedAt": "2026-07-11T23:15:00Z",
+          "answeredAt": "2026-07-12T00:47:32.809Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "getMine() returns the caller's current application (or null when none exists)",
+          "status": "pending"
+        },
+        {
+          "desc": "update(id, payload) issues a PATCH for a pending application; declineReason/moderatorNote and the admin-disabled flag are present on the Application model",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "applications.service.ts and the Application model are also consumed by the admin review screen; model additions are additive but any field rename ripples to admin + status surfaces",
+          "status": "open",
+          "notedAt": "2026-07-11T23:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T00:47:32.809Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; applicant self-service data layer for the application-status/edit/resubmit flow"
+        }
+      ]
+    },
+    {
+      "id": "T-0029",
+      "title": "Applicant application-status page (pending/48h, held, declined, approved)",
+      "summary": "New canonical landing for a non-member who has already applied: shows the application status — pending with a 'please wait up to 48 hours for an officer to review' message, held with the moderator note, declined with the officer's decline reason shown here, or approved (route on to /dashboard). Replaces dumping returning applicants back onto a blank form. This is the first-impression surface and must work end-to-end.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/",
+        "src/app/features/onboarding/onboarding.module.ts"
+      ],
+      "dependsOn": [
+        "T-0028"
+      ],
+      "blocks": [
+        "T-0030",
+        "T-0031",
+        "T-0032"
+      ],
+      "questions": [
+        {
+          "q": "How should the 48-hour window be presented — a live countdown from submittedAt, or static 'within 48 hours' copy? And what should the page show if more than 48 hours elapse with no officer decision (still 'under review', or a softened 'thanks for your patience' variant)?",
+          "answer": "Static within 48 hours should be fine. No need to show anything special if it is never accepted, we will have status property that will determine if the application was rejected, etc.",
+          "askedAt": "2026-07-11T23:15:00Z",
+          "answeredAt": "2026-07-12T00:48:28.496Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "A pending application renders the 'wait up to 48 hours for an officer' message",
+          "status": "pending"
+        },
+        {
+          "desc": "A declined application renders the officer's decline reason / moderator note on the page; a held application renders the hold note",
+          "status": "pending"
+        },
+        {
+          "desc": "An approved application (member session) routes on to /dashboard rather than showing the status page",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T00:48:28.496Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; applicant-facing application-status page (the page rejection/wait state is shown on)"
+        }
+      ]
+    },
+    {
+      "id": "T-0030",
+      "title": "Fix post-login redirect for returning applicants (status page, not blank form)",
+      "summary": "AuthService.completeLogin (auth.service.ts:59-65) currently sends every non-member to /onboarding/apply, so a pending or declined applicant who logs back in is wrongly dropped onto a fresh application form. Route a non-member who already has an application to the status page (T-0029); only a genuinely new applicant (no application) gets the blank form; members still go to /dashboard. Also guard the onboarding route so a returning applicant deep-linking to /onboarding/apply is redirected to their status.",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "auth",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/public/auth-callback/auth-callback.component.ts",
+        "src/app/core/guards/",
+        "src/app/features/onboarding/onboarding.module.ts"
+      ],
+      "dependsOn": [
+        "T-0012",
+        "T-0027",
+        "T-0028",
+        "T-0029"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "After Discord sign-in, a non-member with a pending or declined application lands on the status page (T-0029), not /onboarding/apply",
+          "status": "pending"
+        },
+        {
+          "desc": "A non-member with NO prior application still lands on the blank /onboarding/apply form; a member still lands on /dashboard",
+          "status": "pending"
+        },
+        {
+          "desc": "A returning applicant deep-linking directly to /onboarding/apply is redirected to their status page",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the shared login/redirect path (AuthService.completeLogin) and the onboarding guard; a regression here breaks post-login navigation for members and applicants alike",
+          "status": "open",
+          "notedAt": "2026-07-11T23:15:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-11T23:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; fixes the reported bug where a pending applicant is re-routed to a new onboarding form on re-login"
+        }
+      ]
+    },
+    {
+      "id": "T-0031",
+      "title": "Let applicants modify a pending application (re-bumps the officer queue)",
+      "summary": "While an application is pending, the applicant can go back and edit it (correct in-game name, why-join, etc.) from the status page; saving updates the application via the edit path (T-0028) and re-bumps it in the officer's review queue. Reuses the application form pre-filled from getMine() and calls update() instead of create(). Depends on the backend PATCH/update endpoint that does not exist yet.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-form/",
+        "src/app/features/onboarding/",
+        "src/app/core/services/applications.service.ts"
+      ],
+      "dependsOn": [
+        "T-0028",
+        "T-0029"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "When an applicant edits a pending application, should it reset the 48-hour clock and/or move to the top of the officer queue, or just be flagged 'updated' in place? (Backend re-bump semantics for the update endpoint depend on this answer.)",
+          "answer": "48 hours is just message, it doesnt need to be related to functionality",
+          "askedAt": "2026-07-11T23:15:00Z",
+          "answeredAt": "2026-07-12T00:48:53.125Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "An 'Edit application' action on a pending status opens the application form pre-filled from getMine()",
+          "status": "pending"
+        },
+        {
+          "desc": "Saving the edit calls update() (PATCH) and returns to the status page reflecting the changes",
+          "status": "pending"
+        },
+        {
+          "desc": "The edited application reappears (bumped) in the officer's review queue (verified via T-0034)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T00:48:53.125Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; modify-pending-application flow that re-bumps the officer queue"
+        }
+      ]
+    },
+    {
+      "id": "T-0032",
+      "title": "Allow resubmit after decline by default (blocked only when admin-disabled)",
+      "summary": "A declined applicant can resubmit by default — the status page offers a 'Reapply' action that opens a fresh (optionally pre-filled) application form and creates a new application. If an admin has permanently disabled applications for that user (T-0033), the Reapply action is hidden and a 'you can no longer submit an application' message is shown instead.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/",
+        "src/app/features/onboarding/application-form/",
+        "src/app/core/services/applications.service.ts"
+      ],
+      "dependsOn": [
+        "T-0028",
+        "T-0029"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A declined applicant who is NOT disabled sees a 'Reapply' action that creates a new application (flagged as a reapplication)",
+          "status": "pending"
+        },
+        {
+          "desc": "A declined applicant whose applications have been admin-disabled sees no Reapply action and a blocked message instead",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-11T23:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; default resubmit-after-decline, gated only by the admin disable flag"
+        }
+      ]
+    },
+    {
+      "id": "T-0033",
+      "title": "Admin: permanently disable / re-enable applications from a specific user",
+      "summary": "Give officers an action on the applications review screen to permanently block a specific applicant (Discord identity) from submitting further applications, and to re-enable them. Users are NOT disabled by default (they can resubmit — T-0032). This is an entirely new capability: the backend has no blocklist table, no banned-from-applying flag, and no capability for it, so it depends on backend work that must be planned first.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/",
+        "src/app/core/services/applications.service.ts"
+      ],
+      "dependsOn": [
+        "T-0009",
+        "T-0034"
+      ],
+      "blocks": [
+        "T-0032"
+      ],
+      "questions": [
+        {
+          "q": "This requires a new backend blocklist model + disable/re-enable endpoints + a capability (none exist today). Confirm they will be planned in lords-dashboard-backend, whether the block is per-identity and permanent-until-re-enabled, and which capability gates it (reuse manage_applications, or a new dedicated one)?",
+          "answer": "Yes, if it is not added already, you should check for the blueframe task related to it and do it first there.",
+          "askedAt": "2026-07-11T23:15:00Z",
+          "answeredAt": "2026-07-12T00:49:22.653Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "An officer with the capability can permanently disable applications for a specific applicant, and re-enable them; the action is hidden for users lacking the capability",
+          "status": "pending"
+        },
+        {
+          "desc": "A disabled user is prevented from resubmitting (the frontend surfaces the blocked state via T-0032)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-12T00:49:22.653Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; admin per-user application disable/re-enable (backend blocklist model does not exist yet)"
+        }
+      ]
+    },
+    {
+      "id": "T-0034",
+      "title": "Wire admin applications review queue to live data",
+      "summary": "The admin applications review screen renders a hardcoded mock queue and mock selected application (only the approve/decline/hold write paths are wired to the real service). Fetch the real queue via getAll(status) across the pending/approved/declined/reapply tabs and load the selected application from getById(), so bumped edits, reapplications and decline reasons are actually visible to the officer end-to-end.",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html"
+      ],
+      "dependsOn": [
+        "T-0009",
+        "T-0011"
+      ],
+      "blocks": [
+        "T-0033"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Each tab (pending/approved/declined/reapply) lists real applications from GET /applications?status=",
+          "status": "pending"
+        },
+        {
+          "desc": "Selecting an application loads its detail from the service (not mock data), including moderatorNote/declineReason",
+          "status": "pending"
+        },
+        {
+          "desc": "Approving/declining/holding removes it from the queue and the change persists on refetch",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-11T23:15:00Z",
+      "updatedAt": "2026-07-11T23:15:00Z",
+      "history": [
+        {
+          "at": "2026-07-11T23:15:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; replace the hardcoded mock queue with live getAll/getById so bumps and declines are visible end-to-end"
         }
       ]
     }
