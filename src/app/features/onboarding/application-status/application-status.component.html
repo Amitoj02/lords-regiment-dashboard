@@ -77,9 +77,18 @@
 
                 <!-- Submitted details -->
                 <dl class="status-details">
-                    <div><dt>In-game name</dt><dd>{{ application.inGameName }}</dd></div>
-                    <div><dt>Current regiment</dt><dd>{{ application.currentRegiment }}</dd></div>
-                    <div><dt>Preferred classes</dt><dd>{{ application.preferredClasses }}</dd></div>
+                    <div>
+                        <dt>In-game name</dt>
+                        <dd>{{ application.inGameName }}</dd>
+                    </div>
+                    <div>
+                        <dt>Current regiment</dt>
+                        <dd>{{ application.currentRegiment }}</dd>
+                    </div>
+                    <div>
+                        <dt>Preferred classes</dt>
+                        <dd>{{ application.preferredClasses }}</dd>
+                    </div>
                     <div>
                         <dt>Submitted</dt>
                         <dd>{{ application.submittedAt | date: 'medium' }}</dd>
@@ -99,7 +108,6 @@
             }
             <a routerLink="/" class="btn btn-ghost">Return home</a>
         </div>
-        }
-        }
+        } }
     </div>
 </div>

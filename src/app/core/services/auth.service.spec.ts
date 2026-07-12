@@ -62,7 +62,10 @@ describe('AuthService post-login routing', () => {
 
     const profile = (setupComplete: boolean): RegimentProfile =>
         ({ setupComplete }) as unknown as RegimentProfile;
-    const mine = (application: Application | null): MyApplication => ({ application, blocked: false });
+    const mine = (application: Application | null): MyApplication => ({
+        application,
+        blocked: false,
+    });
 
     it('routes an enrolled member to /dashboard', () => {
         service.completeLogin('t', true);

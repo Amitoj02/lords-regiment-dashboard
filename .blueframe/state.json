@@ -4,7 +4,7 @@
   "lastSyncedCommit": "d9277e99d65cd6d6f77ded161d5e10ee548f782e",
   "lastSyncedAt": "2026-07-12T19:02:09Z",
   "notesForNextSession": "APPLICANT SELF-SERVICE FLOW shipped on feat/applicant-self-service (commit d9277e9), in lockstep with the backend endpoints on lords-dashboard-backend:feat/guilds-scope-and-applicant-self-service (T-0054/55/56). DONE + browser-verified live: T-0027 (apply-as-signin CTA + onboardingGuard), T-0028 (data layer: getMine/updateMine/block/unblock + declineReason on the model), T-0029 (application-status page — pending/held/declined/blocked), T-0030 (post-login redirect: returning applicant → status, new → form, member → dashboard), T-0031 (edit a pending application, ?edit=1 pre-fill → PATCH), T-0032 (reapply after decline unless blocked), T-0033 (admin Block-from-applying / Re-enable). Owner setup: T-0037 (Owner + setupComplete=false → /admin/settings), T-0038 (RETIRED the stub owner-setup wizard → redirects to admin Settings). T-0015 models reconciled (UUID string ids kept — matches the built backend). T-0016 archived. T-0036 owner-superadmin verified via a minted JWT (full admin panel renders) — set a REAL OWNER_DISCORD_ID before seed:prod. 51 unit specs green (new AuthService routing + onboardingGuard specs), ng lint clean, prod build clean. DEFERRED / next: T-0020 wire the account-deletion UI to the existing GDPR endpoints; T-0006 the landing still has hardcoded stats/officers arrays — wire GET /regiment/stats + guard un-wired surfaces before the public deploy (T-0032). Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; the dev web container hot-reloads at localhost:4200 and proxies /api to the api container.",
-  "nextIdCounter": 39,
+  "nextIdCounter": 42,
   "connections": [],
   "tasks": [
     {
@@ -2209,6 +2209,156 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "RETIRED the stub owner-setup wizard (owner-setup + owner-discord deleted): it duplicated the fully-wired admin Settings panel as broken stubs and dead-ended at a nonexistent /onboarding/ranks. /onboarding/setup* now redirects to /admin/settings; the unguarded public access + dead-end are gone. Shipped: post-login routing (AuthService.routeAfterLogin) + the onboardingGuard are covered by new specs pinning the member / Owner-first-run / returning-applicant / new-applicant branches (auth.service.spec + onboarding.guard.spec, 51 green). Server remains authoritative — client gating is UX only. Backend counterparts (lords-dashboard-backend:T-0054/T-0055/T-0056) shipped in lockstep."
+        }
+      ]
+    },
+    {
+      "id": "T-0039",
+      "title": "Fix left/right gutters on the /onboarding/status page",
+      "summary": "The application-status template reuses the .apply-page/.apply-inner shell classes, but those live only in application-form.component.scss and are component-scoped (default Emulated encapsulation), so on /onboarding/status they never apply — the page renders full-bleed with no horizontal padding and no centered max-width. Extract the shared 'apply shell' layout (.apply-page/.apply-inner/.apply-header/.apply-logo/.apply-title/.apply-subtitle/.apply-panel) into a global partial so the status page gets the same padded, centered 640px container as the apply form.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-status/application-status.component.scss",
+        "src/app/features/onboarding/application-form/application-form.component.scss",
+        "src/styles/_onboarding.scss",
+        "src/styles.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0040",
+        "T-0041"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/onboarding/status renders with visible left/right gutters and a centered ~640px container matching /onboarding/apply",
+          "status": "pending"
+        },
+        {
+          "desc": "The apply form (/onboarding/apply) is visually unchanged after the shell extraction — same padding, max-width, header/logo layout",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Extracting/relocating the .apply-* shell layout touches shared onboarding styles consumed by BOTH the apply form and the status page; a mistake reflows both surfaces",
+          "status": "open",
+          "notedAt": "2026-07-12T20:30:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:30:00Z",
+      "updatedAt": "2026-07-12T20:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; root cause = the .apply-* shell classes are scoped to application-form so the status page reuse gets no gutters/centering. Fix by extracting the shell to a global partial."
+        }
+      ]
+    },
+    {
+      "id": "T-0040",
+      "title": "Desktop UI polish for the application-status page",
+      "summary": "Beyond the gutter fix, tighten the visual hierarchy of /onboarding/status on desktop: the header/badge relationship, the pending/held/declined/blocked state panels, the icon/typography treatment, and the spacing/rules of the .status-details definition list and .status-actions row. Align the panel chrome with design-reference/screens-onboarding.jsx so the page reads as a finished surface rather than stacked stub panels.",
+      "status": "planned",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-status/application-status.component.html",
+        "src/app/features/onboarding/application-status/application-status.component.scss",
+        "design-reference/screens-onboarding.jsx"
+      ],
+      "dependsOn": [
+        "T-0039"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Each status state (pending / held+note / declined+reason / blocked) renders with the correct badge, icon, and message hierarchy on desktop",
+          "status": "pending"
+        },
+        {
+          "desc": "The .status-details list and .status-actions row have consistent spacing/alignment and match the design-reference onboarding treatment",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:30:00Z",
+      "updatedAt": "2026-07-12T20:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; desktop visual polish of the status page against the design-reference onboarding screens, after the gutter fix (T-0039)."
+        }
+      ]
+    },
+    {
+      "id": "T-0041",
+      "title": "Mobile/responsive pass for the onboarding status & apply surfaces",
+      "summary": "Make /onboarding/status (and the closely-related /onboarding/apply that shares the shell) hold up on mobile: reduce the .apply-page gutters at small widths, keep the .status-details rows (which use justify-content: space-between) from crushing long values or overflowing, make the .status-actions buttons stack/full-width on narrow screens, and verify no horizontal scroll at 360–414px per design-reference/screens-mobile.jsx.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-status/application-status.component.scss",
+        "src/app/features/onboarding/application-form/application-form.component.scss",
+        "src/styles/_responsive.scss",
+        "design-reference/screens-mobile.jsx"
+      ],
+      "dependsOn": [
+        "T-0039"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/onboarding/status has no horizontal scroll at 360/390/414px; the details rows reflow and the action buttons stack/full-width",
+          "status": "pending"
+        },
+        {
+          "desc": "/onboarding/apply likewise reflows cleanly at mobile widths (shared apply shell)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "May add/edit breakpoints in the shared _responsive.scss and the shared apply shell, both consumed beyond this page — a bad breakpoint can reflow other surfaces / the apply form",
+          "status": "open",
+          "notedAt": "2026-07-12T20:30:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T20:30:00Z",
+      "updatedAt": "2026-07-12T20:30:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; mobile/responsive polish for the onboarding status + apply surfaces, after the gutter fix (T-0039)."
         }
       ]
     }
