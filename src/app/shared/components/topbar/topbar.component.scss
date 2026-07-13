@@ -67,3 +67,50 @@
         display: none;
     }
 }
+
+/* ── T-0082/0083 additions ──────────────────────────────────────────────── */
+
+/* Back-to-home button (replaced the search box). */
+.topbar-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Mobile brand mark — hidden on desktop (the sidebar shows the brand there),
+   shown once the sidebar collapses to an off-canvas drawer (<=820px). */
+.topbar-brand {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+
+    .topbar-brand-logo {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+    }
+
+    .topbar-brand-name {
+        font-weight: 600;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 820px) {
+    .topbar-brand {
+        display: inline-flex;
+    }
+
+    /* Keep the home button compact on mobile (icon only). */
+    .topbar-home-label {
+        display: none;
+    }
+
+    /* The brand replaces the breadcrumbs on narrow screens to avoid crowding. */
+    .crumbs {
+        display: none;
+    }
+}

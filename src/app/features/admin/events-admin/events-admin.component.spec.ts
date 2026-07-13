@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { of } from 'rxjs';
 import { EventsAdminComponent } from './events-admin.component';
 import { EventsService } from '../../../core/services/events.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { RegimentEvent } from '../../../core/models/event.model';
 
 function event(overrides: Partial<RegimentEvent> = {}): RegimentEvent {
@@ -31,13 +32,18 @@ describe('EventsAdminComponent', () => {
     let eventsService: jasmine.SpyObj<EventsService>;
 
     function setup(events: RegimentEvent[]): void {
-        eventsService = jasmine.createSpyObj<EventsService>('EventsService', ['getAll']);
-        eventsService.getAll.and.returnValue(of(events));
+        eventsService = jasmine.createSpyObj<EventsService>('EventsService', ['getAllMine']);
+        eventsService.getAllMine.and.returnValue(of(events));
+        const auth = jasmine.createSpyObj<AuthService>('AuthService', ['hasCapability']);
+        auth.hasCapability.and.returnValue(true);
 
         TestBed.configureTestingModule({
             imports: [CommonModule, RouterModule.forRoot([])],
             declarations: [EventsAdminComponent],
-            providers: [{ provide: EventsService, useValue: eventsService }],
+            providers: [
+                { provide: EventsService, useValue: eventsService },
+                { provide: AuthService, useValue: auth },
+            ],
             schemas: [NO_ERRORS_SCHEMA],
         });
         fixture = TestBed.createComponent(EventsAdminComponent);
@@ -61,8 +67,8 @@ describe('EventsAdminComponent', () => {
     it('renders a Manage link per event and the New event link', () => {
         setup([event({ id: 'ev1', status: 'upcoming' })]);
         const el: HTMLElement = fixture.nativeElement;
-        expect(el.querySelector('a[href="/admin/events/ev1"]')).toBeTruthy();
-        expect(el.querySelector('a[href="/admin/events/create"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/dashboard/events/ev1"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/dashboard/events/create"]')).toBeTruthy();
     });
 
     it('shows an empty state when there are no events', () => {

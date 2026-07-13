@@ -299,3 +299,51 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Dashboard rework additions (T-0074/75/76/79/80/81) ─────────────────── */
+
+/* T-0075: the Honors Strip (rank + medals) must wrap gracefully on mobile
+   instead of overflowing / clipping. */
+@media (max-width: 640px) {
+    .honors-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .honors-divider {
+        display: none;
+    }
+
+    .honor-row-medals {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+
+/* Upcoming events + applicant rows become full-card links. */
+.event-row--link,
+.applicant-row--link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.12s ease;
+
+    &:hover {
+        background: var(--ink-800, rgba(255, 255, 255, 0.03));
+    }
+}
+
+/* Recent Gallery uses the shared card in a compact 2-column masonry. */
+.dashboard-gallery-masonry {
+    column-count: 2;
+    column-gap: 10px;
+
+    @media (max-width: 480px) {
+        column-count: 1;
+    }
+}
+
+.panel-foot {
+    padding: 10px 12px 4px;
+}

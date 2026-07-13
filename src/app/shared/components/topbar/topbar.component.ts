@@ -8,7 +8,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 })
 export class TopbarComponent {
     @Input() crumbs: string[] = [];
-    @Input() showSearch = true;
 
     /** Emitted when the mobile hamburger is tapped (opens the sidebar drawer). */
     @Output() menu = new EventEmitter<void>();

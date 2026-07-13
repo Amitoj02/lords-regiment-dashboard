@@ -19,6 +19,25 @@ export interface DiscordConnection {
     lastFullSyncAt: string | null;
 }
 
+/**
+ * Lean STAFF bot status + live metrics (GET /discord/status). Readable by
+ * Owner/Admin/Moderator; omits the sensitive authority/config fields.
+ */
+export interface BotStatus {
+    connected: boolean;
+    connectionStatus: BotConnectionStatus;
+    botVersion: string | null;
+    membersVisible: number | null;
+    totalRoles: number | null;
+    wsPing: number | null;
+    uptimeMs: number | null;
+    memoryBytes: number | null;
+    cpu: number | null;
+    readyAt: string | null;
+    lastHeartbeatAt: string | null;
+    lastFullSyncAt: string | null;
+}
+
 /** A guild role, for the role pickers (join role, Ban role). */
 export interface DiscordRole {
     id: string;
@@ -84,6 +103,11 @@ export class DiscordService {
 
     getConnection(): Observable<DiscordConnection> {
         return this.http.get<DiscordConnection>(`${this.base}/connection`);
+    }
+
+    /** STAFF-readable bot status + live metrics for the dashboard widget (T-0081). */
+    getStatus(): Observable<BotStatus> {
+        return this.http.get<BotStatus>(`${this.base}/status`);
     }
 
     /** Re-probe the gateway; returns the snapshot plus the guild roles + channels. */

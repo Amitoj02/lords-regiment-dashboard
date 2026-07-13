@@ -17,6 +17,7 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
 import { BottomNavComponent } from './components/bottom-nav/bottom-nav.component';
 import { ComingSoonComponent } from './components/coming-soon/coming-soon.component';
+import { GalleryCardComponent } from './components/gallery-card/gallery-card.component';
 
 const SHARED_COMPONENTS = [
     AvatarComponent,
@@ -33,6 +34,7 @@ const SHARED_COMPONENTS = [
     TopbarComponent,
     BottomNavComponent,
     ComingSoonComponent,
+    GalleryCardComponent,
 ];
 
 @NgModule({

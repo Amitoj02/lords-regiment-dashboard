@@ -11,10 +11,10 @@ describe('SidebarComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('routes Events to the in-shell admin surface and marks it admin-only', () => {
+    it('routes Events to the in-shell member surface and is member-visible', () => {
         const events = component.navItems.find((i) => i.key === 'events');
-        expect(events?.route).toBe('/admin/events');
-        expect(events?.adminOnly).toBe(true);
+        expect(events?.route).toBe('/dashboard/events');
+        expect(events?.adminOnly).toBe(false);
     });
 
     it('routes Gallery to the in-shell admin surface and marks it admin-only', () => {
@@ -23,12 +23,13 @@ describe('SidebarComponent', () => {
         expect(gallery?.adminOnly).toBe(true);
     });
 
-    it('hides admin-only items from non-admins', () => {
+    it('hides admin-only items from non-admins but keeps member-visible Events', () => {
         component.isAdmin = false;
         const keys = component.visibleItems.map((i) => i.key);
         expect(keys).toContain('dashboard');
         expect(keys).toContain('roster');
-        expect(keys).not.toContain('events');
+        // Events are now member-visible (T-0086).
+        expect(keys).toContain('events');
         expect(keys).not.toContain('gallery');
         expect(keys).not.toContain('apps');
         expect(keys).not.toContain('audit');

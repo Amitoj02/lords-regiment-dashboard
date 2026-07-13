@@ -19,6 +19,13 @@
         </svg>
     </button>
 
+    <!-- Mobile brand (T-0083): the sidebar (which normally shows the brand) is an
+         off-canvas drawer on mobile, so surface the regiment mark here. -->
+    <a routerLink="/dashboard" class="topbar-brand" aria-label="Lords Regiment — home">
+        <img src="/assets/images/regiment-logo-sm.png" alt="" class="topbar-brand-logo" />
+        <span class="topbar-brand-name">Lords Regiment</span>
+    </a>
+
     <!-- Breadcrumbs -->
     <nav class="crumbs" aria-label="Breadcrumb">
         @for (crumb of crumbPairs; track crumb; let first = $first) { @if (!first) {
@@ -30,13 +37,12 @@
 
     <span class="sp"></span>
 
-    <!-- Search -->
-    @if (showSearch) {
-    <div class="topbar-search">
+    <!-- Back to home (T-0082 — replaced the decorative search box) -->
+    <a routerLink="/dashboard" class="btn btn-ghost btn-sm topbar-home">
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -45,12 +51,11 @@
             stroke-linejoin="round"
             aria-hidden="true"
         >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
-        <input type="search" placeholder="Search…" class="topbar-input" />
-    </div>
-    }
+        <span class="topbar-home-label">Home</span>
+    </a>
 
     <!-- Projected action buttons -->
     <ng-content select="[topbar-actions]"></ng-content>

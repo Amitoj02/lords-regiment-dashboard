@@ -27,8 +27,9 @@ function apiEvent(overrides: Partial<ApiEvent> = {}): ApiEvent {
         serverName: 'LR #1',
         serverRegion: 'EU',
         recurrenceRule: null,
+        recurrenceCadence: null,
+        recurrenceActive: false,
         notifyOffsets: [60, 15],
-        isDraft: false,
         isArchived: false,
         myRsvp: null,
         ...overrides,
@@ -95,14 +96,16 @@ describe('EventsService', () => {
             serverName: 'LR #2',
             serverPassword: 'secret',
             date: '2026-07-01',
+            endDate: '2026-07-02',
             startTime: '20:00',
             endTime: '21:00',
             timezone: 'UTC',
             platforms: ['steam'],
             status: 'upcoming',
-            recurring: 'Weekly',
+            recurrenceCadence: 'weekly',
             tags: ['drill'],
             rsvpCounts: { interested: 0, tentative: 0, declined: 0, neutral: 0 },
+            bannerKey: 'events/reg/uuid.png',
             notifyBefore: ['1h'],
         };
         service.create(event).subscribe();
@@ -110,11 +113,32 @@ describe('EventsService', () => {
         const req = httpMock.expectOne('/api/events');
         expect(req.request.method).toBe('POST');
         expect(req.request.body.startsAt).toBe('2026-07-01T20:00:00');
-        expect(req.request.body.endsAt).toBe('2026-07-01T21:00:00');
+        // endsAt uses the separate end date (T-0089).
+        expect(req.request.body.endsAt).toBe('2026-07-02T21:00:00');
         expect(req.request.body.serverPassword).toBe('secret');
-        expect(req.request.body.isRecurring).toBe(true);
-        expect(req.request.body.recurrenceRule).toBe('Weekly');
+        // Structured cadence (T-0090) — no legacy isRecurring/recurrenceRule.
+        expect(req.request.body.recurrenceCadence).toBe('weekly');
+        expect(req.request.body.isRecurring).toBeUndefined();
+        expect(req.request.body.bannerKey).toBe('events/reg/uuid.png');
         expect(req.request.body.notifyOffsets).toEqual([60]);
+        // No draft flag is ever sent (T-0091).
+        expect(req.request.body.isDraft).toBeUndefined();
+        req.flush(apiEvent());
+    });
+
+    it('getAllMine() requests the member calendar and maps myRsvp', () => {
+        let result: RegimentEvent[] | undefined;
+        service.getAllMine('upcoming').subscribe((events) => (result = events));
+        const req = httpMock.expectOne('/api/events/mine?status=upcoming&limit=100');
+        expect(req.request.method).toBe('GET');
+        req.flush(page([apiEvent({ myRsvp: { status: 'interested', reminderOffsetMinutes: null } })]));
+        expect(result?.[0].myRsvp).toBe('interested');
+    });
+
+    it('getMineById() hits the member detail endpoint', () => {
+        service.getMineById('ev1').subscribe();
+        const req = httpMock.expectOne('/api/events/mine/ev1');
+        expect(req.request.method).toBe('GET');
         req.flush(apiEvent());
     });
 
@@ -133,13 +157,6 @@ describe('EventsService', () => {
         expect(req.request.method).toBe('POST');
         req.flush({ serverName: 'LR #1', serverRegion: 'EU', serverPassword: 'topsecret' });
         expect(revealed?.serverPassword).toBe('topsecret');
-    });
-
-    it('publish() transitions the event', () => {
-        service.publish('ev1').subscribe();
-        const req = httpMock.expectOne('/api/events/ev1/publish');
-        expect(req.request.method).toBe('POST');
-        req.flush(apiEvent());
     });
 
     it('delete() issues a DELETE', () => {
