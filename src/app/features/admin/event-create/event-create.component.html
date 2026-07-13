@@ -1,9 +1,9 @@
-<hf-app-shell [activeRoute]="'events'">
+<hf-app-shell [activeRoute]="'events'" [crumbs]="['Events', 'Create']">
     <div class="page">
         <div class="page-head">
             <div>
                 <div class="admin-label brass label-spaced">Article of Order</div>
-                <h1 class="page-title">Draft an Event</h1>
+                <h1 class="page-title">{{ isEdit ? 'Edit Event' : 'Create an Event' }}</h1>
             </div>
         </div>
 
@@ -26,50 +26,47 @@
                         </div>
 
                         <div class="field-row">
-                            <label class="field-label" for="event-orders">Orders of the Day</label>
-                            <div class="orders-toolbar">
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-sm btn-icon"
-                                    title="Bold"
-                                >
-                                    <b>B</b>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-sm btn-icon"
-                                    title="Italic"
-                                >
-                                    <i>I</i>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-sm btn-icon"
-                                    title="Underline"
-                                >
-                                    <u>U</u>
-                                </button>
-                                <span class="rule-ornament"></span>
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-sm btn-icon"
-                                    title="List"
-                                >
-                                    &#9776;
-                                </button>
-                            </div>
+                            <label class="field-label" for="event-description">Event description</label>
                             <textarea
-                                id="event-orders"
+                                id="event-description"
                                 class="hf-textarea"
                                 rows="7"
-                                formControlName="orders"
-                                placeholder="Write the orders for this engagement..."
+                                formControlName="description"
+                                placeholder="Describe this engagement — objectives, muster point, expectations…"
                             ></textarea>
                         </div>
 
                         <div class="field-row">
                             <div class="field-label">Banner image</div>
-                            <div class="banner-upload">
+                            <input
+                                #bannerFile
+                                type="file"
+                                class="visually-hidden"
+                                accept="image/png,image/jpeg,image/webp"
+                                (change)="onBannerSelected($event)"
+                            />
+                            @if (bannerPreview) {
+                            <div class="banner-preview">
+                                <img [src]="bannerPreview" alt="Banner preview" />
+                                @if (bannerUploading) {
+                                <span class="banner-status">Uploading…</span>
+                                } @else {
+                                <span class="banner-status banner-status--ok">Ready</span>
+                                }
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm banner-remove"
+                                    (click)="removeBanner()"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                            } @else {
+                            <button
+                                type="button"
+                                class="banner-upload"
+                                (click)="bannerFile.click()"
+                            >
                                 <svg
                                     width="24"
                                     height="24"
@@ -84,14 +81,13 @@
                                     <path d="M3 16l5-5 4 4 3-3 4 4" />
                                     <circle cx="8.5" cy="8.5" r="1.5" />
                                 </svg>
-                                <span
-                                    >Drag &amp; drop or
-                                    <span class="upload-link">browse</span></span
-                                >
-                                <span class="field-hint"
-                                    >PNG, JPG — max 4 MB, 1920×600 recommended</span
-                                >
-                            </div>
+                                <span><span class="upload-link">Choose an image</span> to upload</span>
+                                <span class="field-hint">PNG, JPG or WebP — 1920×600 recommended</span>
+                            </button>
+                            }
+                            @if (bannerError) {
+                            <div class="field-error">{{ bannerError }}</div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -101,7 +97,7 @@
                     <div class="panel-header"><span class="panel-title">When</span></div>
                     <div class="panel-body">
                         <div class="grid-2">
-                            <div>
+                            <div class="field-row">
                                 <div class="field-label">Starts</div>
                                 <div class="row time-row">
                                     <input
@@ -118,13 +114,13 @@
                                     />
                                 </div>
                             </div>
-                            <div>
+                            <div class="field-row">
                                 <div class="field-label">Ends</div>
                                 <div class="row time-row">
                                     <input
                                         class="hf-input flex-1"
                                         type="date"
-                                        formControlName="date"
+                                        formControlName="endDate"
                                         aria-label="End date"
                                     />
                                     <input
@@ -137,26 +133,35 @@
                             </div>
                         </div>
 
-                        <div class="field-row">
-                            <label class="field-label" for="event-timezone">Timezone</label>
-                            <select
-                                id="event-timezone"
-                                class="hf-select timezone-select"
-                                formControlName="timezone"
-                            >
-                                <option value="UTC">UTC</option>
-                                <option value="America/New_York">Eastern (UTC-5)</option>
-                                <option value="America/Chicago">Central (UTC-6)</option>
-                                <option value="Europe/London">London (UTC+0/+1)</option>
-                                <option value="Europe/Berlin">Berlin (UTC+1/+2)</option>
-                            </select>
-                        </div>
-
-                        <div class="field-row">
-                            <label class="field-label">
-                                <input type="checkbox" formControlName="recurring" />
-                                Recurring event
-                            </label>
+                        <div class="grid-2">
+                            <div class="field-row">
+                                <label class="field-label" for="event-timezone">Timezone</label>
+                                <select
+                                    id="event-timezone"
+                                    class="hf-select"
+                                    formControlName="timezone"
+                                >
+                                    <option value="America/New_York">Eastern (EST/EDT)</option>
+                                    <option value="America/Chicago">Central (CST/CDT)</option>
+                                    <option value="America/Denver">Mountain (MST/MDT)</option>
+                                    <option value="America/Los_Angeles">Pacific (PST/PDT)</option>
+                                    <option value="UTC">UTC</option>
+                                    <option value="Europe/London">London (GMT/BST)</option>
+                                    <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                                </select>
+                            </div>
+                            <div class="field-row">
+                                <label class="field-label" for="event-cadence">Repeats</label>
+                                <select
+                                    id="event-cadence"
+                                    class="hf-select"
+                                    formControlName="recurrenceCadence"
+                                >
+                                    @for (opt of cadenceOptions; track opt.value) {
+                                    <option [value]="opt.value">{{ opt.label }}</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
 
                         <div class="field-row">
@@ -199,10 +204,19 @@
                                     type="text"
                                     [(ngModel)]="tagInput"
                                     [ngModelOptions]="{ standalone: true }"
-                                    placeholder="Add tag…"
+                                    placeholder="Add a tag…"
                                     (keydown.enter)="addTag(); $event.preventDefault()"
                                 />
                             </div>
+                            @if (filteredSuggestions.length) {
+                            <div class="tag-suggestions">
+                                @for (s of filteredSuggestions; track s) {
+                                <button type="button" class="chip chip--sm" (click)="addTag(s)">
+                                    + {{ s }}
+                                </button>
+                                }
+                            </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -257,15 +271,22 @@
                         </div>
 
                         <div class="field-row">
-                            <div class="field-label">Platform availability</div>
+                            <div class="field-label">
+                                Platform availability
+                                <span class="field-hint field-hint--inline">select all that apply</span>
+                            </div>
                             <div class="platform-toggles">
                                 @for (p of platformOptions; track p) {
                                 <button
                                     type="button"
-                                    class="chip"
+                                    class="chip chip--check"
                                     [ngClass]="{ 'chip--active': isPlatformSelected(p.id) }"
+                                    [attr.aria-pressed]="isPlatformSelected(p.id)"
                                     (click)="togglePlatform(p.id)"
                                 >
+                                    <span class="chip-check" aria-hidden="true">{{
+                                        isPlatformSelected(p.id) ? '✓' : '+'
+                                    }}</span>
                                     {{ p.label }}
                                 </button>
                                 }
@@ -285,7 +306,10 @@
                 <div class="panel preview-card">
                     <div class="panel-header"><span class="panel-title">Preview</span></div>
                     <div class="panel-body">
-                        <div class="preview-banner"></div>
+                        <div
+                            class="preview-banner"
+                            [style.background-image]="bannerPreview ? 'url(' + bannerPreview + ')' : null"
+                        ></div>
                         <div class="preview-info">
                             <div class="preview-title serif">
                                 {{ form.get('title')?.value || 'Event title…' }}
@@ -309,20 +333,13 @@
                 <div class="create-actions">
                     <button
                         type="button"
-                        class="btn btn-ghost btn-block"
-                        [disabled]="saving"
-                        (click)="saveDraft()"
-                    >
-                        Save draft
-                    </button>
-                    <button
-                        type="button"
                         class="btn btn-primary btn-block"
-                        (click)="publish()"
-                        [disabled]="form.invalid || saving"
+                        (click)="save()"
+                        [disabled]="form.invalid || saving || bannerUploading"
                     >
-                        {{ saving ? 'Working…' : 'Publish' }}
+                        {{ saving ? 'Working…' : isEdit ? 'Save changes' : 'Publish event' }}
                     </button>
+                    <a routerLink="/dashboard/events" class="btn btn-ghost btn-block">Cancel</a>
                 </div>
                 } @else {
                 <hf-notice variant="info">

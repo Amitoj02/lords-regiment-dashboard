@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { EventsService } from '../../../core/services/events.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-events-admin',
@@ -19,13 +20,23 @@ export class EventsAdminComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(private eventsService: EventsService) {}
+    constructor(
+        private eventsService: EventsService,
+        private auth: AuthService,
+    ) {}
+
+    /** Capability gate — only moderator+ may author events. */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
 
     ngOnInit(): void {
         this.loading = true;
         this.loadError = '';
+        // Member projection (T-0085): every member reads the in-shell calendar;
+        // enrolled members also get their own myRsvp per event.
         this.eventsService
-            .getAll()
+            .getAllMine()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (events) => {

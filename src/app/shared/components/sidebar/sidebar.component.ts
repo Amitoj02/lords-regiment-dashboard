@@ -39,15 +39,16 @@ export class SidebarComponent {
             adminOnly: false,
             enabled: true,
         },
-        // Events + Gallery point at the in-shell admin surfaces (index + manage).
-        // Admin-only: plain members reach the public /events + /gallery via the
-        // public site nav instead.
+        // Events are now member-visible in-shell (T-0085/T-0086): members read the
+        // calendar; authoring is gated behind manageEventsGuard + in-template
+        // capability checks. Gallery stays admin-only in-shell (public /gallery
+        // is reachable via the public site nav).
         {
             label: 'Events',
             key: 'events',
-            route: '/admin/events',
+            route: '/dashboard/events',
             icon: 'calendar',
-            adminOnly: true,
+            adminOnly: false,
             enabled: true,
         },
         {

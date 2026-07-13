@@ -204,3 +204,120 @@
     gap: 6px;
     margin-top: 6px;
 }
+
+/* ── T-0089/92/93 additions ─────────────────────────────────────────────── */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Banner upload (T-0093) */
+.banner-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 20px;
+    border: 1px dashed var(--hairline, rgba(255, 255, 255, 0.18));
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-dim, #9aa0a6);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+
+    &:hover {
+        border-color: var(--brass, #c9a24b);
+    }
+
+    .upload-link {
+        color: var(--brass, #c9a24b);
+        text-decoration: underline;
+    }
+}
+
+.banner-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    img {
+        width: 140px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--hairline, rgba(255, 255, 255, 0.18));
+    }
+
+    .banner-status {
+        font-size: 0.8rem;
+        color: var(--ink-dim, #9aa0a6);
+
+        &--ok {
+            color: var(--ok, #6bbf78);
+        }
+    }
+}
+
+.field-error {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--err, #d9534f);
+}
+
+.field-hint--inline {
+    margin-left: 8px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    opacity: 0.75;
+}
+
+/* Tag autocomplete (T-0088) */
+.tag-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.chip--sm {
+    padding: 3px 8px;
+    font-size: 0.78rem;
+}
+
+/* Platform multi-select indicator (T-0092) */
+.chip--check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    .chip-check {
+        font-weight: 700;
+        opacity: 0.85;
+    }
+}
+
+/* Mobile spacing for the When section + form (T-0089) */
+@media (max-width: 680px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .time-row {
+        flex-wrap: wrap;
+    }
+
+    .time-input {
+        min-width: 110px;
+    }
+}

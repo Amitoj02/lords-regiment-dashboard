@@ -7,8 +7,8 @@
                 <div class="event-banner__badges">
                     <hf-event-status [status]="event.status"></hf-event-status>
                     <hf-platform-badges [platforms]="event.platforms"></hf-platform-badges>
-                    @if (event.recurring) {
-                    <span class="badge">{{ event.recurring }}</span>
+                    @if (event.recurrenceCadence) {
+                    <span class="badge">Repeats {{ event.recurrenceCadence }}</span>
                     }
                 </div>
                 <h1 class="event-banner__title serif-display">{{ event.title }}</h1>
@@ -28,14 +28,16 @@
         <div class="event-body">
             <!-- Left column -->
             <div class="event-left">
-                <!-- Orders of the Day -->
+                <!-- Event description -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title">Orders of the Day</span>
+                        <span class="panel-title">Event description</span>
                     </div>
                     <div class="panel-body">
-                        @for (para of event.description.split('\n\n'); track para) {
+                        @for (para of (event.description || '').split('\n\n'); track para) {
                         <p class="serif event-orders">{{ para }}</p>
+                        } @if (!event.description) {
+                        <span class="field-hint">No description provided.</span>
                         }
                     </div>
                 </div>
@@ -94,7 +96,7 @@
                 <div class="panel">
                     <div class="panel-header between">
                         <span class="panel-title">Attendees</span>
-                        <span class="badge">{{ rsvpTotal }}</span>
+                        <span class="badge">{{ event.attendeesCount ?? attendees.length }}</span>
                     </div>
                     <div class="panel-body">
                         @if (attendees.length) {
@@ -124,10 +126,8 @@
                     <div class="panel-body rsvp-options">
                         <button
                             type="button"
-                            class="btn btn-block rsvp-btn"
-                            [ngClass]="{
-                                'rsvp-btn--active btn-primary': selectedRsvp === 'interested',
-                            }"
+                            class="btn btn-block rsvp-btn rsvp-btn--interested"
+                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'interested' }"
                             (click)="setRsvp('interested')"
                         >
                             <span>Interested</span>
@@ -135,10 +135,8 @@
                         </button>
                         <button
                             type="button"
-                            class="btn btn-block rsvp-btn"
-                            [ngClass]="{
-                                'rsvp-btn--active btn-primary': selectedRsvp === 'tentative',
-                            }"
+                            class="btn btn-block rsvp-btn rsvp-btn--tentative"
+                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'tentative' }"
                             (click)="setRsvp('tentative')"
                         >
                             <span>Tentative</span>
@@ -146,23 +144,12 @@
                         </button>
                         <button
                             type="button"
-                            class="btn btn-block rsvp-btn"
-                            [ngClass]="{
-                                'rsvp-btn--active btn-destructive': selectedRsvp === 'declined',
-                            }"
+                            class="btn btn-block rsvp-btn rsvp-btn--declined"
+                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'declined' }"
                             (click)="setRsvp('declined')"
                         >
                             <span>Declined</span>
                             <span class="badge">{{ event.rsvpCounts.declined }}</span>
-                        </button>
-                        <button
-                            type="button"
-                            class="btn btn-block rsvp-btn"
-                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'neutral' }"
-                            (click)="setRsvp('neutral')"
-                        >
-                            <span>Neutral</span>
-                            <span class="badge">{{ event.rsvpCounts.neutral }}</span>
                         </button>
                     </div>
                 </div>
@@ -186,40 +173,47 @@
                             <span class="rollup-label">Declined</span>
                             <span class="rollup-count err">{{ event.rsvpCounts.declined }}</span>
                         </div>
-                        <div class="rollup-row">
-                            <span class="rollup-label">Neutral</span>
-                            <span class="rollup-count">{{ event.rsvpCounts.neutral }}</span>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Action buttons -->
+                <!-- Moderator actions (moderator+; each confirms before acting) -->
                 @if (can('manage_events')) {
-                <div class="event-actions">
-                    <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-block"
-                        [disabled]="working"
-                        (click)="archive()"
-                    >
-                        Archive
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-block"
-                        [disabled]="working"
-                        (click)="complete()"
-                    >
-                        Mark complete
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-destructive btn-sm btn-block"
-                        [disabled]="working"
-                        (click)="remove()"
-                    >
-                        Delete
-                    </button>
+                <div class="panel mod-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Moderator actions</span>
+                    </div>
+                    <div class="panel-body event-actions">
+                        <a
+                            [routerLink]="['/dashboard/events', event.id, 'edit']"
+                            class="btn btn-ghost btn-sm btn-block"
+                        >
+                            Edit event
+                        </a>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="archive()"
+                        >
+                            Archive
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="complete()"
+                        >
+                            Mark complete
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="remove()"
+                        >
+                            Delete
+                        </button>
+                    </div>
                 </div>
                 }
             </div>

@@ -1,11 +1,11 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs';
-import { RegimentEvent } from '../../../core/models/event.model';
+import { RecurrenceCadence, RegimentEvent } from '../../../core/models/event.model';
 import { EventsService } from '../../../core/services/events.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
     selector: 'app-event-create',
@@ -13,10 +13,13 @@ import { AuthService } from '../../../core/services/auth.service';
     styleUrls: ['./event-create.component.scss'],
     standalone: false,
 })
-export class EventCreateComponent {
+export class EventCreateComponent implements OnInit {
     form: FormGroup;
     showPassword = false;
     saving = false;
+
+    /** Non-null when editing an existing event (T-0097). */
+    editId: string | null = null;
 
     readonly notifyOptions = ['15 minutes', '30 minutes', '1 hour', '2 hours', '1 day'];
     selectedNotify: string[] = ['1 hour'];
@@ -30,8 +33,18 @@ export class EventCreateComponent {
         '1 day': '24h',
     };
 
+    /** Recurrence options for the cadence selector (T-0090). '' = one-off. */
+    readonly cadenceOptions: { value: '' | RecurrenceCadence; label: string }[] = [
+        { value: '', label: 'Does not repeat' },
+        { value: 'daily', label: 'Daily' },
+        { value: 'weekly', label: 'Weekly' },
+        { value: 'monthly', label: 'Monthly' },
+    ];
+
     tagInput = '';
     tags: string[] = ['line-battle'];
+    /** Common tags surfaced as autocomplete suggestions (T-0088). */
+    readonly tagSuggestions = ['line-battle', 'siege', 'training', 'skirmish', 'campaign', 'social'];
 
     readonly platformOptions = [
         { id: 'steam', label: 'Steam' },
@@ -40,25 +53,83 @@ export class EventCreateComponent {
     ];
     selectedPlatforms: string[] = ['steam'];
 
+    // Banner upload (T-0093): a locally-selected file is uploaded to object
+    // storage; the resulting key is submitted with the event.
+    bannerKey: string | null = null;
+    bannerPreview: string | null = null;
+    bannerUploading = false;
+    bannerError: string | null = null;
+
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
         private fb: FormBuilder,
         private eventsService: EventsService,
         private auth: AuthService,
+        private storage: StorageService,
         private router: Router,
+        private route: ActivatedRoute,
     ) {
         this.form = this.fb.group({
             title: ['', Validators.required],
-            orders: [''],
+            description: [''],
             date: ['', Validators.required],
+            endDate: [''],
             startTime: ['19:30'],
             endTime: ['22:00'],
-            timezone: ['UTC'],
-            recurring: [false],
+            // Default to Eastern (EST/EDT) per T-0089; members can change it.
+            timezone: ['America/New_York'],
+            recurrenceCadence: [''],
             serverName: [''],
+            serverRegion: [''],
             serverPassword: [''],
         });
+    }
+
+    ngOnInit(): void {
+        this.editId = this.route.snapshot.paramMap.get('id');
+        if (this.editId) {
+            this.eventsService
+                .getMineById(this.editId)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (event) => this.prefill(event),
+                    error: (err) => console.error('Failed to load event for editing', err),
+                });
+        }
+    }
+
+    get isEdit(): boolean {
+        return this.editId !== null;
+    }
+
+    /** Populate the form + chip state from an existing event when editing (T-0097). */
+    private prefill(event: RegimentEvent): void {
+        this.form.patchValue({
+            title: event.title,
+            description: event.description,
+            date: event.date,
+            endDate: event.endDate ?? event.date,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            timezone: event.timezone,
+            recurrenceCadence: event.recurrenceCadence ?? '',
+            serverName: event.serverName,
+            serverRegion: event.serverRegion ?? '',
+        });
+        this.tags = [...event.tags];
+        this.selectedPlatforms = [...event.platforms];
+        this.selectedNotify = (event.notifyBefore ?? [])
+            .map((label) => this.notifyLabelFromCompact(label))
+            .filter((n): n is string => !!n);
+        if (event.bannerUrl) {
+            this.bannerPreview = event.bannerUrl;
+        }
+    }
+
+    /** Compact notify form ('1h') → the human option label ('1 hour'). */
+    private notifyLabelFromCompact(compact: string): string | undefined {
+        return Object.keys(this.notifyOffsets).find((label) => this.notifyOffsets[label] === compact);
     }
 
     /** Capability gate for a template action (see the spec's capability keys). */
@@ -92,8 +163,8 @@ export class EventCreateComponent {
         return this.selectedPlatforms.includes(p);
     }
 
-    addTag(): void {
-        const t = this.tagInput.trim();
+    addTag(value?: string): void {
+        const t = (value ?? this.tagInput).trim().toLowerCase();
         if (t && !this.tags.includes(t)) {
             this.tags.push(t);
         }
@@ -104,72 +175,95 @@ export class EventCreateComponent {
         this.tags = this.tags.filter((tag) => tag !== t);
     }
 
+    /** Suggestions not already chosen, filtered by the current input (T-0088). */
+    get filteredSuggestions(): string[] {
+        const q = this.tagInput.trim().toLowerCase();
+        return this.tagSuggestions
+            .filter((s) => !this.tags.includes(s))
+            .filter((s) => !q || s.includes(q));
+    }
+
+    /** Upload a selected banner file to object storage and hold its key (T-0093). */
+    onBannerSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+        this.bannerError = null;
+        this.bannerUploading = true;
+        this.bannerPreview = URL.createObjectURL(file);
+        this.storage
+            .upload('event-banner', file)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (key) => {
+                    this.bannerKey = key;
+                    this.bannerUploading = false;
+                },
+                error: (err) => {
+                    console.error('Banner upload failed', err);
+                    this.bannerError = 'Upload failed — check the file type and size.';
+                    this.bannerUploading = false;
+                    this.bannerPreview = null;
+                },
+            });
+    }
+
+    removeBanner(): void {
+        this.bannerKey = null;
+        this.bannerPreview = null;
+        this.bannerError = null;
+    }
+
     /** Assemble the frontend view model the events service maps onto the create DTO. */
     private buildEvent(): Omit<RegimentEvent, 'id'> {
         const v = this.form.value;
         return {
             title: v.title,
-            description: v.orders ?? '',
+            description: v.description ?? '',
             serverName: v.serverName ?? '',
+            serverRegion: v.serverRegion || undefined,
             serverPassword: v.serverPassword || undefined,
             date: v.date,
+            endDate: v.endDate || v.date,
             startTime: v.startTime,
             endTime: v.endTime,
             timezone: v.timezone,
             platforms: [...this.selectedPlatforms],
             status: 'upcoming',
-            recurring: v.recurring ? 'Weekly' : undefined,
+            recurrenceCadence: (v.recurrenceCadence || undefined) as RecurrenceCadence | undefined,
             tags: [...this.tags],
             rsvpCounts: { interested: 0, tentative: 0, declined: 0, neutral: 0 },
+            bannerKey: this.bannerKey ?? undefined,
             notifyBefore: this.selectedNotify
                 .map((label) => this.notifyOffsets[label])
                 .filter((offset): offset is string => !!offset),
         };
     }
 
-    saveDraft(): void {
-        if (this.form.get('title')?.invalid || this.saving) {
+    /**
+     * Create + publish the event directly — there is no draft state (T-0091) — or
+     * update it when editing (T-0097). A freshly-uploaded banner (bannerKey) is
+     * only sent when one was chosen, so an edit keeps the existing banner.
+     */
+    save(): void {
+        if (this.form.invalid || this.saving || this.bannerUploading) {
+            this.form.markAllAsTouched();
             return;
         }
         this.saving = true;
-        // isDraft:true keeps the event OFF the public calendar until published.
-        this.eventsService
-            .create(this.buildEvent(), true)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (event) => {
-                    this.saving = false;
-                    this.router.navigate(['/admin/events', event.id]);
-                },
-                error: (err) => {
-                    console.error('Failed to save event draft', err);
-                    this.saving = false;
-                },
-            });
-    }
-
-    publish(): void {
-        if (this.form.invalid || this.saving) {
-            return;
-        }
-        this.saving = true;
-        // Create as a draft, then publish — so the event is never briefly public
-        // before the explicit publish step.
-        this.eventsService
-            .create(this.buildEvent(), true)
-            .pipe(
-                switchMap((event) => this.eventsService.publish(event.id)),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe({
-                next: (event) => {
-                    this.saving = false;
-                    this.router.navigate(['/admin/events', event.id]);
-                },
-                error: (err) => {
-                    console.error('Failed to publish event', err);
-                    this.saving = false;
-                },
-            });
+        const payload = this.buildEvent();
+        const request$ = this.editId
+            ? this.eventsService.update(this.editId, payload)
+            : this.eventsService.create(payload);
+        request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (event) => {
+                this.saving = false;
+                this.router.navigate(['/dashboard/events', event.id]);
+            },
+            error: (err) => {
+                console.error(this.editId ? 'Failed to update event' : 'Failed to create event', err);
+                this.saving = false;
+            },
+        });
     }
 }

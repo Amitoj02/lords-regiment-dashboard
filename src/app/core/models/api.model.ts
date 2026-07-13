@@ -278,8 +278,9 @@ export interface ApiEvent {
     serverName?: string | null;
     serverRegion?: string | null;
     recurrenceRule?: string | null;
+    recurrenceCadence?: 'daily' | 'weekly' | 'monthly' | null;
+    recurrenceActive?: boolean;
     notifyOffsets?: number[];
-    isDraft?: boolean;
     isArchived?: boolean;
     myRsvp?: ApiRsvp | null;
 }
@@ -305,26 +306,32 @@ export function parseNotifyOffset(label: string): number {
 
 export function mapEvent(e: ApiEvent): RegimentEvent {
     const start = splitIsoDateTime(e.startsAt);
+    const end = e.endsAt ? splitIsoDateTime(e.endsAt) : null;
     return {
         id: e.id,
         title: e.title,
         description: e.description ?? '',
         serverName: e.serverName ?? '',
+        serverRegion: e.serverRegion ?? undefined,
         // The password is never in this projection — only the reveal endpoint returns it.
         serverPassword: undefined,
         date: start.date,
+        endDate: end?.date,
         startTime: start.time,
-        endTime: e.endsAt ? splitIsoDateTime(e.endsAt).time : '',
+        endTime: end?.time ?? '',
         timezone: e.timezone,
         platforms: e.platforms,
         status: e.status,
-        recurring: e.recurrenceRule ?? (e.isRecurring ? 'recurring' : undefined),
+        recurrenceCadence: e.recurrenceCadence ?? undefined,
+        recurrenceActive: e.recurrenceActive,
         tags: e.tags,
         rsvpCounts: e.rsvpCounts,
         // attendeesCount is a tally, not a list; the attendee list is a separate endpoint.
         attendees: [],
+        attendeesCount: e.attendeesCount,
         bannerUrl: e.bannerUrl ?? undefined,
         notifyBefore: (e.notifyOffsets ?? []).map(formatNotifyOffset),
+        myRsvp: e.myRsvp ? e.myRsvp.status : e.myRsvp === null ? null : undefined,
     };
 }
 
