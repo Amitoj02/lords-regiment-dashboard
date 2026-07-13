@@ -4,7 +4,7 @@
   "lastSyncedCommit": "88068a5fe5131184621567511f35a5a2b38d413d",
   "lastSyncedAt": "2026-07-12T22:35:00Z",
   "notesForNextSession": "SYNC 2026-07-12T22:35Z: ADMIN-COMPLETION session shipped on feat/admin-completion-ranks-audit-ux (commit 88068a5, PR to open). Advanced to deploy_ready: T-0039-0045 (onboarding polish + Discord dispatch honesty + decision DM), T-0049-0051 (auth-aware public CTAs + specs), T-0052-0055 (admin events/gallery index + sidebar/redirects), T-0056-0059 (applications page fixes), T-0060/0061 (Settings Danger Zone removed), T-0062-0069 (RANKS & MEDALS epic — live data, editors, real Discord role picker + link/unlink, native drag-reorder, sync button, specs), T-0070-0072 (audit actor names + truthful sync badges). Production build + ng lint clean; 99 karma specs green (+30). Adversarial review ran; ALL findings fixed (drag dragend/cross-list guard, mapMedal role-name, events/gallery empty-vs-error states) + a11y keyboard handlers. LIVE-VERIFIED via a minted owner JWT against the running stack: ranks/medals page shows real data + the role picker lists the actual guild roles (the \"roles not showing\" bug — FIXED), applicant queue names legible, audit shows member names + a truthful \"Synced\" badge, Settings danger zone gone, and the member/hero CTAs are auth-aware. BACKEND COUNTERPARTS: lords-dashboard-backend PR #7 (T-0057-T-0064) — MUST deploy together (see the new T-0062 cross-repo coupling risk). STILL OPEN (unchanged): T-0006 landing still has hardcoded stats/officers arrays (wire GET /regiment/stats before the public deploy) — the auth-aware CTA work (T-0049/50) landed but the stats are still stubbed, so T-0006 stays in review; T-0008/0009/0010/0020 stay in review; T-0020 account-deletion still needs wiring to the GDPR endpoints; T-0035#0 (no dedicated apply-form/model spec) and T-0023#0 (modal @Output) remain OPEN from prior sessions. Karma runs headless with CHROME_BIN=/usr/bin/google-chrome; dev web container hot-reloads at :4200 and proxies /api. NOTE: I enabled the bot in the dev backend DB for verification (seed default is dormant).",
-  "nextIdCounter": 73,
+  "nextIdCounter": 98,
   "connections": [],
   "tasks": [
     {
@@ -4219,6 +4219,1198 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Truthful discordSyncStatus badges (pending/synced/failed/not-applicable/unknown); AuditLog model + mapAuditLog migrated off the discordSynced boolean. Verified live: detail shows \"Synced\"."
+        }
+      ]
+    },
+    {
+      "id": "T-0073",
+      "title": "Roster: remove the '+ Invite Mercenary' button",
+      "summary": "Delete the static '+ Invite Mercenary' button on the roster page (roster.component.html:13) — it has no click handler, modal, or service call, so removal is a single-line delete with no TS/SCSS change. Keep the Mercenary role/rank as a concept everywhere else (filters, onboarding applicant type) — only the individual-invite affordance is removed per the clarified scope.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/roster/roster.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0078"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the roster page no longer renders an 'Invite Mercenary' button",
+          "status": "pending"
+        },
+        {
+          "desc": "the Mercenary options in the roster rank/role filters remain intact (concept preserved)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0074",
+      "title": "Dashboard: remove Standing + attendance from the Honors Strip",
+      "summary": "Remove the 'Standing' honor-block (dashboard.component.html:31-42 incl. the preceding .honors-divider), drop attendanceRate from the currentMember model + mapping (dashboard.component.ts:43,63-64), and delete the .standing-attendance SCSS (:47-50). Frontend-only per the goal (item 2a) — the backend members.standing column + computed attendance DTO fields are left intact and simply unused here.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the dashboard Honors Strip no longer shows Standing or the % attendance line",
+          "status": "pending"
+        },
+        {
+          "desc": "the dashboard renders cleanly with no dangling divider where Standing used to be",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0075",
+      "title": "Dashboard: fix broken mobile layout of the rank & medals (Honors Strip)",
+      "summary": "The Honors Strip (.honors-row flex-wrap with fixed-height vertical .honors-divider) has no responsive handling — the only mobile media query touches .dashboard-grid, so on narrow screens the honor blocks wrap awkwardly and the vertical dividers dangle. Add stacking + hide/rotate the dividers under the existing @media(max-width:820px) block so the current rank + medals section reads cleanly on mobile (item 2f).",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.scss",
+        "src/app/features/member/dashboard/dashboard.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "at <=820px the Honors Strip stacks vertically with no dangling/overflowing dividers",
+          "status": "pending"
+        },
+        {
+          "desc": "desktop layout of the Honors Strip is unchanged",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0076",
+      "title": "Dashboard: 'Upcoming Orders' -> 'Upcoming Events' (next 5), wired + links",
+      "summary": "Rename the panel to 'Upcoming Events', inject EventsService and load getAll('upcoming') sliced to 5 (replacing the hard-coded upcomingEvents=[]). Point 'View all' at the in-dashboard events index (/dashboard/events) and each event's 'Details' at the event detail page (/dashboard/events/:id) — replacing today's dead /member/events links (item 2b).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.html"
+      ],
+      "dependsOn": [
+        "T-0085"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the panel shows at most the next 5 upcoming events from the live API",
+          "status": "pending"
+        },
+        {
+          "desc": "'View all' navigates to /dashboard/events and an event row navigates to /dashboard/events/:id",
+          "status": "pending"
+        },
+        {
+          "desc": "an empty upcoming list renders a graceful empty state (no dead links)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0077",
+      "title": "Shared: extract a reusable gallery card component (hf-gallery-card)",
+      "summary": "There is no shared gallery card today — the rich card markup lives inline in the public gallery page (gallery-page.component.html:61-117). Extract it into a shared hf-gallery-card component (thumb + video/link overlays + submitter avatar + likes) declared/exported from SharedModule, and reuse it in the public gallery page. Enables reuse on the dashboard Recent Gallery (item 2c).",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/",
+        "src/app/shared/shared.module.ts",
+        "src/app/features/public/gallery-page/gallery-page.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the public gallery page renders identically using the new hf-gallery-card",
+          "status": "pending"
+        },
+        {
+          "desc": "hf-gallery-card exposes inputs for a gallery item and an optional click/navigation output",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-gallery-card is a new shared component that replaces the public gallery page's inline card markup; a regression here changes the public-facing gallery, not just the dashboard.",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0078",
+      "title": "Public: add a gallery detail page + route (/gallery/:id)",
+      "summary": "No gallery-detail route exists anywhere today, but the dashboard (and public gallery) must let a user click an item through to its detail. Add a GalleryDetailComponent + public route /gallery/:id consuming the existing backend GET /api/gallery/:id (public, approved-only), so gallery cards can navigate to a real detail view (item 2c).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/",
+        "src/app/features/public/public.module.ts",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "navigating to /gallery/:id renders the item detail from the live API",
+          "status": "pending"
+        },
+        {
+          "desc": "an unknown/unapproved id shows a not-found/empty state rather than erroring",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0079",
+      "title": "Dashboard: wire Recent Gallery (latest 10 approved) reusing hf-gallery-card + links",
+      "summary": "Load GalleryService (approved items) sliced to 10, replacing the bespoke .gallery-thumb markup with the shared hf-gallery-card. Pass an explicit limit (limit=10) instead of over-fetch-then-slice. Point 'View all' at the gallery page and make each card click navigate to the gallery detail page (item 2c).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [
+        "T-0077",
+        "T-0078"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the dashboard shows at most 10 latest approved gallery items rendered via hf-gallery-card",
+          "status": "pending"
+        },
+        {
+          "desc": "'View all' navigates to the gallery page and a card click opens /gallery/:id",
+          "status": "pending"
+        },
+        {
+          "desc": "an empty gallery renders a graceful empty state",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0080",
+      "title": "Dashboard: Awaiting Review — remove approve/decline marks, gate to STAFF, link to /admin/applications",
+      "summary": "Remove the decorative check/cross buttons and their SCSS from the Awaiting Review panel. Wrap the WHOLE panel in a role gate so only Owner/Admin/Moderator see it (today the panel always renders; only the data load is capability-gated). Make the panel / each pending row navigate to /admin/applications (item 2d).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a plain member (non-STAFF) does not see the Awaiting Review panel at all",
+          "status": "pending"
+        },
+        {
+          "desc": "an Owner/Admin/Moderator sees pending applications with NO check/cross buttons",
+          "status": "pending"
+        },
+        {
+          "desc": "clicking the panel/row navigates to /admin/applications",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0081",
+      "title": "Dashboard: 'Quartermaster' -> 'Quartermaster Bot' with live bot status + metrics (STAFF-only)",
+      "summary": "Replace the static Quartermaster placeholder rows with live Discord bot status. Rename the panel to 'Quartermaster Bot', gate it to admin/moderator (isAdmin: Owner/Admin/Moderator) per the chosen scope, inject DiscordService, and render online/offline plus metrics (uptime, WS latency, memory, CPU, users) from the new STAFF-gated status endpoint. Handle the disconnected/null case (show Offline + dashes). Reuse the connectionLabel/membersLabel getters from the admin bot-status component (item 2e).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0076",
+        "lords-dashboard-backend:T-0077"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a Moderator sees 'Quartermaster Bot' with online/offline + uptime/latency/memory/cpu/users from the live endpoint",
+          "status": "pending"
+        },
+        {
+          "desc": "a plain member does not see the panel",
+          "status": "pending"
+        },
+        {
+          "desc": "when the bot is offline/unreachable the panel shows Offline with dashed metrics (no crash)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The DiscordConnection interface in discord.service.ts must gain the new metric fields in lockstep with the backend status DTO (lords-dashboard-backend:T-0076).",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0082",
+      "title": "Topbar: remove the search box and add a 'back to home' button",
+      "summary": "Delete the topbar search block (topbar.component.html:34-53) and its now-unused showSearch input + .topbar-search/.topbar-input SCSS. In its place add a primary 'back to home' button/anchor that navigates from the dashboard back to the public site root (routerLink '/', which redirects to /home). No caller sets showSearch, so no external wiring changes (items 3 + 4).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/topbar/topbar.component.html",
+        "src/app/shared/components/topbar/topbar.component.ts",
+        "src/app/shared/components/topbar/topbar.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the topbar no longer renders a search input on any page",
+          "status": "pending"
+        },
+        {
+          "desc": "the topbar shows a 'home' button that navigates to '/' (public landing)",
+          "status": "pending"
+        },
+        {
+          "desc": "topbar unit specs updated (showSearch removed) and green",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-topbar is a global shell component on every authenticated page; removing showSearch and restructuring the action area affects all app-shell pages.",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0083",
+      "title": "Topbar: show the 'Lords Regiment' brand logo on mobile",
+      "summary": "On mobile (<=820px, mirroring the .topbar-burger rule) show the 'Lords Regiment' brand (regiment-logo-sm.png + 'Lords Regiment' / 'Holdfast Command') in the topbar — the brand currently only appears in the off-canvas sidebar drawer, so mobile users have no visible logo in the bar. Hidden on desktop. Reuse the .b-name/.b-sub styles; consider a small shared brand snippet to avoid duplicating the sidebar markup (item 3).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/topbar/topbar.component.html",
+        "src/app/shared/components/topbar/topbar.component.scss",
+        "src/app/shared/components/sidebar/sidebar.component.html"
+      ],
+      "dependsOn": [
+        "T-0082"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "at <=820px the topbar shows the Lords Regiment brand logo; on desktop it is hidden",
+          "status": "pending"
+        },
+        {
+          "desc": "the sidebar drawer brand is unaffected",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the global topbar shell again; must not collide with the burger/home-button layout added in T-0082.",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0084",
+      "title": "Add a moderator+ (manage_events) route guard",
+      "summary": "Introduce a capabilityGuard('manage_events') factory (redirect to /dashboard on fail, /login when unauthenticated) matching the template can()/hasCapability pattern, for gating the events create/edit routes once they move under the authGuard-only /dashboard tree. (adminGuard already permits Moderator via isAdmin(), but a capability guard is the precise, future-proof choice.)",
+      "status": "planned",
+      "type": "feature",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "core",
+      "repo": "",
+      "paths": [
+        "src/app/core/guards/capability.guard.ts",
+        "src/app/app-routing.module.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a member without manage_events is redirected away from a guarded route",
+          "status": "pending"
+        },
+        {
+          "desc": "an Owner/Admin/Moderator (has manage_events) is allowed through",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0085",
+      "title": "Relocate events index/create/detail to /dashboard/events* (members read, moderator+ author)",
+      "summary": "Move EventsAdminComponent (index), EventCreateComponent, and EventDetailComponent from the admin module (/admin/events*, authGuard+adminGuard) into the member /dashboard tree so URLs become /dashboard/events, /dashboard/events/create, /dashboard/events/:id — giving normal members read access (item 5). The index is authGuard-only; the create (and edit) route is gated by the moderator+ capability guard. Update all internal navigations (list 'Manage' link, create-success nav, detail delete nav) and app-shell activeRoute. Only the '+ New event' button is moderator+ (per-action can('manage_events')).",
+      "status": "planned",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/admin.module.ts",
+        "src/app/features/member/member.module.ts",
+        "src/app/features/admin/events-admin/",
+        "src/app/features/admin/event-create/",
+        "src/app/features/admin/event-detail/",
+        "src/app/app-routing.module.ts"
+      ],
+      "dependsOn": [
+        "T-0084",
+        "lords-dashboard-backend:T-0073"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a normal member can open /dashboard/events and /dashboard/events/:id (read) but NOT /dashboard/events/create",
+          "status": "pending"
+        },
+        {
+          "desc": "a moderator+ sees the '+ New event' button and can reach /dashboard/events/create",
+          "status": "pending"
+        },
+        {
+          "desc": "all former /admin/events* deep links / in-code navigations resolve to the new /dashboard/events* routes",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Route relocation across modules: stale routerLinks/navigate() to /admin/events* (list 'Manage', create success, detail delete) and sidebar/bottom-nav must all be repointed or they 404. Verify the member session carries manage_events/rsvp_to_events/view_members_directory as expected.",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0086",
+      "title": "Repoint sidebar Events nav to /dashboard/events (member-visible) + update spec",
+      "summary": "Update the sidebar Events nav item route '/admin/events' -> '/dashboard/events' and set adminOnly:false so normal members see Events; keep the key 'events'. Update sidebar.component.spec.ts assertions that currently pin the Events route to '/admin/events' and adminOnly:true. Gallery nav stays admin-only (out of scope); public-nav Events/Gallery are unaffected (item 5).",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0085"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a normal member sees Events in the sidebar pointing at /dashboard/events",
+          "status": "pending"
+        },
+        {
+          "desc": "sidebar unit specs updated for the new route/visibility and green",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "sidebar is a global shell component and its spec asserts the old Events route/visibility; the assertions must be updated in lockstep or CI breaks.",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0087",
+      "title": "Events list: fix the '+ New event' button mobile misalignment",
+      "summary": "On the events index the '+ New event' button sits in a global .page-head.between flex row that doesn't wrap on narrow screens, so it misaligns on mobile. Add a responsive override (stack/wrap the page-head actions under the mobile breakpoint), component-scoped to avoid disturbing other .page-head usages (item 5).",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/events-admin/events-admin.component.html",
+        "src/app/features/admin/events-admin/events-admin.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "at mobile widths the '+ New event' button wraps/aligns cleanly under the page title",
+          "status": "pending"
+        },
+        {
+          "desc": "desktop header layout is unchanged and other .page-head screens are unaffected",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0088",
+      "title": "Events create: rename Orders->Event description, remove rich-text toolbar, fix tags + autocomplete",
+      "summary": "Cleanup pass on the create form: (a) rename the 'Orders of the Day' label to 'Event description'; (b) remove the non-functional B/I/U/list rich-text toolbar (plain textarea remains); (f) commit tags on comma and on blur in addition to Enter, and remove the default ['line-battle'] tag (start empty); (g) add autocomplete=off / new-password to the Server name + Password inputs to stop browser autofill / strong-password prompts (item 6).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-create/event-create.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the description field is labelled 'Event description' and the B/I/U/list toolbar is gone",
+          "status": "pending"
+        },
+        {
+          "desc": "typing a comma or blurring the tag input creates a tag (Enter still works); no default tags are present",
+          "status": "pending"
+        },
+        {
+          "desc": "the browser no longer offers autofill / strong-password on Server name / Password",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0089",
+      "title": "Events create: fix 'When' section clipping, split start/end date, default timezone EST, mobile spacing",
+      "summary": "Fix the When/date-time section: (d) the create layout grid (1fr/320px) and fixed-width time/timezone inputs have no responsive breakpoint and clip on mobile — add @media stacking plus reduce side paddings / add workspace on mobile; add a separate end-date control (Starts and Ends currently bind the SAME 'date' control, so end can't differ); default the timezone control to Eastern (America/New_York) instead of UTC (item 6).",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/features/admin/event-create/event-create.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "on mobile the When section stacks with no clipping and reduced side padding / more workspace",
+          "status": "pending"
+        },
+        {
+          "desc": "an event can have an end date different from its start date",
+          "status": "pending"
+        },
+        {
+          "desc": "the timezone control defaults to Eastern (America/New_York)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0090",
+      "title": "Events create: recurrence cadence selector (daily/weekly/monthly)",
+      "summary": "Replace the boolean 'Recurring event' checkbox (which hardcodes recurrenceRule='Weekly') with a cadence selector offering exactly daily / weekly / monthly when recurrence is enabled, feeding EventsService.toBody -> backend isRecurring/recurrenceRule + cadence. Aligns with the backend recurrence model + generation cron (item 6).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/core/services/events.service.ts",
+        "src/app/core/models/event.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0074"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "enabling recurrence reveals a daily/weekly/monthly selector and the chosen cadence is sent to the API",
+          "status": "pending"
+        },
+        {
+          "desc": "a non-recurring event sends no cadence",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0091",
+      "title": "Events create: remove 'Save as draft' — publish directly",
+      "summary": "Remove the 'Save draft' button and the saveDraft() path so creating an event publishes directly. Simplify publish() (currently create(isDraft:true) then publish()) to a single create call that lands published. Keep the action block gated by can('manage_events'). Pairs with the backend direct-publish change (item 6).",
+      "status": "planned",
+      "type": "feature",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/core/services/events.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0072"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "there is no 'Save draft' action; creating an event publishes it immediately",
+          "status": "pending"
+        },
+        {
+          "desc": "the events service no longer sends isDraft / calls the retired publish route",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0092",
+      "title": "Events create: indicate multi-select on platform availability",
+      "summary": "The platform availability chips already support multi-select (toggle steam/xbox/ps), but nothing tells the user multiple are allowed. Add a clear affordance/hint (e.g. 'select all that apply' + multi-selected styling) so it reads as multi-select (item 6).",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/features/admin/event-create/event-create.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the platform field visibly communicates that multiple platforms can be selected",
+          "status": "pending"
+        },
+        {
+          "desc": "selecting multiple platforms still persists all of them",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0093",
+      "title": "Events create/edit: wire the banner image to a real upload",
+      "summary": "The banner-upload block is static markup (no file input, no binding; buildEvent never sends bannerUrl). Wire a real file input using the shared storage upload flow (request presigned PUT -> upload to MinIO -> submit the returned key/URL as bannerUrl on create/update). Show a preview + progress/error state (item 6).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/core/services/events.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0066",
+        "lords-dashboard-backend:T-0068"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "selecting a banner image uploads it and the created/updated event shows the stored banner",
+          "status": "pending"
+        },
+        {
+          "desc": "oversize/invalid files are rejected with a clear message and no event is saved with a broken banner",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "First consumer of the new storage upload flow; the FE upload helper + response shape must match the backend presign DTO (lords-dashboard-backend:T-0066).",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0094",
+      "title": "Events detail: RSVP — remove Neutral, distinct action colors, reflect existing RSVP",
+      "summary": "Remove the 'Neutral' RSVP option (a duplicate of Tentative) from the detail RSVP buttons and the rsvp roll-up, and give the remaining statuses distinct action colors (Interested = primary/positive, Tentative = warning, Declined = destructive). Initialize selectedRsvp from the loaded event's myRsvp (mapEvent currently drops myRsvp, so a member's existing RSVP isn't reflected on load). Touches RsvpStatus type, rsvpCounts usage, and the api mapper (item 7).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/core/models/event.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the RSVP control offers Interested/Tentative/Declined only (no Neutral), each with a distinct action color",
+          "status": "pending"
+        },
+        {
+          "desc": "opening an event the member already RSVP'd to pre-selects their existing choice",
+          "status": "pending"
+        },
+        {
+          "desc": "rsvpCounts render correctly without the neutral bucket",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "RsvpStatus type + rsvpCounts + api mapper are shared with the events list/model; the backend enum still includes 'neutral', so the mapper must tolerate/normalize a legacy neutral value without crashing.",
+          "status": "open",
+          "notedAt": "2026-07-12T23:45:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0095",
+      "title": "Events detail: fix section-field misalignments, attendees count, and rename to 'Event description'",
+      "summary": "Fix the detail-page section field misalignments (item 7), correct the Attendees panel count badge (it shows rsvpTotal instead of attendees.length), and rename the 'Orders of the Day' heading to 'Event description'. The attendees list itself already loads real rows (gated by view_members_directory) — verify it renders correctly.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "detail section fields align cleanly across breakpoints",
+          "status": "pending"
+        },
+        {
+          "desc": "the Attendees badge shows the real confirmed-attendee count (attendees.length)",
+          "status": "pending"
+        },
+        {
+          "desc": "the description heading reads 'Event description'",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0096",
+      "title": "Events detail: move lifecycle actions to a separate moderator+ section with confirmations",
+      "summary": "Archive / Mark complete / Delete currently sit in the right column and fire immediately with no confirmation. Move them into a distinct 'Manage event' section clearly separated from the RSVP actions, keep the @if (can('manage_events')) gate (moderator+), and add a confirmation dialog before each action (item 7).",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "lifecycle actions appear in their own 'Manage event' section, visually separate from RSVP, visible only to moderator+",
+          "status": "pending"
+        },
+        {
+          "desc": "each of Archive / Mark complete / Delete requires an explicit confirmation before firing",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0097",
+      "title": "Events: add an EDIT-event flow for moderator+ (including recurrence)",
+      "summary": "There is no edit flow today — EventsService.update() is unused and no edit route exists. Add a /dashboard/events/:id/edit route + form (reuse the create form component, prefilled from getById) wired to EventsService.update(), gated by the moderator+ capability guard / can('manage_events'), and supporting recurrence cadence edits (change cadence or permanently stop) that the backend generation cron then reflects. Add an 'Edit' entry point on the detail page (item 7 + item 6).",
+      "status": "planned",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/member/member.module.ts",
+        "src/app/core/services/events.service.ts"
+      ],
+      "dependsOn": [
+        "T-0085",
+        "T-0090",
+        "lords-dashboard-backend:T-0074"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a moderator+ can open an event's Edit form prefilled with its current values and save changes via update()",
+          "status": "pending"
+        },
+        {
+          "desc": "editing a recurring event's cadence (or stopping recurrence) persists and is honored by the backend generator",
+          "status": "pending"
+        },
+        {
+          "desc": "a non-moderator cannot reach the edit route",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-12T23:45:00Z",
+      "updatedAt": "2026-07-12T23:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-12T23:45:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: roster/dashboard/topbar/events rework + MinIO storage epic"
         }
       ]
     }
