@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "1a593f966efd47a7da2191ca249f3a4fbc9dea07",
-  "lastSyncedAt": "2026-07-13T05:55:00Z",
+  "lastSyncedCommit": "b728b70cd7b264b6eacfa91b720fe756c636f11e",
+  "lastSyncedAt": "2026-07-14T00:59:54Z",
   "notesForNextSession": "SYNC 2026-07-13T05:55:00Z: Frontend UI epic T-0073..T-0097 IMPLEMENTED + deploy_ready on branch feat/dashboard-events-storage-ux (2 commits: b9afaed events, 1a593f9 gallery/dashboard/roster/topbar). 105 Karma unit tests + ng lint + ng build green. Highlights: events RELOCATED to /dashboard/events* (members read via getMine, moderator+ author via new manageEventsGuard); event create/edit reworked (description, tag autocomplete, split start/end dates, EST default, recurrence cadence, no draft, platform multi-select, real banner upload via new StorageService); event detail RSVP (no Neutral, distinct colors, reflects myRsvp) + moderator actions w/ confirmations + edit flow; reusable hf-gallery-card + /gallery/:id detail page; dashboard reworked (honors strip trimmed+mobile-fixed, Upcoming Events wired, Recent Gallery wired, Awaiting Review STAFF read-only, Quartermaster Bot live metrics); roster invite button removed; topbar search->back-home + mobile brand. events.service/model contract changed to match backend (bannerKey/recurrenceCadence/getMine). DEPENDS ON lords-dashboard-backend PR #8 (storage presign + /events/mine + /discord/status + recurrence). NOT DONE: live click-through vs design-reference; T-0006/8/9/10/20 remain in 'review'. Open the FE PR (feat/dashboard-events-storage-ux -> main).",
-  "nextIdCounter": 98,
+  "nextIdCounter": 128,
   "connections": [],
   "tasks": [
     {
@@ -5651,6 +5651,1412 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented; 105 unit tests + ng lint + ng build green; consumes the backend epic endpoints"
+        }
+      ]
+    },
+    {
+      "id": "T-0098",
+      "title": "Render event banner image on the detail page",
+      "summary": "The backend already resolves bannerKey→bannerUrl and projects it, but event-detail renders a fixed SCSS gradient and never binds event.bannerUrl. Bind it (e.g. [style.background-image] on .event-banner) with the gradient as fallback when bannerUrl is absent, and check the public events surface for the same omission.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.scss",
+        "src/app/features/public/events-page/events-page.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Opening an event with a banner shows the uploaded image in the header with the title still legible",
+          "status": "pending"
+        },
+        {
+          "desc": "An event with no banner still shows the previous gradient (no broken image)",
+          "status": "pending"
+        },
+        {
+          "desc": "The image shown on detail matches the one previewed on the create page (same bannerUrl)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0099",
+      "title": "'Delete all recurring events' button wired to the series endpoint",
+      "summary": "Add EventsService.deleteSeries(id) → DELETE /events/:id/series and a \"Delete all recurring events\" button in the event-detail moderator actions, shown only when the event is part of a series (recurrenceCadence set OR recurrenceTemplateId present), with a confirm dialog, then navigate to the events list. Surface recurrenceTemplateId in ApiEvent/mapEvent/RegimentEvent so occurrences are detectable.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/events.service.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/models/event.model.ts",
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0079"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "On a recurring template or one of its occurrences a moderator sees \"Delete all recurring events\"; confirming deletes the series and navigates to the list where none remain",
+          "status": "pending"
+        },
+        {
+          "desc": "The button is hidden for a one-off event",
+          "status": "pending"
+        },
+        {
+          "desc": "A non-moderator cannot trigger the series delete",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0100",
+      "title": "Enforce event tags max 10 in the create/edit form",
+      "summary": "Cap tag entry at 10 in the event create/edit form (disable/hide the add-tag control and show a hint at 10), matching the backend @ArrayMaxSize(10). Defense in depth with the DTO limit.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/features/admin/event-create/event-create.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0080"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The form prevents adding an 11th tag and indicates the limit",
+          "status": "pending"
+        },
+        {
+          "desc": "Submitting with 10 tags succeeds against the backend",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0101",
+      "title": "Verify frontend transparency to short ids; update fixtures",
+      "summary": "Confirm ids flow through route params/models/services as opaque strings with no length assumptions or client-side UUID validators, and update any hardcoded id fixtures in specs to the short-id format. Mostly verification.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "core",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/",
+        "src/app/core/services/",
+        "src/app/**/*.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0082"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Deep-linking to an event/gallery/member detail by a short id resolves correctly",
+          "status": "pending"
+        },
+        {
+          "desc": "No client-side validator rejects a short id; specs use short-id fixtures and pass",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0102",
+      "title": "Reshape root + feature routing under /app",
+      "summary": "Move all /dashboard/* routes to /app/* and all /admin/* routes to /app/admin/* at the routing-config level (root AppRoutingModule + each feature routing module). Keep the public shell (/, /login, /gallery, legal) outside /app. Establish the /app shell mount that the member/admin modules hang off.",
+      "status": "planned",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "scaffold",
+      "repo": "",
+      "paths": [
+        "src/app/app-routing.module.ts",
+        "src/app/features/member/member.module.ts",
+        "src/app/features/admin/admin-routing.module.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Navigating to /app and /app/admin/* resolves the same screens previously at /dashboard and /admin",
+          "status": "pending"
+        },
+        {
+          "desc": "Public routes (/, /login, /gallery, legal) are unaffected",
+          "status": "pending"
+        },
+        {
+          "desc": "ng build succeeds with the new route tree",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Root + all feature route paths change; every RouterLink, guard redirectTo, deep link, and bookmark to /dashboard or /admin breaks until the sweep (T-0104) and shell/guard repoint (T-0103) land in lockstep.",
+          "status": "open",
+          "notedAt": "2026-07-14T23:55:03.452Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0103",
+      "title": "Repoint shell nav, guards, and auth.service to /app paths",
+      "summary": "Update sidebar/bottom-nav/topbar links, guard redirectTo targets, and the OAuth auth-callback redirect (and any AuthService post-login navigation) to the new /app scheme. Point the dashboard toolbar Home button at the public landing (/ or the marketing domain).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "scaffold",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/app-shell/app-shell.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/topbar/topbar.component.ts",
+        "src/app/core/guards/",
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/public/auth-callback/"
+      ],
+      "dependsOn": [
+        "T-0102"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "After Discord sign-in the callback lands the user on /app (not /dashboard)",
+          "status": "pending"
+        },
+        {
+          "desc": "Sidebar/bottom-nav links navigate to /app/* and the active-route highlight is correct",
+          "status": "pending"
+        },
+        {
+          "desc": "The dashboard Home button navigates to the public landing page",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0104",
+      "title": "Sweep feature-template and component links to /app",
+      "summary": "Grep and repoint every remaining routerLink / router.navigate() to /dashboard* or /admin* inside feature templates and components (event list Manage, create-success, detail actions, applications, gallery, roster, etc.) so nothing 404s after the reshape.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "scaffold",
+      "repo": "",
+      "paths": [
+        "src/app/features/"
+      ],
+      "dependsOn": [
+        "T-0102"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A repo-wide grep finds no remaining /dashboard or /admin literal navigations",
+          "status": "pending"
+        },
+        {
+          "desc": "Clicking through each feature's primary links stays within /app and never 404s",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0105",
+      "title": "Route Apply-to-Join CTAs to /login instead of direct OAuth",
+      "summary": "Point the landing page \"Apply to Join\" and the login page \"Apply to join\" CTAs at /login (same page) instead of opening Discord OAuth directly.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.html",
+        "src/app/features/public/login/login.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Clicking \"Apply to Join\" on the landing page navigates to /login (no direct OAuth redirect)",
+          "status": "pending"
+        },
+        {
+          "desc": "The \"Apply to join\" affordance on /login also leads to /login (same page)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0106",
+      "title": "Update specs for the /app path scheme",
+      "summary": "Update route/nav/guard specs that assert /dashboard or /admin paths (sidebar, events-admin, guards) to the new /app scheme so CI stays green.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "scaffold",
+      "repo": "",
+      "paths": [
+        "src/app/**/*.spec.ts"
+      ],
+      "dependsOn": [
+        "T-0102",
+        "T-0103",
+        "T-0104"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "All Karma specs asserting navigation paths pass against /app",
+          "status": "pending"
+        },
+        {
+          "desc": "ng lint + ng test are green",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0107",
+      "title": "Add submit-gallery and moderate-gallery capability route guards",
+      "summary": "Add capability route guards (mirroring manageEventsGuard) for gallery submit (members only / SubmitToGallery) and gallery moderation (moderators+admins / ModerateGallery), for use by the relocated gallery routes.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "core",
+      "repo": "",
+      "paths": [
+        "src/app/core/guards/"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The submit guard blocks a mercenary from /app/gallery/submit and allows a member",
+          "status": "pending"
+        },
+        {
+          "desc": "The moderate guard blocks a non-moderator from /app/gallery/mod and allows a moderator/admin",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0108",
+      "title": "Relocate gallery routes to /app/gallery* with role-based guards",
+      "summary": "Move the gallery admin area from /admin/gallery to /app/gallery, /app/gallery/submit, /app/gallery/mod; make the list accessible to all roster members (members + mercenaries) reading via the authenticated archive endpoint, and apply the submit/moderate guards to their routes.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-admin/",
+        "src/app/features/admin/admin-routing.module.ts",
+        "src/app/features/member/member.module.ts"
+      ],
+      "dependsOn": [
+        "T-0102",
+        "T-0107",
+        "lords-dashboard-backend:T-0086"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/app/gallery lists approved items for a signed-in member and a mercenary",
+          "status": "pending"
+        },
+        {
+          "desc": "/app/gallery/submit is reachable only by members; /app/gallery/mod only by moderators/admins",
+          "status": "pending"
+        },
+        {
+          "desc": "Old /admin/gallery* links no longer appear in nav",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0109",
+      "title": "Role-gate the gallery list: rename Submit button, gate moderation link",
+      "summary": "On the gallery list, rename the \"Submit dispatch\" button to \"Submit\" and show it only to members (SubmitToGallery); show the \"Moderation queue\" link only to moderators/admins (ModerateGallery).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-admin/gallery-admin.component.html",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.ts"
+      ],
+      "dependsOn": [
+        "T-0108"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A member sees a button labelled \"Submit\"; a mercenary does not see it",
+          "status": "pending"
+        },
+        {
+          "desc": "Only a moderator/admin sees the \"Moderation queue\" link",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0110",
+      "title": "Update sidebar Gallery nav to /app/gallery, visible to all roster members",
+      "summary": "Repoint the sidebar Gallery entry to /app/gallery and make it visible to all enrolled roster members (members + mercenaries), consistent with the new access rules.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.html"
+      ],
+      "dependsOn": [
+        "T-0108"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The sidebar Gallery link points to /app/gallery and is shown to members and mercenaries",
+          "status": "pending"
+        },
+        {
+          "desc": "The sidebar spec asserting the old route is updated and passes",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0111",
+      "title": "Gallery models + services: tags in, event-link/tagged-members out",
+      "summary": "Update the FE gallery model, ApiGalleryItem, mapper and service to the new backend contract: add tags, remove the linked-event and tagged-members fields, in lockstep with the backend DTO change.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "core",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/gallery.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0088"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Gallery list/detail render with tags and no event-link/tagged-members references",
+          "status": "pending"
+        },
+        {
+          "desc": "Submitting from the service sends tags and omits the removed fields",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0112",
+      "title": "Rework gallery-submit page: uploads, tag chips, drop draft/event/member-tag",
+      "summary": "Rebuild the submit page (now /app/gallery/submit): add file upload via StorageService (image/video, presign+PUT), rename the \"Dispatch Metadata\" section to \"Submission details\", remove \"Save as draft\", remove event-linking and member-tagging entirely, add quick-chip tags (clutch, melee, artillery, longshot, multikills) plus free tags capped at 10.",
+      "status": "planned",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-submit/gallery-submit.component.ts",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.html",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.scss"
+      ],
+      "dependsOn": [
+        "T-0111"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A member uploads an image/video which appears (after approval) on /app/gallery and the public /gallery",
+          "status": "pending"
+        },
+        {
+          "desc": "The section reads \"Submission details\", there is no draft option, and no event-link or member-tag controls remain",
+          "status": "pending"
+        },
+        {
+          "desc": "Quick chips add the named tags; total tags cannot exceed 10",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0113",
+      "title": "Auto-embed media (medal.tv, YouTube, image/video) in gallery views",
+      "summary": "Add a link→embed resolver so gallery cards/detail render embeds: medal.tv clip links → the medal.tv iframe embed, YouTube links → the YouTube embed, and direct image/video links → inline media, with a safe fallback to a plain link for unrecognized URLs (sanitized).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.ts",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts",
+        "src/app/shared/pipes/"
+      ],
+      "dependsOn": [
+        "T-0111"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A medal.tv clip link renders the medal.tv iframe; a YouTube link renders the YouTube embed",
+          "status": "pending"
+        },
+        {
+          "desc": "A direct image/video URL renders inline; an unrecognized URL shows a safe plain link",
+          "status": "pending"
+        },
+        {
+          "desc": "Embeds render identically on member (/app/gallery) and public (/gallery) surfaces",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0114",
+      "title": "Expose Submit entry point on member and public gallery lists",
+      "summary": "Ensure uploaded/approved submissions are visible from the member list (/app/gallery) and the public list (/gallery), and the \"Submit\" entry point is reachable from the member list for members.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-admin/gallery-admin.component.html",
+        "src/app/features/public/gallery-page/gallery-page.component.html"
+      ],
+      "dependsOn": [
+        "T-0108",
+        "T-0112"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A member can reach the submit flow from /app/gallery and see their approved item there and on /gallery",
+          "status": "pending"
+        },
+        {
+          "desc": "A mercenary sees the list but no Submit entry point",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0115",
+      "title": "Fetch moderation items per tab and show decline reason",
+      "summary": "Update the moderation service/component to fetch per status (pending/approved/declined) using the new backend status filter, so the \"Declined\" section actually populates, and render each declined item's reason.",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-mod/gallery-mod.component.ts",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0089"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The Declined tab lists declined submissions with their decline reason",
+          "status": "pending"
+        },
+        {
+          "desc": "Pending and Approved tabs show their respective buckets",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0116",
+      "title": "Rework gallery-mod UI: remove hover quick-decision, mobile-friendly, /app/gallery/mod",
+      "summary": "Remove the hover-to-reveal check/cross quick-decision affordance (decisions go through explicit controls), make the moderation UI responsive/mobile-friendly, and serve it at /app/gallery/mod.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-mod/gallery-mod.component.html",
+        "src/app/features/admin/gallery-mod/gallery-mod.component.scss",
+        "src/app/features/admin/gallery-mod/gallery-mod.component.ts"
+      ],
+      "dependsOn": [
+        "T-0102",
+        "T-0115"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Hovering a submission no longer shows quick check/cross controls",
+          "status": "pending"
+        },
+        {
+          "desc": "The queue is usable on a narrow (mobile) viewport with no overflow",
+          "status": "pending"
+        },
+        {
+          "desc": "The screen is served at /app/gallery/mod",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0117",
+      "title": "Add \"On hold\" tab to admin applications queue",
+      "summary": "Add an \"On hold\" section/tab to /app/admin/applications so on-hold applications (already produced by the backend hold action but not surfaced anywhere) are visible and actionable.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/core/services/applications.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "An application put on hold appears under the new \"On hold\" tab",
+          "status": "pending"
+        },
+        {
+          "desc": "The tab reads on-hold applications via the applications service (status filter) and supports the normal decision actions",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0118",
+      "title": "Verify permission-matrix rendering + align gallery/dashboard capability gates",
+      "summary": "Confirm the admin settings Permission Matrix table reflects the reconciled backend defaults (gallery view/submit/moderation, dashboard \"Gallery submissions\" = Manage events) and that FE capability gates used across gallery/dashboard match those capability keys.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0091"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The Permission Matrix shows gallery view for members+mercenaries, submit for members, moderation for moderators/admins",
+          "status": "pending"
+        },
+        {
+          "desc": "FE capability keys used in gallery/dashboard guards match the matrix rows",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0119",
+      "title": "Shared hf-avatar renders custom/Discord image in a circular crop",
+      "summary": "Add an avatarUrl input to the shared hf-avatar component: when present render an <img> filling the circle with object-fit:cover (no stretch, no corner artifacts), falling back to the existing initials tile on empty/error. Add avatarUrl (+bannerUrl) to the Member model + mapMember and thread it into consumers that have member data (roster rows, event attendees, profile header).",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/avatar/avatar.component.ts",
+        "src/app/shared/components/avatar/avatar.component.html",
+        "src/app/shared/components/avatar/avatar.component.scss",
+        "src/app/core/models/member.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/features/member/roster/roster.component.html",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0093"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A member with a custom/Discord avatarUrl renders the image in a clean circular crop (no stretch/corner artifacts) at each size",
+          "status": "pending"
+        },
+        {
+          "desc": "A member with no avatarUrl still renders the initials tile",
+          "status": "pending"
+        },
+        {
+          "desc": "A broken image URL falls back to initials",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-avatar is used in ~9 templates; adding the image path must not regress the initials fallback that all current callers rely on.",
+          "status": "open",
+          "notedAt": "2026-07-14T23:55:03.452Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0120",
+      "title": "Sidebar: user avatar, Profile link, and Logout button",
+      "summary": "In the sidebar footer replace the hand-rolled initials span with hf-avatar honoring the current user's avatarUrl; add a \"Profile\" nav item; and add a Logout button near the user-info footer wired to AuthService.logout(). Extend NavUser/AppShell.navUser to carry avatarUrl.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.html",
+        "src/app/shared/components/sidebar/sidebar.component.scss",
+        "src/app/shared/components/app-shell/app-shell.component.ts"
+      ],
+      "dependsOn": [
+        "T-0119"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The sidebar shows the user's avatar (custom/Discord, else initials)",
+          "status": "pending"
+        },
+        {
+          "desc": "A \"Profile\" link navigates to the profile page and a Logout button signs the user out",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0121",
+      "title": "Profile self-edit form with avatar + banner upload",
+      "summary": "Make own-profile editing real: an edit form for name/platform/timezone/inGameName plus avatar (and banner) upload via StorageService.upload('member-avatar'/'member-banner') → PATCH /members/:id with the returned key. Load the caller's own profile via AuthService.currentUser().id (drop the m1 fallback), preview the chosen avatar, and refresh AuthService.currentUser on save so the sidebar avatar updates. (Mock medals/serviceTimeline stay out of scope.)",
+      "status": "planned",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.scss",
+        "src/app/core/services/members.service.ts",
+        "src/app/core/services/storage.service.ts",
+        "src/app/core/services/auth.service.ts"
+      ],
+      "dependsOn": [
+        "T-0119"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Editing name/platform/timezone/inGameName persists via PATCH /members/:id and the view reflects it",
+          "status": "pending"
+        },
+        {
+          "desc": "Uploading an avatar previews it, saves the key, and the sidebar + header avatar update without reload",
+          "status": "pending"
+        },
+        {
+          "desc": "The profile page loads the signed-in user's own record (no m1 fallback)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0122",
+      "title": "Full-size (non-circular) avatar viewer",
+      "summary": "Add a lightbox/modal that shows the raw uploaded avatar uncropped (natural aspect), opened by clicking the large circular avatar on the profile header (and optionally a roster member's avatar), degrading gracefully when only initials/Discord avatar exist.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.scss",
+        "src/app/shared/components/avatar/avatar.component.ts"
+      ],
+      "dependsOn": [
+        "T-0119"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Clicking the profile header avatar opens the full uncropped image",
+          "status": "pending"
+        },
+        {
+          "desc": "When only initials exist the viewer is not offered (or shows a graceful placeholder)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0123",
+      "title": "Expose profile at /app/profile",
+      "summary": "Make the profile reachable at /app/profile in addition to /profile (aliased mount / redirect behind authGuard), and keep the sidebar Profile link + active-route detection consistent with the chosen path.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/app-routing.module.ts",
+        "src/app/features/member/member.module.ts"
+      ],
+      "dependsOn": [
+        "T-0102"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/app/profile resolves to the profile page for a signed-in user",
+          "status": "pending"
+        },
+        {
+          "desc": "The sidebar Profile link and active-route highlight are consistent with the /app path",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0124",
+      "title": "Legal pages: Terms, Privacy, Community Guidelines (routes + content)",
+      "summary": "Add Terms & Conditions, Privacy Policy, and Community Guidelines pages/routes with minimum-viable content deliberately worded to create NO privacy/T&C obligations on the operator (no data-collection promises, no warranties). These are public routes outside /app.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/legal/",
+        "src/app/app-routing.module.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Each of /terms, /privacy, /guidelines (or /legal/*) renders its page",
+          "status": "pending"
+        },
+        {
+          "desc": "The copy makes no binding data/warranty commitments (obligation-free wording)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0125",
+      "title": "Footer legal links + login agreement hint & links",
+      "summary": "Add legal links to the public footer, and on /login add hint text (NOT a checkbox) indicating that signing in means the user agrees to the Terms/Privacy/Community Guidelines, linking to each.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/public-footer/public-footer.component.html",
+        "src/app/features/public/login/login.component.html"
+      ],
+      "dependsOn": [
+        "T-0124"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The public footer links to all three legal pages",
+          "status": "pending"
+        },
+        {
+          "desc": "/login shows an agreement hint (no checkbox) linking to each legal page",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0126",
+      "title": "Expose legal links inside the member/admin app shell",
+      "summary": "Ensure legal links are also reachable from inside the authenticated /app shell (app-shell footer or sidebar), so the requirement \"links in footer everywhere\" holds across public and app surfaces.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/app-shell/app-shell.component.html",
+        "src/app/shared/components/sidebar/sidebar.component.html"
+      ],
+      "dependsOn": [
+        "T-0124",
+        "T-0102"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A signed-in user can reach the legal pages from within the /app shell",
+          "status": "pending"
+        },
+        {
+          "desc": "The links resolve to the same public legal routes",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
+        }
+      ]
+    },
+    {
+      "id": "T-0127",
+      "title": "Repurpose the dashboard panel into \"Gallery submissions\"",
+      "summary": "Rename the dashboard \"Field Dispatches\" panel to \"Gallery submissions\", show it only to users with the \"Manage events\" capability, and populate it with pending submissions as list items (submission title + submitter username). Clicking an item navigates to /app/gallery/mod to decide.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [
+        "T-0102",
+        "lords-dashboard-backend:T-0094"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "The panel is gated by \"Manage events\" but items open the moderation screen (ModerateGallery). Confirm whether ManageEvents holders should be able to open /app/gallery/mod, or whether the panel should be gated by ModerateGallery while keeping the \"Manage events\" label — pairs with backend T-0094.",
+          "answer": null,
+          "askedAt": "2026-07-14T23:55:03.452Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "A user with \"Manage events\" sees a \"Gallery submissions\" panel listing pending items as {title, username}",
+          "status": "pending"
+        },
+        {
+          "desc": "A user without it does not see the panel",
+          "status": "pending"
+        },
+        {
+          "desc": "Clicking an item navigates to /app/gallery/mod",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-14T23:55:03.452Z",
+      "updatedAt": "2026-07-14T23:55:03.452Z",
+      "history": [
+        {
+          "at": "2026-07-14T23:55:03.452Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app routing + short-id + gallery/profile/legals epic"
         }
       ]
     }
