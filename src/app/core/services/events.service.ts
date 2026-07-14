@@ -37,15 +37,28 @@ export class EventsService {
     }
 
     /**
-     * Create an event (ManageEvents). Frontend fields are translated to the
-     * backend DTO. `isDraft` must be passed explicitly — the backend defaults it
-     * to false (published), so "Save draft" MUST send isDraft:true to keep the
-     * event off the public calendar.
+     * The authenticated member calendar (GET /events/mine): the member projection
+     * (server binding + the caller's own myRsvp) for enrolled members, redacted
+     * for non-enrolled callers. Used by the in-shell events surfaces.
      */
-    create(event: Omit<RegimentEvent, 'id'>, isDraft = false): Observable<RegimentEvent> {
-        const body = this.toBody(event);
-        body['isDraft'] = isDraft;
-        return this.http.post<ApiEvent>(this.base, body).pipe(map(mapEvent));
+    getAllMine(status?: EventStatus): Observable<RegimentEvent[]> {
+        const q = status ? `?status=${status}&limit=100` : '?limit=100';
+        return this.http
+            .get<PaginatedResponse<ApiEvent>>(`${this.base}/mine${q}`)
+            .pipe(map((res) => res.data.map(mapEvent)));
+    }
+
+    /** A single event in the member projection (GET /events/mine/:id). */
+    getMineById(id: string): Observable<RegimentEvent> {
+        return this.http.get<ApiEvent>(`${this.base}/mine/${id}`).pipe(map(mapEvent));
+    }
+
+    /**
+     * Create and publish an event (ManageEvents). There is no draft state — the
+     * backend publishes directly (T-0072). Frontend fields translate to the DTO.
+     */
+    create(event: Omit<RegimentEvent, 'id'>): Observable<RegimentEvent> {
+        return this.http.post<ApiEvent>(this.base, this.toBody(event)).pipe(map(mapEvent));
     }
 
     update(id: string, changes: Partial<RegimentEvent>): Observable<RegimentEvent> {
@@ -59,10 +72,6 @@ export class EventsService {
     }
 
     // ── Lifecycle transitions (each returns the updated event) ───────────────
-    publish(id: string): Observable<RegimentEvent> {
-        return this.http.post<ApiEvent>(`${this.base}/${id}/publish`, {}).pipe(map(mapEvent));
-    }
-
     archive(id: string): Observable<RegimentEvent> {
         return this.http.post<ApiEvent>(`${this.base}/${id}/archive`, {}).pipe(map(mapEvent));
     }
@@ -107,18 +116,21 @@ export class EventsService {
         const body: Record<string, unknown> = {};
         if (e.title !== undefined) body['title'] = e.title;
         if (e.description !== undefined) body['description'] = e.description;
-        if (e.bannerUrl !== undefined) body['bannerUrl'] = e.bannerUrl;
+        // A freshly-uploaded banner is submitted as a storage key (T-0093); the
+        // backend re-validates its namespace and stores the resolved public URL.
+        if (e.bannerKey !== undefined) body['bannerKey'] = e.bannerKey;
         if (e.date && e.startTime) body['startsAt'] = `${e.date}T${e.startTime}:00`;
-        if (e.date && e.endTime) body['endsAt'] = `${e.date}T${e.endTime}:00`;
+        // End may fall on a different date than start (T-0089); default to `date`.
+        if (e.endTime) body['endsAt'] = `${e.endDate || e.date}T${e.endTime}:00`;
         if (e.timezone !== undefined) body['timezone'] = e.timezone;
         if (e.serverName !== undefined) body['serverName'] = e.serverName;
+        if (e.serverRegion !== undefined) body['serverRegion'] = e.serverRegion;
         if (e.serverPassword !== undefined) body['serverPassword'] = e.serverPassword;
         if (e.platforms !== undefined) body['platforms'] = e.platforms;
         if (e.tags !== undefined) body['tags'] = e.tags;
-        if (e.recurring !== undefined) {
-            body['isRecurring'] = !!e.recurring;
-            body['recurrenceRule'] = e.recurring;
-        }
+        // A structured cadence makes the event an active recurring template (T-0090).
+        if (e.recurrenceCadence !== undefined) body['recurrenceCadence'] = e.recurrenceCadence;
+        if (e.recurrenceActive !== undefined) body['recurrenceActive'] = e.recurrenceActive;
         if (e.notifyBefore !== undefined) {
             body['notifyOffsets'] = e.notifyBefore.map(parseNotifyOffset);
         }

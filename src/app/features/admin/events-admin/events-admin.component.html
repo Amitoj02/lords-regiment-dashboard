@@ -1,13 +1,17 @@
 <hf-app-shell [activeRoute]="'events'" [crumbs]="['Regiment', 'Events']">
     <div class="page">
-        <div class="page-head between">
+        <div class="page-head between events-head">
             <div>
                 <div class="page-sub">Field Orders</div>
                 <h1 class="page-title serif-display">Events</h1>
             </div>
-            <div class="row gap-8">
-                <a routerLink="/admin/events/create" class="btn btn-primary btn-sm">+ New event</a>
+            @if (can('manage_events')) {
+            <div class="row gap-8 events-head-actions">
+                <a routerLink="/dashboard/events/create" class="btn btn-primary btn-sm"
+                    >+ New event</a
+                >
             </div>
+            }
         </div>
 
         @if (loadError) {
@@ -52,7 +56,7 @@
                                 <td>{{ totalRsvps(event) }}</td>
                                 <td class="col-action">
                                     <a
-                                        [routerLink]="['/admin/events', event.id]"
+                                        [routerLink]="['/dashboard/events', event.id]"
                                         class="btn btn-ghost btn-sm"
                                         >Manage</a
                                     >

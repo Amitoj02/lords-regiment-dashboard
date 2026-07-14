@@ -48,11 +48,16 @@ export class EventDetailComponent implements OnInit {
         if (!this.eventId) {
             return;
         }
+        // Member projection: carries the caller's own RSVP so the buttons reflect
+        // the existing choice (T-0094) and the server binding for enrolled members.
         this.eventsService
-            .getById(this.eventId)
+            .getMineById(this.eventId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (event) => (this.event = event),
+                next: (event) => {
+                    this.event = event;
+                    this.selectedRsvp = event.myRsvp ?? null;
+                },
                 error: (err) => console.error('Failed to load event', err),
             });
 
@@ -127,6 +132,9 @@ export class EventDetailComponent implements OnInit {
         if (!this.eventId || this.working) {
             return;
         }
+        if (!confirm('Archive this event? It will be hidden from the public calendar.')) {
+            return;
+        }
         this.working = true;
         this.eventsService
             .archive(this.eventId)
@@ -145,6 +153,9 @@ export class EventDetailComponent implements OnInit {
 
     complete(): void {
         if (!this.eventId || this.working) {
+            return;
+        }
+        if (!confirm('Mark this event complete? It will move to Previous operations.')) {
             return;
         }
         this.working = true;
@@ -167,12 +178,15 @@ export class EventDetailComponent implements OnInit {
         if (!this.eventId || this.working) {
             return;
         }
+        if (!confirm('Delete this event permanently? This cannot be undone.')) {
+            return;
+        }
         this.working = true;
         this.eventsService
             .delete(this.eventId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => this.router.navigateByUrl('/admin/events'),
+                next: () => this.router.navigateByUrl('/dashboard/events'),
                 error: (err) => {
                     console.error('Failed to delete event', err);
                     this.working = false;

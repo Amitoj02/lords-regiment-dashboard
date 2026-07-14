@@ -7,6 +7,9 @@ import { MedalRibbon } from '../../../core/models/member.model';
 import { ApplicationsService } from '../../../core/services/applications.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MembersService } from '../../../core/services/members.service';
+import { EventsService } from '../../../core/services/events.service';
+import { GalleryService } from '../../../core/services/gallery.service';
+import { BotStatus, DiscordService } from '../../../core/services/discord.service';
 
 interface HonorMedal {
     letter: string;
@@ -25,15 +28,20 @@ export class DashboardComponent implements OnInit {
     private readonly auth = inject(AuthService);
     private readonly membersService = inject(MembersService);
     private readonly applicationsService = inject(ApplicationsService);
+    private readonly eventsService = inject(EventsService);
+    private readonly galleryService = inject(GalleryService);
+    private readonly discordService = inject(DiscordService);
     private readonly PREVIEW_COUNT = 3;
 
-    // Events + Gallery are MVP-deferred (T-0026): kept empty so the widgets show
-    // their empty state rather than fabricated data. They wire up post-MVP.
     upcomingEvents: RegimentEvent[] = [];
     recentGallery: GalleryItem[] = [];
-    // Field Dispatches (notifications) are also deferred.
+    // Field Dispatches (notifications) are still deferred.
     dispatches: { tone: string; title: string; body: string; time: string }[] = [];
     pendingApplications: Application[] = [];
+
+    /** Live bot status for the STAFF-only Quartermaster Bot widget (T-0081). */
+    botStatus: BotStatus | null = null;
+    botStatusError = false;
 
     // The signed-in member's real honors (hydrated from /auth/me + /members/:id).
     currentMember: {
@@ -80,5 +88,68 @@ export class DashboardComponent implements OnInit {
                     this.pendingApplications = apps.slice(0, this.PREVIEW_COUNT);
                 });
         }
+
+        // Upcoming Events — the next 5 (member projection, T-0076).
+        this.eventsService
+            .getAllMine('upcoming')
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (events) => {
+                    this.upcomingEvents = [...events]
+                        .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`))
+                        .slice(0, 5);
+                },
+                error: (err) => console.error('Failed to load upcoming events', err),
+            });
+
+        // Recent Gallery — the latest 10 approved items (T-0079).
+        this.galleryService
+            .getAll()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (items) => {
+                    this.recentGallery = items
+                        .filter((i) => i.status === 'approved')
+                        .slice(0, 10);
+                },
+                error: (err) => console.error('Failed to load recent gallery', err),
+            });
+
+        // Quartermaster Bot status — STAFF only (Owner/Admin/Moderator), T-0081.
+        if (this.isStaff) {
+            this.discordService
+                .getStatus()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (status) => (this.botStatus = status),
+                    error: (err) => {
+                        console.error('Failed to load bot status', err);
+                        this.botStatusError = true;
+                    },
+                });
+        }
+    }
+
+    /** STAFF gate for the applications preview + bot widget. */
+    get isStaff(): boolean {
+        return this.auth.isAdmin();
+    }
+
+    /** ms → a compact "2d 3h" / "4h 12m" / "8m" uptime label. */
+    formatUptime(ms: number | null): string {
+        if (ms == null) return '—';
+        const totalMin = Math.floor(ms / 60000);
+        const d = Math.floor(totalMin / 1440);
+        const h = Math.floor((totalMin % 1440) / 60);
+        const m = totalMin % 60;
+        if (d > 0) return `${d}d ${h}h`;
+        if (h > 0) return `${h}h ${m}m`;
+        return `${m}m`;
+    }
+
+    /** bytes → "128 MB". */
+    formatMemory(bytes: number | null): string {
+        if (bytes == null) return '—';
+        return `${Math.round(bytes / (1024 * 1024))} MB`;
     }
 }

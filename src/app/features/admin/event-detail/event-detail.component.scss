@@ -200,3 +200,48 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* ── T-0094/0096 additions ──────────────────────────────────────────────── */
+/* Distinct RSVP action colors; the active choice is filled, others are outlined. */
+.rsvp-btn {
+    justify-content: space-between;
+    border: 1px solid var(--hairline, rgba(255, 255, 255, 0.18));
+
+    &--interested.rsvp-btn--active {
+        background: var(--ok, #3f7d4e);
+        border-color: var(--ok, #3f7d4e);
+        color: #fff;
+    }
+    &--tentative.rsvp-btn--active {
+        background: var(--warn, #b8862b);
+        border-color: var(--warn, #b8862b);
+        color: #fff;
+    }
+    &--declined.rsvp-btn--active {
+        background: var(--err, #a33a37);
+        border-color: var(--err, #a33a37);
+        color: #fff;
+    }
+
+    /* A subtle color hint on the idle border, so the three intents read distinctly. */
+    &--interested {
+        border-left: 3px solid var(--ok, #3f7d4e);
+    }
+    &--tentative {
+        border-left: 3px solid var(--warn, #b8862b);
+    }
+    &--declined {
+        border-left: 3px solid var(--err, #a33a37);
+    }
+}
+
+/* Moderator actions live in their own bordered panel, set apart from member RSVP. */
+.mod-panel {
+    border-color: var(--brass, #c9a24b);
+
+    .event-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
