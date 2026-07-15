@@ -67,25 +67,25 @@ describe('AuthService post-login routing', () => {
         blocked: false,
     });
 
-    it('routes an enrolled member to /dashboard', () => {
+    it('routes an enrolled member to /app/dashboard', () => {
         service.completeLogin('t', true);
         flushMe({ isMember: true, role: 'Member' });
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
     });
 
-    it('routes an Owner whose setup is incomplete into first-run /admin/settings', () => {
+    it('routes an Owner whose setup is incomplete into first-run /app/admin/settings', () => {
         regiment.getProfile.and.returnValue(of(profile(false)));
         service.completeLogin('t', true);
         flushMe({ isMember: true, role: 'Owner' });
         expect(regiment.getProfile).toHaveBeenCalled();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/settings');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/admin/settings');
     });
 
-    it('routes an Owner whose setup is complete to /dashboard', () => {
+    it('routes an Owner whose setup is complete to /app/dashboard', () => {
         regiment.getProfile.and.returnValue(of(profile(true)));
         service.completeLogin('t', true);
         flushMe({ isMember: true, role: 'Owner' });
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
     });
 
     it('routes a returning applicant (has an application) to /onboarding/status', () => {
@@ -102,10 +102,10 @@ describe('AuthService post-login routing', () => {
         expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/apply');
     });
 
-    it('applyToJoin sends a signed-in member to /dashboard without hitting the API', () => {
+    it('applyToJoin sends a signed-in member to /app/dashboard without hitting the API', () => {
         service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
         service.applyToJoin();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
     });
 
     it('applyToJoin routes a signed-in non-member through their onboarding status', () => {

@@ -26,7 +26,9 @@
                         </div>
 
                         <div class="field-row">
-                            <label class="field-label" for="event-description">Event description</label>
+                            <label class="field-label" for="event-description"
+                                >Event description</label
+                            >
                             <textarea
                                 id="event-description"
                                 class="hf-textarea"
@@ -81,11 +83,15 @@
                                     <path d="M3 16l5-5 4 4 3-3 4 4" />
                                     <circle cx="8.5" cy="8.5" r="1.5" />
                                 </svg>
-                                <span><span class="upload-link">Choose an image</span> to upload</span>
-                                <span class="field-hint">PNG, JPG or WebP — 1920×600 recommended</span>
+                                <span
+                                    ><span class="upload-link">Choose an image</span> to
+                                    upload</span
+                                >
+                                <span class="field-hint"
+                                    >PNG, JPG or WebP — 1920×600 recommended</span
+                                >
                             </button>
-                            }
-                            @if (bannerError) {
+                            } @if (bannerError) {
                             <div class="field-error">{{ bannerError }}</div>
                             }
                         </div>
@@ -273,7 +279,9 @@
                         <div class="field-row">
                             <div class="field-label">
                                 Platform availability
-                                <span class="field-hint field-hint--inline">select all that apply</span>
+                                <span class="field-hint field-hint--inline"
+                                    >select all that apply</span
+                                >
                             </div>
                             <div class="platform-toggles">
                                 @for (p of platformOptions; track p) {
@@ -284,9 +292,9 @@
                                     [attr.aria-pressed]="isPlatformSelected(p.id)"
                                     (click)="togglePlatform(p.id)"
                                 >
-                                    <span class="chip-check" aria-hidden="true">{{
-                                        isPlatformSelected(p.id) ? '✓' : '+'
-                                    }}</span>
+                                    <span class="chip-check" aria-hidden="true"
+                                        >{{ isPlatformSelected(p.id) ? '✓' : '+' }}</span
+                                    >
                                     {{ p.label }}
                                 </button>
                                 }
@@ -339,7 +347,7 @@
                     >
                         {{ saving ? 'Working…' : isEdit ? 'Save changes' : 'Publish event' }}
                     </button>
-                    <a routerLink="/dashboard/events" class="btn btn-ghost btn-block">Cancel</a>
+                    <a routerLink="/app/dashboard/events" class="btn btn-ghost btn-block">Cancel</a>
                 </div>
                 } @else {
                 <hf-notice variant="info">

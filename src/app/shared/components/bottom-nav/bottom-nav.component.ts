@@ -27,9 +27,9 @@ export class BottomNavComponent {
 
     // Events/Gallery are MVP-deferred (T-0026); omitted until wired.
     readonly items: BottomNavItem[] = [
-        { label: 'Board', key: 'dashboard', route: '/dashboard', icon: 'home' },
-        { label: 'Roster', key: 'roster', route: '/roster', icon: 'users' },
-        { label: 'Me', key: 'profile', route: '/profile', icon: 'profile' },
+        { label: 'Board', key: 'dashboard', route: '/app/dashboard', icon: 'home' },
+        { label: 'Roster', key: 'roster', route: '/app/roster', icon: 'users' },
+        { label: 'Me', key: 'profile', route: '/app/profile', icon: 'profile' },
     ];
 
     isActive(key: string): boolean {

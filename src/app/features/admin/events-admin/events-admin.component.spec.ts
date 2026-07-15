@@ -67,8 +67,8 @@ describe('EventsAdminComponent', () => {
     it('renders a Manage link per event and the New event link', () => {
         setup([event({ id: 'ev1', status: 'upcoming' })]);
         const el: HTMLElement = fixture.nativeElement;
-        expect(el.querySelector('a[href="/dashboard/events/ev1"]')).toBeTruthy();
-        expect(el.querySelector('a[href="/dashboard/events/create"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/app/dashboard/events/ev1"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/app/dashboard/events/create"]')).toBeTruthy();
     });
 
     it('shows an empty state when there are no events', () => {

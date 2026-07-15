@@ -44,7 +44,14 @@ export class EventCreateComponent implements OnInit {
     tagInput = '';
     tags: string[] = ['line-battle'];
     /** Common tags surfaced as autocomplete suggestions (T-0088). */
-    readonly tagSuggestions = ['line-battle', 'siege', 'training', 'skirmish', 'campaign', 'social'];
+    readonly tagSuggestions = [
+        'line-battle',
+        'siege',
+        'training',
+        'skirmish',
+        'campaign',
+        'social',
+    ];
 
     readonly platformOptions = [
         { id: 'steam', label: 'Steam' },
@@ -129,7 +136,9 @@ export class EventCreateComponent implements OnInit {
 
     /** Compact notify form ('1h') → the human option label ('1 hour'). */
     private notifyLabelFromCompact(compact: string): string | undefined {
-        return Object.keys(this.notifyOffsets).find((label) => this.notifyOffsets[label] === compact);
+        return Object.keys(this.notifyOffsets).find(
+            (label) => this.notifyOffsets[label] === compact,
+        );
     }
 
     /** Capability gate for a template action (see the spec's capability keys). */
@@ -258,10 +267,13 @@ export class EventCreateComponent implements OnInit {
         request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (event) => {
                 this.saving = false;
-                this.router.navigate(['/dashboard/events', event.id]);
+                this.router.navigate(['/app/dashboard/events', event.id]);
             },
             error: (err) => {
-                console.error(this.editId ? 'Failed to update event' : 'Failed to create event', err);
+                console.error(
+                    this.editId ? 'Failed to update event' : 'Failed to create event',
+                    err,
+                );
                 this.saving = false;
             },
         });

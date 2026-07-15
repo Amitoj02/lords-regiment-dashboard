@@ -16,7 +16,7 @@ export const onboardingGuard: CanActivateFn = (): boolean | UrlTree => {
         return router.createUrlTree(['/login']);
     }
     if (auth.isMember()) {
-        return router.createUrlTree(['/dashboard']);
+        return router.createUrlTree(['/app/dashboard']);
     }
     return true;
 };

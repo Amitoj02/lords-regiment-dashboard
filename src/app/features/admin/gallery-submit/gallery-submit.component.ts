@@ -113,7 +113,7 @@ export class GallerySubmitComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.submitting = false;
-                    this.router.navigateByUrl('/admin/gallery');
+                    this.router.navigateByUrl('/app/gallery');
                 },
                 error: (err) => {
                     console.error('Failed to submit to gallery', err);

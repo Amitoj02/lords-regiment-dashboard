@@ -19,7 +19,9 @@ import { ActivatedRoute } from '@angular/router';
                     This section is part of a later milestone and isn't available yet. The core
                     dashboard — roster, recruitment, ranks &amp; medals — is live now.
                 </p>
-                <a routerLink="/dashboard" class="btn btn-secondary btn-sm">Back to dashboard</a>
+                <a routerLink="/app/dashboard" class="btn btn-secondary btn-sm"
+                    >Back to dashboard</a
+                >
             </div>
         </div>
     `,

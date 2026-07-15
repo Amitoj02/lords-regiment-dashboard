@@ -18,8 +18,8 @@ const routes: Routes = [
     { path: 'apply', component: ApplicationFormComponent, canActivate: [onboardingGuard] },
     { path: 'status', component: ApplicationStatusComponent, canActivate: [onboardingGuard] },
     // Retired owner-setup wizard → the real admin control panel.
-    { path: 'setup/discord', redirectTo: '/admin/settings' },
-    { path: 'setup', redirectTo: '/admin/settings' },
+    { path: 'setup/discord', redirectTo: '/app/admin/settings' },
+    { path: 'setup', redirectTo: '/app/admin/settings' },
 ];
 
 @NgModule({

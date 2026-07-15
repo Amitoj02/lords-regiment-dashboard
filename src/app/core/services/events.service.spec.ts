@@ -131,7 +131,9 @@ describe('EventsService', () => {
         service.getAllMine('upcoming').subscribe((events) => (result = events));
         const req = httpMock.expectOne('/api/events/mine?status=upcoming&limit=100');
         expect(req.request.method).toBe('GET');
-        req.flush(page([apiEvent({ myRsvp: { status: 'interested', reminderOffsetMinutes: null } })]));
+        req.flush(
+            page([apiEvent({ myRsvp: { status: 'interested', reminderOffsetMinutes: null } })]),
+        );
         expect(result?.[0].myRsvp).toBe('interested');
     });
 

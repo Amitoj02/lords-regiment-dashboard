@@ -35,7 +35,7 @@ export class ApplicationStatusComponent implements OnInit {
                     this.loading.set(false);
                     // Approved → the applicant is now a member; move them on.
                     if (mine.application?.status === 'approved') {
-                        this.router.navigateByUrl('/dashboard');
+                        this.router.navigateByUrl('/app/dashboard');
                         return;
                     }
                     // Nothing on record and not blocked → start the apply flow.

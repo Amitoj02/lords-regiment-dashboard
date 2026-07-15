@@ -96,7 +96,9 @@ export class DashboardComponent implements OnInit {
             .subscribe({
                 next: (events) => {
                     this.upcomingEvents = [...events]
-                        .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`))
+                        .sort((a, b) =>
+                            `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`),
+                        )
                         .slice(0, 5);
                 },
                 error: (err) => console.error('Failed to load upcoming events', err),
@@ -108,9 +110,7 @@ export class DashboardComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (items) => {
-                    this.recentGallery = items
-                        .filter((i) => i.status === 'approved')
-                        .slice(0, 10);
+                    this.recentGallery = items.filter((i) => i.status === 'approved').slice(0, 10);
                 },
                 error: (err) => console.error('Failed to load recent gallery', err),
             });

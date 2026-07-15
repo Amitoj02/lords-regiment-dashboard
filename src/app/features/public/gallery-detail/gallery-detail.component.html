@@ -15,7 +15,12 @@
                 @if (item.type === 'video' && mediaUrl) {
                 <video [src]="mediaUrl" controls class="detail-media-el"></video>
                 } @else if (item.type === 'link') {
-                <a [href]="item.mediaUrl || '#'" target="_blank" rel="noopener" class="detail-link-card">
+                <a
+                    [href]="item.mediaUrl || '#'"
+                    target="_blank"
+                    rel="noopener"
+                    class="detail-link-card"
+                >
                     @if (item.thumbnailUrl) {
                     <img [src]="item.thumbnailUrl" [alt]="item.title" class="detail-media-el" />
                     }
@@ -50,17 +55,13 @@
 
                 @if (item.caption) {
                 <p class="serif detail-caption">{{ item.caption }}</p>
-                }
-
-                @if (item.tags.length) {
+                } @if (item.tags.length) {
                 <div class="row detail-tags">
                     @for (tag of item.tags; track tag) {
                     <span class="badge brass">#{{ tag }}</span>
                     }
                 </div>
-                }
-
-                @if (item.taggedMembers?.length) {
+                } @if (item.taggedMembers?.length) {
                 <div class="detail-tagged">
                     <div class="field-label">Tagged</div>
                     <div class="row detail-tagged-list">

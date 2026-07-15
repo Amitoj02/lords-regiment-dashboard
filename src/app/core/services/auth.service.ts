@@ -64,11 +64,13 @@ export class AuthService {
      */
     applyToJoin(): void {
         if (!this.isAuthenticated()) {
-            this.initiateDiscordLogin();
+            // Route to the login page (which explains the flow + hosts the Discord
+            // button) rather than opening OAuth directly (T-0105).
+            this.router.navigateByUrl('/login');
             return;
         }
         if (this.isMember()) {
-            this.router.navigateByUrl('/dashboard');
+            this.router.navigateByUrl('/app/dashboard');
             return;
         }
         this.routeAfterLogin(this.currentUser(), false);
@@ -99,11 +101,13 @@ export class AuthService {
                     .pipe(catchError(() => of(null)))
                     .subscribe((profile) => {
                         const firstRun = profile?.setupComplete === false;
-                        this.router.navigateByUrl(firstRun ? '/admin/settings' : '/dashboard');
+                        this.router.navigateByUrl(
+                            firstRun ? '/app/admin/settings' : '/app/dashboard',
+                        );
                     });
                 return;
             }
-            this.router.navigateByUrl('/dashboard');
+            this.router.navigateByUrl('/app/dashboard');
             return;
         }
         this.applications

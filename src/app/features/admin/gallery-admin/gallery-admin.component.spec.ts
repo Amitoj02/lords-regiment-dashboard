@@ -60,8 +60,8 @@ describe('GalleryAdminComponent', () => {
         );
         expect(component.pendingCount).toBe(2);
         const el: HTMLElement = fixture.nativeElement;
-        expect(el.querySelector('a[href="/admin/gallery/mod"]')).toBeTruthy();
-        expect(el.querySelector('a[href="/admin/gallery/submit"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/app/gallery/mod"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/app/gallery/submit"]')).toBeTruthy();
     });
 
     it('shows an empty state when the archive has no approved items', () => {

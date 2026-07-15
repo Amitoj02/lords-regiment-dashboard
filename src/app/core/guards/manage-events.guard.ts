@@ -10,11 +10,11 @@ import { AuthService } from '../services/auth.service';
  * without the capability can still READ events (guarded by authGuard only).
  */
 export const manageEventsGuard: CanActivateFn = (): boolean | UrlTree => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
+    const auth = inject(AuthService);
+    const router = inject(Router);
 
-  if (auth.isAuthenticated() && auth.hasCapability('manage_events')) {
-    return true;
-  }
-  return router.createUrlTree(['/dashboard']);
+    if (auth.isAuthenticated() && auth.hasCapability('manage_events')) {
+        return true;
+    }
+    return router.createUrlTree(['/app/dashboard']);
 };
