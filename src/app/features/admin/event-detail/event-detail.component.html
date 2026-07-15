@@ -1,8 +1,11 @@
 <hf-app-shell [activeRoute]="'events'">
     @if (event) {
     <div class="event-detail">
-        <!-- Banner -->
-        <div class="event-banner">
+        <!-- Banner (uploaded image if present, else the gradient fallback — T-0098) -->
+        <div
+            class="event-banner"
+            [style.background-image]="event.bannerUrl ? 'url(' + event.bannerUrl + ')' : null"
+        >
             <div class="event-banner__overlay">
                 <div class="event-banner__badges">
                     <hf-event-status [status]="event.status"></hf-event-status>
@@ -213,6 +216,16 @@
                         >
                             Delete
                         </button>
+                        @if (isSeries) {
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="removeSeries()"
+                        >
+                            Delete all recurring events
+                        </button>
+                        }
                     </div>
                 </div>
                 }

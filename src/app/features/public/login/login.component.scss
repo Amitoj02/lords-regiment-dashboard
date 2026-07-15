@@ -216,3 +216,15 @@
         max-width: 440px;
     }
 }
+
+/* Agreement hint under the sign-in button (T-0125) — text link, no checkbox */
+.login-agreement {
+    margin: 12px 0 0;
+    font-size: 0.78rem;
+    color: var(--t-400);
+    text-align: center;
+
+    a {
+        color: var(--brass-400);
+    }
+}

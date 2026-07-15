@@ -15,3 +15,27 @@
     align-items: center;
     gap: 10px;
 }
+
+/* In-shell legal footer (T-0126) */
+.appshell-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px 24px;
+    font-size: 0.76rem;
+    color: var(--t-400);
+
+    a {
+        color: var(--t-400);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--t-100);
+        }
+    }
+}
+
+.appshell-footer-sep {
+    opacity: 0.5;
+}

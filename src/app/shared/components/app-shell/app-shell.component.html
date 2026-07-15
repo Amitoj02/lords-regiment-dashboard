@@ -34,6 +34,15 @@
                 <!-- Page body -->
                 <ng-content></ng-content>
             </div>
+
+            <!-- In-shell legal links (T-0126) — same public legal routes -->
+            <footer class="appshell-footer">
+                <a routerLink="/terms">Terms</a>
+                <span class="appshell-footer-sep">·</span>
+                <a routerLink="/privacy">Privacy</a>
+                <span class="appshell-footer-sep">·</span>
+                <a routerLink="/guidelines">Community Guidelines</a>
+            </footer>
         </div>
 
         <!-- Mobile bottom navigation -->

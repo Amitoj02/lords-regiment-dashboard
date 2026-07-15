@@ -167,4 +167,11 @@ describe('EventsService', () => {
         expect(req.request.method).toBe('DELETE');
         req.flush(null);
     });
+
+    it('deleteSeries() DELETEs the /series endpoint (T-0099)', () => {
+        service.deleteSeries('ev1').subscribe();
+        const req = httpMock.expectOne('/api/events/ev1/series');
+        expect(req.request.method).toBe('DELETE');
+        req.flush(null);
+    });
 });

@@ -1,6 +1,8 @@
 .event-banner {
     height: 280px;
     background: linear-gradient(to bottom right, var(--ink-850), var(--ink-800));
+    background-size: cover;
+    background-position: center;
     border-radius: 10px;
     position: relative;
     overflow: hidden;

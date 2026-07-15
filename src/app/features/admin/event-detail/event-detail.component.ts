@@ -194,6 +194,32 @@ export class EventDetailComponent implements OnInit {
             });
     }
 
+    /** True when this event is part of a recurring series (template or occurrence). */
+    get isSeries(): boolean {
+        return !!this.event && (!!this.event.isRecurring || !!this.event.recurrenceTemplateId);
+    }
+
+    /** Delete the whole recurring series (template + every occurrence) — T-0099. */
+    removeSeries(): void {
+        if (!this.eventId || this.working || !this.isSeries) {
+            return;
+        }
+        if (!confirm('Delete ALL events in this recurring series? This cannot be undone.')) {
+            return;
+        }
+        this.working = true;
+        this.eventsService
+            .deleteSeries(this.eventId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.router.navigateByUrl('/app/dashboard/events'),
+                error: (err) => {
+                    console.error('Failed to delete event series', err);
+                    this.working = false;
+                },
+            });
+    }
+
     get rsvpTotal(): number {
         if (!this.event) {
             return 0;

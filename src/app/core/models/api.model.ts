@@ -282,6 +282,7 @@ export interface ApiEvent {
     recurrenceRule?: string | null;
     recurrenceCadence?: 'daily' | 'weekly' | 'monthly' | null;
     recurrenceActive?: boolean;
+    recurrenceTemplateId?: string | null;
     notifyOffsets?: number[];
     isArchived?: boolean;
     myRsvp?: ApiRsvp | null;
@@ -326,6 +327,8 @@ export function mapEvent(e: ApiEvent): RegimentEvent {
         status: e.status,
         recurrenceCadence: e.recurrenceCadence ?? undefined,
         recurrenceActive: e.recurrenceActive,
+        isRecurring: e.isRecurring,
+        recurrenceTemplateId: e.recurrenceTemplateId ?? undefined,
         tags: e.tags,
         rsvpCounts: e.rsvpCounts,
         // attendeesCount is a tally, not a list; the attendee list is a separate endpoint.

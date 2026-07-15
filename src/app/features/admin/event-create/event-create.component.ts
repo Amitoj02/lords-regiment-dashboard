@@ -172,9 +172,16 @@ export class EventCreateComponent implements OnInit {
         return this.selectedPlatforms.includes(p);
     }
 
+    /** Hard cap on event tags — matches the backend @ArrayMaxSize(10) (T-0100). */
+    readonly maxTags = 10;
+
+    get tagsAtLimit(): boolean {
+        return this.tags.length >= this.maxTags;
+    }
+
     addTag(value?: string): void {
         const t = (value ?? this.tagInput).trim().toLowerCase();
-        if (t && !this.tags.includes(t)) {
+        if (t && !this.tags.includes(t) && !this.tagsAtLimit) {
             this.tags.push(t);
         }
         this.tagInput = '';

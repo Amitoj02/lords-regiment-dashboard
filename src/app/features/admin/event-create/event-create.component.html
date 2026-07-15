@@ -210,11 +210,15 @@
                                     type="text"
                                     [(ngModel)]="tagInput"
                                     [ngModelOptions]="{ standalone: true }"
-                                    placeholder="Add a tag…"
+                                    [placeholder]="tagsAtLimit ? 'Tag limit reached' : 'Add a tag…'"
+                                    [disabled]="tagsAtLimit"
                                     (keydown.enter)="addTag(); $event.preventDefault()"
                                 />
                             </div>
-                            @if (filteredSuggestions.length) {
+                            <div class="field-hint field-hint--inline">
+                                {{ tags.length }} / {{ maxTags }} tags
+                            </div>
+                            @if (filteredSuggestions.length && !tagsAtLimit) {
                             <div class="tag-suggestions">
                                 @for (s of filteredSuggestions; track s) {
                                 <button type="button" class="chip chip--sm" (click)="addTag(s)">
