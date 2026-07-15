@@ -3,6 +3,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 export interface NavUser {
     name: string;
     rank: string;
+    avatarUrl?: string | null;
 }
 
 interface NavItem {
@@ -29,6 +30,8 @@ export class SidebarComponent {
     @Input() isAdmin = false;
 
     @Output() navigate = new EventEmitter<string>();
+    /** Emitted when the footer Logout button is pressed (handled by the shell). */
+    @Output() logout = new EventEmitter<void>();
 
     readonly navItems: NavItem[] = [
         {
@@ -113,17 +116,7 @@ export class SidebarComponent {
         this.navigate.emit(route);
     }
 
-    get initials(): string {
-        return this.user.name
-            .split(' ')
-            .map((s) => s[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase();
-    }
-
-    get avatarBg(): string {
-        const h = Array.from(this.user.name).reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-        return `oklch(0.32 0.04 ${h})`;
+    onLogout(): void {
+        this.logout.emit();
     }
 }

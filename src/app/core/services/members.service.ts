@@ -42,12 +42,19 @@ export class MembersService {
         return this.http.get<ApiMember>(`${this.base}/${id}`).pipe(map(mapMember));
     }
 
-    /** Self-service profile edit (PATCH; only platform/timezone/inGameName/avatarUrl). */
+    /**
+     * Self-service profile edit (PATCH). Sends only the fields the backend
+     * self-edit DTO accepts: name, platform, timezone, inGameName, and the
+     * storage KEYS of freshly-uploaded avatar/banner images (avatarKey/bannerKey).
+     */
     update(id: string, changes: Partial<Member>): Observable<Member> {
         const body: Record<string, unknown> = {};
+        if (changes.name !== undefined) body['name'] = changes.name;
         if (changes.platform !== undefined) body['platform'] = changes.platform;
         if (changes.timezone !== undefined) body['timezone'] = changes.timezone;
         if (changes.inGameName !== undefined) body['inGameName'] = changes.inGameName;
+        if (changes.avatarKey !== undefined) body['avatarKey'] = changes.avatarKey;
+        if (changes.bannerKey !== undefined) body['bannerKey'] = changes.bannerKey;
         return this.http.patch<ApiMember>(`${this.base}/${id}`, body).pipe(map(mapMember));
     }
 

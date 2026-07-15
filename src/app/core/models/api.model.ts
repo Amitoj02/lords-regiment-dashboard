@@ -183,6 +183,8 @@ export function mapMember(m: ApiMember): Member {
         attendanceRate: m.attendanceRate,
         suspendedUntil: m.suspendedUntil,
         bannedAt: m.bannedAt,
+        avatarUrl: m.avatarUrl,
+        bannerUrl: m.bannerUrl,
     };
 }
 

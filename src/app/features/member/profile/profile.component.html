@@ -1,14 +1,25 @@
 <hf-app-shell [activeRoute]="'roster'" [crumbs]="['Roster', member?.name ?? 'Profile']">
     @if (member) {
     <div class="profile-page">
-        <!-- Banner -->
-        <div class="profile-banner profile-banner--bg">
+        <!-- Banner (data-driven; falls back to the default asset via --bg) -->
+        <div
+            class="profile-banner"
+            [class.profile-banner--bg]="!member.bannerUrl"
+            [style.background-image]="member.bannerUrl ? 'url(' + member.bannerUrl + ')' : null"
+        >
             <div class="profile-banner-overlay"></div>
         </div>
         <!-- Profile Header -->
         <div class="profile-header">
             <div class="profile-avatar-wrap">
-                <hf-avatar [name]="member.name" [size]="124" class="profile-avatar"></hf-avatar>
+                <hf-avatar
+                    [name]="member.name"
+                    [avatarUrl]="member.avatarUrl"
+                    [size]="124"
+                    [clickable]="canOpenViewer"
+                    (avatarClick)="openViewer()"
+                    class="profile-avatar"
+                ></hf-avatar>
             </div>
             <div class="profile-header-info">
                 <div class="row profile-name-row">
@@ -44,7 +55,9 @@
                     Admin Actions ▾
                 </button>
                 } @if (isOwnProfile) {
-                <button type="button" class="btn btn-primary btn-sm">Edit My Profile</button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="startEdit()">
+                    Edit My Profile
+                </button>
                 } @if (isOwnProfile) {
                 <a class="btn btn-ghost btn-sm" routerLink="/app/account-deletion"
                     >Account Deletion</a
@@ -309,6 +322,128 @@
                 }
             </div>
         </div>
+
+        <!-- Self-edit modal (T-0121) -->
+        @if (editing) {
+        <div
+            class="profile-edit-backdrop"
+            role="button"
+            tabindex="0"
+            aria-label="Close editor"
+            (click)="cancelEdit()"
+            (keydown.escape)="cancelEdit()"
+            (keydown.enter)="cancelEdit()"
+        ></div>
+        <div class="profile-edit-modal" role="dialog" aria-modal="true">
+            <div class="panel-header">
+                <span class="panel-title">Edit my profile</span>
+            </div>
+            <div class="panel-body profile-edit-body">
+                <div class="field-row">
+                    <label class="field-label" for="pe-name">Display name</label>
+                    <input id="pe-name" class="hf-input" type="text" [(ngModel)]="editName" />
+                </div>
+                <div class="field-row">
+                    <label class="field-label" for="pe-ign">In-game name</label>
+                    <input id="pe-ign" class="hf-input" type="text" [(ngModel)]="editInGameName" />
+                </div>
+                <div class="field-row">
+                    <label class="field-label" for="pe-platform">Platform</label>
+                    <select id="pe-platform" class="hf-select" [(ngModel)]="editPlatform">
+                        <option value="">—</option>
+                        @for (p of platformOptions; track p.value) {
+                        <option [value]="p.value">{{ p.label }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="field-row">
+                    <label class="field-label" for="pe-tz">Timezone</label>
+                    <input
+                        id="pe-tz"
+                        class="hf-input"
+                        type="text"
+                        placeholder="e.g. America/Toronto"
+                        [(ngModel)]="editTimezone"
+                    />
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Avatar</span>
+                    <div class="profile-upload-row">
+                        <hf-avatar
+                            [name]="editName"
+                            [avatarUrl]="avatarPreview ?? member.avatarUrl"
+                            [size]="56"
+                        ></hf-avatar>
+                        <label class="btn btn-ghost btn-sm">
+                            {{ avatarUploading ? 'Uploading…' : 'Choose image' }}
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                hidden
+                                (change)="onAvatarSelected($event)"
+                            />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Banner</span>
+                    <div class="profile-upload-row">
+                        <div
+                            class="profile-banner-thumb"
+                            [style.background-image]="
+                                (bannerPreview ?? member.bannerUrl)
+                                    ? 'url(' + (bannerPreview ?? member.bannerUrl) + ')'
+                                    : null
+                            "
+                        ></div>
+                        <label class="btn btn-ghost btn-sm">
+                            {{ bannerUploading ? 'Uploading…' : 'Choose image' }}
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                hidden
+                                (change)="onBannerSelected($event)"
+                            />
+                        </label>
+                    </div>
+                </div>
+
+                @if (saveError) {
+                <hf-notice variant="err">{{ saveError }}</hf-notice>
+                }
+            </div>
+            <div class="panel-footer profile-edit-actions">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="cancelEdit()">
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    [disabled]="!canSave"
+                    (click)="save()"
+                >
+                    {{ saving ? 'Saving…' : 'Save changes' }}
+                </button>
+            </div>
+        </div>
+        }
+
+        <!-- Full-size avatar viewer (T-0122) -->
+        @if (viewerOpen && member.avatarUrl) {
+        <div
+            class="profile-viewer"
+            role="button"
+            tabindex="0"
+            aria-label="Close image viewer"
+            (click)="closeViewer()"
+            (keydown.escape)="closeViewer()"
+            (keydown.enter)="closeViewer()"
+        >
+            <img class="profile-viewer-img" [src]="member.avatarUrl" [alt]="member.name" />
+        </div>
+        }
     </div>
     }
 

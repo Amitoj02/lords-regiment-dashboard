@@ -70,4 +70,12 @@ export interface Member {
     attendanceRate?: number;
     suspendedUntil?: string | null;
     bannedAt?: string | null;
+    /** Custom or Discord-fallback avatar URL (null → initials tile). */
+    avatarUrl?: string | null;
+    /** Profile banner URL (null → default banner). */
+    bannerUrl?: string | null;
+    /** Write-only: storage key of a freshly-uploaded avatar (sent on self-edit). */
+    avatarKey?: string;
+    /** Write-only: storage key of a freshly-uploaded banner (sent on self-edit). */
+    bannerKey?: string;
 }

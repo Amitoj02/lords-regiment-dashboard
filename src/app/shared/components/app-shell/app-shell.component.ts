@@ -31,16 +31,22 @@ export class AppShellComponent {
         this.drawerOpen = false;
     }
 
-    get navUser(): { name: string; rank: string } {
+    get navUser(): { name: string; rank: string; avatarUrl: string | null } {
         const user = this.currentUser();
         return {
             name: user?.name ?? '',
             rank: user?.rank ?? '',
+            avatarUrl: user?.avatarUrl ?? null,
         };
     }
 
     onNavigate(route: string): void {
         this.closeDrawer();
         this.router.navigateByUrl(route);
+    }
+
+    onLogout(): void {
+        this.closeDrawer();
+        this.auth.logout();
     }
 }
