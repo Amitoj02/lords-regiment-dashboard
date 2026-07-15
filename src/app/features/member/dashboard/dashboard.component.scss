@@ -347,3 +347,23 @@
 .panel-foot {
     padding: 10px 12px 4px;
 }
+
+/* Gallery submissions panel items (T-0127) */
+.gallery-sub-item {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.12s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+}
+
+.panel-empty {
+    padding: 16px;
+    font-size: 0.82rem;
+    color: var(--t-400);
+}

@@ -33,10 +33,20 @@ export class GalleryModComponent implements OnInit {
         this.load();
     }
 
+    /** Switch tabs and refetch that bucket from the backend (T-0115). */
+    setTab(tab: 'pending' | 'approved' | 'declined'): void {
+        if (this.activeTab === tab) {
+            return;
+        }
+        this.activeTab = tab;
+        this.declineReason = '';
+        this.load();
+    }
+
     private load(): void {
         this.loading = true;
         this.galleryService
-            .moderationQueue()
+            .moderationQueue(this.activeTab)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (items) => {

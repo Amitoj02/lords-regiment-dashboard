@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { of } from 'rxjs';
 import { GalleryAdminComponent } from './gallery-admin.component';
 import { GalleryService } from '../../../core/services/gallery.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { GalleryItem } from '../../../core/models/gallery.model';
 
 function item(overrides: Partial<GalleryItem> = {}): GalleryItem {
@@ -27,18 +28,22 @@ describe('GalleryAdminComponent', () => {
     let component: GalleryAdminComponent;
     let galleryService: jasmine.SpyObj<GalleryService>;
 
-    function setup(items: GalleryItem[], queue: GalleryItem[] = []): void {
+    function setup(items: GalleryItem[], queue: GalleryItem[] = [], canAll = true): void {
         galleryService = jasmine.createSpyObj<GalleryService>('GalleryService', [
-            'getAll',
+            'getArchive',
             'moderationQueue',
         ]);
-        galleryService.getAll.and.returnValue(of(items));
+        galleryService.getArchive.and.returnValue(of(items));
         galleryService.moderationQueue.and.returnValue(of(queue));
+        const auth = { hasCapability: () => canAll } as unknown as AuthService;
 
         TestBed.configureTestingModule({
             imports: [CommonModule, RouterModule.forRoot([])],
             declarations: [GalleryAdminComponent],
-            providers: [{ provide: GalleryService, useValue: galleryService }],
+            providers: [
+                { provide: GalleryService, useValue: galleryService },
+                { provide: AuthService, useValue: auth },
+            ],
             schemas: [NO_ERRORS_SCHEMA],
         });
         fixture = TestBed.createComponent(GalleryAdminComponent);
@@ -62,6 +67,15 @@ describe('GalleryAdminComponent', () => {
         const el: HTMLElement = fixture.nativeElement;
         expect(el.querySelector('a[href="/app/gallery/mod"]')).toBeTruthy();
         expect(el.querySelector('a[href="/app/gallery/submit"]')).toBeTruthy();
+    });
+
+    it('hides the submit + moderation links without the capabilities (T-0109)', () => {
+        setup([item()], [], false);
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector('a[href="/app/gallery/mod"]')).toBeFalsy();
+        expect(el.querySelector('a[href="/app/gallery/submit"]')).toBeFalsy();
+        // No moderation-queue fetch when the caller can't moderate.
+        expect(galleryService.moderationQueue).not.toHaveBeenCalled();
     });
 
     it('shows an empty state when the archive has no approved items', () => {

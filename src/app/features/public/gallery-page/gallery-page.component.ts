@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem, GalleryItemType } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'hf-gallery-page',
@@ -26,7 +27,15 @@ export class GalleryPageComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(private galleryService: GalleryService) {}
+    constructor(
+        private galleryService: GalleryService,
+        private auth: AuthService,
+    ) {}
+
+    /** A member with submit rights gets a direct Submit entry (T-0114). */
+    get canSubmit(): boolean {
+        return this.auth.isAuthenticated() && this.auth.hasCapability('submit_to_gallery');
+    }
 
     ngOnInit(): void {
         this.galleryService

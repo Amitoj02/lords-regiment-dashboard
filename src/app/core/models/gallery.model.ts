@@ -12,8 +12,8 @@ export interface GalleryItem {
     status: GalleryItemStatus;
     likes: number;
     tags: string[];
-    linkedEvent?: string;
-    taggedMembers?: string[];
+    /** Reason recorded on decline (moderation "Declined" tab). */
+    declineReason?: string | null;
     caption?: string;
     fileCount?: number;
 }

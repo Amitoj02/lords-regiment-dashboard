@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
+import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 /**
  * Public gallery detail page (T-0078) at /gallery/:id. Reads the id from the
@@ -17,12 +18,14 @@ import { GalleryService } from '../../../core/services/gallery.service';
 })
 export class GalleryDetailComponent implements OnInit {
     item: GalleryItem | null = null;
+    embed: MediaEmbed | null = null;
     loading = true;
     notFound = false;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly route = inject(ActivatedRoute);
     private readonly gallery = inject(GalleryService);
+    private readonly mediaEmbed = inject(MediaEmbedService);
 
     ngOnInit(): void {
         const id = this.route.snapshot.paramMap.get('id');
@@ -37,6 +40,7 @@ export class GalleryDetailComponent implements OnInit {
             .subscribe({
                 next: (item) => {
                     this.item = item;
+                    this.embed = this.mediaEmbed.resolve(item.mediaUrl ?? item.thumbnailUrl);
                     this.loading = false;
                 },
                 error: (err) => {

@@ -10,15 +10,27 @@
         <div class="notice err">This dispatch could not be found.</div>
         } @else {
         <div class="detail-grid">
-            <!-- Media -->
+            <!-- Media (auto-embed: medal.tv / YouTube iframe, inline image/video, else link) -->
             <div class="detail-media">
-                @if (item.type === 'video' && mediaUrl) {
-                <video [src]="mediaUrl" controls class="detail-media-el"></video>
-                } @else if (item.type === 'link') {
+                @if (embed?.kind === 'youtube' || embed?.kind === 'medaltv') {
+                <div class="detail-embed">
+                    <iframe
+                        [src]="embed!.safeUrl"
+                        title="Embedded clip"
+                        frameborder="0"
+                        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+                } @else if (embed?.kind === 'video') {
+                <video [src]="embed!.rawUrl" controls class="detail-media-el"></video>
+                } @else if (embed?.kind === 'image') {
+                <img [src]="embed!.rawUrl" [alt]="item.title" class="detail-media-el" />
+                } @else if (embed?.kind === 'link') {
                 <a
-                    [href]="item.mediaUrl || '#'"
+                    [href]="embed!.rawUrl"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     class="detail-link-card"
                 >
                     @if (item.thumbnailUrl) {
@@ -26,8 +38,6 @@
                     }
                     <span class="badge brass detail-vod">Open external link →</span>
                 </a>
-                } @else if (mediaUrl) {
-                <img [src]="mediaUrl" [alt]="item.title" class="detail-media-el" />
                 } @else {
                 <div class="detail-media-placeholder"></div>
                 }
@@ -60,15 +70,6 @@
                     @for (tag of item.tags; track tag) {
                     <span class="badge brass">#{{ tag }}</span>
                     }
-                </div>
-                } @if (item.taggedMembers?.length) {
-                <div class="detail-tagged">
-                    <div class="field-label">Tagged</div>
-                    <div class="row detail-tagged-list">
-                        @for (m of item.taggedMembers; track m) {
-                        <span class="badge">{{ m }}</span>
-                        }
-                    </div>
                 </div>
                 }
             </div>

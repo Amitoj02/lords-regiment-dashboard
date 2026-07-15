@@ -1,8 +1,8 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EventsService } from '../../../core/services/events.service';
 import { GalleryFileInput, GalleryService } from '../../../core/services/gallery.service';
+import { StorageService } from '../../../core/services/storage.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface UploadedFile {
@@ -10,7 +10,12 @@ interface UploadedFile {
     filename: string;
     size: string;
     caption: string;
-    thumbnailColor: string;
+    mediaType: 'image' | 'video';
+    previewUrl: string;
+    /** Storage key once the presigned PUT completes; null while uploading. */
+    key: string | null;
+    uploading: boolean;
+    error: boolean;
 }
 
 @Component({
@@ -19,48 +24,72 @@ interface UploadedFile {
     styleUrls: ['./gallery-submit.component.scss'],
     standalone: false,
 })
-export class GallerySubmitComponent implements OnInit {
+export class GallerySubmitComponent {
     activeTab: 'files' | 'link' = 'files';
 
     uploadedFiles: UploadedFile[] = [];
 
     submissionTitle = '';
-    selectedEvent = '';
     tagInput = '';
     tags: string[] = [];
-
-    /** Populated from the real events list (GET /events) for the "linked event" picker. */
-    events: { value: string; label: string }[] = [];
-
-    taggedMembers: string[] = [];
-    tagMemberInput = '';
+    readonly maxTags = 10;
+    /** Quick-add tag chips for common highlight categories (T-0112). */
+    readonly quickTags = ['clutch', 'melee', 'artillery', 'longshot', 'multikills'];
 
     linkUrl = '';
     submitting = false;
 
+    private fileSeq = 0;
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
         private galleryService: GalleryService,
-        private eventsService: EventsService,
+        private storage: StorageService,
         private auth: AuthService,
         private router: Router,
     ) {}
 
-    /** Capability gate for a template action (see the spec's capability keys). */
+    /** Capability gate for a template action. */
     can(capability: string): boolean {
         return this.auth.hasCapability(capability);
     }
 
-    ngOnInit(): void {
-        this.eventsService
-            .getAll()
+    onFilesSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const files = input.files ? Array.from(input.files) : [];
+        for (const file of files) {
+            this.uploadFile(file);
+        }
+        // Reset the input so selecting the same file again re-triggers change.
+        input.value = '';
+    }
+
+    private uploadFile(file: File): void {
+        const mediaType: 'image' | 'video' = file.type.startsWith('video') ? 'video' : 'image';
+        const entry: UploadedFile = {
+            id: `f${this.fileSeq++}`,
+            filename: file.name,
+            size: String(file.size),
+            caption: '',
+            mediaType,
+            previewUrl: URL.createObjectURL(file),
+            key: null,
+            uploading: true,
+            error: false,
+        };
+        this.uploadedFiles = [...this.uploadedFiles, entry];
+        this.storage
+            .upload('gallery', file)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (events) => {
-                    this.events = events.map((e) => ({ value: e.id, label: e.title }));
+                next: (key) => {
+                    entry.key = key;
+                    entry.uploading = false;
                 },
-                error: (err) => console.error('Failed to load events for tagging', err),
+                error: () => {
+                    entry.uploading = false;
+                    entry.error = true;
+                },
             });
     }
 
@@ -68,9 +97,13 @@ export class GallerySubmitComponent implements OnInit {
         this.uploadedFiles = this.uploadedFiles.filter((f) => f.id !== id);
     }
 
-    addTag(): void {
-        const t = this.tagInput.trim();
-        if (t && !this.tags.includes(t)) {
+    get tagsAtLimit(): boolean {
+        return this.tags.length >= this.maxTags;
+    }
+
+    addTag(value?: string): void {
+        const t = (value ?? this.tagInput).trim().toLowerCase();
+        if (t && !this.tags.includes(t) && !this.tagsAtLimit) {
             this.tags.push(t);
         }
         this.tagInput = '';
@@ -80,34 +113,51 @@ export class GallerySubmitComponent implements OnInit {
         this.tags = this.tags.filter((tag) => tag !== t);
     }
 
-    saveDraft(): void {
-        // No draft endpoint on the backend — submission is a single reviewed step.
+    get availableQuickTags(): string[] {
+        return this.quickTags.filter((q) => !this.tags.includes(q));
+    }
+
+    get uploadsPending(): boolean {
+        return this.uploadedFiles.some((f) => f.uploading);
+    }
+
+    get canSubmit(): boolean {
+        return !!this.submissionTitle.trim() && !this.submitting && !this.uploadsPending;
     }
 
     submit(): void {
         const title = this.submissionTitle.trim();
-        if (!title || this.submitting) {
+        if (!title || !this.canSubmit) {
             return;
         }
         const isLink = this.activeTab === 'link';
         const files: GalleryFileInput[] = isLink
             ? []
-            : this.uploadedFiles.map((f) => ({
-                  fileName: f.filename,
-                  mediaType: 'image',
-                  caption: f.caption || undefined,
-                  thumbnailColor: f.thumbnailColor,
-              }));
+            : this.uploadedFiles
+                  .filter((f) => f.key)
+                  .map((f) => ({
+                      fileName: f.filename,
+                      key: f.key ?? undefined,
+                      mediaType: f.mediaType,
+                      sizeBytes: f.size,
+                      caption: f.caption || undefined,
+                  }));
+
+        // type: link when on the Link tab, else video if any video was uploaded.
+        const type = isLink
+            ? 'link'
+            : files.some((f) => f.mediaType === 'video')
+              ? 'video'
+              : 'image';
 
         this.submitting = true;
         this.galleryService
             .submit({
                 title,
-                type: isLink ? 'link' : 'image',
+                type,
                 linkUrl: isLink ? this.linkUrl.trim() || undefined : undefined,
-                eventId: this.selectedEvent || undefined,
                 files: files.length ? files : undefined,
-                taggedMemberIds: this.taggedMembers.length ? this.taggedMembers : undefined,
+                tags: this.tags.length ? [...this.tags] : undefined,
             })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({

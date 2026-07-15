@@ -96,36 +96,29 @@
 
         <!-- Right Column -->
         <div class="dashboard-aside">
-            <!-- Field Dispatches -->
+            <!-- Gallery submissions (ManageEvents holders; pending queue preview) -->
+            @if (canManageEvents) {
             <div class="panel panel--spaced">
-                <div class="panel-header">
-                    <span class="panel-title serif">Field Dispatches</span>
+                <div class="panel-header between">
+                    <span class="panel-title serif">Gallery submissions</span>
+                    <span class="badge ox">{{ gallerySubmissions.length }}</span>
                 </div>
                 <div class="panel-body panel-body--flush">
-                    @for (dispatch of dispatches; track dispatch) {
-                    <div class="dispatch-item">
-                        <div
-                            class="dispatch-tone-bar"
-                            [ngStyle]="{
-                                    background:
-                                        dispatch.tone === 'info'
-                                            ? 'var(--info)'
-                                            : dispatch.tone === 'warn'
-                                              ? 'var(--warn)'
-                                              : dispatch.tone === 'ok'
-                                                ? 'var(--ok)'
-                                                : 'var(--t-400)',
-                                }"
-                        ></div>
+                    @for (sub of gallerySubmissions; track sub.id) {
+                    <a class="dispatch-item gallery-sub-item" routerLink="/app/gallery/mod">
                         <div class="dispatch-body">
-                            <div class="dispatch-title">{{ dispatch.title }}</div>
-                            <div class="dispatch-text">{{ dispatch.body }}</div>
-                            <div class="mono dispatch-time">{{ dispatch.time }}</div>
+                            <div class="dispatch-title">{{ sub.title }}</div>
+                            <div class="dispatch-text">
+                                by {{ sub.submitterUsername ?? 'Unknown' }}
+                            </div>
                         </div>
-                    </div>
+                    </a>
+                    } @empty {
+                    <div class="panel-empty">No submissions awaiting review.</div>
                     }
                 </div>
             </div>
+            }
 
             <!-- Awaiting Review (STAFF only; read-only preview → full review screen) -->
             @if (isStaff) {

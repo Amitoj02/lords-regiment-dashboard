@@ -366,11 +366,10 @@ export interface ApiGalleryItem {
     linkUrl: string | null;
     thumbnailUrl: string | null;
     status: GalleryItemStatus;
-    eventId: string | null;
     declineReason: string | null;
     author: ApiGalleryMemberRef | null;
     files: ApiGalleryFile[];
-    taggedMembers: ApiGalleryMemberRef[];
+    tags: string[];
     likesCount: number;
     /** Present only for authenticated callers. */
     liked?: boolean;
@@ -391,13 +390,18 @@ export function mapGalleryItem(g: ApiGalleryItem): GalleryItem {
         submittedAt: g.submittedAt,
         status: g.status,
         likes: g.likesCount,
-        // The backend has no free-form tags on gallery items.
-        tags: [],
-        linkedEvent: g.eventId ?? undefined,
-        taggedMembers: (g.taggedMembers ?? []).map((m) => m.memberId),
+        tags: g.tags ?? [],
+        declineReason: g.declineReason,
         caption: g.caption ?? undefined,
         fileCount: g.files?.length,
     };
+}
+
+/** Lean pending-submission summary for the dashboard panel (T-0094/T-0127). */
+export interface ApiGallerySubmissionSummary {
+    id: string;
+    title: string;
+    submitterUsername: string | null;
 }
 
 // ── Audit ────────────────────────────────────────────────────────────────────
