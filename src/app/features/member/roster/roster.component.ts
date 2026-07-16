@@ -1,5 +1,6 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { Member } from '../../../core/models/member.model';
 import { MembersService } from '../../../core/services/members.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -41,6 +42,7 @@ export class RosterComponent implements OnInit {
     constructor(
         private membersService: MembersService,
         private auth: AuthService,
+        private router: Router,
     ) {}
 
     /** Whether the caller may open the admin-action modal on a row. */
@@ -50,8 +52,51 @@ export class RosterComponent implements OnInit {
         );
     }
 
+    /** Only Owners/Admins may pull a roster ledger export. */
+    get canExport(): boolean {
+        return this.auth.isOwnerOrAdmin();
+    }
+
     openActions(member: Member): void {
         this.selectedMember = member;
+    }
+
+    /** Row click → the member's profile (the actions button stops propagation). */
+    goToProfile(id: string): void {
+        this.router.navigate(['/app/profile', id]);
+    }
+
+    /** Build + download a CSV of the currently-filtered roster (Owners/Admins). */
+    exportLedger(): void {
+        if (!this.canExport) {
+            return;
+        }
+        const headers = ['In-game name', 'Discord tag', 'Rank', 'Role', 'Status', 'Last seen'];
+        const rows = this.filteredMembers.map((m) => [
+            m.inGameName,
+            m.discordTag,
+            m.rank,
+            m.role,
+            m.status,
+            m.lastSeen,
+        ]);
+        const csv = [headers, ...rows]
+            .map((row) => row.map((cell) => this.csvCell(cell)).join(','))
+            .join('\r\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `roster-${new Date().toISOString().slice(0, 10)}.csv`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /** Escape a single CSV field (quote when it contains a comma/quote/newline). */
+    private csvCell(value: string): string {
+        const v = value ?? '';
+        return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
     }
 
     /** Replace the updated member across the roster and re-apply filters. */
@@ -81,7 +126,6 @@ export class RosterComponent implements OnInit {
             const q = this.searchQuery.toLowerCase();
             results = results.filter(
                 (m) =>
-                    m.name.toLowerCase().includes(q) ||
                     m.discordTag.toLowerCase().includes(q) ||
                     m.inGameName.toLowerCase().includes(q),
             );

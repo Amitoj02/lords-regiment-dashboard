@@ -7,9 +7,9 @@
 
 .gallery-card {
     border-radius: 8px;
-    border: 1px solid var(--rule-2);
+    border: 1px solid var(--rule);
     overflow: hidden;
-    background: var(--parch-100);
+    background: var(--ink-850);
 
     &__thumb {
         height: 120px;
@@ -25,6 +25,7 @@
     &__caption {
         font-size: 0.8rem;
         font-weight: 600;
+        color: var(--t-100);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

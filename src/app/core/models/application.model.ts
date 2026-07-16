@@ -1,11 +1,15 @@
 export type ApplicationStatus = 'pending' | 'approved' | 'declined' | 'held';
 
+/** Enlistment track chosen on the apply form (mirrors the backend enum). */
+export type ApplicantType = 'Member' | 'Mercenary';
+
 /** View model for a recruitment application (mirrors the reshaped API contract). */
 export interface Application {
     id: string;
     applicantName: string;
     discordTag: string;
     inGameName: string;
+    applicantType: ApplicantType;
     currentRegiment: string;
     howFound: string;
     preferredClasses: string;

@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MemberRole } from '../../../core/models/member.model';
-import { NotificationTone } from '../../../core/models/notification.model';
 import { AuthService } from '../../../core/services/auth.service';
 import {
     PermissionChange,
@@ -10,7 +9,6 @@ import {
     SettingsService,
     UpdateSettingsPayload,
 } from '../../../core/services/settings.service';
-import { NotificationsService } from '../../../core/services/notifications.service';
 import {
     BotOperation,
     DiscordBotSettings,
@@ -37,8 +35,7 @@ export class SettingsComponent implements OnInit {
 
     navItems: NavItem[] = [
         { id: 'profile', label: 'Profile & visibility', group: 'Regiment' },
-        { id: 'announce', label: 'Announcements', group: 'Regiment' },
-        { id: 'discord', label: 'Discord & Quartermaster', group: 'Regiment' },
+        { id: 'discord', label: 'Discord & Adjutant', group: 'Regiment' },
         { id: 'roles', label: 'Roles & permissions', group: 'Regiment' },
     ];
     navGroups = ['Regiment'];
@@ -54,22 +51,12 @@ export class SettingsComponent implements OnInit {
     permissionsFlash = '';
     private readonly permissionChanges = new Map<string, PermissionChange>();
 
-    // ── Announcements (T-0017) ───────────────────────────────────────────────
-    announce = {
-        title: '',
-        body: '',
-        tone: 'info' as NotificationTone,
-        crossPostToDiscord: true,
-    };
-    sendingAnnouncement = false;
-    announceFlash = '';
-    /** True when announceFlash is a warning (e.g. the Discord cross-post did not send). */
-    announceWarn = false;
-
     // ── Invite (T-0017) ──────────────────────────────────────────────────────
     inviteCopied = false;
+    savingInvite = false;
+    inviteFlash = '';
 
-    // ── Discord + Quartermaster bot (T-0024) ─────────────────────────────────
+    // ── Discord + Lord Adjutant bot (T-0024) ─────────────────────────────────
     connection: DiscordConnection | null = null;
     botSettings: DiscordBotSettings | null = null;
     operations: BotOperation[] = [];
@@ -81,17 +68,10 @@ export class SettingsComponent implements OnInit {
     savingBot = false;
     botFlash = '';
 
-    readonly tones: { value: NotificationTone; label: string }[] = [
-        { value: 'info', label: 'Info' },
-        { value: 'ok', label: 'Good news' },
-        { value: 'warn', label: 'Warning' },
-    ];
-
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
         private settingsService: SettingsService,
-        private notifications: NotificationsService,
         private discord: DiscordService,
         private auth: AuthService,
     ) {}
@@ -126,6 +106,21 @@ export class SettingsComponent implements OnInit {
     }
 
     // ── Profile + visibility ─────────────────────────────────────────────────
+    /**
+     * The Identity "Established" control is a month input (YYYY-MM), but the
+     * backend stores a full date — persist the first of the month.
+     */
+    get establishedMonth(): string {
+        return this.settings?.establishedAt ? this.settings.establishedAt.slice(0, 7) : '';
+    }
+
+    set establishedMonth(value: string) {
+        if (!this.settings) {
+            return;
+        }
+        this.settings.establishedAt = value ? `${value}-01` : null;
+    }
+
     saveProfile(): void {
         if (!this.settings || this.savingProfile) {
             return;
@@ -133,9 +128,8 @@ export class SettingsComponent implements OnInit {
         const s = this.settings;
         const payload: UpdateSettingsPayload = {
             name: s.name,
-            shortTag: s.shortTag,
             missionStatement: s.missionStatement,
-            publicRoster: s.publicRoster,
+            establishedAt: s.establishedAt,
             publicGallery: s.publicGallery,
             publicEvents: s.publicEvents,
             publicStats: s.publicStats,
@@ -178,6 +172,30 @@ export class SettingsComponent implements OnInit {
             },
             () => console.error('Clipboard write was blocked'),
         );
+    }
+
+    /** Persist the Discord invite link (regiment settings row) — T-0156. */
+    saveInviteUrl(): void {
+        if (!this.settings || this.savingInvite || !this.can('manage_settings')) {
+            return;
+        }
+        this.savingInvite = true;
+        this.inviteFlash = '';
+        this.settingsService
+            .updateSettings({ discordInviteUrl: this.settings.discordInviteUrl?.trim() || null })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (settings) => {
+                    this.settings = settings;
+                    this.savingInvite = false;
+                    this.inviteFlash = 'Invite link saved.';
+                },
+                error: (err) => {
+                    console.error('Failed to save invite link', err);
+                    this.savingInvite = false;
+                    this.inviteFlash = 'Could not save — try again.';
+                },
+            });
     }
 
     // ── Permission matrix ────────────────────────────────────────────────────
@@ -236,81 +254,7 @@ export class SettingsComponent implements OnInit {
         return spaced.charAt(0).toUpperCase() + spaced.slice(1);
     }
 
-    // ── Announcements (T-0017) ───────────────────────────────────────────────
-    sendAnnouncement(): void {
-        const title = this.announce.title.trim();
-        const body = this.announce.body.trim();
-        if (!title || !body || this.sendingAnnouncement) {
-            return;
-        }
-        // Decide cross-posting up front — the form is reset once publishing lands.
-        const crossPost = this.announce.crossPostToDiscord && this.can('manage_notifications');
-        this.sendingAnnouncement = true;
-        this.announceFlash = '';
-        this.announceWarn = false;
-        this.notifications
-            .compose({ title, body, tone: this.announce.tone })
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    if (crossPost) {
-                        // Keep the guard raised until Discord confirms (or fails).
-                        this.crossPostAnnouncement(title, body);
-                        return;
-                    }
-                    this.resetAnnounceForm();
-                    this.sendingAnnouncement = false;
-                    this.announceFlash = 'Dispatch published to the regiment.';
-                },
-                error: (err) => {
-                    console.error('Failed to publish announcement', err);
-                    this.sendingAnnouncement = false;
-                    this.announceFlash = 'Could not publish — try again.';
-                    this.announceWarn = true;
-                },
-            });
-    }
-
-    /**
-     * Cross-post a freshly published dispatch to Discord and report honestly.
-     * `announce()` resolves to the backend `enqueued` flag — false means no
-     * announcement channel is configured (or the enqueue failed), so the message
-     * never reached Discord even though the site publish succeeded.
-     */
-    private crossPostAnnouncement(title: string, body: string): void {
-        this.discord
-            .announce(`**${title}**\n\n${body}`)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (enqueued) => {
-                    this.resetAnnounceForm();
-                    this.sendingAnnouncement = false;
-                    this.announceWarn = !enqueued;
-                    this.announceFlash = enqueued
-                        ? 'Dispatch published to the regiment.'
-                        : 'Published to the site, but the Discord cross-post did not send — no announcement channel is configured.';
-                },
-                error: (err) => {
-                    console.error('Failed to cross-post to Discord', err);
-                    this.resetAnnounceForm();
-                    this.sendingAnnouncement = false;
-                    this.announceWarn = true;
-                    this.announceFlash =
-                        'Published to the site, but the Discord cross-post did not send — try again.';
-                },
-            });
-    }
-
-    private resetAnnounceForm(): void {
-        this.announce = {
-            title: '',
-            body: '',
-            tone: 'info',
-            crossPostToDiscord: true,
-        };
-    }
-
-    // ── Discord + Quartermaster (T-0024) ─────────────────────────────────────
+    // ── Discord + Lord Adjutant (T-0024) ─────────────────────────────────────
     private loadDiscord(): void {
         this.discord
             .getConnection()
@@ -387,11 +331,6 @@ export class SettingsComponent implements OnInit {
         if (!this.botSettings) return;
         this.botSettings.banRoleId = id || null;
         this.botSettings.banRoleName = id ? this.roleName(id) : null;
-    }
-
-    setAnnouncementChannel(id: string): void {
-        if (!this.botSettings) return;
-        this.botSettings.announcementChannelId = id || null;
     }
 
     setWelcomeChannel(id: string): void {
@@ -482,7 +421,6 @@ export class SettingsComponent implements OnInit {
         this.discord
             .updateSettings({
                 botEnabled: b.botEnabled,
-                announcementChannelId: b.announcementChannelId,
                 welcomeChannelId: b.welcomeChannelId,
                 welcomeMessage: b.welcomeMessage,
                 enlistmentChannelId: b.enlistmentChannelId,
@@ -503,7 +441,7 @@ export class SettingsComponent implements OnInit {
                 next: (settings) => {
                     this.botSettings = settings;
                     this.savingBot = false;
-                    this.botFlash = 'Quartermaster settings saved.';
+                    this.botFlash = 'Lord Adjutant settings saved.';
                 },
                 error: (err) => {
                     console.error('Failed to save bot settings', err);

@@ -14,7 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
     standalone: false,
 })
 export class BotStatusComponent implements OnInit {
-    crumbs = ['Settings', 'Quartermaster bot'];
+    crumbs = ['Settings', 'Lord Adjutant bot'];
 
     connection: DiscordConnection | null = null;
     operations: BotOperation[] = [];

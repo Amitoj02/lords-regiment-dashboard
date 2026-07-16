@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 @Component({
     selector: 'app-gallery-mod',
@@ -14,6 +15,8 @@ export class GalleryModComponent implements OnInit {
     activeTab: 'pending' | 'approved' | 'declined' = 'pending';
     items: GalleryItem[] = [];
     selectedId: string | null = null;
+    /** Resolved media preview for the selected submission (computed once per selection). */
+    selectedEmbed: MediaEmbed | null = null;
     declineReason = '';
     loading = false;
 
@@ -22,6 +25,7 @@ export class GalleryModComponent implements OnInit {
     constructor(
         private galleryService: GalleryService,
         private auth: AuthService,
+        private media: MediaEmbedService,
     ) {}
 
     /** Capability gate for a template action (see the spec's capability keys). */
@@ -51,7 +55,7 @@ export class GalleryModComponent implements OnInit {
             .subscribe({
                 next: (items) => {
                     this.items = items;
-                    this.selectedId = items[0]?.id ?? null;
+                    this.select(items[0]?.id ?? null);
                     this.loading = false;
                 },
                 error: (err) => {
@@ -65,10 +69,23 @@ export class GalleryModComponent implements OnInit {
         return this.items.find((i) => i.id === this.selectedId);
     }
 
-    /** A CSS `background` for a card thumbnail — the uploaded image, or a stable tint. */
+    /** Select a submission and resolve its media preview once (avoids re-embedding per CD). */
+    select(id: string | null): void {
+        this.selectedId = id;
+        const item = id ? this.items.find((i) => i.id === id) : undefined;
+        this.selectedEmbed = item ? this.media.resolve(item.mediaUrl) : null;
+    }
+
+    /**
+     * A CSS `background` for a grid card thumbnail. Derived from the real media
+     * (`mediaUrl`) via MediaEmbedService (T-0146) — an image file or YouTube
+     * poster becomes a cover image; video/other links fall back to a stable tint.
+     */
     thumb(item: GalleryItem): string {
-        if (item.thumbnailUrl) {
-            return `center / cover no-repeat url('${item.thumbnailUrl}')`;
+        const embed = this.media.resolve(item.mediaUrl);
+        const imageUrl = embed?.kind === 'image' ? embed.rawUrl : embed?.posterUrl;
+        if (imageUrl) {
+            return `center / cover no-repeat url('${imageUrl}')`;
         }
         const hue = Array.from(item.id).reduce((sum, c) => sum + c.charCodeAt(0), 0) % 360;
         return `oklch(0.32 0.05 ${hue})`;
@@ -107,13 +124,6 @@ export class GalleryModComponent implements OnInit {
             });
     }
 
-    skip(): void {
-        const idx = this.items.findIndex((i) => i.id === this.selectedId);
-        if (idx > -1 && idx < this.items.length - 1) {
-            this.selectedId = this.items[idx + 1].id;
-        }
-    }
-
     private removeFromQueue(id: string): void {
         const idx = this.items.findIndex((i) => i.id === id);
         if (idx === -1) {
@@ -121,6 +131,6 @@ export class GalleryModComponent implements OnInit {
         }
         this.items.splice(idx, 1);
         const nextItem = this.items[idx] ?? this.items[idx - 1];
-        this.selectedId = nextItem?.id ?? null;
+        this.select(nextItem?.id ?? null);
     }
 }

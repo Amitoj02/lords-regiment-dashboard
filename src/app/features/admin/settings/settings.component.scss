@@ -36,7 +36,7 @@
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.875rem;
-    color: var(--t-500);
+    color: var(--t-400);
     transition:
         background 0.12s,
         color 0.12s;
@@ -74,8 +74,8 @@
     }
 }
 
-.short-tag-input {
-    width: 100px;
+.established-input {
+    width: 180px;
 }
 
 .upload-target {
@@ -202,10 +202,6 @@
 .flash {
     margin-right: auto;
     color: var(--brass-700);
-
-    &--warn {
-        color: var(--oxblood-500);
-    }
 }
 
 .invite-blurb {
@@ -220,7 +216,7 @@
     }
 }
 
-.announce-actions,
+.invite-save,
 .discord-actions,
 .bot-save {
     align-items: center;

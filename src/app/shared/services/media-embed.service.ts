@@ -9,6 +9,11 @@ export interface MediaEmbed {
     safeUrl?: SafeResourceUrl;
     /** The raw URL (used for <img>/<video>/plain-link rendering). */
     rawUrl: string;
+    /**
+     * A still-image URL usable as a compact thumbnail/poster where an inline
+     * iframe is undesirable (e.g. gallery cards). Currently YouTube only.
+     */
+    posterUrl?: string;
 }
 
 /**
@@ -46,6 +51,7 @@ export class MediaEmbedService {
                 kind: 'youtube',
                 rawUrl: raw,
                 safeUrl: this.trust(`https://www.youtube.com/embed/${youtubeId}`),
+                posterUrl: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
             };
         }
 

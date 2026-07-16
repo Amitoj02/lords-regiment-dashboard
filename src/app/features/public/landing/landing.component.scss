@@ -220,25 +220,6 @@
     margin: 0;
 }
 
-/* Officer row */
-.officer-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--rule);
-
-    &:last-child {
-        border-bottom: none;
-    }
-}
-
-.officer-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--t-100);
-}
-
 /* Discord panel */
 .discord-icon {
     width: 40px;
@@ -341,21 +322,6 @@
 
 .charter-attribution-label {
     font-size: 10px;
-}
-
-.officers-panel {
-    margin-top: 16px;
-}
-
-.officer-rank-row {
-    gap: 6px;
-    align-items: center;
-    margin-top: 2px;
-}
-
-.officer-rank {
-    font-size: 11px;
-    color: var(--t-400);
 }
 
 .discord-panel {

@@ -153,11 +153,11 @@
             </div>
             }
 
-            <!-- Quartermaster Bot — live status + metrics (STAFF only, T-0081) -->
+            <!-- Lord Adjutant bot — live status + metrics (STAFF only, T-0081) -->
             @if (isStaff) {
             <div class="panel qm-panel">
                 <div class="panel-header between">
-                    <span class="panel-title serif">Quartermaster Bot</span>
+                    <span class="panel-title serif">Lord Adjutant</span>
                     @if (botStatus) {
                     <span class="badge" [ngClass]="botStatus.connected ? 'laurel' : 'ox'"
                         >{{ botStatus.connected ? 'Online' : 'Offline' }}</span

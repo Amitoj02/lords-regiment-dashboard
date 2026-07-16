@@ -59,4 +59,18 @@ export class StorageService {
             ),
         );
     }
+
+    /**
+     * Extract a user-facing upload error message from an HttpErrorResponse. The
+     * backend returns a standardized "Your file size exceeds the limit of N MB"
+     * (and similar) in `error.message`; surface it verbatim (T-0160), falling back
+     * to a generic message when none is present.
+     */
+    static uploadErrorMessage(err: unknown, fallback = 'Upload failed. Please try again.'): string {
+        const body = (err as { error?: unknown })?.error;
+        const message = (body as { message?: unknown })?.message;
+        if (typeof message === 'string' && message.trim()) return message;
+        if (Array.isArray(message) && typeof message[0] === 'string') return message[0];
+        return fallback;
+    }
 }

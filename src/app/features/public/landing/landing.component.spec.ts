@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
 import { GalleryService } from '../../../core/services/gallery.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 import { LandingComponent } from './landing.component';
 
 /**
@@ -26,7 +27,7 @@ class MockAuthService {
 function makeUser(isMember: boolean): CurrentUser {
     return {
         id: 'u1',
-        name: 'Test User',
+        inGameName: 'Test User',
         rank: null,
         role: isMember ? 'Member' : 'Applicant',
         discordTag: null,
@@ -50,6 +51,10 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
                 { provide: AuthService, useValue: auth },
                 { provide: EventsService, useValue: { getAll: () => of([]) } },
                 { provide: GalleryService, useValue: { getAll: () => of([]) } },
+                {
+                    provide: RegimentService,
+                    useValue: { getProfile: () => of(null), getStats: () => of(null) },
+                },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         }).compileComponents();

@@ -39,16 +39,17 @@
                         />
                     </div>
                     <div class="field-row">
-                        <label class="field-label" for="short-tag">Short tag</label>
+                        <label class="field-label" for="established">Established</label>
                         <input
-                            id="short-tag"
-                            class="hf-input short-tag-input"
-                            type="text"
-                            [(ngModel)]="settings.shortTag"
+                            id="established"
+                            class="hf-input established-input"
+                            type="month"
+                            [(ngModel)]="establishedMonth"
                             [disabled]="!can('manage_settings')"
                         />
                         <span class="field-hint"
-                            >Displayed in brackets before member names, e.g. [LR] Jameson Nolt</span
+                            >The month the regiment was raised — shown as "Since est MM/YYYY" on the
+                            landing page.</span
                         >
                     </div>
                     <div class="field-row">
@@ -71,20 +72,6 @@
                     <span class="panel-title">Visibility</span>
                 </div>
                 <div class="panel-body toggle-list">
-                    <div class="toggle-row">
-                        <div>
-                            <div class="toggle-label">Public roster</div>
-                            <div class="field-hint">Show the member list to non-members</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input
-                                type="checkbox"
-                                [(ngModel)]="settings.publicRoster"
-                                [disabled]="!can('manage_settings')"
-                            />
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
                     <div class="toggle-row">
                         <div>
                             <div class="toggle-label">Public gallery</div>
@@ -177,8 +164,7 @@
                     </div>
                     } @else {
                     <hf-notice variant="info">
-                        No Discord invite link is set yet — add one under Discord &amp;
-                        Quartermaster.
+                        No Discord invite link is set yet — add one under Discord &amp; Adjutant.
                     </hf-notice>
                     }
                 </div>
@@ -200,74 +186,47 @@
             </div>
             } } }
 
-            <!-- ═══ Announcements (T-0017) ═══ -->
-            @if (activeSection === 'announce') {
+            <!-- ═══ Discord & Adjutant (T-0024) ═══ -->
+            @if (activeSection === 'discord') {
+            <!-- Discord invite link (regiment settings row) — T-0156 -->
+            @if (settings) {
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">Compose a Field Dispatch</span>
+                    <span class="panel-title">Discord invite link</span>
                 </div>
                 <div class="panel-body">
-                    @if (!can('manage_notifications')) {
-                    <hf-notice variant="info">
-                        You need the "Manage notifications" permission to publish dispatches.
-                    </hf-notice>
-                    } @else {
                     <div class="field-row">
-                        <label class="field-label" for="ann-title">Title</label>
+                        <label class="field-label" for="discord-invite">Invite URL</label>
                         <input
-                            id="ann-title"
+                            id="discord-invite"
                             class="hf-input"
-                            type="text"
-                            [(ngModel)]="announce.title"
-                            placeholder="e.g. Muster for the Autumn Campaign"
+                            type="url"
+                            placeholder="https://discord.gg/…"
+                            [(ngModel)]="settings.discordInviteUrl"
+                            [disabled]="!can('manage_settings')"
                         />
-                    </div>
-                    <div class="field-row">
-                        <label class="field-label" for="ann-body">Message</label>
-                        <textarea
-                            id="ann-body"
-                            class="hf-textarea"
-                            rows="5"
-                            [(ngModel)]="announce.body"
-                            placeholder="Write the dispatch to the regiment…"
-                        ></textarea>
-                    </div>
-                    <div class="field-row">
-                        <label class="field-label" for="ann-tone">Tone</label>
-                        <select id="ann-tone" class="hf-select" [(ngModel)]="announce.tone">
-                            @for (t of tones; track t.value) {
-                            <option [value]="t.value">{{ t.label }}</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="field-row">
-                        <label class="field-label toggle-inline">
-                            <input type="checkbox" [(ngModel)]="announce.crossPostToDiscord" />
-                            Also cross-post to the Discord announcement channel
-                        </label>
-                    </div>
-                    <div class="row gap-8 announce-actions">
-                        @if (announceFlash) {
-                        <span class="field-hint flash" [ngClass]="{ 'flash--warn': announceWarn }"
-                            >{{ announceFlash }}</span
+                        <span class="field-hint"
+                            >Shared under "Muster a mercenary" so members can invite mates.</span
                         >
+                    </div>
+                    @if (can('manage_settings')) {
+                    <div class="row gap-8 invite-save">
+                        @if (inviteFlash) {
+                        <span class="field-hint flash">{{ inviteFlash }}</span>
                         }
                         <button
                             type="button"
-                            class="btn btn-primary"
-                            [disabled]="sendingAnnouncement || !announce.title || !announce.body"
-                            (click)="sendAnnouncement()"
+                            class="btn btn-primary btn-sm"
+                            [disabled]="savingInvite"
+                            (click)="saveInviteUrl()"
                         >
-                            {{ sendingAnnouncement ? 'Publishing…' : 'Publish dispatch' }}
+                            {{ savingInvite ? 'Saving…' : 'Save invite link' }}
                         </button>
                     </div>
                     }
                 </div>
             </div>
             }
-
-            <!-- ═══ Discord & Quartermaster (T-0024) ═══ -->
-            @if (activeSection === 'discord') {
             <div class="panel">
                 <div class="panel-header between">
                     <span class="panel-title">Discord connection</span>
@@ -276,7 +235,7 @@
                 <div class="panel-body">
                     @if (connection && !connection.connected) {
                     <hf-notice variant="warn">
-                        Quartermaster is not currently connected to Discord — role and announcement
+                        Lord Adjutant is not currently connected to Discord — role and announcement
                         syncs are paused until the connection is restored.
                     </hf-notice>
                     }
@@ -317,18 +276,18 @@
                 </div>
             </div>
 
-            <!-- Quartermaster bot settings -->
+            <!-- Lord Adjutant bot settings -->
             @if (botSettings) {
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">Quartermaster bot</span>
+                    <span class="panel-title">Lord Adjutant bot</span>
                 </div>
                 <div class="panel-body toggle-list">
                     <div class="toggle-row">
                         <div>
                             <div class="toggle-label">Bot enabled</div>
                             <div class="field-hint">
-                                Master switch for all Quartermaster activity
+                                Master switch for all Lord Adjutant activity
                             </div>
                         </div>
                         <label class="toggle-switch">
@@ -357,32 +316,6 @@
                         </label>
                     </div>
                     <!-- Channel pickers (populated by "Verify connection") -->
-                    <div class="field-row bot-field">
-                        <label class="field-label" for="ann-channel">Announcement channel</label>
-                        <select
-                            id="ann-channel"
-                            class="hf-select"
-                            [ngModel]="botSettings.announcementChannelId ?? ''"
-                            (ngModelChange)="setAnnouncementChannel($event)"
-                            [disabled]="!can('manage_settings')"
-                        >
-                            <option value="">— None —</option>
-                            @if (botSettings.announcementChannelId &&
-                            !channelLoaded(botSettings.announcementChannelId)) {
-                            <option [value]="botSettings.announcementChannelId">
-                                {{ botSettings.announcementChannelId }}
-                            </option>
-                            } @for (channel of channels; track channel.id) {
-                            <option [value]="channel.id">#{{ channel.name }}</option>
-                            }
-                        </select>
-                    </div>
-                    @if (!botSettings.announcementChannelId) {
-                    <hf-notice variant="warn">
-                        Announcement cross-posts will not reach Discord until an announcement
-                        channel is set.
-                    </hf-notice>
-                    }
                     <div class="field-row bot-field">
                         <label class="field-label" for="welcome-channel">Welcome channel</label>
                         <select

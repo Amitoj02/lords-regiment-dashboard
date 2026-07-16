@@ -8,12 +8,13 @@ import {
     PaginatedResponse,
     mapApplication,
 } from '../models/api.model';
-import { Application, MyApplication } from '../models/application.model';
+import { ApplicantType, Application, MyApplication } from '../models/application.model';
 
 /** Payload for the public recruitment intake (POST /applications). */
 export interface CreateApplicationPayload {
     applicantName: string;
     inGameName: string;
+    applicantType?: ApplicantType;
     discordTag?: string;
     currentRegiment: string;
     howFound: string;

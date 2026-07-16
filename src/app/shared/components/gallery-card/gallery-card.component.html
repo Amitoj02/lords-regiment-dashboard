@@ -9,13 +9,23 @@
 }
 
 <ng-template #cardInner>
-    <!-- Thumbnail -->
+    <!-- Media preview (resolved from mediaUrl via MediaEmbedService) -->
     <div class="gallery-card-thumb" [ngClass]="aspectClass">
-        @if (item.thumbnailUrl) {
-        <img [src]="item.thumbnailUrl" [alt]="item.title" class="gallery-card-img" />
+        @if (preview?.kind === 'image') {
+        <img [src]="preview!.rawUrl" [alt]="item.title" class="gallery-card-img" />
+        } @else if (preview?.kind === 'video') {
+        <video
+            [src]="preview!.rawUrl"
+            class="gallery-card-img"
+            preload="metadata"
+            muted
+            playsinline
+        ></video>
+        } @else if (preview?.posterUrl) {
+        <img [src]="preview!.posterUrl" [alt]="item.title" class="gallery-card-img" />
         } @else {
         <div class="gallery-card-placeholder"></div>
-        } @if (isVideo(item)) {
+        } @if (showPlay) {
         <div class="gallery-play-overlay">
             <div class="gallery-play-btn">
                 <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor">
@@ -23,7 +33,7 @@
                 </svg>
             </div>
         </div>
-        } @if (isLink(item)) {
+        } @if (showLinkBadge) {
         <div class="gallery-link-badge">
             <span class="badge brass gallery-vod-badge">
                 <svg

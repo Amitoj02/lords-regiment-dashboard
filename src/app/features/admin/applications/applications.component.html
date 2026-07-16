@@ -1,4 +1,49 @@
 <hf-app-shell [activeRoute]="'apps'">
+    <!-- Status tabs — full-width row above the queue + detail layout so the
+         filter reads first (and stacks first on mobile). -->
+    <div class="hf-tabs tab-bar">
+        <button
+            type="button"
+            class="hf-tab"
+            [ngClass]="{ active: activeTab === 'pending' }"
+            (click)="setTab('pending')"
+        >
+            Pending <span class="badge brass">{{ tabCount('pending') }}</span>
+        </button>
+        <button
+            type="button"
+            class="hf-tab"
+            [ngClass]="{ active: activeTab === 'held' }"
+            (click)="setTab('held')"
+        >
+            On hold <span class="badge blue">{{ tabCount('held') }}</span>
+        </button>
+        <button
+            type="button"
+            class="hf-tab"
+            [ngClass]="{ active: activeTab === 'approved' }"
+            (click)="setTab('approved')"
+        >
+            Approved <span class="badge">{{ tabCount('approved') }}</span>
+        </button>
+        <button
+            type="button"
+            class="hf-tab"
+            [ngClass]="{ active: activeTab === 'declined' }"
+            (click)="setTab('declined')"
+        >
+            Declined <span class="badge">{{ tabCount('declined') }}</span>
+        </button>
+        <button
+            type="button"
+            class="hf-tab"
+            [ngClass]="{ active: activeTab === 'reapply' }"
+            (click)="setTab('reapply')"
+        >
+            Re-applications <span class="badge blue">{{ tabCount('reapply') }}</span>
+        </button>
+    </div>
+
     <div class="applications-layout">
         <!-- Queue Column -->
         <div class="queue-col">
@@ -253,50 +298,6 @@
                 </div>
             </div>
             }
-
-            <!-- Tab bar -->
-            <div class="hf-tabs tab-bar">
-                <button
-                    type="button"
-                    class="hf-tab"
-                    [ngClass]="{ active: activeTab === 'pending' }"
-                    (click)="setTab('pending')"
-                >
-                    Pending <span class="badge brass">{{ tabCount('pending') }}</span>
-                </button>
-                <button
-                    type="button"
-                    class="hf-tab"
-                    [ngClass]="{ active: activeTab === 'held' }"
-                    (click)="setTab('held')"
-                >
-                    On hold <span class="badge blue">{{ tabCount('held') }}</span>
-                </button>
-                <button
-                    type="button"
-                    class="hf-tab"
-                    [ngClass]="{ active: activeTab === 'approved' }"
-                    (click)="setTab('approved')"
-                >
-                    Approved <span class="badge">{{ tabCount('approved') }}</span>
-                </button>
-                <button
-                    type="button"
-                    class="hf-tab"
-                    [ngClass]="{ active: activeTab === 'declined' }"
-                    (click)="setTab('declined')"
-                >
-                    Declined <span class="badge">{{ tabCount('declined') }}</span>
-                </button>
-                <button
-                    type="button"
-                    class="hf-tab"
-                    [ngClass]="{ active: activeTab === 'reapply' }"
-                    (click)="setTab('reapply')"
-                >
-                    Re-applications <span class="badge blue">{{ tabCount('reapply') }}</span>
-                </button>
-            </div>
         </div>
     </div>
 </hf-app-shell>

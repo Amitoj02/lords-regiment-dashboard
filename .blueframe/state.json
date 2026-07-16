@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "a4229c19c029a4293d1e2760bc8396c32ea22723",
-  "lastSyncedAt": "2026-07-15T03:12:00Z",
-  "notesForNextSession": "EPIC COMPLETE (this session): all 30 planned FE tasks T-0098..T-0127 -> deploy_ready. Routing reshaped to /app (member) + /app/admin (admin); gallery relocated to /app/gallery* with role guards. Avatar: hf-avatar image (circular) + initials fallback; sidebar footer avatar + Profile link + Logout; profile self-edit (name/platform/timezone/inGameName + avatar/banner upload) with live currentUser refresh; full-size viewer. Gallery: tags-in/event+member-tag-out, reworked submit (uploads + quick-chip tags max 10), media auto-embed (medal.tv/YouTube/img/video), per-tab moderation + decline reason, mobile mod UI, dashboard 'Gallery submissions' panel. Events: banner, delete-all-recurring, tag cap. Admin: on-hold applications tab, data-driven permission matrix. Legal pages obligation-free + footer/login/in-shell links. Apply CTAs -> /login. VERIFIED: full-stack browser E2E desktop + mobile (mock OAuth) — sign-in->/app, profile edit persisted + live sidebar refresh, gallery relocation, submit rework, legal. Open PR feat/planned-tasks-epic -> main.",
-  "nextIdCounter": 128,
+  "lastSyncedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+  "lastSyncedAt": "2026-07-16T02:45:00Z",
+  "notesForNextSession": "Dashboard-polish epic (T-0128..T-0160, all 33) implemented + verified → deploy_ready. Models/services foundation reshaped centrally (member.name → inGameName sole identity; dropped platform/timezone/attendanceRate/shortTag/publicRoster; added establishedAt/enrolledExcludingMercenaries/hasServerPassword/applicantType/audit member ids; new members.getEvents/getRsvps + events.unarchive/archived flag; NotificationsService + DiscordService.announce removed), then 33 component tasks built across 7 disjoint-file clusters. format/lint/ng build/113 unit green; browser cross-stack E2E (desktop) verified landing/login/dashboard/sidebar-groups/profile-overhaul/settings/roster/gallery/events-archive/applications-tabbar/audit; mobile shell (bottom-nav + 480/640/820 breakpoints) confirmed present (window could not be resized <1229px in the harness for a full mobile render). Ship WITH backend PR feat/planned-tasks-be — contracts change in lockstep (this retires the T-0062 cross-repo deploy-coupling concern for this epic: both repos ship together).",
+  "nextIdCounter": 161,
   "connections": [],
   "tasks": [
     {
@@ -7274,6 +7274,1814 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified this epic session: ng build + 120 karma + lint + prettier green; full-stack browser E2E (desktop + mobile) against the short-id API."
+        }
+      ]
+    },
+    {
+      "id": "T-0128",
+      "title": "Repoint topbar \"Home\" button to the public landing page",
+      "summary": "The topbar \"Home\"/back-to-home control (and the mobile brand link) currently route to /app/dashboard. Change their routerLink to \"/\" so they open the public landing page at localhost:4200/, not the dashboard.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/topbar/topbar.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Clicking \"Home\" in the dashboard topbar navigates to the public landing page (\"/\"), not /app/dashboard",
+          "status": "passed"
+        },
+        {
+          "desc": "The mobile brand link also lands on the public landing page",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0129",
+      "title": "Always land on the dashboard after Discord sign-in",
+      "summary": "AuthService.routeAfterLogin currently sends first-run Owners to /app/admin/settings. Remove that branch so every enrolled member always lands on /app/dashboard after Discord sign-in; non-members keep routing to /onboarding/*. Update the stale JSDoc/comments.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "auth",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/public/auth-callback/auth-callback.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Confirm non-members (applicants) should still route to /onboarding/apply|/onboarding/status rather than the dashboard, since they have no dashboard access.",
+          "answer": "yes",
+          "askedAt": "2026-07-15T20:30:00Z",
+          "answeredAt": "2026-07-16T00:40:43.394Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "An enrolled Owner signing in lands on /app/dashboard (not /app/admin/settings), regardless of setup-complete state",
+          "status": "passed"
+        },
+        {
+          "desc": "A regular enrolled member lands on /app/dashboard",
+          "status": "passed"
+        },
+        {
+          "desc": "A non-member still routes to the onboarding apply/status flow",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0130",
+      "title": "Login: \"Apply to join\" triggers Discord OAuth; remove Privacy notice",
+      "summary": "On the login page, make the \"Not a member yet? Apply to join\" link fire the same signInWithDiscord() handler as \"Continue with Discord\" (full Discord OAuth redirect), and delete the \"Privacy: We only read your Discord username…\" notice block.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/login/login.component.html",
+        "src/app/features/public/login/login.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Clicking \"Apply to join\" starts the Discord OAuth redirect (same as Continue with Discord)",
+          "status": "passed"
+        },
+        {
+          "desc": "The \"Privacy: We only read…\" notice is no longer rendered on /login",
+          "status": "passed"
+        },
+        {
+          "desc": "Both controls respect the isLoading disabled state",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0131",
+      "title": "Group sidebar nav into General / Me / Administrative sections",
+      "summary": "Add a group discriminator to the sidebar NavItem model and render three labeled groups — [General] Dashboard, Events, Gallery, Members; [Me] My profile; [Administrative] Applications, Ranks & Medals, Audit ledger, Settings — so members discover the My-profile link. The Administrative group only shows for admins.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.html",
+        "src/app/shared/components/sidebar/sidebar.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Sidebar renders three labeled groups: General, Me, Administrative",
+          "status": "passed"
+        },
+        {
+          "desc": "General shows Dashboard/Events/Gallery/Members; Me shows My profile; Administrative shows Applications/Ranks & Medals/Audit ledger/Settings",
+          "status": "passed"
+        },
+        {
+          "desc": "The Administrative group is hidden for non-admin members",
+          "status": "passed"
+        },
+        {
+          "desc": "The My-profile nav item routes to the signed-in user's profile",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0132",
+      "title": "Re-add Member/Mercenary applicant-type choice to the apply form",
+      "summary": "Restore the applicant-type selector (Member or Mercenary) on the onboarding apply form (including edit mode ?edit=1), thread applicantType through CreateApplicationPayload / Application model / ApiApplication mapping, and submit it. Depends on the backend re-adding the applicant_type field.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "onboarding",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-form/application-form.component.ts",
+        "src/app/features/onboarding/application-form/application-form.component.html",
+        "src/app/core/services/applications.service.ts",
+        "src/app/core/models/application.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0095"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The apply form shows a Member/Mercenary selector (default Member)",
+          "status": "passed"
+        },
+        {
+          "desc": "Editing an existing application (?edit=1) pre-fills the previously chosen type",
+          "status": "passed"
+        },
+        {
+          "desc": "Submitting persists applicantType and approval enlists with the matching role",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0133",
+      "title": "Stop browser password autofill on event server credentials",
+      "summary": "Add autocomplete=\"new-password\" to the event server-password input and autocomplete=\"off\" to the server-name input (and the form) on the event-create page so the browser password manager stops offering to save/autofill the server password.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Creating an event, the browser no longer offers to save/autofill the server password",
+          "status": "passed"
+        },
+        {
+          "desc": "Server name/password still submit correctly",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0134",
+      "title": "Fix invisible event description text on the event detail page",
+      "summary": "The .event-orders description uses var(--t-on-parch) (near-black) on a dark var(--ink-800) panel, making it invisible; switch it to a light-on-dark token (e.g. var(--t-200)).",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The event description text is legible (light text) on the dark detail panel",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0135",
+      "title": "Hide password/reveal UI for passwordless events",
+      "summary": "The event detail page shows a Password field + Reveal button whenever the viewer can reveal passwords, even when the event has none (Reveal only 404s). Gate the block on a new hasServerPassword flag from the member EventDto.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/models/event.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0096"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A passwordless event shows no Password field or Reveal button",
+          "status": "passed"
+        },
+        {
+          "desc": "An event with a password still shows the field + working Reveal for capable viewers",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0136",
+      "title": "Toggle event Archive/Unarchive and reflect state",
+      "summary": "Map isArchived into the FE event model, add events.service.unarchive(), and make the event-detail button read \"Archive\"/\"Unarchive\" based on state and call the matching endpoint so archiving is reversible in place.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/core/services/events.service.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/models/event.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0097"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "An unarchived event shows an \"Archive\" button; pressing it archives and the button flips to \"Unarchive\"",
+          "status": "passed"
+        },
+        {
+          "desc": "Pressing \"Unarchive\" reverts the state and the button flips back",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0137",
+      "title": "Add \"View archived\" events control for moderators",
+      "summary": "Add a \"View archived\" toggle beside \"+ New event\" on the events-admin surface (shown only to manage_events holders) that reloads the list including archived events via a new archived query flag.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/events-admin/events-admin.component.ts",
+        "src/app/features/admin/events-admin/events-admin.component.html",
+        "src/app/core/services/events.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0098"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Should archived events also be viewable on the PUBLIC events page for a signed-in moderator, or is the admin/events-admin surface sufficient? (The public projection excludes archived by design.)",
+          "answer": "No, archived are not publics, admin/event-admins sufficient",
+          "askedAt": "2026-07-15T20:30:00Z",
+          "answeredAt": "2026-07-16T00:41:06.644Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "A moderator sees a \"View archived\" toggle next to \"New event\"",
+          "status": "passed"
+        },
+        {
+          "desc": "Toggling it lists archived events alongside active ones",
+          "status": "passed"
+        },
+        {
+          "desc": "Non-moderators do not see the toggle and cannot list archived events",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0138",
+      "title": "Fix broken Steam/Xbox/PlayStation platform icons",
+      "summary": "The platform badge SVGs use non-canonical hand-rolled path data for Xbox and PlayStation (Steam is correct), so those glyphs render wrong/empty. Replace with correct canonical simple-icons 24x24 path data.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/platform-badges/platform-badges.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Steam, Xbox and PlayStation badges render correct, recognizable glyphs on the events pages and event-detail banner",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0139",
+      "title": "Route profiles by member id (/app/profile/:id) including others",
+      "summary": "Make My profile resolve to /app/profile/{myUid} and any member/mercenary viewable at /app/profile/{uid}. Add id to NavUser + app-shell, repoint sidebar-footer and bottom-nav profile links to the uid URL, keep a bare /app/profile that resolves to the owner uid, and tighten isOwnProfile. Backend GET /members/:id already returns the full public profile.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/member.module.ts",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/sidebar/sidebar.component.html",
+        "src/app/shared/components/bottom-nav/bottom-nav.component.ts",
+        "src/app/shared/components/app-shell/app-shell.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/app/profile redirects to /app/profile/{signed-in uid}",
+          "status": "passed"
+        },
+        {
+          "desc": "/app/profile/{otherUid} loads that member/mercenary profile",
+          "status": "passed"
+        },
+        {
+          "desc": "Self-edit/admin buttons only appear on your own profile (isOwnProfile)",
+          "status": "passed"
+        },
+        {
+          "desc": "A not-found/invalid id shows a graceful state (not an infinite \"Loading profile…\")",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0140",
+      "title": "Clean up profile: remove stale badges/sections, wire honours",
+      "summary": "On the profile page remove the Active status tag, the Discord-linked indicator, the Tagged tab/section, the dead admin \"Edit Profile\" button, and the redundant Command Information panel; bind Honours & Decorations to the member's real medalAwards (drop the 4-item stub) and verify rank/chevrons render for own and other profiles.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "No Active tag, Discord-linked indicator, Tagged section, dead \"Edit Profile\" button, or Command Information panel on the profile",
+          "status": "passed"
+        },
+        {
+          "desc": "Honours & Decorations shows the member's actual awarded medals (empty state when none)",
+          "status": "passed"
+        },
+        {
+          "desc": "Rank name + chevrons display correctly for both your own and another member's profile",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0141",
+      "title": "Profile particulars: drop Platform/Timezone/Attendance, add Last Access",
+      "summary": "Remove the Platform, Timezone and Attendance rows from the profile Particulars panel and from the self-edit modal, and add a \"Last Access\" row (from member.lastSeen) visible only to the member or moderators, with a question-mark privacy hint. Pairs with the backend dropping the platform/timezone columns.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0099"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Confirm platform + timezone should be fully dropped from the DB/entity (the ask says \"get rid of these fields from DB\"), not just hidden — they are currently editable in the self-edit modal. Proceeding drops the columns + self-edit fields.",
+          "answer": "Make sure yourself, you can modify backend too",
+          "askedAt": "2026-07-15T20:30:00Z",
+          "answeredAt": "2026-07-16T00:41:41.587Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Particulars no longer shows Platform, Timezone or Attendance",
+          "status": "passed"
+        },
+        {
+          "desc": "A \"Last Access\" row appears with a privacy hint, visible only to the member themselves and to moderators/admins",
+          "status": "passed"
+        },
+        {
+          "desc": "Viewing another member as a non-moderator hides Last Access",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0142",
+      "title": "Wire profile Event History and RSVPs tabs",
+      "summary": "The Event History tab is permanently empty (it filters public events by an always-empty attendees array) and the RSVPs tab is a placeholder. Add MembersService.getEvents(id)/getRsvps(id) bound to new per-member backend endpoints and populate both tabs.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/core/services/members.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0100"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The Event History tab lists the member's attended past events",
+          "status": "passed"
+        },
+        {
+          "desc": "The RSVPs tab lists the member's event RSVPs",
+          "status": "passed"
+        },
+        {
+          "desc": "Both tabs show a sensible empty state when there is no data",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0143",
+      "title": "Wire privacy-gated Service Record timeline on profile",
+      "summary": "Replace the hardcoded serviceTimeline stub with MembersService.getServiceRecord(id), rendering role/rank/medal/suspension entries in the Event History tab. Show the section only to the member themselves or an admin, with a small question-mark privacy hint. Pairs with backend self/admin gating of the read endpoint.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0101"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The Service Record shows real timeline entries (role changes, etc.) from the API",
+          "status": "passed"
+        },
+        {
+          "desc": "The section is visible only to the profile owner or an admin, with a privacy hint",
+          "status": "passed"
+        },
+        {
+          "desc": "Another non-admin member cannot see the service record (UI + API both gate it)",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0144",
+      "title": "Move Account Deletion into the Edit-my-profile modal",
+      "summary": "Relocate the account-deletion UI from the standalone /app/account-deletion page (and the profile-header button) into a \"Danger zone\" section inside the Edit-my-profile modal; strip the account-deletion component's own hf-app-shell so it renders inside the modal, remove the standalone route/button, and wire the deletion-request/confirm/export controls to the existing backend endpoints.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/account-deletion/account-deletion.component.html",
+        "src/app/features/member/account-deletion/account-deletion.component.ts",
+        "src/app/features/member/member.module.ts",
+        "src/app/core/services/members.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Account deletion + data export controls appear inside the Edit-my-profile modal",
+          "status": "passed"
+        },
+        {
+          "desc": "The standalone \"Account Deletion\" header button and /app/account-deletion route are gone",
+          "status": "passed"
+        },
+        {
+          "desc": "The modal renders without a nested/duplicate app shell",
+          "status": "passed"
+        },
+        {
+          "desc": "Requesting deletion / exporting data calls the real backend endpoints",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0145",
+      "title": "Remove the \"Skip\" action from the gallery moderation queue",
+      "summary": "Delete the Skip button from the gallery mod-queue decision controls and the now-unused skip() method; moderation is Decline or Approve only.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-mod/gallery-mod.component.html",
+        "src/app/features/admin/gallery-mod/gallery-mod.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The mod queue shows only Decline and Approve (no Skip)",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0146",
+      "title": "Fix broken gallery previews across list/mod/dashboard surfaces",
+      "summary": "Root cause: gallery-card, gallery-admin and gallery-mod render item.thumbnailUrl (a backend column the upload flow never populates) instead of the real media. Derive previews from item.mediaUrl via MediaEmbedService (image/video/youtube/link), mirroring gallery-detail, so previews render on /gallery, /app/gallery, the mod queue, and the dashboard Recent-gallery panel.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.ts",
+        "src/app/features/admin/gallery-mod/gallery-mod.component.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/shared/services/media-embed.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Image/video/link previews render on /gallery and /app/gallery cards",
+          "status": "passed"
+        },
+        {
+          "desc": "Previews render in the gallery moderation queue",
+          "status": "passed"
+        },
+        {
+          "desc": "The dashboard \"Recent gallery\" panel shows previews",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0147",
+      "title": "Rework public gallery detail layout and remove Likes",
+      "summary": "Redesign the /gallery/:uid detail page layout/spacing/typography for a stronger media-first preview (grounded in design-reference/screens-public.jsx), and remove the Likes heart/count UI (leave the model field unused).",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.scss",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The public gallery detail page has an improved, media-first layout",
+          "status": "passed"
+        },
+        {
+          "desc": "No Likes count/heart is shown",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0148",
+      "title": "Darken the gallery card backgrounds in /app/gallery and mod queue",
+      "summary": "The GalleryAdmin and gallery-mod cards use the bright var(--parch-100) cream against the dark app shell. Swap to a dark surface token (e.g. var(--ink-850)) with a rule border to match the shared gallery-card.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-admin/gallery-admin.component.scss",
+        "src/app/features/admin/gallery-mod/gallery-mod.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Gallery cards on /app/gallery and the mod queue use a dark surface consistent with the app shell",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0149",
+      "title": "Darken the gallery submit dropzone and attached-file row",
+      "summary": "The gallery submit \"Choose images or videos\" dropzone (var(--parch-50)) and the post-attach file row (var(--parch-100)) are bright and clash with the dark page; restyle both to dark surfaces with appropriate borders/text tokens.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-submit/gallery-submit.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The submit dropzone is dark and fits the page",
+          "status": "passed"
+        },
+        {
+          "desc": "The attached-file row is dark and fits the page",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0150",
+      "title": "Roster: remove Filters/bulk-select, row→profile, admin CSV export",
+      "summary": "Remove the dead \"Filters\" button and the non-functional bulk-select checkboxes from the roster; make each roster row navigate to /app/profile/{id} (with stopPropagation on the actions button); and gate \"Export ledger\" to admins only, making it generate and download a roster CSV client-side.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/roster/roster.component.html",
+        "src/app/features/member/roster/roster.component.ts",
+        "src/app/features/member/roster/roster.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "No \"Filters\" button and no bulk-select checkboxes on the roster",
+          "status": "passed"
+        },
+        {
+          "desc": "Clicking a roster row opens that member's profile; the \"···\" actions button does not trigger navigation",
+          "status": "passed"
+        },
+        {
+          "desc": "\"Export ledger\" is visible only to admins and downloads a roster CSV",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0151",
+      "title": "Landing: real stats, settings-driven identity, remove Officer's Mess",
+      "summary": "Replace the hardcoded hero stats with \"Since est <MM/YYYY>\" + the count of members (excluding mercenaries, from membersByRole), gated by the Regiment-statistics visibility toggle (getStats 403 → hide). Bind the hero title + description to the regiment name + mission statement (getProfile). Remove the Officer's Mess section. Depends on the backend exposing an established month/date.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "public",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.ts",
+        "src/app/features/public/landing/landing.component.html",
+        "src/app/features/public/landing/landing.component.scss",
+        "src/app/core/services/regiment.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0102"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The hero shows \"Since est MM/YYYY\" and the member count (mercenaries excluded)",
+          "status": "passed"
+        },
+        {
+          "desc": "When Regiment statistics visibility is off, the stat block is hidden",
+          "status": "passed"
+        },
+        {
+          "desc": "The hero title + description reflect the configured regiment name + mission statement",
+          "status": "passed"
+        },
+        {
+          "desc": "The Officer's Mess section is removed",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0152",
+      "title": "Lighten the settings secondary sidebar colors",
+      "summary": "The settings-page left nav item/group labels use dark tokens (var(--t-500)/var(--t-300)) and read too dark; lighten them (e.g. var(--t-400)/var(--t-300)) while keeping the brass active state.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The settings secondary sidebar labels are legibly lighter; active/hover states still look correct",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0153",
+      "title": "Remove announcements (Field Dispatch) from the frontend",
+      "summary": "Remove the \"Compose a Field Dispatch\" nav item + panel and all announce state/methods from settings, the announcement-channel picker from Discord & Adjutant, the NotificationsService + notification model/mapping, and announce()/announcementChannelId from DiscordService. Pairs with the backend teardown.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.scss",
+        "src/app/core/services/notifications.service.ts",
+        "src/app/core/services/notifications.service.spec.ts",
+        "src/app/core/models/notification.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/discord.service.ts",
+        "src/app/core/services/discord.service.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0103"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "No \"Compose a Field Dispatch\" section in settings",
+          "status": "passed"
+        },
+        {
+          "desc": "No announcement-channel picker in Discord & Adjutant",
+          "status": "passed"
+        },
+        {
+          "desc": "Build passes with NotificationsService and announce() removed",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0154",
+      "title": "Rename \"Quartermaster\" to \"Lord Adjutant\" across the frontend",
+      "summary": "Replace all user-visible \"Quartermaster\" strings with \"Lord Adjutant\" (the settings nav label becomes \"Discord & Adjutant\") in settings, the dashboard bot widget, and the bot-status page. Pairs with the backend label rename.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/member/dashboard/dashboard.component.ts",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/member/dashboard/dashboard.component.scss",
+        "src/app/features/admin/bot-status/bot-status.component.ts",
+        "src/app/features/admin/bot-status/bot-status.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0104"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "No user-visible \"Quartermaster\" text remains in the frontend",
+          "status": "passed"
+        },
+        {
+          "desc": "The settings nav label reads \"Discord & Adjutant\" and the bot is called \"Lord Adjutant\"",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0155",
+      "title": "Settings Profile & Visibility: drop Short Tag/Public roster, wire established + visibility",
+      "summary": "Remove the Short Tag field and the Public roster toggle from settings; add an Established (month/year) input to Identity bound to the new regiment established date; and verify the five visibility toggles (Public gallery/events, Regiment Statistics, Open recruitments, Allow mercenaries) still round-trip through PATCH /settings and are edit-gated to manage_settings.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/settings.service.ts",
+        "src/app/core/services/settings.service.spec.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0105",
+        "lords-dashboard-backend:T-0102"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "No Short Tag field and no Public roster toggle in settings",
+          "status": "passed"
+        },
+        {
+          "desc": "An \"Established\" month/year input persists and drives the landing \"Since est\" value",
+          "status": "passed"
+        },
+        {
+          "desc": "The five visibility toggles persist across reload and are disabled for users without manage_settings",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0156",
+      "title": "Add a Discord Invite Link editor in settings",
+      "summary": "Add a \"Discord Invite Link\" input in the Discord & Adjutant section bound to settings.discordInviteUrl and persisted via SettingsService.updateSettings (the regiment/settings row, not bot settings). Backend column + DTO already exist.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The Discord Invite Link field saves and reloads its value",
+          "status": "passed"
+        },
+        {
+          "desc": "The saved invite link is reflected by the existing invite panel",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0157",
+      "title": "Audit page: fix View profile / All-by, admin-only export, remove bright box",
+      "summary": "Thread actorMemberId/targetMemberId through the AuditLog model + mapper; wire \"View profile\" to /app/profile/:targetMemberId and keep/upgrade \"All by {user}\"; restrict Export CSV to admins (auth.isOwnerOrAdmin); and remove the purposeless bright box (the discord-sync warn banner / detail-desc) after confirming against design-reference.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/audit/audit.component.html",
+        "src/app/features/admin/audit/audit.component.ts",
+        "src/app/features/admin/audit/audit.component.scss",
+        "src/app/core/models/audit-log.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/audit.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "\"View profile\" opens the target member's profile",
+          "status": "passed"
+        },
+        {
+          "desc": "\"All by {user}\" filters the log to that actor",
+          "status": "passed"
+        },
+        {
+          "desc": "Export CSV is visible only to admins and downloads the audit CSV",
+          "status": "passed"
+        },
+        {
+          "desc": "The purposeless bright box is removed",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0158",
+      "title": "Applications: move the tab bar above the queue",
+      "summary": "Move the status tab bar (Pending/On hold/Approved/Declined/Re-applications) out of the bottom of the detail column to a full-width row above the applications layout (above the Queue), fixing especially the mobile ordering.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The status tabs render above the Queue on desktop and stack first on mobile",
+          "status": "passed"
+        },
+        {
+          "desc": "Switching tabs still filters the queue correctly",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0159",
+      "title": "Remove Display Name from the frontend; require In-game Name",
+      "summary": "Remove the \"Display name\" field from the profile self-edit form, make In-game name required (profile + apply form), drop name from the member model/mapping/CurrentUser, and switch all display sites (roster, sidebar avatar, dashboard, audit actor/target) to inGameName. Pairs with the backend dropping the members.name column.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/core/models/member.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/members.service.ts",
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/member/roster/roster.component.ts",
+        "src/app/features/member/roster/roster.component.html",
+        "src/app/features/onboarding/application-form/application-form.component.ts",
+        "src/app/features/onboarding/application-form/application-form.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0106"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "The ask mentions removing a UNIQUE check on In-game Name, but the schema has NO unique index on members.in_game_name (only UNIQUE(discord_identity_id)). Confirm the intent is simply that In-game Name need not be unique (i.e. ensure none is ever added) — there is nothing to drop today.",
+          "answer": "Okay, good",
+          "askedAt": "2026-07-15T20:30:00Z",
+          "answeredAt": "2026-07-16T00:42:00.678Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "No \"Display name\" field anywhere; In-game name is required on profile edit and the apply form",
+          "status": "passed"
+        },
+        {
+          "desc": "Roster, sidebar avatar, dashboard and audit rows display the in-game name",
+          "status": "passed"
+        },
+        {
+          "desc": "A member with only an in-game name renders everywhere without blanks/errors",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "member display name (member.name) is a display primitive across FE avatar/roster/sidebar/audit; collapsing to inGameName risks blank labels if any consumer is missed",
+          "status": "resolved",
+          "notedAt": "2026-07-15T20:30:00Z",
+          "resolvedAt": "2026-07-16T02:45:00Z",
+          "resolvedBy": "claude",
+          "note": "member.name removed from the model/mapping/CurrentUser; every display site (roster, sidebar avatar, dashboard, audit, profile, admin-action modal) switched to inGameName. Build + 113 unit green; roster/sidebar/profile/audit inGameName rendering verified live in the browser (no blank labels)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0160",
+      "title": "Surface a clear file-size-limit error on all uploads",
+      "summary": "Upload consumers currently swallow the backend 400 and show no message. Surface a clear \"Your file size exceeds the limit of <N> MB\" error (from err.error.message) across avatar/banner (profile), gallery submit, and event banner uploads. Pairs with the backend standardizing the message copy.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "core-data",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/storage.service.ts",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.ts",
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0107"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Uploading an oversized banner/avatar shows \"Your file size exceeds the limit of <N> MB\"",
+          "status": "passed"
+        },
+        {
+          "desc": "The same clear error appears for gallery and event-banner uploads",
+          "status": "passed"
+        },
+        {
+          "desc": "A valid-size upload still succeeds",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
+      "createdAt": "2026-07-15T20:30:00Z",
+      "updatedAt": "2026-07-16T02:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-15T20:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: dashboard polish batch (nav/auth/profile/gallery/events/roster/landing/settings/audit + display-name removal + file-size errors)"
+        },
+        {
+          "at": "2026-07-16T02:45:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
         }
       ]
     }

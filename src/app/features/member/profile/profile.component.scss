@@ -228,16 +228,6 @@
     margin-top: 6px;
 }
 
-.profile-discord-linked {
-    color: var(--ok);
-    margin-left: 6px;
-}
-
-.profile-discord-unlinked {
-    color: var(--t-500);
-    margin-left: 6px;
-}
-
 .profile-actions {
     gap: 8px;
     margin-left: auto;
@@ -278,10 +268,6 @@
     color: var(--t-200);
 }
 
-.particulars-value--upper {
-    text-transform: uppercase;
-}
-
 .particulars-value-mono {
     font-size: 12px;
     color: var(--t-300);
@@ -291,26 +277,23 @@
     color: var(--t-400);
 }
 
-.particulars-attendance {
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.command-admin-label {
+/* Small "?" privacy hint next to gated fields/sections (T-0141 / T-0143) */
+.privacy-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 6px;
+    border-radius: 999px;
+    border: 1px solid var(--rule-3);
+    background: var(--ink-800);
+    color: var(--t-400);
     font-size: 9px;
-}
-
-.command-id {
-    font-size: 11px;
-    color: var(--t-500);
-}
-
-.command-discord {
-    font-size: 13px;
-}
-
-.command-deactivate {
-    padding: 12px 16px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    vertical-align: middle;
 }
 
 .profile-tabs {
@@ -380,10 +363,51 @@
     margin-top: 3px;
 }
 
+/* Service-record entry type label + type-coloured dots (T-0143) */
+.timeline-type {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--t-500);
+    border: 1px solid var(--rule-3);
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+
+.timeline-dot {
+    &.is-rank {
+        background: var(--brass-400);
+    }
+    &.is-role {
+        background: var(--regblue-500);
+    }
+    &.is-medal {
+        background: var(--laurel-400);
+    }
+    &.is-suspension {
+        background: var(--oxblood-400);
+    }
+}
+
+.profile-service-record {
+    margin-top: 20px;
+}
+
 .profile-loading {
     text-align: center;
     padding: 64px;
     color: var(--t-400);
+}
+
+.profile-notfound-title {
+    font-size: 20px;
+    color: var(--t-200);
+    margin-bottom: 6px;
+}
+
+.profile-notfound-sub {
+    font-size: 13px;
+    color: var(--t-500);
 }
 
 // ───────── Mobile (ref: MobileProfile) ─────────
@@ -424,7 +448,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(520px, calc(100vw - 32px));
+    width: min(640px, calc(100vw - 32px));
     max-height: calc(100vh - 48px);
     overflow-y: auto;
     z-index: 41;

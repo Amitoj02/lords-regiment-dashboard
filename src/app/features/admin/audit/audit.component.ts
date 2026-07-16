@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditLog, DiscordSyncStatus } from '../../../core/models/audit-log.model';
 import { AuditService } from '../../../core/services/audit.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { DiscordService } from '../../../core/services/discord.service';
 
 @Component({
     selector: 'app-audit',
@@ -28,20 +27,21 @@ export class AuditComponent implements OnInit {
     loading = true;
     loadError = '';
 
-    /** True when the bot is off or no audit-log channel is bound — entries won't cross-post. */
-    discordSyncDisabled = false;
-
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
         private auditService: AuditService,
         private auth: AuthService,
-        private discord: DiscordService,
     ) {}
 
     /** Capability gate for a template action (see the spec's capability keys). */
     can(capability: string): boolean {
         return this.auth.hasCapability(capability);
+    }
+
+    /** Only Owners/Admins may export the ledger as a CSV. */
+    get canExport(): boolean {
+        return this.auth.isOwnerOrAdmin();
     }
 
     ngOnInit(): void {
@@ -63,22 +63,6 @@ export class AuditComponent implements OnInit {
                     this.loading = false;
                     this.loadError = 'Could not load the audit ledger — please try again.';
                     console.error('Failed to load audit ledger', err);
-                },
-            });
-
-        // Surface why entries may read pending/not-applicable: the bot must be
-        // enabled AND an audit-log channel bound for entries to cross-post.
-        this.discord
-            .getSettings()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (settings) => {
-                    this.discordSyncDisabled =
-                        !settings.botEnabled || settings.auditLogChannelId === null;
-                },
-                error: (err) => {
-                    // Non-blocking: leave the banner hidden if settings can't be read.
-                    console.error('Failed to load Discord settings', err);
                 },
             });
     }

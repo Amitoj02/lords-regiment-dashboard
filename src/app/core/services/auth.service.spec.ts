@@ -47,7 +47,7 @@ describe('AuthService post-login routing', () => {
     const flushMe = (over: Partial<CurrentUser>): void => {
         const user: CurrentUser = {
             id: 'u',
-            name: 'U',
+            inGameName: 'U',
             rank: null,
             role: 'Member',
             discordTag: null,
@@ -73,18 +73,13 @@ describe('AuthService post-login routing', () => {
         expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
     });
 
-    it('routes an Owner whose setup is incomplete into first-run /app/admin/settings', () => {
+    it('routes an enrolled Owner straight to /app/dashboard (no first-run setup detour, T-0129)', () => {
+        // Even with an incomplete-setup profile available, Owners are not detoured.
         regiment.getProfile.and.returnValue(of(profile(false)));
         service.completeLogin('t', true);
         flushMe({ isMember: true, role: 'Owner' });
-        expect(regiment.getProfile).toHaveBeenCalled();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/admin/settings');
-    });
-
-    it('routes an Owner whose setup is complete to /app/dashboard', () => {
-        regiment.getProfile.and.returnValue(of(profile(true)));
-        service.completeLogin('t', true);
-        flushMe({ isMember: true, role: 'Owner' });
+        // getProfile is no longer consulted on login (the setup detour was dropped).
+        expect(regiment.getProfile).not.toHaveBeenCalled();
         expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
     });
 

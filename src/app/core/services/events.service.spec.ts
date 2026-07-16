@@ -129,7 +129,7 @@ describe('EventsService', () => {
     it('getAllMine() requests the member calendar and maps myRsvp', () => {
         let result: RegimentEvent[] | undefined;
         service.getAllMine('upcoming').subscribe((events) => (result = events));
-        const req = httpMock.expectOne('/api/events/mine?status=upcoming&limit=100');
+        const req = httpMock.expectOne('/api/events/mine?limit=100&status=upcoming');
         expect(req.request.method).toBe('GET');
         req.flush(
             page([apiEvent({ myRsvp: { status: 'interested', reminderOffsetMinutes: null } })]),

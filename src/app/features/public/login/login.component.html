@@ -85,14 +85,25 @@
                 <a routerLink="/guidelines">Community Guidelines</a>.
             </p>
 
-            <div class="notice info">
-                <strong>Privacy:</strong> We only read your Discord username, avatar, and guild
-                membership. We do not post on your behalf or read your messages.
-            </div>
-
             <div class="login-apply">
                 <span class="login-apply-prompt">Not a member yet?</span>
-                <a routerLink="/login" class="login-apply-link"> Apply to join → </a>
+                <button
+                    type="button"
+                    class="login-apply-link"
+                    style="
+                        appearance: none;
+                        background: none;
+                        border: none;
+                        padding: 0;
+                        cursor: pointer;
+                        font-family: inherit;
+                    "
+                    [style.opacity]="isLoading ? '0.6' : null"
+                    [disabled]="isLoading"
+                    (click)="signInWithDiscord()"
+                >
+                    Apply to join →
+                </button>
             </div>
         </div>
     </div>

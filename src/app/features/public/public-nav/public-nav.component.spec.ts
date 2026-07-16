@@ -25,7 +25,7 @@ class MockAuthService {
 function makeUser(isMember: boolean): CurrentUser {
     return {
         id: 'u1',
-        name: 'Test User',
+        inGameName: 'Test User',
         rank: null,
         role: isMember ? 'Member' : 'Applicant',
         discordTag: null,

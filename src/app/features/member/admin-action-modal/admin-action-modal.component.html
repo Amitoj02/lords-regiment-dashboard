@@ -7,7 +7,7 @@
         <div class="aam-head">
             <div>
                 <div class="admin-label aam-eyebrow">Admin Actions</div>
-                <h2 id="aam-title" class="serif aam-title">{{ member.name }}</h2>
+                <h2 id="aam-title" class="serif aam-title">{{ member.inGameName }}</h2>
             </div>
             <button
                 type="button"
@@ -200,7 +200,7 @@
                     } @else {
                     <div class="notice warn aam-confirm">
                         <div class="n-body">
-                            This bans {{ member.name }} and removes their access. Continue?
+                            This bans {{ member.inGameName }} and removes their access. Continue?
                         </div>
                     </div>
                     <div class="row aam-inline">

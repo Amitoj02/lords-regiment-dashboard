@@ -25,10 +25,10 @@ describe('SettingsService', () => {
     });
 
     it('updateSettings() PATCHes the changed fields', () => {
-        service.updateSettings({ publicRoster: false, name: 'LR' }).subscribe();
+        service.updateSettings({ publicEvents: false, name: 'LR' }).subscribe();
         const req = httpMock.expectOne('/api/settings');
         expect(req.request.method).toBe('PATCH');
-        expect(req.request.body).toEqual({ publicRoster: false, name: 'LR' });
+        expect(req.request.body).toEqual({ publicEvents: false, name: 'LR' });
         req.flush({ name: 'LR' });
     });
 

@@ -1,12 +1,12 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { Member, Platform } from '../../../core/models/member.model';
+import { catchError, of } from 'rxjs';
+import { Member } from '../../../core/models/member.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { RegimentEvent } from '../../../core/models/event.model';
-import { MembersService } from '../../../core/services/members.service';
+import { MembersService, ServiceRecordEntry } from '../../../core/services/members.service';
 import { GalleryService } from '../../../core/services/gallery.service';
-import { EventsService } from '../../../core/services/events.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { StorageService } from '../../../core/services/storage.service';
 
@@ -19,11 +19,19 @@ import { StorageService } from '../../../core/services/storage.service';
 export class ProfileComponent implements OnInit {
     member: Member | null = null;
     galleryItems: GalleryItem[] = [];
-    taggedItems: GalleryItem[] = [];
     eventHistory: RegimentEvent[] = [];
-    activeTab: 'gallery' | 'tagged' | 'events' | 'rsvps' = 'gallery';
+    rsvps: RegimentEvent[] = [];
+    serviceRecord: ServiceRecordEntry[] = [];
+    activeTab: 'gallery' | 'events' | 'rsvps' = 'gallery';
     isAdmin = false;
     isOwnProfile = false;
+    /** Last Access + Service Record are gated to the member themselves or staff. */
+    canViewPrivate = false;
+
+    // Resolution state (T-0139): distinguish "still loading" from "not found" so
+    // an invalid id shows a graceful empty state instead of an endless spinner.
+    loading = true;
+    notFound = false;
 
     /** The target of the admin-action modal (null = closed). */
     adminTarget: Member | null = null;
@@ -32,15 +40,7 @@ export class ProfileComponent implements OnInit {
     editing = false;
     saving = false;
     saveError: string | null = null;
-    editName = '';
     editInGameName = '';
-    editPlatform: Platform | '' = '';
-    editTimezone = '';
-    readonly platformOptions: { value: Platform; label: string }[] = [
-        { value: 'steam', label: 'Steam / PC' },
-        { value: 'xbox', label: 'Xbox' },
-        { value: 'ps', label: 'PlayStation' },
-    ];
     /** Local preview of a chosen avatar/banner + the resolved storage key. */
     avatarPreview: string | null = null;
     avatarKey: string | null = null;
@@ -55,49 +55,10 @@ export class ProfileComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
     private readonly maxGalleryItems = 6;
 
-    medals = [
-        {
-            letter: 'V',
-            ribbon: 'gold' as const,
-            title: 'Valour Cross',
-            description: 'Exceptional battlefield conduct.',
-        },
-        {
-            letter: 'C',
-            ribbon: 'tricolor' as const,
-            title: 'Campaign Star',
-            description: 'Completed a full campaign.',
-        },
-        {
-            letter: 'L',
-            ribbon: 'red' as const,
-            title: 'Long Service',
-            description: 'Three+ seasons of active service.',
-        },
-        {
-            letter: 'D',
-            ribbon: 'blue' as const,
-            title: 'Distinguished Drill',
-            description: 'Excellence in formation drill.',
-        },
-    ];
-
-    serviceTimeline = [
-        { date: 'Jan 2022', event: 'Enlisted as Private', note: '' },
-        { date: 'Mar 2022', event: 'Promoted to Corporal', note: 'Excellent drill performance.' },
-        { date: 'Jun 2022', event: 'Promoted to Sergeant', note: '' },
-        { date: 'Oct 2022', event: 'Awarded Valour Cross', note: 'May Campaign — Final Assault.' },
-        { date: 'Mar 2023', event: 'Promoted to Lieutenant', note: '' },
-        { date: 'Sep 2023', event: 'Promoted to Captain', note: '' },
-        { date: 'Feb 2024', event: 'Promoted to Major', note: '' },
-        { date: 'Jan 2025', event: 'Promoted to Colonel', note: 'Regiment CO.' },
-    ];
-
     constructor(
         private route: ActivatedRoute,
         private membersService: MembersService,
         private galleryService: GalleryService,
-        private eventsService: EventsService,
         private auth: AuthService,
         private storage: StorageService,
     ) {}
@@ -105,23 +66,41 @@ export class ProfileComponent implements OnInit {
     ngOnInit(): void {
         this.isAdmin = this.auth.isAdmin();
         const routeId = this.route.snapshot.paramMap.get('id');
-        // Own profile when no :id — load the signed-in user's own record
-        // (T-0121: drop the legacy 'm1' fallback).
         const currentUser = this.auth.currentUser();
+        // A bare /app/profile resolves to the signed-in user's own uid (T-0139).
         const id = routeId ?? currentUser?.id ?? '';
-        this.isOwnProfile = !routeId || currentUser?.id === id;
+        // Own profile ONLY when the resolved id matches the signed-in uid.
+        this.isOwnProfile = !!currentUser && currentUser.id === id;
+        this.canViewPrivate = this.isOwnProfile || this.isAdmin;
 
         if (!id) {
+            this.loading = false;
+            this.notFound = true;
             return;
         }
 
         this.membersService
             .getById(id)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((member) => {
-                this.member = member ?? null;
+            .subscribe({
+                next: (member) => {
+                    this.loading = false;
+                    if (!member) {
+                        this.notFound = true;
+                        return;
+                    }
+                    this.member = member;
+                    this.loadRelated(id);
+                },
+                error: () => {
+                    this.loading = false;
+                    this.notFound = true;
+                },
             });
+    }
 
+    /** Load the tabs + timeline once we have a valid member. */
+    private loadRelated(id: string): void {
         this.galleryService
             .getAll()
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -129,15 +108,36 @@ export class ProfileComponent implements OnInit {
                 this.galleryItems = items
                     .filter((i) => i.submittedBy && i.status === 'approved')
                     .slice(0, this.maxGalleryItems);
-                this.taggedItems = [];
             });
 
-        this.eventsService
-            .getAll()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((events) => {
-                this.eventHistory = events.filter((e) => e.attendees?.includes(id));
-            });
+        // Event History + RSVPs come straight from the member endpoints (T-0142).
+        this.membersService
+            .getEvents(id)
+            .pipe(
+                catchError(() => of<RegimentEvent[]>([])),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((events) => (this.eventHistory = events));
+
+        this.membersService
+            .getRsvps(id)
+            .pipe(
+                catchError(() => of<RegimentEvent[]>([])),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((events) => (this.rsvps = events));
+
+        // Service Record is privacy-gated; the backend also returns 403 for a
+        // non-admin viewing another member, so swallow errors to an empty list.
+        if (this.canViewPrivate) {
+            this.membersService
+                .getServiceRecord(id)
+                .pipe(
+                    catchError(() => of<ServiceRecordEntry[]>([])),
+                    takeUntilDestroyed(this.destroyRef),
+                )
+                .subscribe((entries) => (this.serviceRecord = entries));
+        }
     }
 
     // ── Self-edit (T-0121) ────────────────────────────────────────────────────
@@ -148,10 +148,7 @@ export class ProfileComponent implements OnInit {
         }
         this.editing = true;
         this.saveError = null;
-        this.editName = this.member.name;
         this.editInGameName = this.member.inGameName ?? '';
-        this.editPlatform = this.member.platform ?? '';
-        this.editTimezone = this.member.timezone ?? '';
         this.avatarPreview = null;
         this.avatarKey = null;
         this.bannerPreview = null;
@@ -181,9 +178,12 @@ export class ProfileComponent implements OnInit {
                     this.avatarKey = key;
                     this.avatarUploading = false;
                 },
-                error: () => {
+                error: (err) => {
                     this.avatarUploading = false;
-                    this.saveError = 'Avatar upload failed. Please try again.';
+                    this.saveError = StorageService.uploadErrorMessage(
+                        err,
+                        'Avatar upload failed. Please try again.',
+                    );
                 },
             });
     }
@@ -203,15 +203,24 @@ export class ProfileComponent implements OnInit {
                     this.bannerKey = key;
                     this.bannerUploading = false;
                 },
-                error: () => {
+                error: (err) => {
                     this.bannerUploading = false;
-                    this.saveError = 'Banner upload failed. Please try again.';
+                    this.saveError = StorageService.uploadErrorMessage(
+                        err,
+                        'Banner upload failed. Please try again.',
+                    );
                 },
             });
     }
 
     get canSave(): boolean {
-        return !this.saving && !this.avatarUploading && !this.bannerUploading && !!this.member;
+        return (
+            !this.saving &&
+            !this.avatarUploading &&
+            !this.bannerUploading &&
+            !!this.member &&
+            !!this.editInGameName.trim()
+        );
     }
 
     save(): void {
@@ -221,10 +230,7 @@ export class ProfileComponent implements OnInit {
         this.saving = true;
         this.saveError = null;
         const changes: Partial<Member> = {
-            name: this.editName.trim(),
             inGameName: this.editInGameName.trim(),
-            platform: this.editPlatform || undefined,
-            timezone: this.editTimezone.trim() || undefined,
         };
         if (this.avatarKey) {
             changes.avatarKey = this.avatarKey;
@@ -266,7 +272,7 @@ export class ProfileComponent implements OnInit {
         this.viewerOpen = false;
     }
 
-    setTab(tab: 'gallery' | 'tagged' | 'events' | 'rsvps'): void {
+    setTab(tab: 'gallery' | 'events' | 'rsvps'): void {
         this.activeTab = tab;
     }
 
@@ -276,15 +282,6 @@ export class ProfileComponent implements OnInit {
 
     onMemberUpdated(updated: Member): void {
         this.member = updated;
-    }
-
-    getInitials(name: string): string {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
     }
 
     getRoleClass(role: string): string {
@@ -297,6 +294,25 @@ export class ProfileComponent implements OnInit {
                 return 'blue';
             default:
                 return 'parch';
+        }
+    }
+
+    /** Colour-code a service-record dot by entry type (backend: promotion/role/award/suspension/ban). */
+    serviceEntryClass(type: string): string {
+        switch (type) {
+            case 'promotion':
+            case 'rank':
+                return 'is-rank';
+            case 'role':
+                return 'is-role';
+            case 'award':
+            case 'medal':
+                return 'is-medal';
+            case 'suspension':
+            case 'ban':
+                return 'is-suspension';
+            default:
+                return '';
         }
     }
 }

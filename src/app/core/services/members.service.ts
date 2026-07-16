@@ -2,8 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiMember, PaginatedResponse, mapMember } from '../models/api.model';
+import { ApiEvent, ApiMember, PaginatedResponse, mapEvent, mapMember } from '../models/api.model';
 import { Member, MemberRole } from '../models/member.model';
+import { RegimentEvent } from '../models/event.model';
 
 /** A member's service-record timeline entry (GET /members/:id/service-record). */
 export interface ServiceRecordEntry {
@@ -44,18 +45,29 @@ export class MembersService {
 
     /**
      * Self-service profile edit (PATCH). Sends only the fields the backend
-     * self-edit DTO accepts: name, platform, timezone, inGameName, and the
+     * self-edit DTO accepts: inGameName (the sole display identity) and the
      * storage KEYS of freshly-uploaded avatar/banner images (avatarKey/bannerKey).
      */
     update(id: string, changes: Partial<Member>): Observable<Member> {
         const body: Record<string, unknown> = {};
-        if (changes.name !== undefined) body['name'] = changes.name;
-        if (changes.platform !== undefined) body['platform'] = changes.platform;
-        if (changes.timezone !== undefined) body['timezone'] = changes.timezone;
         if (changes.inGameName !== undefined) body['inGameName'] = changes.inGameName;
         if (changes.avatarKey !== undefined) body['avatarKey'] = changes.avatarKey;
         if (changes.bannerKey !== undefined) body['bannerKey'] = changes.bannerKey;
         return this.http.patch<ApiMember>(`${this.base}/${id}`, body).pipe(map(mapMember));
+    }
+
+    /** A member's attended events (profile Event History tab, T-0142). */
+    getEvents(id: string): Observable<RegimentEvent[]> {
+        return this.http
+            .get<ApiEvent[]>(`${this.base}/${id}/events`)
+            .pipe(map((rows) => rows.map(mapEvent)));
+    }
+
+    /** A member's event RSVPs (profile RSVPs tab, T-0142). */
+    getRsvps(id: string): Observable<RegimentEvent[]> {
+        return this.http
+            .get<ApiEvent[]>(`${this.base}/${id}/rsvps`)
+            .pipe(map((rows) => rows.map(mapEvent)));
     }
 
     // ── Admin actions (each returns the updated member) ──────────────────────

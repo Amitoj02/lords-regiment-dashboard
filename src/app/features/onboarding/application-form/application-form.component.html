@@ -89,6 +89,43 @@
                         </div>
                         }
                     </div>
+                    <!-- Applicant Type -->
+                    <div class="field-group">
+                        <div class="field-label">Joining as</div>
+                        <div class="field-hint type-card-hint">
+                            Members are reviewed by an officer and expected at drill. Mercenaries
+                            play alongside the regiment with limited access.
+                        </div>
+                        <div style="display: flex; gap: 12px">
+                            <button
+                                type="button"
+                                class="type-card"
+                                [class.type-card--active]="
+                                    form.get('applicantType')?.value === 'Member'
+                                "
+                                (click)="form.get('applicantType')?.setValue('Member')"
+                            >
+                                <div class="type-card-title">Member</div>
+                                <div class="type-card-desc">
+                                    Full enlistment. Reviewed by an officer and expected at drill.
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                class="type-card"
+                                [class.type-card--active]="
+                                    form.get('applicantType')?.value === 'Mercenary'
+                                "
+                                (click)="form.get('applicantType')?.setValue('Mercenary')"
+                            >
+                                <div class="type-card-title">Mercenary</div>
+                                <div class="type-card-desc">
+                                    Play alongside the regiment without full enlistment. Limited
+                                    access.
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                     <!-- Current Regiment -->
                     <div class="field-group">
                         <label class="field-label" for="currentRegiment">Current Regiment</label>

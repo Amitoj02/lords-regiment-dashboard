@@ -20,10 +20,6 @@
     padding-top: 8px;
 }
 
-.roster-btn-glyph {
-    margin-right: 4px;
-}
-
 // ───────── Filter bar controls ─────────
 .roster-search {
     max-width: 320px;
@@ -57,12 +53,13 @@
     width: 100%;
 }
 
-.roster-th-check {
-    width: 36px;
-}
-
 .roster-th-actions {
     width: 48px;
+}
+
+// Whole rows are clickable → the member's profile.
+.roster-row {
+    cursor: pointer;
 }
 
 .roster-member-cell {
@@ -212,8 +209,7 @@
             justify-content: flex-start;
         }
 
-        // Drop the bulk-select checkbox and the row-actions menu on mobile
-        td.col-check,
+        // Drop the row-actions menu on mobile (the whole card is tappable)
         td.col-actions {
             display: none;
         }

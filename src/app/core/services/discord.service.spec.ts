@@ -56,16 +56,6 @@ describe('DiscordService', () => {
         expect(enqueued).toBe(12);
     });
 
-    it('announce() posts content and unwraps the enqueued flag', () => {
-        let enqueued: boolean | undefined;
-        service.announce('Muster!', 'chan1').subscribe((e) => (enqueued = e));
-        const req = httpMock.expectOne('/api/discord/announce');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ content: 'Muster!', channelId: 'chan1' });
-        req.flush({ enqueued: true });
-        expect(enqueued).toBe(true);
-    });
-
     it('getOperations() returns the paginated data array', () => {
         let ops: BotOperation[] | undefined;
         service.getOperations().subscribe((o) => (ops = o));

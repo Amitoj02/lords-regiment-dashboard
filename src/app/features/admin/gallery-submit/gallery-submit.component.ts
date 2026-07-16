@@ -16,6 +16,8 @@ interface UploadedFile {
     key: string | null;
     uploading: boolean;
     error: boolean;
+    /** User-facing failure message from the backend (T-0160), when the upload fails. */
+    errorMessage?: string;
 }
 
 @Component({
@@ -86,9 +88,11 @@ export class GallerySubmitComponent {
                     entry.key = key;
                     entry.uploading = false;
                 },
-                error: () => {
+                error: (err) => {
                     entry.uploading = false;
                     entry.error = true;
+                    // Surface the backend's user-facing reason (e.g. the size limit) — T-0160.
+                    entry.errorMessage = StorageService.uploadErrorMessage(err);
                 },
             });
     }

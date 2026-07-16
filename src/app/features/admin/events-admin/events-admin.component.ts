@@ -18,6 +18,9 @@ export class EventsAdminComponent implements OnInit {
     loading = true;
     loadError = '';
 
+    /** Whether the list includes archived events (manage_events only — T-0137). */
+    includeArchived = false;
+
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
@@ -31,12 +34,17 @@ export class EventsAdminComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.load();
+    }
+
+    private load(): void {
         this.loading = true;
         this.loadError = '';
         // Member projection (T-0085): every member reads the in-shell calendar;
-        // enrolled members also get their own myRsvp per event.
+        // enrolled members also get their own myRsvp per event. Moderators may
+        // additionally request archived events via the toggle (T-0137).
         this.eventsService
-            .getAllMine()
+            .getAllMine(undefined, this.includeArchived)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (events) => {
@@ -51,6 +59,12 @@ export class EventsAdminComponent implements OnInit {
                     console.error('Failed to load events', err);
                 },
             });
+    }
+
+    /** Toggle inclusion of archived events (manage_events only) and reload (T-0137). */
+    toggleArchived(): void {
+        this.includeArchived = !this.includeArchived;
+        this.load();
     }
 
     /** The non-empty status groups, in muster order (ongoing → upcoming → previous). */
