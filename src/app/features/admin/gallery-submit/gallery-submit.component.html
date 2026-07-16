@@ -1,236 +1,170 @@
-<hf-app-shell [activeRoute]="'gallery'">
+<hf-app-shell [activeRoute]="'gallery'" [crumbs]="['Gallery', 'Submit']">
     <div class="page">
         <div class="page-head">
             <h1 class="page-title serif-display">Submit to Gallery</h1>
         </div>
 
-        <div class="hf-tabs">
-            <button
-                type="button"
-                class="hf-tab"
-                [ngClass]="{ active: activeTab === 'files' }"
-                (click)="activeTab = 'files'"
-            >
-                Images / Videos
-            </button>
-            <button
-                type="button"
-                class="hf-tab"
-                [ngClass]="{ active: activeTab === 'link' }"
-                (click)="activeTab = 'link'"
-            >
-                Link
-            </button>
-        </div>
-
+        @if (can('submit_to_gallery')) {
         <div class="submit-layout">
-            <!-- Left: Upload zone + files -->
-            <div class="submit-left">
-                @if (activeTab === 'files') {
-                <!-- Drop zone -->
-                <div class="drop-zone">
-                    <svg
-                        width="32"
-                        height="32"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
+            <div class="submit-main">
+                <div class="hf-tabs">
+                    <button
+                        type="button"
+                        class="hf-tab"
+                        [ngClass]="{ active: activeTab === 'files' }"
+                        (click)="activeTab = 'files'"
                     >
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <span
-                        >Drag &amp; drop files here, or
-                        <span class="upload-link">browse</span></span
+                        Upload media
+                    </button>
+                    <button
+                        type="button"
+                        class="hf-tab"
+                        [ngClass]="{ active: activeTab === 'link' }"
+                        (click)="activeTab = 'link'"
                     >
-                    <span class="field-hint">PNG, JPG, MP4, MOV — max 50 MB each</span>
+                        External link
+                    </button>
                 </div>
-                <!-- File list -->
-                <div class="file-list">
-                    @for (file of uploadedFiles; track file) {
-                    <div class="file-row">
-                        <div
-                            class="file-thumb"
-                            [ngStyle]="{ background: file.thumbnailColor }"
-                        ></div>
-                        <div class="file-info">
-                            <span class="file-name">{{ file.filename }}</span>
-                            <span class="file-size">{{ file.size }}</span>
+
+                @if (activeTab === 'files') {
+                <label class="drop-zone">
+                    <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
+                        multiple
+                        hidden
+                        (change)="onFilesSelected($event)"
+                    />
+                    <div class="drop-zone__title">Choose images or videos</div>
+                    <div class="drop-zone__hint">PNG, JPG, WEBP, GIF, MP4 or WEBM</div>
+                </label>
+
+                @for (f of uploadedFiles; track f.id) {
+                <div class="file-row">
+                    <div
+                        class="file-thumb"
+                        [style.background-image]="'url(' + f.previewUrl + ')'"
+                    ></div>
+                    <div class="file-meta">
+                        <div class="file-name">{{ f.filename }}</div>
+                        <div class="file-status">
+                            @if (f.uploading) { Uploading… } @else if (f.error) {
+                            <span class="file-status--err">Upload failed</span>
+                            } @else { Ready }
                         </div>
                         <input
                             class="hf-input file-caption"
                             type="text"
-                            [(ngModel)]="file.caption"
                             placeholder="Caption (optional)"
+                            [(ngModel)]="f.caption"
+                            [ngModelOptions]="{ standalone: true }"
                         />
-                        <button
-                            type="button"
-                            class="btn btn-destructive btn-sm btn-icon"
-                            (click)="removeFile(file.id)"
-                            title="Remove"
-                        >
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                        </button>
                     </div>
-                    }
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="removeFile(f.id)"
+                        aria-label="Remove file"
+                    >
+                        Remove
+                    </button>
                 </div>
-                } @if (activeTab === 'link') {
-                <div class="panel">
-                    <div class="panel-body">
-                        <label class="field-label" for="gs-link-url">URL</label>
-                        <input
-                            id="gs-link-url"
-                            class="hf-input"
-                            type="url"
-                            [(ngModel)]="linkUrl"
-                            placeholder="https://youtube.com/watch?v=..."
-                        />
-                        <span class="field-hint field-hint-block"
-                            >YouTube, Twitch, Imgur and direct image links are supported.</span
-                        >
-                    </div>
+                } } @else {
+                <div class="field-row">
+                    <label class="field-label" for="gs-link"
+                        >Link (medal.tv, YouTube, image/video URL)</label
+                    >
+                    <input
+                        id="gs-link"
+                        class="hf-input"
+                        type="url"
+                        placeholder="https://medal.tv/clips/…"
+                        [(ngModel)]="linkUrl"
+                        [ngModelOptions]="{ standalone: true }"
+                    />
                 </div>
                 }
+            </div>
 
-                <!-- Dispatch metadata -->
+            <div class="submit-side">
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title">Dispatch Metadata</span>
+                        <span class="panel-title">Submission details</span>
                     </div>
                     <div class="panel-body">
                         <div class="field-row">
-                            <label class="field-label" for="gs-title">Submission title</label>
+                            <label class="field-label" for="gs-title">Title</label>
                             <input
                                 id="gs-title"
                                 class="hf-input"
                                 type="text"
+                                maxlength="160"
+                                placeholder="e.g. The charge at dawn"
                                 [(ngModel)]="submissionTitle"
-                                placeholder="e.g. Siege Defense Highlights — June 2026"
-                            />
-                        </div>
-
-                        <div class="field-row">
-                            <label class="field-label" for="gs-event">Linked event</label>
-                            <select id="gs-event" class="hf-select" [(ngModel)]="selectedEvent">
-                                <option value="">No linked event</option>
-                                @for (e of events; track e) {
-                                <option [value]="e.value">{{ e.label }}</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="field-row">
-                            <label class="field-label" for="gs-tag-member">Tag members</label>
-                            <input
-                                id="gs-tag-member"
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="tagMemberInput"
-                                placeholder="Search members…"
+                                [ngModelOptions]="{ standalone: true }"
                             />
                         </div>
 
                         <div class="field-row">
                             <label class="field-label" for="gs-tag-input">Tags</label>
-                            <div class="tags-row">
+                            @if (tags.length) {
+                            <div class="tag-chips">
                                 @for (tag of tags; track tag) {
-                                <span class="badge brass">
+                                <span class="badge brass tag-chip">
                                     {{ tag }}
                                     <button
                                         type="button"
                                         class="tag-remove"
                                         (click)="removeTag(tag)"
+                                        [attr.aria-label]="'Remove tag ' + tag"
                                     >
                                         &times;
                                     </button>
                                 </span>
                                 }
-                                <input
-                                    id="gs-tag-input"
-                                    class="hf-input tag-input"
-                                    type="text"
-                                    [(ngModel)]="tagInput"
-                                    placeholder="Add tag…"
-                                    (keydown.enter)="addTag(); $event.preventDefault()"
-                                />
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Info + actions -->
-            <div class="submit-right">
-                <div class="panel">
-                    <div class="panel-header">
-                        <span class="panel-title">Submission Guidelines</span>
-                    </div>
-                    <div class="panel-body">
-                        <hf-notice variant="info">
-                            Submissions are reviewed by gallery moderators before appearing
-                            publicly. Typical review time is under 24 hours.
-                        </hf-notice>
-                        <div class="guidelines-list">
-                            <div class="guideline-item">
-                                <span class="guideline-label">Allowed types</span>
-                                <div class="row allowed-types">
-                                    <span class="badge">PNG</span>
-                                    <span class="badge">JPG</span>
-                                    <span class="badge">MP4</span>
-                                    <span class="badge">MOV</span>
-                                    <span class="badge">Webm</span>
-                                </div>
+                            }
+                            <input
+                                id="gs-tag-input"
+                                class="hf-input tag-input"
+                                type="text"
+                                [placeholder]="tagsAtLimit ? 'Tag limit reached' : 'Add a tag…'"
+                                [disabled]="tagsAtLimit"
+                                [(ngModel)]="tagInput"
+                                [ngModelOptions]="{ standalone: true }"
+                                (keydown.enter)="addTag(); $event.preventDefault()"
+                            />
+                            @if (availableQuickTags.length && !tagsAtLimit) {
+                            <div class="tag-suggestions">
+                                @for (q of availableQuickTags; track q) {
+                                <button type="button" class="chip chip--sm" (click)="addTag(q)">
+                                    + {{ q }}
+                                </button>
+                                }
                             </div>
-                            <div class="guideline-item">
-                                <span class="guideline-label">Max file size</span>
-                                <span>50 MB per file</span>
-                            </div>
-                            <div class="guideline-item">
-                                <span class="guideline-label">Max per submission</span>
-                                <span>20 files</span>
-                            </div>
-                            <div class="guideline-item">
-                                <span class="guideline-label">Content policy</span>
-                                <span class="content-policy-note"
-                                    >Regiment-related content only. No offensive material.</span
-                                >
-                            </div>
+                            }
+                            <div class="field-hint">{{ tags.length }} / {{ maxTags }} tags</div>
                         </div>
                     </div>
                 </div>
 
-                @if (can('submit_to_gallery')) {
                 <div class="submit-actions">
-                    <button type="button" class="btn btn-ghost btn-block" (click)="saveDraft()">
-                        Save draft
-                    </button>
                     <button
                         type="button"
                         class="btn btn-primary btn-block"
-                        [disabled]="submitting || !submissionTitle"
+                        [disabled]="!canSubmit"
                         (click)="submit()"
                     >
                         {{ submitting ? 'Submitting…' : 'Submit for review' }}
                     </button>
+                    <a routerLink="/app/gallery" class="btn btn-ghost btn-block">Cancel</a>
                 </div>
-                } @else {
-                <hf-notice variant="info">
-                    You need the "Submit to gallery" permission to add submissions.
-                </hf-notice>
-                }
             </div>
         </div>
+        } @else {
+        <hf-notice variant="warn">
+            You need the “Submit to gallery” permission to add submissions.
+        </hf-notice>
+        }
     </div>
 </hf-app-shell>

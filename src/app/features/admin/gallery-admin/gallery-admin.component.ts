@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-gallery-admin',
@@ -10,7 +11,7 @@ import { GalleryService } from '../../../core/services/gallery.service';
     standalone: false,
 })
 export class GalleryAdminComponent implements OnInit {
-    /** The approved archive (public feed). */
+    /** The approved archive (authenticated member feed). */
     items: GalleryItem[] = [];
     /** Count of submissions still awaiting a moderation decision. */
     pendingCount = 0;
@@ -20,13 +21,22 @@ export class GalleryAdminComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(private galleryService: GalleryService) {}
+    constructor(
+        private galleryService: GalleryService,
+        private auth: AuthService,
+    ) {}
+
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
 
     ngOnInit(): void {
         this.loading = true;
         this.loadError = '';
+        // Authenticated archive: approved items for the caller's regiment, even
+        // when the public gallery is off (T-0086/T-0108).
         this.galleryService
-            .getAll()
+            .getArchive()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (items) => {
@@ -40,13 +50,16 @@ export class GalleryAdminComponent implements OnInit {
                 },
             });
 
-        this.galleryService
-            .moderationQueue()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (queue) => (this.pendingCount = queue.length),
-                error: (err) => console.error('Failed to load the moderation queue count', err),
-            });
+        // Only moderators fetch the pending count (their queue link).
+        if (this.can('moderate_gallery')) {
+            this.galleryService
+                .moderationQueue()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (queue) => (this.pendingCount = queue.length),
+                    error: (err) => console.error('Failed to load the moderation queue count', err),
+                });
+        }
     }
 
     /** A CSS `background` for a card thumbnail — the uploaded image, or a stable tint. */

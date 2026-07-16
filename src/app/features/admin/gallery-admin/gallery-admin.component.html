@@ -6,14 +6,15 @@
                 <h1 class="page-title serif-display">Gallery Archive</h1>
             </div>
             <div class="row gap-8">
-                <a routerLink="/admin/gallery/mod" class="btn btn-ghost btn-sm">
+                @if (can('moderate_gallery')) {
+                <a routerLink="/app/gallery/mod" class="btn btn-ghost btn-sm">
                     Moderation queue @if (pendingCount > 0) {
                     <span class="badge ox">{{ pendingCount }}</span>
                     }
                 </a>
-                <a routerLink="/admin/gallery/submit" class="btn btn-primary btn-sm"
-                    >Submit dispatch</a
-                >
+                } @if (can('submit_to_gallery')) {
+                <a routerLink="/app/gallery/submit" class="btn btn-primary btn-sm">Submit</a>
+                }
             </div>
         </div>
 

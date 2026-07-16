@@ -76,7 +76,7 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
         expect(ctaText()).toContain('Dashboard');
         expect(ctaText()).toContain('Sign out');
         expect(ctaText()).not.toContain('Sign in');
-        expect(hrefs()).toContain('/dashboard');
+        expect(hrefs()).toContain('/app/dashboard');
     });
 
     it('routes a signed-in applicant to their status page (not /login)', () => {

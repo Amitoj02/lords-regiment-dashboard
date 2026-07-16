@@ -23,6 +23,10 @@ export interface RegimentEvent {
     recurrenceCadence?: RecurrenceCadence;
     /** Whether a recurring template is still generating occurrences. */
     recurrenceActive?: boolean;
+    /** True when this event IS a recurring template. */
+    isRecurring?: boolean;
+    /** On a generated occurrence, the id of its template (member projection only). */
+    recurrenceTemplateId?: string | null;
     tags: string[];
     rsvpCounts: { interested: number; tentative: number; declined: number; neutral: number };
     attendees?: string[];

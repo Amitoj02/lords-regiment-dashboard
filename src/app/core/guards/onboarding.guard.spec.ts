@@ -23,12 +23,12 @@ describe('onboardingGuard', () => {
         expect(result).toBe(true);
     });
 
-    it('redirects an already-enrolled member to /dashboard', () => {
+    it('redirects an already-enrolled member to /app/dashboard', () => {
         const result = runGuard({ isAuthenticated: () => true, isMember: () => true });
         const router = TestBed.inject(Router);
         expect(result).not.toBe(true);
         expect(router.serializeUrl(result as ReturnType<Router['createUrlTree']>)).toBe(
-            '/dashboard',
+            '/app/dashboard',
         );
     });
 

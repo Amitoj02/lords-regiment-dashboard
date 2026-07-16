@@ -2,13 +2,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiGalleryItem, PaginatedResponse, mapGalleryItem } from '../models/api.model';
-import { GalleryItem, GalleryItemType } from '../models/gallery.model';
+import {
+    ApiGalleryItem,
+    ApiGallerySubmissionSummary,
+    PaginatedResponse,
+    mapGalleryItem,
+} from '../models/api.model';
+import { GalleryItem, GalleryItemStatus, GalleryItemType } from '../models/gallery.model';
 
 /** One file in a multi-file submission (POST /gallery). `sizeBytes` is a numeric string. */
 export interface GalleryFileInput {
     fileName: string;
-    url?: string;
+    /** Storage key from StorageService.upload('gallery', …); the API resolves it to a URL. */
+    key?: string;
     mediaType: 'image' | 'video';
     sizeBytes?: string;
     width?: number;
@@ -25,9 +31,15 @@ export interface GallerySubmitPayload {
     type: GalleryItemType;
     linkUrl?: string;
     thumbnailUrl?: string;
-    eventId?: string;
     files?: GalleryFileInput[];
-    taggedMemberIds?: string[];
+    tags?: string[];
+}
+
+/** Lean pending-submission summary for the dashboard panel (T-0094/T-0127). */
+export interface GallerySubmissionSummary {
+    id: string;
+    title: string;
+    submitterUsername: string | null;
 }
 
 /** Response of the like/unlike endpoints. */
@@ -41,11 +53,10 @@ export class GalleryService {
     private readonly http = inject(HttpClient);
     private readonly base = `${environment.apiBaseUrl}/gallery`;
 
-    /** Public feed (approved only). Optional type / event filters. */
-    getAll(type?: GalleryItemType, eventId?: string): Observable<GalleryItem[]> {
+    /** Public feed (approved only). Optional type filter. */
+    getAll(type?: GalleryItemType): Observable<GalleryItem[]> {
         let params = new HttpParams().set('limit', '100');
         if (type) params = params.set('type', type);
-        if (eventId) params = params.set('eventId', eventId);
         return this.http
             .get<PaginatedResponse<ApiGalleryItem>>(this.base, { params })
             .pipe(map((res) => res.data.map(mapGalleryItem)));
@@ -55,11 +66,35 @@ export class GalleryService {
         return this.http.get<ApiGalleryItem>(`${this.base}/${id}`).pipe(map(mapGalleryItem));
     }
 
-    /** The pending moderation queue (ModerateGallery). */
-    moderationQueue(): Observable<GalleryItem[]> {
+    /**
+     * Authenticated member archive (ViewGallery): approved items for the caller's
+     * regiment, ignoring the publicGallery flag (T-0086). Used by /app/gallery.
+     */
+    getArchive(type?: GalleryItemType): Observable<GalleryItem[]> {
+        let params = new HttpParams().set('limit', '100');
+        if (type) params = params.set('type', type);
         return this.http
-            .get<PaginatedResponse<ApiGalleryItem>>(`${this.base}/moderation/queue?limit=100`)
+            .get<PaginatedResponse<ApiGalleryItem>>(`${this.base}/archive`, { params })
             .pipe(map((res) => res.data.map(mapGalleryItem)));
+    }
+
+    /**
+     * The moderation queue (ModerateGallery), filtered by status so the FE can
+     * populate each tab — pending (default), approved, or declined (T-0115).
+     */
+    moderationQueue(status: GalleryItemStatus = 'pending'): Observable<GalleryItem[]> {
+        const params = new HttpParams().set('limit', '100').set('status', status);
+        return this.http
+            .get<PaginatedResponse<ApiGalleryItem>>(`${this.base}/moderation/queue`, { params })
+            .pipe(map((res) => res.data.map(mapGalleryItem)));
+    }
+
+    /**
+     * Lean pending-submissions summary for the dashboard "Gallery submissions"
+     * panel (ManageEvents holders) — T-0094/T-0127.
+     */
+    pendingSummary(): Observable<GallerySubmissionSummary[]> {
+        return this.http.get<ApiGallerySubmissionSummary[]>(`${this.base}/pending-summary`);
     }
 
     /** Submit a new item (SubmitToGallery) — lands in the moderation queue. */

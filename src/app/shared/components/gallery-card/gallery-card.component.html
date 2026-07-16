@@ -15,8 +15,7 @@
         <img [src]="item.thumbnailUrl" [alt]="item.title" class="gallery-card-img" />
         } @else {
         <div class="gallery-card-placeholder"></div>
-        }
-        @if (isVideo(item)) {
+        } @if (isVideo(item)) {
         <div class="gallery-play-overlay">
             <div class="gallery-play-btn">
                 <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor">
@@ -24,11 +23,16 @@
                 </svg>
             </div>
         </div>
-        }
-        @if (isLink(item)) {
+        } @if (isLink(item)) {
         <div class="gallery-link-badge">
             <span class="badge brass gallery-vod-badge">
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" class="gallery-vod-icon">
+                <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    class="gallery-vod-icon"
+                >
                     <path
                         d="M7.5 3.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5zM2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8zm1 0a5 5 0 1 0 10 0A5 5 0 0 0 3 8z"
                     />

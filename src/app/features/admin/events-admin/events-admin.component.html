@@ -7,7 +7,7 @@
             </div>
             @if (can('manage_events')) {
             <div class="row gap-8 events-head-actions">
-                <a routerLink="/dashboard/events/create" class="btn btn-primary btn-sm"
+                <a routerLink="/app/dashboard/events/create" class="btn btn-primary btn-sm"
                     >+ New event</a
                 >
             </div>
@@ -56,7 +56,7 @@
                                 <td>{{ totalRsvps(event) }}</td>
                                 <td class="col-action">
                                     <a
-                                        [routerLink]="['/dashboard/events', event.id]"
+                                        [routerLink]="['/app/dashboard/events', event.id]"
                                         class="btn btn-ghost btn-sm"
                                         >Manage</a
                                     >

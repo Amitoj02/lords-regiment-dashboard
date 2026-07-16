@@ -71,6 +71,14 @@ export class EventsService {
         return this.http.delete<void>(`${this.base}/${id}`);
     }
 
+    /**
+     * Delete a whole recurring series (the template + every occurrence) — T-0099.
+     * Accepts the template id OR any occurrence id (the backend resolves it).
+     */
+    deleteSeries(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.base}/${id}/series`);
+    }
+
     // ── Lifecycle transitions (each returns the updated event) ───────────────
     archive(id: string): Observable<RegimentEvent> {
         return this.http.post<ApiEvent>(`${this.base}/${id}/archive`, {}).pipe(map(mapEvent));

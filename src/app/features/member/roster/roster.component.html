@@ -107,7 +107,11 @@
                         </td>
                         <td class="col-member">
                             <div class="row roster-member-cell">
-                                <hf-avatar [name]="member.name" [size]="32"></hf-avatar>
+                                <hf-avatar
+                                    [name]="member.name"
+                                    [avatarUrl]="member.avatarUrl"
+                                    [size]="32"
+                                ></hf-avatar>
                                 <div>
                                     <div class="roster-member-name">{{ member.name }}</div>
                                     <div class="mono roster-member-tag">

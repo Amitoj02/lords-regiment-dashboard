@@ -267,6 +267,14 @@
                 <button
                     type="button"
                     class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'held' }"
+                    (click)="setTab('held')"
+                >
+                    On hold <span class="badge blue">{{ tabCount('held') }}</span>
+                </button>
+                <button
+                    type="button"
+                    class="hf-tab"
                     [ngClass]="{ active: activeTab === 'approved' }"
                     (click)="setTab('approved')"
                 >

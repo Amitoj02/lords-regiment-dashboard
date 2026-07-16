@@ -8,7 +8,7 @@ import { ApplicationsService } from '../../../core/services/applications.service
 import { AuthService } from '../../../core/services/auth.service';
 import { MembersService } from '../../../core/services/members.service';
 import { EventsService } from '../../../core/services/events.service';
-import { GalleryService } from '../../../core/services/gallery.service';
+import { GallerySubmissionSummary, GalleryService } from '../../../core/services/gallery.service';
 import { BotStatus, DiscordService } from '../../../core/services/discord.service';
 
 interface HonorMedal {
@@ -35,8 +35,8 @@ export class DashboardComponent implements OnInit {
 
     upcomingEvents: RegimentEvent[] = [];
     recentGallery: GalleryItem[] = [];
-    // Field Dispatches (notifications) are still deferred.
-    dispatches: { tone: string; title: string; body: string; time: string }[] = [];
+    // Gallery submissions awaiting moderation (T-0127) — shown to ManageEvents holders.
+    gallerySubmissions: GallerySubmissionSummary[] = [];
     pendingApplications: Application[] = [];
 
     /** Live bot status for the STAFF-only Quartermaster Bot widget (T-0081). */
@@ -96,7 +96,9 @@ export class DashboardComponent implements OnInit {
             .subscribe({
                 next: (events) => {
                     this.upcomingEvents = [...events]
-                        .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`))
+                        .sort((a, b) =>
+                            `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`),
+                        )
                         .slice(0, 5);
                 },
                 error: (err) => console.error('Failed to load upcoming events', err),
@@ -108,12 +110,21 @@ export class DashboardComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (items) => {
-                    this.recentGallery = items
-                        .filter((i) => i.status === 'approved')
-                        .slice(0, 10);
+                    this.recentGallery = items.filter((i) => i.status === 'approved').slice(0, 10);
                 },
                 error: (err) => console.error('Failed to load recent gallery', err),
             });
+
+        // Gallery submissions — pending queue preview for ManageEvents holders (T-0127).
+        if (this.canManageEvents) {
+            this.galleryService
+                .pendingSummary()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (items) => (this.gallerySubmissions = items),
+                    error: (err) => console.error('Failed to load gallery submissions', err),
+                });
+        }
 
         // Quartermaster Bot status — STAFF only (Owner/Admin/Moderator), T-0081.
         if (this.isStaff) {
@@ -133,6 +144,11 @@ export class DashboardComponent implements OnInit {
     /** STAFF gate for the applications preview + bot widget. */
     get isStaff(): boolean {
         return this.auth.isAdmin();
+    }
+
+    /** Gate for the "Gallery submissions" panel (T-0127). */
+    get canManageEvents(): boolean {
+        return this.auth.hasCapability('manage_events');
     }
 
     /** ms → a compact "2d 3h" / "4h 12m" / "8m" uptime label. */

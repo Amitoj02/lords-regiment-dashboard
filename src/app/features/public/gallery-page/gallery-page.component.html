@@ -13,7 +13,11 @@
                 </div>
             </div>
             <div class="row">
-                <button type="button" class="btn btn-ghost btn-sm">Sign in to submit</button>
+                @if (canSubmit) {
+                <a routerLink="/app/gallery/submit" class="btn btn-primary btn-sm">Submit</a>
+                } @else {
+                <a routerLink="/login" class="btn btn-ghost btn-sm">Sign in to submit</a>
+                }
             </div>
         </div>
 

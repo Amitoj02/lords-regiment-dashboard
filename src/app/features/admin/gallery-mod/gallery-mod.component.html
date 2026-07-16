@@ -1,4 +1,4 @@
-<hf-app-shell [activeRoute]="'gallery'">
+<hf-app-shell [activeRoute]="'gallery'" [crumbs]="['Gallery', 'Moderation']">
     <div class="page">
         <div class="page-head between">
             <div>
@@ -12,41 +12,40 @@
                 type="button"
                 class="hf-tab"
                 [ngClass]="{ active: activeTab === 'pending' }"
-                (click)="activeTab = 'pending'"
+                (click)="setTab('pending')"
             >
-                Pending <span class="badge ox">{{ items.length }}</span>
+                Pending @if (activeTab === 'pending') {
+                <span class="badge ox">{{ items.length }}</span>
+                }
             </button>
             <button
                 type="button"
                 class="hf-tab"
                 [ngClass]="{ active: activeTab === 'approved' }"
-                (click)="activeTab = 'approved'"
+                (click)="setTab('approved')"
             >
-                Recently approved
+                Approved
             </button>
             <button
                 type="button"
                 class="hf-tab"
                 [ngClass]="{ active: activeTab === 'declined' }"
-                (click)="activeTab = 'declined'"
+                (click)="setTab('declined')"
             >
                 Declined
             </button>
         </div>
 
-        @if (activeTab !== 'pending') {
-        <hf-notice variant="info">
-            Approved and declined submissions live in the public gallery and audit ledger. This
-            queue shows items still awaiting a decision.
+        @if (loading) {
+        <div class="empty"><div class="e-body">Loading…</div></div>
+        } @else if (items.length === 0) {
+        <hf-notice variant="ok">
+            @if (activeTab === 'pending') { The moderation queue is clear — no submissions are
+            waiting. } @else { No {{ activeTab }} submissions. }
         </hf-notice>
-        } @else if (!loading && items.length === 0) {
-        <hf-notice variant="ok"
-            >The moderation queue is clear — no submissions are waiting.</hf-notice
-        >
-        }
-
+        } @else {
         <div class="mod-layout">
-            <!-- Left: gallery grid -->
+            <!-- Left: submissions grid -->
             <div class="mod-left">
                 <div class="gallery-grid">
                     @for (item of items; track item) {
@@ -56,26 +55,10 @@
                         [ngClass]="{ 'gallery-card--selected': item.id === selectedId }"
                         (click)="selectedId = item.id"
                     >
-                        <div class="gallery-card__thumb" [ngStyle]="{ background: thumb(item) }">
-                            @if (can('moderate_gallery')) {
-                            <div class="gallery-card__actions">
-                                <button
-                                    type="button"
-                                    class="btn btn-primary btn-sm"
-                                    (click)="approve(item.id); $event.stopPropagation()"
-                                >
-                                    &#10003;
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-destructive btn-sm"
-                                    (click)="decline(item.id); $event.stopPropagation()"
-                                >
-                                    &times;
-                                </button>
-                            </div>
-                            }
-                        </div>
+                        <div
+                            class="gallery-card__thumb"
+                            [ngStyle]="{ background: thumb(item) }"
+                        ></div>
                         <div class="gallery-card__info">
                             <span class="gallery-card__caption"
                                 >{{ item.caption || item.title }}</span
@@ -87,7 +70,7 @@
                 </div>
             </div>
 
-            <!-- Right: detail panel -->
+            <!-- Right: detail panel with explicit decision controls -->
             @if (selected) {
             <div class="mod-right">
                 <div class="panel">
@@ -95,12 +78,10 @@
                         <span class="panel-title">Submission Detail</span>
                     </div>
                     <div class="panel-body">
-                        <!-- Main preview -->
                         <div
                             class="detail-main-preview"
                             [ngStyle]="{ background: thumb(selected) }"
                         ></div>
-                        <!-- Metadata -->
                         <div class="detail-meta">
                             <div class="meta-row">
                                 <span class="field-label">Title</span>
@@ -116,10 +97,14 @@
                                 <span class="field-label">Type</span>
                                 <span class="badge">{{ selected.type }}</span>
                             </div>
-                            @if (selected.linkedEvent) {
+                            @if (selected.tags.length) {
                             <div class="meta-row">
-                                <span class="field-label">Linked event</span>
-                                <span class="badge brass">{{ selected.linkedEvent }}</span>
+                                <span class="field-label">Tags</span>
+                                <div class="row row--wrap-4">
+                                    @for (t of selected.tags; track t) {
+                                    <span class="badge brass">{{ t }}</span>
+                                    }
+                                </div>
                             </div>
                             }
                             <div class="meta-row">
@@ -127,22 +112,18 @@
                                 <span>{{ selected.fileCount ?? 0 }}</span>
                             </div>
                             <div class="meta-row">
-                                <span class="field-label">Tagged members</span>
-                                <div class="row row--wrap-4">
-                                    @for (m of selected.taggedMembers ?? []; track m) {
-                                    <span class="badge laurel">{{ m }}</span>
-                                    } @if ((selected.taggedMembers ?? []).length === 0) {
-                                    <span class="field-hint">None</span>
-                                    }
-                                </div>
-                            </div>
-                            <div class="meta-row">
                                 <span class="field-label">Submitted by</span>
                                 <span>{{ selected.submittedBy }}</span>
                             </div>
+                            @if (selected.status === 'declined' && selected.declineReason) {
+                            <div class="meta-row">
+                                <span class="field-label">Decline reason</span>
+                                <span class="decline-reason">{{ selected.declineReason }}</span>
+                            </div>
+                            }
                         </div>
-                        @if (can('moderate_gallery')) {
-                        <!-- Decline reason -->
+
+                        @if (can('moderate_gallery') && activeTab === 'pending') {
                         <div class="field-row">
                             <label class="field-label" for="gm-decline-reason"
                                 >Decline reason <span class="field-hint">(optional)</span></label
@@ -155,7 +136,6 @@
                                 placeholder="Provide a reason to notify the submitter…"
                             ></textarea>
                         </div>
-                        <!-- Action buttons -->
                         <div class="detail-actions">
                             <button
                                 type="button"
@@ -175,11 +155,22 @@
                                 Approve
                             </button>
                         </div>
+                        } @else if (can('moderate_gallery') && activeTab === 'declined') {
+                        <div class="detail-actions">
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                (click)="approve(selected.id)"
+                            >
+                                Approve instead
+                            </button>
+                        </div>
                         }
                     </div>
                 </div>
             </div>
             }
         </div>
+        }
     </div>
 </hf-app-shell>

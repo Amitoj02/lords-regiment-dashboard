@@ -3,6 +3,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 export interface NavUser {
     name: string;
     rank: string;
+    avatarUrl?: string | null;
 }
 
 interface NavItem {
@@ -29,24 +30,25 @@ export class SidebarComponent {
     @Input() isAdmin = false;
 
     @Output() navigate = new EventEmitter<string>();
+    /** Emitted when the footer Logout button is pressed (handled by the shell). */
+    @Output() logout = new EventEmitter<void>();
 
     readonly navItems: NavItem[] = [
         {
             label: 'Dashboard',
             key: 'dashboard',
-            route: '/dashboard',
+            route: '/app/dashboard',
             icon: 'home',
             adminOnly: false,
             enabled: true,
         },
-        // Events are now member-visible in-shell (T-0085/T-0086): members read the
-        // calendar; authoring is gated behind manageEventsGuard + in-template
-        // capability checks. Gallery stays admin-only in-shell (public /gallery
-        // is reachable via the public site nav).
+        // Events + Gallery are member-visible in-shell (T-0085/T-0086/T-0110):
+        // members read the calendar + gallery archive; authoring/moderation is
+        // gated behind capability guards + in-template capability checks.
         {
             label: 'Events',
             key: 'events',
-            route: '/dashboard/events',
+            route: '/app/dashboard/events',
             icon: 'calendar',
             adminOnly: false,
             enabled: true,
@@ -54,15 +56,15 @@ export class SidebarComponent {
         {
             label: 'Gallery',
             key: 'gallery',
-            route: '/admin/gallery',
+            route: '/app/gallery',
             icon: 'image',
-            adminOnly: true,
+            adminOnly: false,
             enabled: true,
         },
         {
             label: 'Members',
             key: 'roster',
-            route: '/roster',
+            route: '/app/roster',
             icon: 'users',
             adminOnly: false,
             enabled: true,
@@ -70,7 +72,7 @@ export class SidebarComponent {
         {
             label: 'Applications',
             key: 'apps',
-            route: '/admin/applications',
+            route: '/app/admin/applications',
             icon: 'scroll',
             adminOnly: true,
             enabled: true,
@@ -78,7 +80,7 @@ export class SidebarComponent {
         {
             label: 'Ranks & Medals',
             key: 'ranks',
-            route: '/admin/ranks',
+            route: '/app/admin/ranks',
             icon: 'award',
             adminOnly: true,
             enabled: true,
@@ -87,7 +89,7 @@ export class SidebarComponent {
         {
             label: 'Audit Ledger',
             key: 'audit',
-            route: '/admin/audit',
+            route: '/app/admin/audit',
             icon: 'activity',
             adminOnly: true,
             enabled: true,
@@ -95,7 +97,7 @@ export class SidebarComponent {
         {
             label: 'Settings',
             key: 'settings',
-            route: '/admin/settings',
+            route: '/app/admin/settings',
             icon: 'settings',
             adminOnly: true,
             enabled: true,
@@ -114,17 +116,7 @@ export class SidebarComponent {
         this.navigate.emit(route);
     }
 
-    get initials(): string {
-        return this.user.name
-            .split(' ')
-            .map((s) => s[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase();
-    }
-
-    get avatarBg(): string {
-        const h = Array.from(this.user.name).reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-        return `oklch(0.32 0.04 ${h})`;
+    onLogout(): void {
+        this.logout.emit();
     }
 }

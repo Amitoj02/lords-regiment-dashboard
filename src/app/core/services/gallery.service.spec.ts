@@ -14,7 +14,6 @@ function apiItem(overrides: Partial<ApiGalleryItem> = {}): ApiGalleryItem {
         linkUrl: null,
         thumbnailUrl: 'https://cdn/thumb.png',
         status: 'pending',
-        eventId: 'ev1',
         declineReason: null,
         author: { memberId: 'm1', name: 'Mara Erskine' },
         files: [
@@ -31,7 +30,7 @@ function apiItem(overrides: Partial<ApiGalleryItem> = {}): ApiGalleryItem {
                 thumbnailColor: '#3a4a5c',
             },
         ],
-        taggedMembers: [{ memberId: 'm2', name: 'Sade Wren' }],
+        tags: ['siege', 'defense'],
         likesCount: 4,
         liked: false,
         submittedAt: '2026-06-04T06:00:00Z',
@@ -70,20 +69,19 @@ describe('GalleryService', () => {
 
     afterEach(() => httpMock.verify());
 
-    it('getAll(type, eventId) sets the filter query params', () => {
-        service.getAll('image', 'ev1').subscribe();
+    it('getAll(type) sets the filter query params', () => {
+        service.getAll('image').subscribe();
         const req = httpMock.expectOne(
             (r) =>
                 r.url === '/api/gallery' &&
                 r.params.get('type') === 'image' &&
-                r.params.get('eventId') === 'ev1' &&
                 r.params.get('limit') === '100',
         );
         expect(req.request.method).toBe('GET');
         req.flush(page([]));
     });
 
-    it('getAll() maps media/author/tagged fields', () => {
+    it('getAll() maps media/author/tags fields (T-0111)', () => {
         let result: GalleryItem[] | undefined;
         service.getAll().subscribe((items) => (result = items));
         const req = httpMock.expectOne((r) => r.url === '/api/gallery');
@@ -93,22 +91,50 @@ describe('GalleryService', () => {
         expect(item?.submittedBy).toBe('Mara Erskine');
         expect(item?.mediaUrl).toBe('https://cdn/shot.png');
         expect(item?.likes).toBe(4);
-        expect(item?.taggedMembers).toEqual(['m2']);
+        expect(item?.tags).toEqual(['siege', 'defense']);
         expect(item?.fileCount).toBe(1);
     });
 
-    it('moderationQueue() hits the moderation endpoint', () => {
-        service.moderationQueue().subscribe();
-        const req = httpMock.expectOne('/api/gallery/moderation/queue?limit=100');
+    it('getArchive() hits the authenticated archive endpoint (T-0086)', () => {
+        service.getArchive().subscribe();
+        const req = httpMock.expectOne(
+            (r) => r.url === '/api/gallery/archive' && r.params.get('limit') === '100',
+        );
         expect(req.request.method).toBe('GET');
-        req.flush(page([apiItem()]));
+        req.flush(page([apiItem({ status: 'approved' })]));
     });
 
-    it('submit() posts the payload', () => {
-        service.submit({ title: 'New', type: 'link', linkUrl: 'https://y.tube' }).subscribe();
+    it('moderationQueue(status) sends the status filter (T-0115)', () => {
+        service.moderationQueue('declined').subscribe();
+        const req = httpMock.expectOne(
+            (r) =>
+                r.url === '/api/gallery/moderation/queue' &&
+                r.params.get('status') === 'declined' &&
+                r.params.get('limit') === '100',
+        );
+        expect(req.request.method).toBe('GET');
+        req.flush(page([apiItem({ status: 'declined', declineReason: 'blurry' })]));
+    });
+
+    it('pendingSummary() hits the pending-summary endpoint (T-0094)', () => {
+        service.pendingSummary().subscribe();
+        const req = httpMock.expectOne('/api/gallery/pending-summary');
+        expect(req.request.method).toBe('GET');
+        req.flush([{ id: 'g1', title: 'Siege', submitterUsername: 'Mara' }]);
+    });
+
+    it('submit() posts the payload with tags (T-0111)', () => {
+        service
+            .submit({ title: 'New', type: 'link', linkUrl: 'https://y.tube', tags: ['clutch'] })
+            .subscribe();
         const req = httpMock.expectOne('/api/gallery');
         expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ title: 'New', type: 'link', linkUrl: 'https://y.tube' });
+        expect(req.request.body).toEqual({
+            title: 'New',
+            type: 'link',
+            linkUrl: 'https://y.tube',
+            tags: ['clutch'],
+        });
         req.flush(apiItem());
     });
 

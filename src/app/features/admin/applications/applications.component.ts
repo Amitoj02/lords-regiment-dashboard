@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Application } from '../../../core/models/application.model';
 import { ApplicationsService } from '../../../core/services/applications.service';
 
-type QueueTab = 'pending' | 'approved' | 'declined' | 'reapply';
+type QueueTab = 'pending' | 'held' | 'approved' | 'declined' | 'reapply';
 
 @Component({
     selector: 'app-applications',

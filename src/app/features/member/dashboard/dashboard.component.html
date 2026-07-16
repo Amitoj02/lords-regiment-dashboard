@@ -41,11 +41,14 @@
             <div class="panel panel--spaced">
                 <div class="panel-header between">
                     <span class="panel-title serif">Upcoming Events</span>
-                    <a routerLink="/dashboard/events" class="btn btn-ghost btn-sm">View all</a>
+                    <a routerLink="/app/dashboard/events" class="btn btn-ghost btn-sm">View all</a>
                 </div>
                 <div class="panel-body panel-body--flush">
                     @for (event of upcomingEvents; track event) {
-                    <a class="event-row event-row--link" [routerLink]="['/dashboard/events', event.id]">
+                    <a
+                        class="event-row event-row--link"
+                        [routerLink]="['/app/dashboard/events', event.id]"
+                    >
                         <div class="event-date-col">
                             <div class="serif event-day">{{ event.date | date: 'd' }}</div>
                             <div class="event-month">{{ event.date | date: 'MMM' }}</div>
@@ -53,7 +56,8 @@
                         <div class="event-main">
                             <div class="event-title">{{ event.title }}</div>
                             <div class="mono event-meta">
-                                {{ event.startTime }}{{ event.serverName ? ' · ' + event.serverName : '' }}
+                                {{ event.startTime }}{{ event.serverName ? ' · ' + event.serverName
+                                : '' }}
                             </div>
                         </div>
                         <div class="event-actions">
@@ -92,36 +96,29 @@
 
         <!-- Right Column -->
         <div class="dashboard-aside">
-            <!-- Field Dispatches -->
+            <!-- Gallery submissions (ManageEvents holders; pending queue preview) -->
+            @if (canManageEvents) {
             <div class="panel panel--spaced">
-                <div class="panel-header">
-                    <span class="panel-title serif">Field Dispatches</span>
+                <div class="panel-header between">
+                    <span class="panel-title serif">Gallery submissions</span>
+                    <span class="badge ox">{{ gallerySubmissions.length }}</span>
                 </div>
                 <div class="panel-body panel-body--flush">
-                    @for (dispatch of dispatches; track dispatch) {
-                    <div class="dispatch-item">
-                        <div
-                            class="dispatch-tone-bar"
-                            [ngStyle]="{
-                                    background:
-                                        dispatch.tone === 'info'
-                                            ? 'var(--info)'
-                                            : dispatch.tone === 'warn'
-                                              ? 'var(--warn)'
-                                              : dispatch.tone === 'ok'
-                                                ? 'var(--ok)'
-                                                : 'var(--t-400)',
-                                }"
-                        ></div>
+                    @for (sub of gallerySubmissions; track sub.id) {
+                    <a class="dispatch-item gallery-sub-item" routerLink="/app/gallery/mod">
                         <div class="dispatch-body">
-                            <div class="dispatch-title">{{ dispatch.title }}</div>
-                            <div class="dispatch-text">{{ dispatch.body }}</div>
-                            <div class="mono dispatch-time">{{ dispatch.time }}</div>
+                            <div class="dispatch-title">{{ sub.title }}</div>
+                            <div class="dispatch-text">
+                                by {{ sub.submitterUsername ?? 'Unknown' }}
+                            </div>
                         </div>
-                    </div>
+                    </a>
+                    } @empty {
+                    <div class="panel-empty">No submissions awaiting review.</div>
                     }
                 </div>
             </div>
+            }
 
             <!-- Awaiting Review (STAFF only; read-only preview → full review screen) -->
             @if (isStaff) {
@@ -132,7 +129,10 @@
                 </div>
                 <div class="panel-body panel-body--flush">
                     @for (app of pendingApplications; track app) {
-                    <a class="applicant-row applicant-row--link" routerLink="/admin/applications">
+                    <a
+                        class="applicant-row applicant-row--link"
+                        routerLink="/app/admin/applications"
+                    >
                         <hf-avatar [name]="app.applicantName" [size]="32"></hf-avatar>
                         <div class="applicant-main">
                             <div class="applicant-name">{{ app.applicantName }}</div>
@@ -145,7 +145,7 @@
                 </div>
                 @if (pendingApplications.length > 0) {
                 <div class="panel-foot">
-                    <a routerLink="/admin/applications" class="btn btn-ghost btn-sm btn-block"
+                    <a routerLink="/app/admin/applications" class="btn btn-ghost btn-sm btn-block"
                         >Review all applications</a
                     >
                 </div>
@@ -159,9 +159,7 @@
                 <div class="panel-header between">
                     <span class="panel-title serif">Quartermaster Bot</span>
                     @if (botStatus) {
-                    <span
-                        class="badge"
-                        [ngClass]="botStatus.connected ? 'laurel' : 'ox'"
+                    <span class="badge" [ngClass]="botStatus.connected ? 'laurel' : 'ox'"
                         >{{ botStatus.connected ? 'Online' : 'Offline' }}</span
                     >
                     }
@@ -174,7 +172,9 @@
                     } @else {
                     <div class="qm-row">
                         <span class="qm-label">WS latency</span>
-                        <span class="mono qm-date">{{ botStatus.wsPing !== null ? botStatus.wsPing + ' ms' : '—' }}</span>
+                        <span class="mono qm-date"
+                            >{{ botStatus.wsPing !== null ? botStatus.wsPing + ' ms' : '—' }}</span
+                        >
                     </div>
                     <div class="qm-row">
                         <span class="qm-label">Uptime</span>
@@ -186,7 +186,9 @@
                     </div>
                     <div class="qm-row">
                         <span class="qm-label">CPU</span>
-                        <span class="mono qm-date">{{ botStatus.cpu !== null ? botStatus.cpu + '%' : '—' }}</span>
+                        <span class="mono qm-date"
+                            >{{ botStatus.cpu !== null ? botStatus.cpu + '%' : '—' }}</span
+                        >
                     </div>
                     <div class="qm-row">
                         <span class="qm-label">Members visible</span>

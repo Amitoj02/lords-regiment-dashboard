@@ -131,7 +131,9 @@ describe('EventsService', () => {
         service.getAllMine('upcoming').subscribe((events) => (result = events));
         const req = httpMock.expectOne('/api/events/mine?status=upcoming&limit=100');
         expect(req.request.method).toBe('GET');
-        req.flush(page([apiEvent({ myRsvp: { status: 'interested', reminderOffsetMinutes: null } })]));
+        req.flush(
+            page([apiEvent({ myRsvp: { status: 'interested', reminderOffsetMinutes: null } })]),
+        );
         expect(result?.[0].myRsvp).toBe('interested');
     });
 
@@ -162,6 +164,13 @@ describe('EventsService', () => {
     it('delete() issues a DELETE', () => {
         service.delete('ev1').subscribe();
         const req = httpMock.expectOne('/api/events/ev1');
+        expect(req.request.method).toBe('DELETE');
+        req.flush(null);
+    });
+
+    it('deleteSeries() DELETEs the /series endpoint (T-0099)', () => {
+        service.deleteSeries('ev1').subscribe();
+        const req = httpMock.expectOne('/api/events/ev1/series');
         expect(req.request.method).toBe('DELETE');
         req.flush(null);
     });

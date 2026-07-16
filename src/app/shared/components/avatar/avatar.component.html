@@ -1,5 +1,17 @@
-<span class="hf-avatar" [style]="hostStyle" [style.background]="bg" [attr.title]="name">
-    {{ initials }} @if (online) {
+<span
+    class="hf-avatar"
+    [class.hf-avatar--clickable]="clickable"
+    [style]="hostStyle"
+    [style.background]="showImage ? 'transparent' : bg"
+    [attr.title]="name"
+    [attr.role]="clickable ? 'button' : null"
+    [attr.tabindex]="clickable ? 0 : null"
+    (click)="onClick()"
+    (keydown.enter)="onClick()"
+>
+    @if (showImage) {
+    <img class="hf-avatar__img" [src]="avatarUrl" [alt]="name" (error)="onImgError()" />
+    } @else { {{ initials }} } @if (online) {
     <span class="hf-avatar__dot" [style.width.px]="dotSize" [style.height.px]="dotSize"></span>
     }
 </span>

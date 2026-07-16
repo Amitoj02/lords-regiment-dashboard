@@ -5,7 +5,7 @@ import {
     Router,
     RouterStateSnapshot,
 } from '@angular/router';
-import { adminGuard } from './admin.guard';
+import { moderateGalleryGuard } from './moderate-gallery.guard';
 import { AuthService } from '../services/auth.service';
 
 function runGuard(auth: Partial<AuthService>) {
@@ -13,18 +13,21 @@ function runGuard(auth: Partial<AuthService>) {
         providers: [{ provide: AuthService, useValue: auth }, provideRouter([])],
     });
     return TestBed.runInInjectionContext(() =>
-        adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+        moderateGalleryGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     );
 }
 
-describe('adminGuard', () => {
-    it('allows an authenticated admin', () => {
-        const result = runGuard({ isAuthenticated: () => true, isAdmin: () => true });
+describe('moderateGalleryGuard', () => {
+    it('allows an authenticated caller with moderate_gallery', () => {
+        const result = runGuard({
+            isAuthenticated: () => true,
+            hasCapability: (c) => c === 'moderate_gallery',
+        });
         expect(result).toBe(true);
     });
 
-    it('redirects a signed-in non-admin to /app/dashboard', () => {
-        const result = runGuard({ isAuthenticated: () => true, isAdmin: () => false });
+    it('redirects a non-moderator to /app/dashboard', () => {
+        const result = runGuard({ isAuthenticated: () => true, hasCapability: () => false });
         const router = TestBed.inject(Router);
         expect(result).not.toBe(true);
         expect(router.serializeUrl(result as ReturnType<Router['createUrlTree']>)).toBe(
@@ -32,8 +35,8 @@ describe('adminGuard', () => {
         );
     });
 
-    it('redirects an anonymous caller to /app/dashboard', () => {
-        const result = runGuard({ isAuthenticated: () => false, isAdmin: () => false });
+    it('redirects an anonymous caller', () => {
+        const result = runGuard({ isAuthenticated: () => false, hasCapability: () => true });
         expect(result).not.toBe(true);
     });
 });

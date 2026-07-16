@@ -1,0 +1,33 @@
+.legal-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.back-link {
+    margin-bottom: 12px;
+}
+
+.legal-doc {
+    line-height: 1.7;
+
+    h1.legal-title {
+        margin-bottom: 4px;
+    }
+
+    h2 {
+        margin-top: 24px;
+        margin-bottom: 6px;
+        font-size: 1.05rem;
+    }
+
+    p {
+        margin-bottom: 12px;
+        color: var(--t-200);
+    }
+}
+
+.legal-updated {
+    color: var(--t-400);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+}

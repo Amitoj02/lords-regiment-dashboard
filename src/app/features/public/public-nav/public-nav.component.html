@@ -25,7 +25,9 @@
 
         <div class="public-nav-cta">
             @if (auth.isAuthenticated()) { @if (auth.isMember()) {
-            <a routerLink="/dashboard" class="btn btn-primary" (click)="closeMenu()">Dashboard</a>
+            <a routerLink="/app/dashboard" class="btn btn-primary" (click)="closeMenu()"
+                >Dashboard</a
+            >
             } @else {
             <a routerLink="/onboarding/status" class="btn btn-primary" (click)="closeMenu()"
                 >My Application</a
