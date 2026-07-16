@@ -11,17 +11,17 @@ import { MemberRole } from '../models/member.model';
 export interface SettingsDto {
     // Regiment profile
     name: string;
-    shortTag: string;
     missionStatement: string | null;
     accentTone: string;
     crestUrl: string | null;
     bannerUrl: string | null;
     establishedYear: number | null;
+    /** Full establishment date (YYYY-MM-DD); drives the landing "Since est MM/YYYY". */
+    establishedAt: string | null;
     discordInviteUrl: string | null;
     discordServerId: string | null;
     discordServerName: string | null;
     // Privacy toggles
-    publicRoster: boolean;
     publicGallery: boolean;
     publicEvents: boolean;
     publicStats: boolean;

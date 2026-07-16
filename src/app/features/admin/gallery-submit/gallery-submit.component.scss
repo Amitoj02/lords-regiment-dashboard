@@ -33,12 +33,12 @@
     text-align: center;
     color: var(--t-400);
     cursor: pointer;
-    background: var(--parch-50);
+    background: var(--ink-800);
     transition: all 0.15s;
 
     &:hover {
         border-color: var(--brass-400);
-        background: color-mix(in srgb, var(--brass-400) 4%, transparent);
+        background: color-mix(in srgb, var(--brass-400) 8%, var(--ink-800));
     }
 
     &__title {
@@ -57,7 +57,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    background: var(--parch-100);
+    background: var(--ink-850);
     border: 1px solid var(--rule);
     border-radius: 8px;
 }

@@ -7,22 +7,23 @@
         <div class="hero-inner">
             <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
             <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
-            <h1 class="serif-display hero-headline">
-                The Lord Regiment.<br />Discipline, not spectacle.
-            </h1>
-            <p class="hero-sub">
-                An organized regiment built on drill, camaraderie, and the pursuit of excellence on
-                the field of battle. We fight together, or we do not fight at all.
-            </p>
+            <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
+            <p class="hero-sub">{{ missionStatement }}</p>
 
+            @if (statsVisible) {
             <div class="hero-stats">
-                @for (stat of stats; track stat) {
+                @if (establishedLabel) {
                 <div class="hero-stat">
-                    <div class="hero-stat-value serif">{{ stat.value }}</div>
-                    <div class="hero-stat-label">{{ stat.label }}</div>
+                    <div class="hero-stat-value serif">{{ establishedLabel }}</div>
+                    <div class="hero-stat-label">Since Established</div>
                 </div>
                 }
+                <div class="hero-stat">
+                    <div class="hero-stat-value serif">{{ memberCount }}</div>
+                    <div class="hero-stat-label">Members</div>
+                </div>
             </div>
+            }
 
             <div class="row gap-12 hero-actions">
                 <button type="button" (click)="applyToJoin()" class="btn btn-primary btn-lg">
@@ -88,7 +89,7 @@
                         <div class="gallery-grid">
                             @for (item of galleryItems; track item) {
                             <div class="gallery-thumb">
-                                <img [src]="item.thumbnailUrl" [alt]="item.title" />
+                                <img [src]="item.previewUrl" [alt]="item.title" />
                                 <div class="gallery-thumb-overlay">
                                     <span class="gallery-thumb-title">{{ item.title }}</span>
                                 </div>
@@ -116,27 +117,6 @@
                                 >— Regiment Charter, Article I</span
                             >
                         </div>
-                    </div>
-                </div>
-
-                <!-- Officers' Mess -->
-                <div class="panel officers-panel">
-                    <div class="panel-header">
-                        <span class="panel-title serif">Officers' Mess</span>
-                    </div>
-                    <div class="panel-body panel-body-flush">
-                        @for (officer of officers; track officer) {
-                        <div class="officer-row">
-                            <hf-avatar [name]="officer.name" [size]="36"></hf-avatar>
-                            <div class="officer-info">
-                                <div class="officer-name">{{ officer.name }}</div>
-                                <div class="row officer-rank-row">
-                                    <hf-chevrons [count]="officer.chevrons"></hf-chevrons>
-                                    <span class="officer-rank">{{ officer.rank }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        }
                     </div>
                 </div>
 

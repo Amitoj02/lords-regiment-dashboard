@@ -53,7 +53,7 @@
                         type="button"
                         class="gallery-card"
                         [ngClass]="{ 'gallery-card--selected': item.id === selectedId }"
-                        (click)="selectedId = item.id"
+                        (click)="select(item.id)"
                     >
                         <div
                             class="gallery-card__thumb"
@@ -78,10 +78,51 @@
                         <span class="panel-title">Submission Detail</span>
                     </div>
                     <div class="panel-body">
-                        <div
-                            class="detail-main-preview"
-                            [ngStyle]="{ background: thumb(selected) }"
-                        ></div>
+                        <!-- Media preview (resolved from mediaUrl via MediaEmbedService, T-0146) -->
+                        <div class="detail-main-preview">
+                            @if (selectedEmbed?.kind === 'youtube' || selectedEmbed?.kind ===
+                            'medaltv') {
+                            <div class="mod-embed">
+                                <iframe
+                                    [src]="selectedEmbed!.safeUrl"
+                                    title="Embedded clip"
+                                    frameborder="0"
+                                    allow="fullscreen; picture-in-picture; encrypted-media"
+                                    allowfullscreen
+                                ></iframe>
+                            </div>
+                            } @else if (selectedEmbed?.kind === 'video') {
+                            <video
+                                [src]="selectedEmbed!.rawUrl"
+                                controls
+                                playsinline
+                                class="mod-media-el"
+                            ></video>
+                            } @else if (selectedEmbed?.kind === 'image') {
+                            <img
+                                [src]="selectedEmbed!.rawUrl"
+                                [alt]="selected.title"
+                                class="mod-media-el"
+                            />
+                            } @else if (selectedEmbed?.posterUrl) {
+                            <img
+                                [src]="selectedEmbed!.posterUrl"
+                                [alt]="selected.title"
+                                class="mod-media-el"
+                            />
+                            } @else if (selectedEmbed?.kind === 'link') {
+                            <a
+                                [href]="selectedEmbed!.rawUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="mod-link-card"
+                            >
+                                <span class="badge brass">Open external link &rarr;</span>
+                            </a>
+                            } @else {
+                            <div class="mod-media-placeholder"></div>
+                            }
+                        </div>
                         <div class="detail-meta">
                             <div class="meta-row">
                                 <span class="field-label">Title</span>
@@ -143,9 +184,6 @@
                                 (click)="decline(selected.id)"
                             >
                                 Decline
-                            </button>
-                            <button type="button" class="btn btn-ghost btn-sm" (click)="skip()">
-                                Skip
                             </button>
                             <button
                                 type="button"

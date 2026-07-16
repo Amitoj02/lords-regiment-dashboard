@@ -128,27 +128,38 @@ export class EventDetailComponent implements OnInit {
             });
     }
 
-    archive(): void {
-        if (!this.eventId || this.working) {
+    /**
+     * Archive or unarchive the event in place (T-0136). The button reflects the
+     * current state and this reverses it, keeping archiving fully reversible.
+     */
+    toggleArchive(): void {
+        if (!this.eventId || !this.event || this.working) {
             return;
         }
-        if (!confirm('Archive this event? It will be hidden from the public calendar.')) {
+        const isArchived = !!this.event.isArchived;
+        const message = isArchived
+            ? 'Unarchive this event? It will be restored to the calendar.'
+            : 'Archive this event? It will be hidden from the public calendar.';
+        if (!confirm(message)) {
             return;
         }
         this.working = true;
-        this.eventsService
-            .archive(this.eventId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (event) => {
-                    this.event = event;
-                    this.working = false;
-                },
-                error: (err) => {
-                    console.error('Failed to archive event', err);
-                    this.working = false;
-                },
-            });
+        const request$ = isArchived
+            ? this.eventsService.unarchive(this.eventId)
+            : this.eventsService.archive(this.eventId);
+        request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (event) => {
+                this.event = event;
+                this.working = false;
+            },
+            error: (err) => {
+                console.error(
+                    isArchived ? 'Failed to unarchive event' : 'Failed to archive event',
+                    err,
+                );
+                this.working = false;
+            },
+        });
     }
 
     complete(): void {

@@ -6,7 +6,7 @@
                 <h1 class="page-title serif-display">Audit Ledger</h1>
             </div>
             <div class="row gap-8">
-                @if (can('view_audit_log')) {
+                @if (canExport) {
                 <button
                     type="button"
                     class="btn btn-ghost btn-sm"
@@ -22,12 +22,6 @@
 
         @if (loadError) {
         <hf-notice variant="warn" [body]="loadError"></hf-notice>
-        } @if (discordSyncDisabled) {
-        <hf-notice
-            variant="warn"
-            title="Discord cross-posting is off"
-            body="Audit entries aren't cross-posting to Discord until the bot is enabled and an audit-log channel is configured — until then, entries may read pending or not applicable."
-        ></hf-notice>
         }
 
         <!-- Filter row -->
@@ -173,8 +167,13 @@
                             </div>
                         </div>
                         <div class="detail-footer-actions">
-                            @if (selectedLog.targetUser) {
-                            <button type="button" class="btn btn-ghost btn-sm">View profile</button>
+                            @if (selectedLog.targetMemberId) {
+                            <a
+                                class="btn btn-ghost btn-sm"
+                                [routerLink]="['/app/profile', selectedLog.targetMemberId]"
+                            >
+                                View profile
+                            </a>
                             }
                             <button
                                 type="button"

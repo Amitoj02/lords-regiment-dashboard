@@ -37,4 +37,8 @@ export interface RegimentEvent {
     notifyBefore?: string[];
     /** The signed-in member's own RSVP to this event (member projection only). */
     myRsvp?: RsvpStatus | null;
+    /** Whether the event has a server password set (member projection only). */
+    hasServerPassword?: boolean;
+    /** Whether the event is archived (member projection only). */
+    isArchived?: boolean;
 }

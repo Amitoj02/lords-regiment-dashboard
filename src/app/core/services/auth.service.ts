@@ -5,7 +5,6 @@ import { Observable, catchError, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Member } from '../models/member.model';
 import { ApplicationsService } from './applications.service';
-import { RegimentService } from './regiment.service';
 
 /**
  * The `CurrentUser` projection returned by `GET /api/auth/me`. Mirrors the
@@ -14,7 +13,8 @@ import { RegimentService } from './regiment.service';
  */
 export interface CurrentUser {
     id: string;
-    name: string;
+    /** In-game name (member) or Discord display name (identity-only). */
+    inGameName: string;
     rank: string | null;
     role: Member['role'];
     discordTag: string | null;
@@ -32,7 +32,6 @@ export class AuthService {
     private readonly http = inject(HttpClient);
     private readonly router = inject(Router);
     private readonly applications = inject(ApplicationsService);
-    private readonly regiment = inject(RegimentService);
 
     /** Null until hydrated from `/auth/me` (see hydrate()). */
     readonly currentUser = signal<CurrentUser | null>(null);
@@ -87,26 +86,14 @@ export class AuthService {
 
     /**
      * Decide where a freshly-authenticated caller lands:
-     *  - enrolled member → dashboard, EXCEPT an Owner whose regiment setup is not
-     *    complete, who is guided into first-run setup (admin settings) — T-0037;
+     *  - every enrolled member → the dashboard (T-0129) — Owners no longer detour
+     *    to first-run setup;
      *  - non-member who already has an application → their status page (T-0030);
      *  - brand-new non-member → the blank application form.
      */
     private routeAfterLogin(user: CurrentUser | null, isMemberHint: boolean): void {
         const enrolled = user?.isMember ?? isMemberHint;
         if (enrolled) {
-            if (user?.role === 'Owner') {
-                this.regiment
-                    .getProfile()
-                    .pipe(catchError(() => of(null)))
-                    .subscribe((profile) => {
-                        const firstRun = profile?.setupComplete === false;
-                        this.router.navigateByUrl(
-                            firstRun ? '/app/admin/settings' : '/app/dashboard',
-                        );
-                    });
-                return;
-            }
             this.router.navigateByUrl('/app/dashboard');
             return;
         }

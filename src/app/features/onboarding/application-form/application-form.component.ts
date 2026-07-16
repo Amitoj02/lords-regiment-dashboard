@@ -32,7 +32,7 @@ export class ApplicationFormComponent implements OnInit {
     // The signed-in Discord identity (falls back to a placeholder if not logged in).
     get discordUser() {
         const u = this.auth.currentUser();
-        const name = u?.name ?? 'Prospective Recruit';
+        const name = u?.inGameName ?? 'Prospective Recruit';
         return {
             name,
             tag: u?.discordTag ?? 'recruit#0000',
@@ -51,6 +51,8 @@ export class ApplicationFormComponent implements OnInit {
     ) {
         this.form = this.fb.group({
             inGameName: ['', [Validators.required, Validators.minLength(2)]],
+            // Enlistment track — Member (full application) or Mercenary. Defaults to Member.
+            applicantType: ['Member', [Validators.required]],
             currentRegiment: ['', [Validators.required]],
             howFound: ['', [Validators.required]],
             preferredClasses: ['', [Validators.required]],
@@ -73,6 +75,7 @@ export class ApplicationFormComponent implements OnInit {
                     this.editing = true;
                     this.form.patchValue({
                         inGameName: app.inGameName,
+                        applicantType: app.applicantType ?? 'Member',
                         currentRegiment: app.currentRegiment,
                         howFound: app.howFound,
                         preferredClasses: app.preferredClasses,
@@ -104,8 +107,9 @@ export class ApplicationFormComponent implements OnInit {
         const v = this.form.value;
         const user = this.auth.currentUser();
         const payload = {
-            applicantName: user?.name ?? v.inGameName,
+            applicantName: user?.inGameName ?? v.inGameName,
             inGameName: v.inGameName,
+            applicantType: v.applicantType,
             discordTag: user?.discordTag ?? undefined,
             currentRegiment: v.currentRegiment,
             howFound: v.howFound,

@@ -1,4 +1,4 @@
-<hf-app-shell [activeRoute]="'roster'" [crumbs]="['Roster', member?.name ?? 'Profile']">
+<hf-app-shell [activeRoute]="'roster'" [crumbs]="['Roster', member?.inGameName ?? 'Profile']">
     @if (member) {
     <div class="profile-page">
         <!-- Banner (data-driven; falls back to the default asset via --bg) -->
@@ -13,7 +13,7 @@
         <div class="profile-header">
             <div class="profile-avatar-wrap">
                 <hf-avatar
-                    [name]="member.name"
+                    [name]="member.inGameName"
                     [avatarUrl]="member.avatarUrl"
                     [size]="124"
                     [clickable]="canOpenViewer"
@@ -23,34 +23,19 @@
             </div>
             <div class="profile-header-info">
                 <div class="row profile-name-row">
-                    <h1 class="serif profile-name">{{ member.name }}</h1>
+                    <h1 class="serif profile-name">{{ member.inGameName }}</h1>
                     <span class="badge" [ngClass]="getRoleClass(member.role)"
                         >{{ member.role }}</span
                     >
-                    @if (member.status === 'Active') {
-                    <span class="badge laurel">Active</span>
-                    } @if (member.status === 'Inactive') {
-                    <span class="badge parch">Inactive</span>
-                    } @if (member.status === 'Pending') {
-                    <span class="badge brass">Pending</span>
-                    }
                 </div>
                 <div class="row profile-rank-row">
                     <hf-chevrons [count]="member.chevrons"></hf-chevrons>
                     <span class="profile-rank">{{ member.rank }}</span>
                 </div>
-                <div class="mono profile-discord">
-                    {{ member.discordTag }} @if (member.discordLinked) {
-                    <span class="profile-discord-linked">● Discord linked</span>
-                    } @if (!member.discordLinked) {
-                    <span class="profile-discord-unlinked">○ Discord unlinked</span>
-                    }
-                </div>
+                <div class="mono profile-discord">{{ member.discordTag }}</div>
             </div>
             <div class="profile-actions row">
                 @if (isAdmin) {
-                <button type="button" class="btn btn-ghost btn-sm">Edit Profile</button>
-                } @if (isAdmin) {
                 <button type="button" class="btn btn-secondary btn-sm" (click)="openAdminActions()">
                     Admin Actions ▾
                 </button>
@@ -58,10 +43,6 @@
                 <button type="button" class="btn btn-primary btn-sm" (click)="startEdit()">
                     Edit My Profile
                 </button>
-                } @if (isOwnProfile) {
-                <a class="btn btn-ghost btn-sm" routerLink="/app/account-deletion"
-                    >Account Deletion</a
-                >
                 }
             </div>
         </div>
@@ -69,27 +50,33 @@
         <div class="profile-grid">
             <!-- Left panel -->
             <aside class="profile-left">
-                <!-- Honors -->
+                <!-- Honours -->
                 <div class="panel profile-panel-mb">
                     <div class="panel-header">
                         <span class="panel-title serif">Honours &amp; Decorations</span>
                     </div>
                     <div class="panel-body">
+                        @if (member.medalAwards && member.medalAwards.length > 0) {
                         <div class="medals-grid">
-                            @for (medal of medals; track medal) {
+                            @for (award of member.medalAwards; track award.id) {
                             <div class="medal-item">
                                 <hf-medal
-                                    [letter]="medal.letter"
-                                    [ribbon]="medal.ribbon"
-                                    [title]="medal.title"
+                                    [letter]="award.glyph"
+                                    [ribbon]="award.ribbon"
+                                    [title]="award.title"
                                 ></hf-medal>
                                 <div class="medal-info">
-                                    <div class="medal-title">{{ medal.title }}</div>
-                                    <div class="medal-desc">{{ medal.description }}</div>
+                                    <div class="medal-title">{{ award.title }}</div>
+                                    @if (award.detail) {
+                                    <div class="medal-desc">{{ award.detail }}</div>
+                                    }
                                 </div>
                             </div>
                             }
                         </div>
+                        } @else {
+                        <span class="field-hint">No decorations yet.</span>
+                        }
                     </div>
                 </div>
                 <!-- Particulars -->
@@ -99,37 +86,12 @@
                     </div>
                     <div class="panel-body panel-body--flush">
                         <div class="particulars-row">
-                            <span class="field-label particulars-label">Platform</span>
-                            <span class="particulars-value particulars-value--upper">
-                                {{ member.platform ?? '—' }}
-                            </span>
-                        </div>
-                        <div class="particulars-row">
-                            <span class="field-label particulars-label">Timezone</span>
-                            <span class="particulars-value">{{ member.timezone ?? '—' }}</span>
-                        </div>
-                        <div class="particulars-row">
                             <span class="field-label particulars-label">In-Game Name</span>
                             <span class="mono particulars-value-mono">{{ member.inGameName }}</span>
                         </div>
                         <div class="particulars-row">
                             <span class="field-label particulars-label">Events Attended</span>
                             <span class="particulars-value">{{ member.eventsAttended ?? 0 }}</span>
-                        </div>
-                        <div class="particulars-row">
-                            <span class="field-label particulars-label">Attendance</span>
-                            <span
-                                class="particulars-attendance"
-                                [ngStyle]="{
-                                        color:
-                                            (member.attendanceRate ?? 0) >= 80
-                                                ? 'var(--ok)'
-                                                : (member.attendanceRate ?? 0) >= 60
-                                                  ? 'var(--warn)'
-                                                  : 'var(--err)',
-                                    }"
-                                >{{ member.attendanceRate ?? 0 }}%</span
-                            >
                         </div>
                         <div class="particulars-row">
                             <span class="field-label particulars-label">Joined</span>
@@ -140,47 +102,24 @@
                                 }}
                             </span>
                         </div>
-                    </div>
-                </div>
-                <!-- Admin Command Information (admin-only) -->
-                @if (isAdmin) {
-                <div class="panel">
-                    <div class="panel-header">
-                        <span class="panel-title serif">Command Information</span>
-                        <span class="admin-label brass command-admin-label">Admin Only</span>
-                    </div>
-                    <div class="panel-body panel-body--flush">
+                        @if (canViewPrivate) {
                         <div class="particulars-row">
-                            <span class="field-label particulars-label">Member ID</span>
-                            <span class="mono command-id">{{ member.id }}</span>
-                        </div>
-                        <div class="particulars-row">
-                            <span class="field-label particulars-label">Discord Linked</span>
-                            <span
-                                class="command-discord"
-                                [ngStyle]="{
-                                            color: member.discordLinked
-                                                ? 'var(--ok)'
-                                                : 'var(--err)',
-                                        }"
-                            >
-                                {{ member.discordLinked ? 'Yes' : 'No' }}
+                            <span class="field-label particulars-label">
+                                Last Access
+                                <span
+                                    class="privacy-hint"
+                                    title="Only you and command staff can see this."
+                                    >?</span
+                                >
+                            </span>
+                            <span class="mono particulars-value-mono">
+                                {{ member.lastSeen ? (member.lastSeen | date: 'MMM d, yyyy, h:mm a')
+                                : '—' }}
                             </span>
                         </div>
-                        <div class="particulars-row">
-                            <span class="field-label particulars-label">Role</span>
-                            <span class="badge" [ngClass]="getRoleClass(member.role)"
-                                >{{ member.role }}</span
-                            >
-                        </div>
-                        <div class="command-deactivate">
-                            <button type="button" class="btn btn-destructive btn-sm btn-block">
-                                Deactivate Account
-                            </button>
-                        </div>
+                        }
                     </div>
                 </div>
-                }
             </aside>
             <!-- Right panel -->
             <div class="profile-right">
@@ -193,14 +132,6 @@
                         (click)="setTab('gallery')"
                     >
                         Gallery
-                    </button>
-                    <button
-                        type="button"
-                        class="hf-tab"
-                        [ngClass]="{ 'hf-tab--active': activeTab === 'tagged' }"
-                        (click)="setTab('tagged')"
-                    >
-                        Tagged
                     </button>
                     <button
                         type="button"
@@ -238,85 +169,95 @@
                     }
                 </div>
                 }
-                <!-- Tagged Tab -->
-                @if (activeTab === 'tagged') {
-                <div>
-                    @if (taggedItems.length > 0) {
-                    <div class="profile-gallery-grid">
-                        @for (item of taggedItems; track item) {
-                        <div class="profile-gallery-thumb">
-                            <img [src]="item.thumbnailUrl" [alt]="item.title" />
-                            <div class="profile-gallery-overlay">
-                                <span class="profile-gallery-caption">{{ item.title }}</span>
-                            </div>
-                        </div>
-                        }
-                    </div>
-                    } @if (taggedItems.length === 0) {
-                    <div class="notice info">Not tagged in any gallery items.</div>
-                    }
-                </div>
-                }
                 <!-- Event History Tab -->
                 @if (activeTab === 'events') {
-                <div>
-                    <div class="panel profile-panel-mb-lg">
-                        <div class="panel-body panel-body--flush">
-                            @for (event of eventHistory; track event) {
-                            <div class="event-history-row">
-                                <div class="event-history-date">
-                                    <div class="serif event-day">{{ event.date | date: 'd' }}</div>
-                                    <div class="event-month">{{ event.date | date: 'MMM' }}</div>
-                                </div>
-                                <div class="event-main">
-                                    <div class="event-title">{{ event.title }}</div>
-                                    <div class="mono event-server">{{ event.serverName }}</div>
-                                </div>
-                                <span
-                                    class="badge"
-                                    [ngClass]="
-                                                    event.status === 'previous' ? 'laurel' : 'brass'
-                                                "
-                                >
-                                    {{ event.status === 'previous' ? 'Attended' : event.status }}
-                                </span>
+                <div class="panel">
+                    <div class="panel-body panel-body--flush">
+                        @for (event of eventHistory; track event.id) {
+                        <div class="event-history-row">
+                            <div class="event-history-date">
+                                <div class="serif event-day">{{ event.date | date: 'd' }}</div>
+                                <div class="event-month">{{ event.date | date: 'MMM' }}</div>
                             </div>
-                            } @if (eventHistory.length === 0) {
-                            <div class="event-empty">No event history recorded.</div>
-                            }
-                        </div>
-                    </div>
-                    <!-- Service Timeline -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <span class="panel-title serif">Service Record</span>
-                        </div>
-                        <div class="panel-body panel-body--flush">
-                            <div class="timeline">
-                                @for (entry of serviceTimeline; track entry) {
-                                <div class="timeline-item">
-                                    <div class="timeline-dot"></div>
-                                    <div class="timeline-body">
-                                        <div class="row timeline-head">
-                                            <div class="timeline-event">{{ entry.event }}</div>
-                                        </div>
-                                        <div class="mono timeline-date">{{ entry.date }}</div>
-                                        @if (entry.note) {
-                                        <div class="timeline-note">{{ entry.note }}</div>
-                                        }
-                                    </div>
-                                </div>
-                                }
+                            <div class="event-main">
+                                <div class="event-title">{{ event.title }}</div>
+                                <div class="mono event-server">{{ event.serverName }}</div>
                             </div>
+                            <span
+                                class="badge"
+                                [ngClass]="event.status === 'previous' ? 'laurel' : 'brass'"
+                            >
+                                {{ event.status === 'previous' ? 'Attended' : event.status }}
+                            </span>
                         </div>
+                        } @if (eventHistory.length === 0) {
+                        <div class="event-empty">No event history recorded.</div>
+                        }
                     </div>
                 </div>
                 }
                 <!-- RSVPs Tab -->
                 @if (activeTab === 'rsvps') {
-                <div>
-                    <div class="notice info">
-                        RSVP history will be available in a future update.
+                <div class="panel">
+                    <div class="panel-body panel-body--flush">
+                        @for (event of rsvps; track event.id) {
+                        <div class="event-history-row">
+                            <div class="event-history-date">
+                                <div class="serif event-day">{{ event.date | date: 'd' }}</div>
+                                <div class="event-month">{{ event.date | date: 'MMM' }}</div>
+                            </div>
+                            <div class="event-main">
+                                <div class="event-title">{{ event.title }}</div>
+                                <div class="mono event-server">{{ event.serverName }}</div>
+                            </div>
+                            <span class="badge brass">
+                                {{ event.status === 'previous' ? 'Past' : event.status }}
+                            </span>
+                        </div>
+                        } @if (rsvps.length === 0) {
+                        <div class="event-empty">No RSVPs recorded.</div>
+                        }
+                    </div>
+                </div>
+                }
+                <!-- Service Record (privacy-gated: owner or command staff, T-0143) -->
+                @if (canViewPrivate) {
+                <div class="panel profile-service-record">
+                    <div class="panel-header">
+                        <span class="panel-title serif">Service Record</span>
+                        <span class="privacy-hint" title="Only you and command staff can see this."
+                            >?</span
+                        >
+                    </div>
+                    <div class="panel-body panel-body--flush">
+                        @if (serviceRecord.length > 0) {
+                        <div class="timeline">
+                            @for (entry of serviceRecord; track entry.id) {
+                            <div class="timeline-item">
+                                <div
+                                    class="timeline-dot"
+                                    [ngClass]="serviceEntryClass(entry.type)"
+                                ></div>
+                                <div class="timeline-body">
+                                    <div class="row timeline-head">
+                                        <div class="timeline-event">{{ entry.event }}</div>
+                                        @if (entry.type) {
+                                        <span class="timeline-type">{{ entry.type }}</span>
+                                        }
+                                    </div>
+                                    <div class="mono timeline-date">
+                                        {{ entry.occurredAt | date: 'MMM d, yyyy' }}
+                                    </div>
+                                    @if (entry.note) {
+                                    <div class="timeline-note">{{ entry.note }}</div>
+                                    }
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        } @else {
+                        <div class="event-empty">No service record entries yet.</div>
+                        }
                     </div>
                 </div>
                 }
@@ -340,38 +281,24 @@
             </div>
             <div class="panel-body profile-edit-body">
                 <div class="field-row">
-                    <label class="field-label" for="pe-name">Display name</label>
-                    <input id="pe-name" class="hf-input" type="text" [(ngModel)]="editName" />
-                </div>
-                <div class="field-row">
                     <label class="field-label" for="pe-ign">In-game name</label>
-                    <input id="pe-ign" class="hf-input" type="text" [(ngModel)]="editInGameName" />
-                </div>
-                <div class="field-row">
-                    <label class="field-label" for="pe-platform">Platform</label>
-                    <select id="pe-platform" class="hf-select" [(ngModel)]="editPlatform">
-                        <option value="">—</option>
-                        @for (p of platformOptions; track p.value) {
-                        <option [value]="p.value">{{ p.label }}</option>
-                        }
-                    </select>
-                </div>
-                <div class="field-row">
-                    <label class="field-label" for="pe-tz">Timezone</label>
                     <input
-                        id="pe-tz"
+                        id="pe-ign"
                         class="hf-input"
                         type="text"
-                        placeholder="e.g. America/Toronto"
-                        [(ngModel)]="editTimezone"
+                        required
+                        [(ngModel)]="editInGameName"
                     />
+                    @if (!editInGameName.trim()) {
+                    <div class="field-error">In-game name is required.</div>
+                    }
                 </div>
 
                 <div class="field-row">
                     <span class="field-label">Avatar</span>
                     <div class="profile-upload-row">
                         <hf-avatar
-                            [name]="editName"
+                            [name]="editInGameName"
                             [avatarUrl]="avatarPreview ?? member.avatarUrl"
                             [size]="56"
                         ></hf-avatar>
@@ -413,6 +340,10 @@
                 @if (saveError) {
                 <hf-notice variant="err">{{ saveError }}</hf-notice>
                 }
+
+                <!-- Danger zone: account deletion moved into the edit modal (T-0144) -->
+                <hf-crest-divider>Danger zone</hf-crest-divider>
+                <app-account-deletion (closed)="cancelEdit()"></app-account-deletion>
             </div>
             <div class="panel-footer profile-edit-actions">
                 <button type="button" class="btn btn-ghost btn-sm" (click)="cancelEdit()">
@@ -441,15 +372,25 @@
             (keydown.escape)="closeViewer()"
             (keydown.enter)="closeViewer()"
         >
-            <img class="profile-viewer-img" [src]="member.avatarUrl" [alt]="member.name" />
+            <img class="profile-viewer-img" [src]="member.avatarUrl" [alt]="member.inGameName" />
         </div>
         }
     </div>
     }
 
     <!-- Loading state -->
-    @if (!member) {
+    @if (!member && loading) {
     <div class="profile-loading">Loading profile…</div>
+    }
+
+    <!-- Not-found / invalid id (T-0139) -->
+    @if (!member && notFound) {
+    <div class="profile-loading profile-notfound">
+        <div class="serif profile-notfound-title">Member not found</div>
+        <div class="profile-notfound-sub">
+            This profile doesn’t exist or is no longer available.
+        </div>
+    </div>
     }
 
     <!-- Admin action modal -->

@@ -26,9 +26,13 @@ const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     { path: 'dashboard', component: DashboardComponent },
     { path: 'roster', component: RosterComponent },
+    // Bare /app/profile resolves to the signed-in user's own record in the
+    // component (T-0139); any member/mercenary is viewable at /app/profile/:id.
     { path: 'profile', component: ProfileComponent },
     { path: 'profile/:id', component: ProfileComponent },
-    { path: 'account-deletion', component: AccountDeletionComponent },
+    // Account deletion now lives inside the profile edit modal's "Danger zone"
+    // (T-0144); the standalone /app/account-deletion route was removed. The
+    // component is still declared below because the modal embeds it.
     // Events: members read the index + detail; only moderator+ may author.
     // create MUST precede :id so it is not captured as an id.
     { path: 'dashboard/events', component: EventsAdminComponent },

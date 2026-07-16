@@ -49,8 +49,8 @@ export interface MemberMedalAward {
 
 export interface Member {
     id: string;
-    name: string;
     discordTag: string;
+    /** In-game name — the sole display identity (the separate display name was dropped). */
     inGameName: string;
     rank: string;
     /** Rank id (from the backend), needed to change a member's rank. */
@@ -63,11 +63,8 @@ export interface Member {
     discordLinked: boolean;
     status: MemberStatus;
     lastSeen: string;
-    platform?: Platform;
-    timezone?: string;
     joinedAt?: string;
     eventsAttended?: number;
-    attendanceRate?: number;
     suspendedUntil?: string | null;
     bannedAt?: string | null;
     /** Custom or Discord-fallback avatar URL (null → initials tile). */

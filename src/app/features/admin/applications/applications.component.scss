@@ -171,7 +171,8 @@
 }
 
 .tab-bar {
-    margin-top: 16px;
+    // Full-width filter row sitting above the queue + detail layout.
+    margin-bottom: 16px;
 }
 
 /* Applicant blocklist controls (T-0033) */

@@ -39,7 +39,7 @@ export class DashboardComponent implements OnInit {
     gallerySubmissions: GallerySubmissionSummary[] = [];
     pendingApplications: Application[] = [];
 
-    /** Live bot status for the STAFF-only Quartermaster Bot widget (T-0081). */
+    /** Live bot status for the STAFF-only Lord Adjutant bot widget (T-0081). */
     botStatus: BotStatus | null = null;
     botStatusError = false;
 
@@ -48,28 +48,26 @@ export class DashboardComponent implements OnInit {
         name: string;
         rank: string;
         chevrons: number;
-        attendanceRate: number;
         medals: HonorMedal[];
-    } = { name: '', rank: '—', chevrons: 0, attendanceRate: 0, medals: [] };
+    } = { name: '', rank: '—', chevrons: 0, medals: [] };
 
     ngOnInit(): void {
         const user = this.auth.currentUser();
         if (user) {
-            this.currentMember.name = user.name;
+            this.currentMember.name = user.inGameName;
             this.currentMember.rank = user.rank ?? '—';
         }
 
-        // Load the caller's own roster record for chevrons/attendance/medals.
+        // Load the caller's own roster record for chevrons/medals.
         if (user?.isMember) {
             this.membersService
                 .getById(user.id)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe((m) => {
                     this.currentMember = {
-                        name: m.name,
+                        name: m.inGameName,
                         rank: m.rank || '—',
                         chevrons: m.chevrons,
-                        attendanceRate: m.attendanceRate ?? 0,
                         medals: (m.medalAwards ?? []).map((a) => ({
                             letter: a.glyph,
                             ribbon: a.ribbon,
@@ -126,7 +124,7 @@ export class DashboardComponent implements OnInit {
                 });
         }
 
-        // Quartermaster Bot status — STAFF only (Owner/Admin/Moderator), T-0081.
+        // Lord Adjutant bot status — STAFF only (Owner/Admin/Moderator), T-0081.
         if (this.isStaff) {
             this.discordService
                 .getStatus()

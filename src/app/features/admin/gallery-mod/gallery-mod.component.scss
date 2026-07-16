@@ -41,18 +41,18 @@
     text-align: inherit;
     appearance: none;
     border-radius: 8px;
-    border: 2px solid transparent;
+    border: 2px solid var(--rule);
     overflow: hidden;
     cursor: pointer;
     transition: border-color 0.15s;
-    background: var(--parch-100);
+    background: var(--ink-850);
 
     &--selected {
         border-color: var(--brass-400);
     }
 
     &:hover:not(&--selected) {
-        border-color: var(--rule-2);
+        border-color: var(--rule-3);
     }
 
     &__thumb {
@@ -70,6 +70,7 @@
     &__caption {
         font-size: 0.8rem;
         font-weight: 600;
+        color: var(--t-100);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -82,9 +83,49 @@
 }
 
 .detail-main-preview {
-    height: 180px;
     border-radius: 8px;
+    overflow: hidden;
     margin-bottom: 10px;
+    background: var(--ink-900);
+    border: 1px solid var(--rule);
+}
+
+.mod-media-el {
+    width: 100%;
+    display: block;
+    max-height: 320px;
+    object-fit: contain;
+    background: var(--ink-900);
+}
+
+.mod-media-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--ink-800);
+}
+
+.mod-embed {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+
+    iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+}
+
+.mod-link-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 9;
+    background: var(--ink-800);
+    text-decoration: none;
 }
 
 .detail-thumbnails {

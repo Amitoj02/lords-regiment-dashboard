@@ -5,12 +5,13 @@
             <div class="admin-label roster-roll-call">Roll Call</div>
             <h1 class="page-title serif">Regimental Roster</h1>
         </div>
+        @if (canExport) {
         <div class="row roster-head-actions">
-            <button type="button" class="btn btn-secondary btn-sm">
-                <span class="roster-btn-glyph">⊞</span> Filters
+            <button type="button" class="btn btn-ghost btn-sm" (click)="exportLedger()">
+                ↓ Export Ledger
             </button>
-            <button type="button" class="btn btn-ghost btn-sm">↓ Export Ledger</button>
         </div>
+        }
     </div>
 
     <div class="divider"></div>
@@ -78,13 +79,6 @@
             <table class="hf-table roster-table">
                 <thead>
                     <tr>
-                        <th class="roster-th-check">
-                            <input
-                                type="checkbox"
-                                class="hf-check"
-                                aria-label="Select all members"
-                            />
-                        </th>
                         <th>Member</th>
                         <th>Rank</th>
                         <th>Medals</th>
@@ -97,23 +91,24 @@
                 </thead>
                 <tbody>
                     @for (member of filteredMembers; track member) {
-                    <tr>
-                        <td class="col-check">
-                            <input
-                                type="checkbox"
-                                class="hf-check"
-                                [attr.aria-label]="'Select ' + member.name"
-                            />
-                        </td>
+                    <tr
+                        class="roster-row"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-label]="'View profile of ' + member.inGameName"
+                        (click)="goToProfile(member.id)"
+                        (keydown.enter)="goToProfile(member.id)"
+                        (keydown.space)="goToProfile(member.id); $event.preventDefault()"
+                    >
                         <td class="col-member">
                             <div class="row roster-member-cell">
                                 <hf-avatar
-                                    [name]="member.name"
+                                    [name]="member.inGameName"
                                     [avatarUrl]="member.avatarUrl"
                                     [size]="32"
                                 ></hf-avatar>
                                 <div>
-                                    <div class="roster-member-name">{{ member.name }}</div>
+                                    <div class="roster-member-name">{{ member.inGameName }}</div>
                                     <div class="mono roster-member-tag">
                                         {{ member.discordTag }}
                                     </div>
@@ -171,7 +166,7 @@
                                 class="btn btn-icon btn-ghost btn-sm"
                                 title="Actions"
                                 aria-label="Member actions"
-                                (click)="openActions(member)"
+                                (click)="$event.stopPropagation(); openActions(member)"
                             >
                                 ···
                             </button>
@@ -180,7 +175,7 @@
                     </tr>
                     } @if (filteredMembers.length === 0) {
                     <tr>
-                        <td colspan="9" class="roster-empty">
+                        <td colspan="8" class="roster-empty">
                             No members match your current filters.
                         </td>
                     </tr>

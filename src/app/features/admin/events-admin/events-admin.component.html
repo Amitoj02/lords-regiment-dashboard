@@ -7,6 +7,15 @@
             </div>
             @if (can('manage_events')) {
             <div class="row gap-8 events-head-actions">
+                <button
+                    type="button"
+                    class="btn btn-sm"
+                    [ngClass]="includeArchived ? 'btn-secondary' : 'btn-ghost'"
+                    [attr.aria-pressed]="includeArchived"
+                    (click)="toggleArchived()"
+                >
+                    {{ includeArchived ? 'Hide archived' : 'View archived' }}
+                </button>
                 <a routerLink="/app/dashboard/events/create" class="btn btn-primary btn-sm"
                     >+ New event</a
                 >

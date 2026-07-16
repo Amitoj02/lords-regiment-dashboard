@@ -55,7 +55,7 @@
                             <div class="field-label">Server name</div>
                             <div class="mono">{{ event.serverName || '—' }}</div>
                         </div>
-                        @if (can('reveal_event_passwords')) {
+                        @if (event.hasServerPassword && can('reveal_event_passwords')) {
                         <div class="field-group">
                             <div class="field-label">Password</div>
                             <div class="row gap-8">
@@ -196,9 +196,9 @@
                             type="button"
                             class="btn btn-ghost btn-sm btn-block"
                             [disabled]="working"
-                            (click)="archive()"
+                            (click)="toggleArchive()"
                         >
-                            Archive
+                            {{ event.isArchived ? 'Unarchive' : 'Archive' }}
                         </button>
                         <button
                             type="button"

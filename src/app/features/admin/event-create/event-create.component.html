@@ -7,7 +7,7 @@
             </div>
         </div>
 
-        <form [formGroup]="form" class="create-layout">
+        <form [formGroup]="form" class="create-layout" autocomplete="off">
             <!-- Left: main form -->
             <div class="create-left">
                 <!-- Particulars -->
@@ -242,6 +242,7 @@
                                 class="hf-input"
                                 type="text"
                                 formControlName="serverName"
+                                autocomplete="off"
                                 placeholder="e.g. Lords Regiment Official #1"
                             />
                         </div>
@@ -268,6 +269,7 @@
                                     class="hf-input password-input"
                                     [type]="showPassword ? 'text' : 'password'"
                                     formControlName="serverPassword"
+                                    autocomplete="new-password"
                                     placeholder="Server password"
                                 />
                                 <button

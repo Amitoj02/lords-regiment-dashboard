@@ -63,7 +63,6 @@ export interface DiscordVerifyConnection extends DiscordConnection {
 /** The regiment's Discord bot configuration (GET /discord/settings). */
 export interface DiscordBotSettings {
     botEnabled: boolean;
-    announcementChannelId: string | null;
     welcomeChannelId: string | null;
     welcomeMessage: string | null;
     /** Per-purpose routed channels (admin-picked). */
@@ -141,13 +140,6 @@ export class DiscordService {
     resync(): Observable<number> {
         return this.http
             .post<{ enqueued: number }>(`${this.base}/resync`, {})
-            .pipe(map((res) => res.enqueued));
-    }
-
-    /** Cross-post an announcement to Discord (ManageNotifications). */
-    announce(content: string, channelId?: string): Observable<boolean> {
-        return this.http
-            .post<{ enqueued: boolean }>(`${this.base}/announce`, { content, channelId })
             .pipe(map((res) => res.enqueued));
     }
 

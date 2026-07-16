@@ -31,10 +31,13 @@ export class AppShellComponent {
         this.drawerOpen = false;
     }
 
-    get navUser(): { name: string; rank: string; avatarUrl: string | null } {
+    get navUser(): { id: string; name: string; rank: string; avatarUrl: string | null } {
         const user = this.currentUser();
         return {
-            name: user?.name ?? '',
+            id: user?.id ?? '',
+            // The model's `name` field was removed — in-game name is the sole display
+            // identity (T-0159); id drives the own-profile links (T-0139).
+            name: user?.inGameName ?? '',
             rank: user?.rank ?? '',
             avatarUrl: user?.avatarUrl ?? null,
         };

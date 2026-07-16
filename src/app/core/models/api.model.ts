@@ -4,7 +4,7 @@
  * whole app) lets the existing components stay unchanged while the services swap
  * `of(stub)` for real HTTP. Field names mirror the NestJS DTOs exactly.
  */
-import { Application, ApplicationStatus } from './application.model';
+import { ApplicantType, Application, ApplicationStatus } from './application.model';
 import { AuditLog, AuditSeverity, DiscordSyncStatus } from './audit-log.model';
 import { EventStatus, RegimentEvent, RsvpStatus } from './event.model';
 import { GalleryItem, GalleryItemStatus, GalleryItemType } from './gallery.model';
@@ -18,7 +18,6 @@ import {
     Platform,
     Rank,
 } from './member.model';
-import { Notification, NotificationTone } from './notification.model';
 
 /** Standard paginated envelope (matches PaginatedResponseDto). */
 export interface PaginatedResponse<T> {
@@ -45,12 +44,9 @@ export interface ApiMemberMedal {
 
 export interface ApiMember {
     id: string;
-    name: string;
-    inGameName: string | null;
+    inGameName: string;
     role: MemberRole;
     status: MemberStatus;
-    platform: Platform | null;
-    timezone: string | null;
     rank: string | null;
     rankId: string;
     chevrons: number;
@@ -64,7 +60,6 @@ export interface ApiMember {
     joinedAt: string | null;
     lastSeenAt: string | null;
     eventsAttended: number;
-    attendanceRate: number;
     suspendedUntil: string | null;
     bannedAt: string | null;
     medals: ApiMemberMedal[];
@@ -104,6 +99,7 @@ export interface ApiApplication {
     applicantName: string;
     discordTag: string | null;
     inGameName: string;
+    applicantType: ApplicantType;
     currentRegiment: string;
     howFound: string;
     preferredClasses: string;
@@ -125,12 +121,13 @@ export interface ApiApplication {
 export interface RegimentProfile {
     id: string;
     name: string;
-    shortTag: string;
     missionStatement: string | null;
     accentTone: string;
     crestUrl: string | null;
     bannerUrl: string | null;
     establishedYear: number | null;
+    /** Full establishment date (YYYY-MM-DD). */
+    establishedAt: string | null;
     discordInviteUrl: string | null;
     discordServerName: string | null;
     setupComplete: boolean;
@@ -139,12 +136,16 @@ export interface RegimentProfile {
 
 export interface RegimentStats {
     totalMembers: number;
+    /** Enrolled members excluding Mercenaries (the landing "members" count). */
+    enrolledExcludingMercenaries: number;
     activeMembers: number;
     membersByRole: Record<MemberRole, number>;
     totalEvents: number;
     upcomingEvents: number;
     previousEvents: number;
     establishedYear: number | null;
+    /** Full establishment date (YYYY-MM-DD). */
+    establishedAt: string | null;
 }
 
 // ── Mappers: backend DTO → frontend view model ───────────────────────────────
@@ -164,7 +165,6 @@ export function mapMedalAward(m: ApiMemberMedal): MemberMedalAward {
 export function mapMember(m: ApiMember): Member {
     return {
         id: m.id,
-        name: m.name,
         discordTag: m.discordTag ?? '',
         inGameName: m.inGameName ?? '',
         rank: m.rank ?? '',
@@ -176,11 +176,8 @@ export function mapMember(m: ApiMember): Member {
         discordLinked: m.discordLinked,
         status: m.status,
         lastSeen: m.lastSeenAt ?? '',
-        platform: m.platform ?? undefined,
-        timezone: m.timezone ?? undefined,
         joinedAt: m.joinedAt ?? undefined,
         eventsAttended: m.eventsAttended,
-        attendanceRate: m.attendanceRate,
         suspendedUntil: m.suspendedUntil,
         bannedAt: m.bannedAt,
         avatarUrl: m.avatarUrl,
@@ -223,6 +220,7 @@ export function mapApplication(a: ApiApplication): Application {
         applicantName: a.applicantName,
         discordTag: a.discordTag ?? '',
         inGameName: a.inGameName,
+        applicantType: a.applicantType,
         currentRegiment: a.currentRegiment,
         howFound: a.howFound,
         preferredClasses: a.preferredClasses,
@@ -279,6 +277,8 @@ export interface ApiEvent {
     // Member-view-only fields (omitted entirely for public callers).
     serverName?: string | null;
     serverRegion?: string | null;
+    /** Whether a server password is set (member view only). The password itself is never sent. */
+    hasServerPassword?: boolean;
     recurrenceRule?: string | null;
     recurrenceCadence?: 'daily' | 'weekly' | 'monthly' | null;
     recurrenceActive?: boolean;
@@ -337,6 +337,8 @@ export function mapEvent(e: ApiEvent): RegimentEvent {
         bannerUrl: e.bannerUrl ?? undefined,
         notifyBefore: (e.notifyOffsets ?? []).map(formatNotifyOffset),
         myRsvp: e.myRsvp ? e.myRsvp.status : e.myRsvp === null ? null : undefined,
+        hasServerPassword: e.hasServerPassword,
+        isArchived: e.isArchived,
     };
 }
 
@@ -433,37 +435,15 @@ export function mapAuditLog(a: ApiAuditEntry): AuditLog {
         id: a.id,
         timestamp: a.occurredAt,
         actor: a.actorLabel ?? a.actorMemberId ?? 'System',
+        actorMemberId: a.actorMemberId,
         action: a.action,
         detail: a.detail ?? '',
         severity: a.severity,
         targetUser: a.targetLabel ?? undefined,
+        targetMemberId: a.targetMemberId,
         beforeState: a.before ? JSON.stringify(a.before) : undefined,
         afterState: a.after ? JSON.stringify(a.after) : undefined,
         requestId: a.requestId ?? undefined,
         discordSyncStatus: a.discordSyncStatus ?? null,
-    };
-}
-
-// ── Notifications ────────────────────────────────────────────────────────────
-
-export interface ApiNotification {
-    id: string;
-    title: string;
-    body: string;
-    tone: NotificationTone;
-    authorLabel: string | null;
-    createdAt: string;
-    read: boolean;
-}
-
-export function mapNotification(n: ApiNotification): Notification {
-    return {
-        id: n.id,
-        title: n.title,
-        body: n.body,
-        tone: n.tone,
-        author: n.authorLabel ?? 'Command',
-        createdAt: n.createdAt,
-        read: n.read,
     };
 }

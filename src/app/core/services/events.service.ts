@@ -41,10 +41,14 @@ export class EventsService {
      * (server binding + the caller's own myRsvp) for enrolled members, redacted
      * for non-enrolled callers. Used by the in-shell events surfaces.
      */
-    getAllMine(status?: EventStatus): Observable<RegimentEvent[]> {
-        const q = status ? `?status=${status}&limit=100` : '?limit=100';
+    getAllMine(status?: EventStatus, includeArchived = false): Observable<RegimentEvent[]> {
+        const params = ['limit=100'];
+        if (status) params.push(`status=${status}`);
+        // Moderators can request archived events too (T-0137); the backend gates it
+        // on ManageEvents and silently ignores the flag for other callers.
+        if (includeArchived) params.push('archived=true');
         return this.http
-            .get<PaginatedResponse<ApiEvent>>(`${this.base}/mine${q}`)
+            .get<PaginatedResponse<ApiEvent>>(`${this.base}/mine?${params.join('&')}`)
             .pipe(map((res) => res.data.map(mapEvent)));
     }
 
@@ -82,6 +86,11 @@ export class EventsService {
     // ── Lifecycle transitions (each returns the updated event) ───────────────
     archive(id: string): Observable<RegimentEvent> {
         return this.http.post<ApiEvent>(`${this.base}/${id}/archive`, {}).pipe(map(mapEvent));
+    }
+
+    /** Unarchive an event — restores it to the calendar (T-0136). */
+    unarchive(id: string): Observable<RegimentEvent> {
+        return this.http.post<ApiEvent>(`${this.base}/${id}/unarchive`, {}).pipe(map(mapEvent));
     }
 
     complete(id: string, outcome?: string, inLineCount?: number): Observable<RegimentEvent> {
