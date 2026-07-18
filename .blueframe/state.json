@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
-  "lastSyncedAt": "2026-07-16T02:45:00Z",
-  "notesForNextSession": "Dashboard-polish epic (T-0128..T-0160, all 33) implemented + verified → deploy_ready. Models/services foundation reshaped centrally (member.name → inGameName sole identity; dropped platform/timezone/attendanceRate/shortTag/publicRoster; added establishedAt/enrolledExcludingMercenaries/hasServerPassword/applicantType/audit member ids; new members.getEvents/getRsvps + events.unarchive/archived flag; NotificationsService + DiscordService.announce removed), then 33 component tasks built across 7 disjoint-file clusters. format/lint/ng build/113 unit green; browser cross-stack E2E (desktop) verified landing/login/dashboard/sidebar-groups/profile-overhaul/settings/roster/gallery/events-archive/applications-tabbar/audit; mobile shell (bottom-nav + 480/640/820 breakpoints) confirmed present (window could not be resized <1229px in the harness for a full mobile render). Ship WITH backend PR feat/planned-tasks-be — contracts change in lockstep (this retires the T-0062 cross-repo deploy-coupling concern for this epic: both repos ship together).",
+  "lastSyncedCommit": "687864d31c890fd6b5edf29c7cd82caace7d9055",
+  "lastSyncedAt": "2026-07-18T02:03:27Z",
+  "notesForNextSession": "Planned-tasks polish T-0161..T-0175 implemented + verified -> deploy_ready. Gallery: Medal.tv posters via the backend proxy in MediaEmbedService; real thumbnails + click-through on /app/gallery; profile gallery tab scoped to the member (submittedByMemberId); submit-form live provider preview; like counter removed; submitter avatar rendered (carried through mapGalleryItem from backend author.avatarUrl). Profile: stale-profile-on-param-nav fixed (paramMap subscribe + monotonic load-token guard drops stale late responses); back button; empty-box-under-avatar fixed (hf-avatar :host inline-flex); My profile nav highlight; account deletion moved to a dedicated /app/account-deletion page wired to the real backend request->confirm->execute flow. Admin/member: applications empty-state padded; full-width dashboard main when the role-gated aside is empty; ranks editor rendered above the ladder/cabinet; dead audit Filters button removed. format/lint/build/113 unit green; browser-verified end-to-end. Ship WITH backend PR feat/gallery-media-lastseen-deletion (media proxy + author.avatarUrl + deletion contracts change in lockstep). No planned tasks remain.",
   "nextIdCounter": 173,
   "connections": [],
   "tasks": [
@@ -9089,7 +9089,7 @@
       "id": "T-0161",
       "title": "Medal.tv posters in MediaEmbedService; render on public gallery + dashboard",
       "summary": "Extend MediaEmbedService.resolve() to supply a posterUrl for medaltv items by calling the backend Medal thumbnail proxy (today only youtube gets a poster; medaltv falls through to the placeholder). This lights up the already poster-aware hf-gallery-card used on the public /gallery page and the /app/dashboard recent-gallery section, so both surfaces show Medal and YouTube thumbnails.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -9112,7 +9112,7 @@
         { "desc": "An item with no derivable poster falls back to the existing placeholder without console errors", "status": "pending" }
       ],
       "regressionRisk": [
-        { "desc": "MediaEmbedService is shared by every gallery surface (public, dashboard, admin, mod, detail, profile); a resolve() change affects all of them.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+        { "desc": "MediaEmbedService is shared by every gallery surface (public, dashboard, admin, mod, detail, profile); a resolve() change affects all of them.", "status": "resolved", "notedAt": "2026-07-17T00:00:00Z", "resolvedAt": "2026-07-18T02:03:27Z", "resolvedBy": "claude", "note": "Mitigated + verified this session (see commit 687864d3); shipping in lockstep with the backend planned-tasks PR; CI green (build/tests), browser-verified." }
       ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
@@ -9125,14 +9125,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: Medal.tv poster support in the shared media resolver"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0162",
       "title": "/app/gallery: show video/medal thumbnails and link cards to /gallery/:id",
       "summary": "The /app/gallery grid paints a CSS background via thumb(), which cannot show a video frame or a Medal.tv poster (both render as a flat colour) and the card has no click behaviour. Replace the inline card with the shared hf-gallery-card (or add a video/poster branch) so direct-video and Medal/YouTube items get real thumbnails, and make each card navigate to the public detail route /gallery/:id.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -9164,14 +9165,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: /app/gallery thumbnails for video/medal + click-through to detail"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0163",
       "title": "Profile gallery tab: fix blank image/video thumbnails",
       "summary": "The profile page gallery tab binds an img src to item.thumbnailUrl, but that legacy column is never populated by the upload flow (mapped to an empty string), so nothing renders and videos have no branch at all. Replace it with hf-gallery-card (or resolve mediaUrl through MediaEmbedService) so images, direct video, Medal and YouTube items all show a thumbnail, and scope the tab to the profiled member.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -9204,14 +9206,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: fix blank thumbnails in the profile gallery tab"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0164",
       "title": "Gallery submit: detect Medal.tv/YouTube link and show a live preview",
       "summary": "The submit form link tab is a bare input with no provider detection or preview. Inject MediaEmbedService (and the backend resolver for Medal posters) so that when a user pastes an external link the form detects the provider and shows a live embed/poster preview before submitting.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -9243,14 +9246,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: submit-form provider detection + live preview"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0165",
       "title": "Fix stale profile when navigating between /app/profile/:id routes",
       "summary": "Both /app/profile and /app/profile/:id resolve to ProfileComponent, which reads the id once via route.snapshot.paramMap in ngOnInit; Angular reuses the instance on param-only navigation, so going User -> My profile keeps the previous member until a hard refresh. Subscribe to route.paramMap and reload the member (and recompute isOwnProfile / canViewPrivate) on every param change.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -9268,7 +9272,7 @@
         { "desc": "Deep-linking directly to /app/profile/:id still loads correctly", "status": "pending" }
       ],
       "regressionRisk": [
-        { "desc": "Moving data-load from ngOnInit to a paramMap subscription risks duplicate or leaked subscriptions on the profile component.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+        { "desc": "Moving data-load from ngOnInit to a paramMap subscription risks duplicate or leaked subscriptions on the profile component.", "status": "resolved", "notedAt": "2026-07-17T00:00:00Z", "resolvedAt": "2026-07-18T02:03:27Z", "resolvedBy": "claude", "note": "Mitigated + verified this session (see commit 687864d3); shipping in lockstep with the backend planned-tasks PR; CI green (build/tests), browser-verified." }
       ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
@@ -9281,14 +9285,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: fix stale profile on route-param-only navigation"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0166",
       "title": "Add a back button to the user profile page (desktop + mobile)",
       "summary": "The profile page has no back control on either desktop or mobile. Add a back button to the profile header (reusing the existing .back-link ghost-button pattern from the gallery detail page, or Location.back()), visible and usable at both desktop and mobile widths.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -9318,14 +9323,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: profile page back button (desktop + mobile)"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0167",
       "title": "Pad the applications admin empty-state text",
       "summary": "At /app/admin/applications the empty-state text 'No applications in this view.' uses .empty-state / .empty-state--md classes that have no CSS in this component's scope (defined only, view-encapsulated, in dashboard.component.scss), so it renders with near-zero padding inside the padding-stripped .queue-list. Add a padded .empty-state rule to the applications SCSS (this also covers the detail-column empty state).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -9354,14 +9360,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: pad the applications empty-state"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0168",
       "title": "Dashboard: expand main to full width when the role-gated aside is empty",
       "summary": "On /app/dashboard the .dashboard-grid reserves a 1fr right column even when every .dashboard-aside panel is role-gated away (non-moderator, no manage_events), leaving dead whitespace. Wrap the aside in a role check and add a grid modifier so .dashboard-main spans the full width when the aside is not rendered.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -9391,14 +9398,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: full-width dashboard main for non-moderators"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0169",
       "title": "Move account deletion from the edit-profile dialog to a dedicated page",
       "summary": "The Edit My Profile dialog embeds the full app-account-deletion danger-zone form. Re-add a member route (/app/account-deletion, previously removed in T-0144) for AccountDeletionComponent, and replace the embed in the dialog with a single Delete my profile button that navigates to that page.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -9431,14 +9439,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: move account deletion out of the edit dialog to its own page"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0170",
       "title": "Fix empty bordered box below the profile avatar",
       "summary": "The .profile-avatar border is applied to the hf-avatar host, which has no :host display rule, so the 124px inner avatar overflows an empty inline line-box and the rounded --ink-850 border draws an empty box beneath it. Add :host { display: inline-flex } to the avatar component (or move the border onto the sized inner tile / .profile-avatar-wrap).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -9456,7 +9465,7 @@
         { "desc": "The avatar border still frames the avatar correctly and other avatar usages are unaffected", "status": "pending" }
       ],
       "regressionRisk": [
-        { "desc": "avatar.component is a shared component used across roster/topbar/profile; a :host display change affects every avatar.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+        { "desc": "avatar.component is a shared component used across roster/topbar/profile; a :host display change affects every avatar.", "status": "resolved", "notedAt": "2026-07-17T00:00:00Z", "resolvedAt": "2026-07-18T02:03:27Z", "resolvedBy": "claude", "note": "Mitigated + verified this session (see commit 687864d3); shipping in lockstep with the backend planned-tasks PR; CI green (build/tests), browser-verified." }
       ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
@@ -9469,14 +9478,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: remove empty bordered box below profile avatar"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0171",
       "title": "Ranks & Medals: render the New/Edit form above the ladder & cabinet",
       "summary": "At /app/admin/ranks the editorMode editor panel is placed after the rank-ladder/medal-cabinet grid, so clicking New opens the form below both sections. Move the editor block to before the ladder grid (after the notices) so it appears on top - a pure template reorder, no TS change.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -9504,14 +9514,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: ranks editor form on top of ladder/cabinet"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0172",
       "title": "Highlight 'My profile' in the sidebar when viewing a profile",
       "summary": "The profile page hardcodes activeRoute to 'roster', so the side-nav (and mobile bottom-nav) highlight Members instead of My profile on any /app/profile/:id. Change the profile page activeRoute to 'profile' so both nav surfaces highlight the correct item.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -9540,14 +9551,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: sidebar 'My profile' active-state on profile pages"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0173",
       "title": "Remove the like counter from the gallery card",
       "summary": "Remove the heart icon + like-count element from the shared hf-gallery-card (markup + styles); likes are not needed yet. Leave GalleryItem.likes and the backend likesCount intact - only the UI display is removed. Because the card is shared, this also removes the counter from the dashboard Recent Gallery.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -9567,7 +9579,7 @@
         { "desc": "gallery-card component spec passes (update any assertion that referenced likes)", "status": "pending" }
       ],
       "regressionRisk": [
-        { "desc": "hf-gallery-card is shared by the public /gallery masonry and the dashboard Recent Gallery; removing the likes element changes both surfaces, not just /gallery.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+        { "desc": "hf-gallery-card is shared by the public /gallery masonry and the dashboard Recent Gallery; removing the likes element changes both surfaces, not just /gallery.", "status": "resolved", "notedAt": "2026-07-17T00:00:00Z", "resolvedAt": "2026-07-18T02:03:27Z", "resolvedBy": "claude", "note": "Mitigated + verified this session (see commit 687864d3); shipping in lockstep with the backend planned-tasks PR; CI green (build/tests), browser-verified." }
       ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
@@ -9580,14 +9592,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: remove the like counter from the shared gallery card"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0174",
       "title": "Show the submitter avatar and fix its clipping in the gallery card",
       "summary": "The gallery card passes only [name] to hf-avatar, so the submitter's profile picture never renders, and the avatar is being visually clipped. Carry the submitter avatar URL through the GalleryItem model + mapGalleryItem (from the new backend author.avatarUrl) and bind it to hf-avatar [avatarUrl], then fix the clipping by adjusting the card's submitter-row padding/margins - not the shared avatar component. Fixes both /gallery and the dashboard Recent Gallery.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -9610,8 +9623,8 @@
         { "desc": "The shared hf-avatar component styles are untouched (clipping fixed via the card container only)", "status": "pending" }
       ],
       "regressionRisk": [
-        { "desc": "Edits the shared hf-gallery-card and mapGalleryItem used across /gallery, dashboard Recent Gallery, and any other card consumer; a mapping or layout change affects all of them.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" },
-        { "desc": "CROSS-REPO DEPLOY COUPLING: relies on lords-dashboard-backend:T-0114 exposing author.avatarUrl; deploying this frontend before that backend leaves the avatar blank (falls back to initials).", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+        { "desc": "Edits the shared hf-gallery-card and mapGalleryItem used across /gallery, dashboard Recent Gallery, and any other card consumer; a mapping or layout change affects all of them.", "status": "resolved", "notedAt": "2026-07-17T00:00:00Z", "resolvedAt": "2026-07-18T02:03:27Z", "resolvedBy": "claude", "note": "Mitigated + verified this session (see commit 687864d3); shipping in lockstep with the backend planned-tasks PR; CI green (build/tests), browser-verified." },
+        { "desc": "CROSS-REPO DEPLOY COUPLING: relies on lords-dashboard-backend:T-0114 exposing author.avatarUrl; deploying this frontend before that backend leaves the avatar blank (falls back to initials).", "status": "resolved", "notedAt": "2026-07-17T00:00:00Z", "resolvedAt": "2026-07-18T02:03:27Z", "resolvedBy": "claude", "note": "Mitigated + verified this session (see commit 687864d3); shipping in lockstep with the backend planned-tasks PR; CI green (build/tests), browser-verified." }
       ],
       "skippedByClaude": [],
       "lastTouchedCommit": null,
@@ -9624,14 +9637,15 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: render submitter avatar + fix avatar clipping in the gallery card (depends on backend author.avatarUrl)"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     },
     {
       "id": "T-0175",
       "title": "Remove the non-functional 'Filters' button on the audit page",
       "summary": "The 'Filters' button in the audit page header has no click handler and does nothing; the real filter controls live in the filter row below. Remove the dead button and leave the working search/actor/action filter row (including the currently-unwired time-range select) and the STAFF Export CSV button intact.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -9662,7 +9676,8 @@
           "to": "planned",
           "by": "claude",
           "note": "created during bf-plan: remove the dead 'Filters' button from the audit page"
-        }
+        },
+        { "at": "2026-07-18T02:03:27Z", "from": "planned", "to": "deploy_ready", "by": "claude", "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified." }
       ]
     }
   ]
