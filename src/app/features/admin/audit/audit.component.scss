@@ -11,20 +11,54 @@
     min-width: 200px;
 }
 
-.audit-layout {
-    display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 20px;
-    align-items: start;
-}
-
-.audit-detail {
-    position: sticky;
-    top: 20px;
-}
-
 .audit-table-wrap {
     overflow-x: auto;
+}
+
+// ── Detail dialog (T-0189) — mirrors the member admin-action modal overlay ──────
+.audit-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(11, 14, 20, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.audit-modal {
+    width: min(520px, 100%);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    background: var(--ink-800);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-3);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+
+    // Focused programmatically on open (for a11y announcement), not via Tab —
+    // so no focus ring on the container itself; inner controls keep theirs.
+    &:focus {
+        outline: none;
+    }
+}
+
+.audit-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent);
+}
+
+.audit-modal-body {
+    padding: 16px;
+    overflow-y: auto;
 }
 
 .ts-cell {
@@ -121,12 +155,19 @@
     background: var(--ink-850);
     border-radius: 6px;
     border: 1px solid var(--rule-2);
+
+    // Let each cell shrink so long before/after JSON wraps instead of forcing the
+    // whole dialog to scroll horizontally (T-0189).
+    > div {
+        min-width: 0;
+    }
 }
 
 .state-value {
     font-weight: 600;
     margin-top: 4px;
     color: var(--t-100);
+    overflow-wrap: anywhere;
 }
 
 .detail-metadata {

@@ -78,6 +78,7 @@ export class AdminActionModalComponent {
     awardBusy = false;
     removingMedalId: string | null = null;
     suspendBusy = false;
+    unsuspendBusy = false;
     banBusy = false;
     error: string | null = null;
 
@@ -99,6 +100,16 @@ export class AdminActionModalComponent {
     }
     get hasAnyCapability(): boolean {
         return this.canRanksMedals || this.canRoles;
+    }
+
+    /**
+     * True when the member is *actively* suspended (suspendedUntil in the future),
+     * matching deriveMemberStatus + the backend unsuspend guard. Drives the
+     * Unsuspend button so it never shows for an already-elapsed suspension.
+     */
+    get isActivelySuspended(): boolean {
+        const until = this._member?.suspendedUntil;
+        return !!until && new Date(until).getTime() > Date.now();
     }
 
     /** Local minimum for the suspend datetime-local (now, to the minute). */
@@ -242,6 +253,13 @@ export class AdminActionModalComponent {
         if (!m) return;
         this.banBusy = true;
         this.run(this.members.unban(m.id), () => (this.banBusy = false));
+    }
+
+    unsuspend(): void {
+        const m = this._member;
+        if (!m) return;
+        this.unsuspendBusy = true;
+        this.run(this.members.unsuspend(m.id), () => (this.unsuspendBusy = false));
     }
 
     // ── Shared plumbing ──────────────────────────────────────────────────────

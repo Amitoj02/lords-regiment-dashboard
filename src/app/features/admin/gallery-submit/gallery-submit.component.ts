@@ -1,8 +1,9 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryFileInput, GalleryService } from '../../../core/services/gallery.service';
-import { StorageService } from '../../../core/services/storage.service';
+import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/storage.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 
@@ -27,10 +28,19 @@ interface UploadedFile {
     styleUrls: ['./gallery-submit.component.scss'],
     standalone: false,
 })
-export class GallerySubmitComponent {
+export class GallerySubmitComponent implements OnInit {
     activeTab: 'files' | 'link' = 'files';
 
     uploadedFiles: UploadedFile[] = [];
+
+    /** The fixed accepted-type list for gallery uploads (from the upload policy). */
+    private static readonly GALLERY_TYPES = StorageService.formatExtensions(
+        StorageService.targetPolicy(DEFAULT_STORAGE_POLICY, 'gallery').acceptedExtensions,
+    );
+    /** Accepted-types + size/item caps for the dropzone hint. The type list is the
+     * fixed upload policy; the caps are admin-configurable (GET /api/settings), so
+     * they are seeded from the backend defaults then refreshed live (T-0187). */
+    galleryHint = this.composeGalleryHint(12, 80, 10);
 
     submissionTitle = '';
     tagInput = '';
@@ -52,10 +62,36 @@ export class GallerySubmitComponent {
     constructor(
         private galleryService: GalleryService,
         private storage: StorageService,
+        private settings: SettingsService,
         private auth: AuthService,
         private router: Router,
         private media: MediaEmbedService,
     ) {}
+
+    ngOnInit(): void {
+        // Gallery size/item caps are admin-configurable — refresh the hint from the
+        // live settings, but never block on it (keep the seeded defaults on error).
+        this.settings
+            .getSettings()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (s) => {
+                    this.galleryHint = this.composeGalleryHint(
+                        s.galleryMaxImageSizeMb,
+                        s.galleryMaxVideoSizeMb,
+                        s.galleryMaxItemsPerSubmission,
+                    );
+                },
+                error: () => {
+                    /* keep the default hint */
+                },
+            });
+    }
+
+    /** "PNG, JPG, WebP, MP4, WEBM or MOV · images up to N MB, video up to M MB · max K files". */
+    private composeGalleryHint(imageMb: number, videoMb: number, maxItems: number): string {
+        return `${GallerySubmitComponent.GALLERY_TYPES} · images up to ${imageMb} MB, video up to ${videoMb} MB · max ${maxItems} files`;
+    }
 
     /** Re-resolve the link preview whenever the URL input changes. */
     onLinkChange(): void {

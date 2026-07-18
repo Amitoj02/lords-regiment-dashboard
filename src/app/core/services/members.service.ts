@@ -109,6 +109,11 @@ export class MembersService {
         return this.http.post<ApiMember>(`${this.base}/${id}/unban`, {}).pipe(map(mapMember));
     }
 
+    /** Lift an active suspension (POST /members/:id/unsuspend). Mirrors {@link unban}. */
+    unsuspend(id: string): Observable<Member> {
+        return this.http.post<ApiMember>(`${this.base}/${id}/unsuspend`, {}).pipe(map(mapMember));
+    }
+
     getServiceRecord(id: string): Observable<ServiceRecordEntry[]> {
         return this.http.get<ServiceRecordEntry[]>(`${this.base}/${id}/service-record`);
     }
