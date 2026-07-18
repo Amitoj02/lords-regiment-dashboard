@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "687864d31c890fd6b5edf29c7cd82caace7d9055",
-  "lastSyncedAt": "2026-07-18T02:03:27Z",
-  "notesForNextSession": "Planned-tasks polish T-0161..T-0175 implemented + verified -> deploy_ready. Gallery: Medal.tv posters via the backend proxy in MediaEmbedService; real thumbnails + click-through on /app/gallery; profile gallery tab scoped to the member (submittedByMemberId); submit-form live provider preview; like counter removed; submitter avatar rendered (carried through mapGalleryItem from backend author.avatarUrl). Profile: stale-profile-on-param-nav fixed (paramMap subscribe + monotonic load-token guard drops stale late responses); back button; empty-box-under-avatar fixed (hf-avatar :host inline-flex); My profile nav highlight; account deletion moved to a dedicated /app/account-deletion page wired to the real backend request->confirm->execute flow. Admin/member: applications empty-state padded; full-width dashboard main when the role-gated aside is empty; ranks editor rendered above the ladder/cabinet; dead audit Filters button removed. format/lint/build/113 unit green; browser-verified end-to-end. Ship WITH backend PR feat/gallery-media-lastseen-deletion (media proxy + author.avatarUrl + deletion contracts change in lockstep). No planned tasks remain.",
-  "nextIdCounter": 173,
+  "lastSyncedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+  "lastSyncedAt": "2026-07-18T04:56:34Z",
+  "notesForNextSession": "Planned-tasks polish T-0176..T-0186 implemented -> deploy_ready (FE 72c9585). Gallery: usage-ranked tag bar + animated More/Less expander (public /gallery only; /app/gallery is GalleryAdminComponent), submitter-avatar inset on the shared hf-gallery-card, media-detail byline real avatar + profile link + moderator edit(caption/tags via new GalleryService.update->PATCH)/delete. Profile: back-button clears the full-bleed banner (desktop + 820/480 mobile), My-profile nav highlight only on own profile. Admin ranks: New Role + New Medal toolbar buttons, panel \"+ New\" removed. Roster: derived Suspended/Banned/Inactive pills + tooltips (filter + CSV in lockstep). Audit: real actor avatars (initials fallback) + dark detail/state boxes. format/lint/build/133 FE specs green; browser-verified end-to-end (signed in as owner via minted JWT). SHIP WITH backend PR feat/gallery-moderation-audit-avatars (2e082cb): T-0183 consumes PATCH /gallery/:id (backend T-0115) and T-0185 consumes actorAvatarUrl (backend T-0117) — deploy the two together. No planned tasks remain.",
+  "nextIdCounter": 187,
   "connections": [],
   "tasks": [
     {
@@ -11026,6 +11026,723 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        }
+      ]
+    },
+    {
+      "id": "T-0176",
+      "title": "Rank gallery tags by usage and cap the filter bar to the top 5",
+      "summary": "In GalleryPageComponent, count how often each tag appears across approved items, sort descending by count, and expose the top 5 as the default visible set plus the full ranked list behind an expanded flag. Ensure an active tag that falls outside the top 5 stays visible while the list is collapsed so the current filter is never hidden.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "tag-filter",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-page/gallery-page.component.ts",
+        "src/app/features/public/gallery-page/gallery-page.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0177"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Tags are ordered by descending usage count across approved items (most-used first)",
+          "status": "passed"
+        },
+        {
+          "desc": "With >5 distinct tags, only the top 5 render by default; the rest are held behind the expanded flag",
+          "status": "passed"
+        },
+        {
+          "desc": "With <=5 distinct tags, all tags show and no 'more' control is needed",
+          "status": "passed"
+        },
+        {
+          "desc": "Selecting a tag outside the top 5 keeps that chip visible while the list is collapsed (active filter never hidden)",
+          "status": "passed"
+        },
+        {
+          "desc": "Clicking a tag still filters filteredItems to items carrying that tag (existing setTag/applyFilter behavior preserved)",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Reworks allTags derivation in GalleryPageComponent.ngOnInit shared by the tag filter bar",
+          "status": "resolved",
+          "notedAt": "2026-07-18T03:42:44Z",
+          "resolvedAt": "2026-07-18T04:56:34Z",
+          "resolvedBy": "claude",
+          "note": "allTags reworked into a frequency-ranked derivation with an animated overflow region; new gallery-page.component.spec (6 tests: ranking, top-5, overflow de-dup, active-tag-visible, toggle, <=5-no-expander) + browser-verified the expander is correctly hidden at <=5 tags on /gallery. 133 FE specs green."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:42:44Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:42:44Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0177",
+      "title": "Add an animated 'More'/'Less' expander to reveal the full gallery tag list",
+      "summary": "Add a 'More' chip after the top-5 tags that smoothly expands the tag bar to reveal every remaining tag (and a 'Less' control to collapse it), styled to match the brass gallery-tag chips. Any tag in the expanded list is clickable to filter, and the reveal uses a graceful height/opacity transition rather than a hard jump.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "tag-filter",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-page/gallery-page.component.html",
+        "src/app/features/public/gallery-page/gallery-page.component.scss",
+        "src/app/features/public/gallery-page/gallery-page.component.ts"
+      ],
+      "dependsOn": [
+        "T-0176"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A 'More (+N)' chip appears only when there are more than 5 tags and toggles to 'Less' when expanded",
+          "status": "passed"
+        },
+        {
+          "desc": "Expanding smoothly animates the extra tags into view; collapsing animates them away (no layout jump)",
+          "status": "passed"
+        },
+        {
+          "desc": "Tags revealed by expanding are clickable and filter the grid exactly like the top-5 chips",
+          "status": "passed"
+        },
+        {
+          "desc": "Expander chip matches the existing brass gallery-tag styling and is keyboard-focusable/operable",
+          "status": "passed"
+        },
+        {
+          "desc": "Collapsing while a hidden tag is active keeps that active chip pinned visible (consistent with T-0176)",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds transition CSS to gallery-tag-list which also lays out the existing tag chips",
+          "status": "resolved",
+          "notedAt": "2026-07-18T03:42:44Z",
+          "resolvedAt": "2026-07-18T04:56:34Z",
+          "resolvedBy": "claude",
+          "note": "Overflow region uses a component-scoped grid 0fr->1fr + opacity transition (no global blast radius); reduced-motion guarded. Covered by the same gallery-page spec + browser-verified tag-bar renders without console errors."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:42:44Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:42:44Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0178",
+      "title": "Fix profile back-button clipping into the user banner (desktop + mobile)",
+      "summary": "The back button added in T-0166 sits directly above .profile-banner, whose negative top margin (margin: -24px -24px 0 on desktop; -16px / -14px at the mobile breakpoints) plus overflow:hidden rides the banner up under the button so it visually clips. Adjust the .back-link / .profile-banner spacing (and stacking) in profile.component.scss so the back control clears the banner at desktop and both mobile widths without losing the full-bleed banner gutter.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "back-button",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.scss",
+        "src/app/features/member/profile/profile.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Back button fully visible above the banner at >=1024px (no clip)",
+          "status": "passed"
+        },
+        {
+          "desc": "Back button not clipped at the 820px and 480px mobile breakpoints",
+          "status": "passed"
+        },
+        {
+          "desc": "Banner still spans full width with its negative-gutter margins intact",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0179",
+      "title": "Ranks & Medals: replace the single top button with 'New Role' + 'New Medal' and drop the section 'New' buttons",
+      "summary": "At /app/admin/ranks, replace the single golden '+ New' button (calls newRank) in the header toolbar with two golden btn-primary buttons labelled 'New Role' (newRank) and 'New Medal' (newMedal) beside the Sync-with-Discord button, and remove the ghost '+ New' buttons from the Rank Ladder and Medal Cabinet panel headers. Update the 'Use \"+ New\"' empty-state copy in both panels. Template-only change - newRank()/newMedal() handlers already exist.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "ranks-medals",
+      "subfeature": "new-buttons",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Two golden buttons 'New Role' and 'New Medal' appear in the header next to Sync with Discord",
+          "status": "passed"
+        },
+        {
+          "desc": "New Role opens the rank editor; New Medal opens the medal editor",
+          "status": "passed"
+        },
+        {
+          "desc": "No '+ New' buttons remain in the Rank Ladder or Medal Cabinet panel headers",
+          "status": "passed"
+        },
+        {
+          "desc": "Empty-state copy no longer references a removed section button",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0180",
+      "title": "Highlight 'My profile' in the sidebar only when viewing your own profile",
+      "summary": "Refines T-0172. The profile page hardcodes [activeRoute]=\"'profile'\", so opening any /app/profile/:id highlights 'My profile' even for another member (e.g. Ownr00000001). Bind activeRoute to the already-computed isOwnProfile flag (isOwnProfile ? 'profile' : '') so the side-nav and mobile bottom-nav highlight My profile only on your own profile and highlight nothing on others'.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "nav-highlight",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Own profile -> 'My profile' is highlighted in side-nav and bottom-nav",
+          "status": "passed"
+        },
+        {
+          "desc": "Another member's profile -> 'My profile' is NOT highlighted",
+          "status": "passed"
+        },
+        {
+          "desc": "Another member's profile does not falsely highlight 'Members' either",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0181",
+      "title": "Add a left inset so the submitter avatar isn't clipped by the gallery card edge",
+      "summary": "Follows T-0174. On /app/gallery, /gallery and the profile gallery tab the submitter avatar in the shared hf-gallery-card hugs the 12px card-body padding and is visually clipped by the card's overflow:hidden. Add extra left padding/margin to the .gallery-submitter row (card SCSS only, not the shared hf-avatar component) so the whole avatar sits inside the card on all three surfaces.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "card-style",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.scss",
+        "src/app/shared/components/gallery-card/gallery-card.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Submitter avatar fully visible (no left clip) on /gallery",
+          "status": "passed"
+        },
+        {
+          "desc": "Submitter avatar fully visible on /app/gallery",
+          "status": "passed"
+        },
+        {
+          "desc": "Submitter avatar fully visible on the profile gallery tab and dashboard Recent Gallery",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-gallery-card is the shared card rendered on the public gallery, member gallery, profile tab and dashboard; a submitter-row spacing change affects every surface.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T03:48:15Z",
+          "resolvedAt": "2026-07-18T04:56:34Z",
+          "resolvedBy": "claude",
+          "note": "Zeroed the leaked Bootstrap .row negative gutter on both nested card rows (card SCSS only; hf-avatar untouched); browser-verified computed margin-left:0 and the submitter avatar fully inside the card on the profile tab AND public /gallery."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0182",
+      "title": "Show the submitter avatar and link the name to their profile on the media detail page",
+      "summary": "On the public media detail page (/gallery/:id) the byline renders hf-avatar with [name] only (always initials) and the submitter name is plain text. Bind [avatarUrl]=\"item.submittedByAvatarUrl\" (already carried on GalleryItem and returned by GET /gallery/:id) and wrap the name in a routerLink to /app/profile/:submittedByMemberId - the AuthGuard-protected profile route, so an unauthenticated visitor is routed through login as expected.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "public-gallery",
+      "subfeature": "detail",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0114"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Real avatar renders for a submitter that has one",
+          "status": "passed"
+        },
+        {
+          "desc": "Initials fallback renders when submittedByAvatarUrl is null",
+          "status": "passed"
+        },
+        {
+          "desc": "Clicking the submitter name navigates to /app/profile/:id",
+          "status": "passed"
+        },
+        {
+          "desc": "An unauthenticated visitor clicking the name is routed through the auth guard (login)",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0183",
+      "title": "Add admin actions (edit description, edit tags, delete) to the media detail page",
+      "summary": "Add a moderator-only actions block to the media detail page (/gallery/:id) gated by can('moderate_gallery'): edit the caption/description and the tags via a new gallery.service.update() -> PATCH /gallery/:id, and a Delete button (existing gallery.service.delete() -> DELETE /gallery/:id) that removes the item and its MinIO object. The media content itself (the uploaded/linked file) is not editable.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "feature": "moderation",
+      "subfeature": "detail-admin-actions",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts",
+        "src/app/features/public/gallery-detail/gallery-detail.component.scss",
+        "src/app/core/services/gallery.service.ts",
+        "src/app/core/models/gallery.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0115",
+        "lords-dashboard-backend:T-0116"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A moderator sees the admin actions on the detail page; a non-moderator does not",
+          "status": "passed"
+        },
+        {
+          "desc": "Editing description and tags persists (PATCH /gallery/:id) and re-renders",
+          "status": "passed"
+        },
+        {
+          "desc": "Delete removes the item and its MinIO object and navigates away",
+          "status": "passed"
+        },
+        {
+          "desc": "Media content is not offered for editing",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds an update() method + edit payload type to the shared gallery.service/gallery.model consumed by the gallery list, moderation queue and submit flows.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T03:48:15Z",
+          "resolvedAt": "2026-07-18T04:56:34Z",
+          "resolvedBy": "claude",
+          "note": "GalleryService.update() + UpdateGalleryPayload added additively (no existing signature changed); new HttpTestingController spec pins the PATCH; browser-verified the moderator edit form (caption+tags) + delete on /gallery/:id."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0184",
+      "title": "Roster status column: derive Suspended/Banned/Inactive tags with explanatory tooltips",
+      "summary": "Replace the raw member.status pill in the roster table with a derived status: Banned (bannedAt set), Suspended (suspendedUntil in the future), Inactive (no login for >3 weeks / 21 days from lastSeenAt), else Active/Pending. All fields are already exposed by GET /members (MemberDto: status, lastSeenAt, suspendedUntil, bannedAt) so no backend change is needed - derivation is client-side (the SCHEMA references a 30-day auto-inactive job that does not yet exist; use the 21-day threshold the user asked for). Add a title/tooltip on each tag explaining its meaning and extend the status colour map + filter options.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "feature": "roster",
+      "subfeature": "status-column",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/roster/roster.component.ts",
+        "src/app/features/member/roster/roster.component.html",
+        "src/app/features/member/roster/roster.component.scss",
+        "src/app/core/models/member.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Member with bannedAt set -> Banned tag",
+          "status": "passed"
+        },
+        {
+          "desc": "Member with a future suspendedUntil -> Suspended tag",
+          "status": "passed"
+        },
+        {
+          "desc": "Member with lastSeen older than 21 days -> Inactive tag; recently-seen -> Active",
+          "status": "passed"
+        },
+        {
+          "desc": "Hovering each tag shows a tooltip explaining the status",
+          "status": "passed"
+        },
+        {
+          "desc": "api.model mapMember carries suspendedUntil/bannedAt/lastSeenAt onto the Member model",
+          "status": "passed"
+        },
+        {
+          "desc": "Status filter dropdown still works with the expanded set",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds derivation exports (deriveMemberStatus/statusVariant/statusTooltip/INACTIVE_AFTER_DAYS) to the shared core member.model, consumed by the roster pill + status filter + CSV export in lockstep.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T04:56:34Z",
+          "resolvedAt": "2026-07-18T04:56:34Z",
+          "resolvedBy": "claude",
+          "note": "Additive only (Member interface unchanged); pinned by new member.model.spec (13 cases incl. Banned>Suspended>Pending>Inactive precedence + empty-lastSeen NaN guard) and browser-verified pills/tooltips/filter (Active laurel, Suspended ox)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0185",
+      "title": "Show real actor avatars on the audit page",
+      "summary": "The audit table and detail panel already render hf-avatar but pass [name] only, so they show initials tiles. Add an actor avatar field to the audit-log model + ApiAuditEntry + mapAuditLog and bind [avatarUrl] on both hf-avatar usages, sourced from the new backend actorAvatarUrl projection; keep the initials fallback for system/bot actors.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "audit-log",
+      "subfeature": "actor-avatar",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/audit/audit.component.html",
+        "src/app/core/models/audit-log.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0117"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "An audit entry by a member with an avatar shows their photo in the table and detail panel",
+          "status": "passed"
+        },
+        {
+          "desc": "System/bot actors fall back to initials",
+          "status": "passed"
+        },
+        {
+          "desc": "No console errors when actorAvatarUrl is null",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds actorAvatarUrl to the shared ApiAuditEntry (required) + AuditLog view-model + mapAuditLog, consumed by the audit table + detail panel.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T04:56:34Z",
+          "resolvedAt": "2026-07-18T04:56:34Z",
+          "resolvedBy": "claude",
+          "note": "Additive mapper change pinned by audit.service.spec (populated + null); pairs with backend lords-dashboard-backend:T-0117. Browser-verified the initials fallback for system actors renders; the real-avatar path is the same [avatarUrl] binding already in use."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0186",
+      "title": "Dark-theme the audit detail boxes (replace the parchment/white panels)",
+      "summary": "On /app/admin/audit the .detail-desc and .state-grid (Before/After) boxes use light --parch-* backgrounds that read as white against the otherwise dark admin theme. Restyle them with dark surface/border tokens consistent with the rest of the admin UI in audit.component.scss, keeping the text legible.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "audit-log",
+      "subfeature": "dark-theme",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/audit/audit.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Detail description + Before/After boxes render with dark surfaces matching the admin theme",
+          "status": "passed"
+        },
+        {
+          "desc": "Text remains legible on the dark surfaces",
+          "status": "passed"
+        },
+        {
+          "desc": "No light/white boxes remain on the audit page",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
+      "createdAt": "2026-07-18T03:48:15Z",
+      "updatedAt": "2026-07-18T04:56:34Z",
+      "history": [
+        {
+          "at": "2026-07-18T03:48:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T04:56:34Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
         }
       ]
     }

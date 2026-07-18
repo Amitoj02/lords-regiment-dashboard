@@ -1,4 +1,7 @@
-<hf-app-shell [activeRoute]="'profile'" [crumbs]="['Roster', member?.inGameName ?? 'Profile']">
+<hf-app-shell
+    [activeRoute]="isOwnProfile ? 'profile' : ''"
+    [crumbs]="['Roster', member?.inGameName ?? 'Profile']"
+>
     <button type="button" class="btn btn-ghost btn-sm back-link" (click)="back()">
         &larr; Back
     </button>

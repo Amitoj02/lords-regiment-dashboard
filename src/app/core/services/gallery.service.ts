@@ -35,6 +35,16 @@ export interface GallerySubmitPayload {
     tags?: string[];
 }
 
+/**
+ * Body for PATCH /gallery/:id (moderator edit — T-0115 backend counterpart).
+ * Only the caption and tags are editable; the media itself (files/type/link) is
+ * immutable once submitted. Mirrors the backend UpdateGalleryItemDto.
+ */
+export interface UpdateGalleryPayload {
+    caption?: string;
+    tags?: string[];
+}
+
 /** Lean pending-submission summary for the dashboard panel (T-0094/T-0127). */
 export interface GallerySubmissionSummary {
     id: string;
@@ -100,6 +110,16 @@ export class GalleryService {
     /** Submit a new item (SubmitToGallery) — lands in the moderation queue. */
     submit(payload: GallerySubmitPayload): Observable<GalleryItem> {
         return this.http.post<ApiGalleryItem>(this.base, payload).pipe(map(mapGalleryItem));
+    }
+
+    /**
+     * Moderator edit of an item's caption + tags (ModerateGallery — T-0115). The
+     * media itself is not editable through this endpoint.
+     */
+    update(id: string, payload: UpdateGalleryPayload): Observable<GalleryItem> {
+        return this.http
+            .patch<ApiGalleryItem>(`${this.base}/${id}`, payload)
+            .pipe(map(mapGalleryItem));
     }
 
     approve(id: string): Observable<GalleryItem> {

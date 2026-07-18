@@ -76,3 +76,79 @@ export interface Member {
     /** Write-only: storage key of a freshly-uploaded banner (sent on self-edit). */
     bannerKey?: string;
 }
+
+// ── Roster status derivation (client-side, T-0184) ───────────────────────────
+// The raw `status` field only distinguishes Active/Inactive/Pending. The roster
+// pill surfaces a richer, derived status from the moderation fields already on
+// the member (bannedAt / suspendedUntil / lastSeen), with no backend change.
+
+/** The roster status shown on the pill, derived from the raw member fields. */
+export type DerivedMemberStatus = 'Active' | 'Inactive' | 'Pending' | 'Suspended' | 'Banned';
+
+/** No sign-in for this many days flips a member to Inactive (client-side only). */
+export const INACTIVE_AFTER_DAYS = 21;
+
+/**
+ * Derive a member's roster status. Precedence (first match wins): Banned
+ * (`bannedAt` set) → Suspended (`suspendedUntil` in the future) → Pending
+ * (application awaiting review) → Inactive (no sign-in for >21 days) → Active.
+ * The Pending check precedes the inactivity check so an applicant with no/old
+ * `lastSeen` is never mislabelled Inactive; the inactivity branch is guarded on a
+ * truthy `lastSeen` so an empty string (from a null `lastSeenAt`) can't yield NaN.
+ */
+export function deriveMemberStatus(m: Member, now = Date.now()): DerivedMemberStatus {
+    if (m.bannedAt) {
+        return 'Banned';
+    }
+    if (m.suspendedUntil && new Date(m.suspendedUntil).getTime() > now) {
+        return 'Suspended';
+    }
+    if (m.status === 'Pending') {
+        return 'Pending';
+    }
+    if (m.lastSeen && (now - new Date(m.lastSeen).getTime()) / 86_400_000 > INACTIVE_AFTER_DAYS) {
+        return 'Inactive';
+    }
+    return 'Active';
+}
+
+/** The badge variant colour for a derived status (Suspended + Banned share ox). */
+export function statusVariant(status: DerivedMemberStatus): string {
+    switch (status) {
+        case 'Active':
+            return 'laurel';
+        case 'Pending':
+            return 'brass';
+        case 'Inactive':
+            return 'parch';
+        case 'Suspended':
+        case 'Banned':
+            return 'ox';
+    }
+}
+
+/** A human-readable explanation of a derived status for the pill's hover tooltip. */
+export function statusTooltip(m: Member): string {
+    const fmt = (iso: string): string =>
+        new Date(iso).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    switch (deriveMemberStatus(m)) {
+        case 'Banned':
+            return m.bannedAt
+                ? `Banned on ${fmt(m.bannedAt)} — removed from the regiment.`
+                : 'Banned — removed from the regiment.';
+        case 'Suspended':
+            return m.suspendedUntil
+                ? `Suspended until ${fmt(m.suspendedUntil)} — access temporarily restricted.`
+                : 'Suspended — access temporarily restricted.';
+        case 'Inactive':
+            return `Inactive — no sign-in in over ${INACTIVE_AFTER_DAYS} days.`;
+        case 'Pending':
+            return 'Pending — application awaiting review.';
+        case 'Active':
+            return `Active — signed in within the last ${INACTIVE_AFTER_DAYS} days.`;
+    }
+}

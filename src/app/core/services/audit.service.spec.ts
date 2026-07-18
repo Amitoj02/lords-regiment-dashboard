@@ -14,6 +14,7 @@ function apiEntry(overrides: Partial<ApiAuditEntry> = {}): ApiAuditEntry {
         actorType: 'member',
         actorMemberId: 'm1',
         actorLabel: 'Jameson Nolt',
+        actorAvatarUrl: null,
         targetType: 'member',
         targetId: 'm2',
         targetMemberId: 'm2',
@@ -70,6 +71,21 @@ describe('AuditService', () => {
         expect(log?.targetUser).toBe('Bjorn Trager');
         expect(log?.beforeState).toBe(JSON.stringify({ status: 'Active' }));
         expect(log?.afterState).toBe(JSON.stringify({ status: 'Banned' }));
+    });
+
+    it('getAll() maps actorAvatarUrl through (populated + null)', () => {
+        let result: AuditLog[] | undefined;
+        service.getAll().subscribe((logs) => (result = logs));
+        const req = httpMock.expectOne((r) => r.url === '/api/audit');
+        req.flush(
+            page([
+                apiEntry({ actorAvatarUrl: 'https://cdn.example/a.png' }),
+                apiEntry({ id: 'a2', actorAvatarUrl: null }),
+            ]),
+        );
+
+        expect(result?.[0].actorAvatarUrl).toBe('https://cdn.example/a.png');
+        expect(result?.[1].actorAvatarUrl).toBeNull();
     });
 
     it('getAll() maps discordSyncStatus through (populated + null)', () => {
