@@ -52,147 +52,163 @@
             </select>
         </div>
 
-        <!-- Two-column body -->
-        <div class="audit-layout">
-            <!-- Log table -->
-            <div class="audit-table-wrap">
-                <table class="hf-table">
-                    <thead>
-                        <tr>
-                            <th>When</th>
-                            <th>Actor</th>
-                            <th>Action</th>
-                            <th>Target / Detail</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (log of filteredLogs; track log) {
-                        <tr
-                            class="log-row"
-                            [ngClass]="{ 'row--active': selectedLog?.id === log.id }"
-                            role="button"
-                            tabindex="0"
-                            (click)="selectLog(log)"
-                            (keydown.enter)="selectLog(log)"
-                            (keydown.space)="selectLog(log)"
-                        >
-                            <td class="mono ts-cell">{{ formatTimestamp(log.timestamp) }}</td>
-                            <td>
-                                <div class="row actor-row">
-                                    <hf-avatar
-                                        [name]="log.actor"
-                                        [avatarUrl]="log.actorAvatarUrl"
-                                    ></hf-avatar>
-                                    <span>{{ log.actor }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span
-                                    class="action-badge mono"
-                                    [ngClass]="getSeverityClass(log.severity)"
-                                    >{{ log.action }}</span
-                                >
-                            </td>
-                            <td class="detail-cell">
-                                {{ log.targetUser ? log.targetUser + ' — ' : '' }}{{ log.detail }}
-                            </td>
-                        </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+        <!-- Full-width log table -->
+        <div class="audit-table-wrap">
+            <table class="hf-table">
+                <thead>
+                    <tr>
+                        <th>When</th>
+                        <th>Actor</th>
+                        <th>Action</th>
+                        <th>Target / Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (log of filteredLogs; track log) {
+                    <tr
+                        class="log-row"
+                        [ngClass]="{ 'row--active': selectedLog?.id === log.id }"
+                        role="button"
+                        tabindex="0"
+                        (click)="selectLog(log)"
+                        (keydown.enter)="selectLog(log)"
+                        (keydown.space)="selectLog(log)"
+                    >
+                        <td class="mono ts-cell">{{ formatTimestamp(log.timestamp) }}</td>
+                        <td>
+                            <div class="row actor-row">
+                                <hf-avatar
+                                    [name]="log.actor"
+                                    [avatarUrl]="log.actorAvatarUrl"
+                                ></hf-avatar>
+                                <span>{{ log.actor }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span
+                                class="action-badge mono"
+                                [ngClass]="getSeverityClass(log.severity)"
+                                >{{ log.action }}</span
+                            >
+                        </td>
+                        <td class="detail-cell">
+                            {{ log.targetUser ? log.targetUser + ' — ' : '' }}{{ log.detail }}
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-            <!-- Detail panel -->
-            @if (selectedLog) {
-            <div class="audit-detail">
-                <div class="panel">
-                    <div class="panel-header">
-                        <span class="panel-title mono">Entry #{{ selectedLog.id }}</span>
-                    </div>
-                    <div class="panel-body">
-                        <!-- Actor info -->
-                        <div class="row detail-actor-row">
-                            <hf-avatar
-                                [name]="selectedLog.actor"
-                                [avatarUrl]="selectedLog.actorAvatarUrl"
-                                [size]="36"
-                            ></hf-avatar>
-                            <div>
-                                <div class="detail-actor-name">{{ selectedLog.actor }}</div>
-                                <div class="mono detail-timestamp">
-                                    {{ formatTimestamp(selectedLog.timestamp) }}
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Description -->
-                        <div class="detail-desc serif">{{ selectedLog.detail }}</div>
-                        <!-- Before/After -->
-                        @if (selectedLog.beforeState || selectedLog.afterState) {
-                        <div class="grid-2 state-grid">
-                            <div>
-                                <div class="admin-label brass">Before</div>
-                                <div class="state-value">{{ selectedLog.beforeState || '—' }}</div>
-                            </div>
-                            <div>
-                                <div class="admin-label brass">After</div>
-                                <div class="state-value">{{ selectedLog.afterState || '—' }}</div>
-                            </div>
-                        </div>
-                        }
-                        <!-- Metadata -->
-                        <div class="detail-metadata">
-                            @if (selectedLog.targetUser) {
-                            <div class="meta-item">
-                                <span class="field-label">Target member</span>
-                                <span>{{ selectedLog.targetUser }}</span>
-                            </div>
-                            }
-                            <div class="meta-item">
-                                <span class="field-label">Discord sync</span>
-                                <span class="row sync-row">
-                                    <span
-                                        class="status-dot"
-                                        [ngClass]="syncStatusClass(selectedLog.discordSyncStatus)"
-                                    ></span>
-                                    {{ syncStatusLabel(selectedLog.discordSyncStatus) }}
-                                </span>
-                            </div>
-                            @if (selectedLog.requestId) {
-                            <div class="meta-item">
-                                <span class="field-label">Request ID</span>
-                                <span class="mono">{{ selectedLog.requestId }}</span>
-                            </div>
-                            }
-                            <div class="meta-item">
-                                <span class="field-label">Severity</span>
-                                <span
-                                    class="badge"
-                                    [ngClass]="getSeverityClass(selectedLog.severity)"
-                                    >{{ selectedLog.severity }}</span
-                                >
-                            </div>
-                        </div>
-                        <div class="detail-footer-actions">
-                            @if (selectedLog.targetMemberId) {
-                            <a
-                                class="btn btn-ghost btn-sm"
-                                [routerLink]="['/app/profile', selectedLog.targetMemberId]"
-                            >
-                                View profile
-                            </a>
-                            }
-                            <button
-                                type="button"
-                                class="btn btn-ghost btn-sm"
-                                (click)="filterByActor(selectedLog.actor)"
-                            >
-                                All by {{ selectedLog.actor.split(' ')[0] }}
-                            </button>
+    <!-- Detail dialog: opened on row click; closes via ✕, Escape, or backdrop. -->
+    @if (selectedLog) {
+    <!-- Presentational overlay: keyboard users close via Escape (host listener) or the ✕ button. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+    <div class="audit-backdrop" (click)="onBackdrop($event)">
+        <div
+            #auditDialog
+            class="audit-modal panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="audit-dialog-title"
+            tabindex="-1"
+        >
+            <div class="audit-modal-head">
+                <span id="audit-dialog-title" class="panel-title mono"
+                    >Entry #{{ selectedLog.id }}</span
+                >
+                <button
+                    type="button"
+                    class="btn btn-icon btn-ghost btn-sm"
+                    aria-label="Close"
+                    (click)="closeDetail()"
+                >
+                    ✕
+                </button>
+            </div>
+            <div class="audit-modal-body">
+                <!-- Actor info -->
+                <div class="row detail-actor-row">
+                    <hf-avatar
+                        [name]="selectedLog.actor"
+                        [avatarUrl]="selectedLog.actorAvatarUrl"
+                        [size]="36"
+                    ></hf-avatar>
+                    <div>
+                        <div class="detail-actor-name">{{ selectedLog.actor }}</div>
+                        <div class="mono detail-timestamp">
+                            {{ formatTimestamp(selectedLog.timestamp) }}
                         </div>
                     </div>
                 </div>
+                <!-- Description -->
+                @if (selectedLog.detail) {
+                <div class="detail-desc serif">{{ selectedLog.detail }}</div>
+                }
+                <!-- Before/After -->
+                @if (selectedLog.beforeState || selectedLog.afterState) {
+                <div class="grid-2 state-grid">
+                    <div>
+                        <div class="admin-label brass">Before</div>
+                        <div class="state-value">{{ selectedLog.beforeState || '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="admin-label brass">After</div>
+                        <div class="state-value">{{ selectedLog.afterState || '—' }}</div>
+                    </div>
+                </div>
+                }
+                <!-- Metadata -->
+                <div class="detail-metadata">
+                    @if (selectedLog.targetUser) {
+                    <div class="meta-item">
+                        <span class="field-label">Target member</span>
+                        <span>{{ selectedLog.targetUser }}</span>
+                    </div>
+                    }
+                    <div class="meta-item">
+                        <span class="field-label">Discord sync</span>
+                        <span class="row sync-row">
+                            <span
+                                class="status-dot"
+                                [ngClass]="syncStatusClass(selectedLog.discordSyncStatus)"
+                            ></span>
+                            {{ syncStatusLabel(selectedLog.discordSyncStatus) }}
+                        </span>
+                    </div>
+                    @if (selectedLog.requestId) {
+                    <div class="meta-item">
+                        <span class="field-label">Request ID</span>
+                        <span class="mono">{{ selectedLog.requestId }}</span>
+                    </div>
+                    }
+                    <div class="meta-item">
+                        <span class="field-label">Severity</span>
+                        <span class="badge" [ngClass]="getSeverityClass(selectedLog.severity)"
+                            >{{ selectedLog.severity }}</span
+                        >
+                    </div>
+                </div>
+                <div class="detail-footer-actions">
+                    @if (selectedLog.targetMemberId) {
+                    <a
+                        class="btn btn-ghost btn-sm"
+                        [routerLink]="['/app/profile', selectedLog.targetMemberId]"
+                    >
+                        View profile
+                    </a>
+                    }
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="filterByActor(selectedLog.actor)"
+                    >
+                        All by {{ selectedLog.actor.split(' ')[0] }}
+                    </button>
+                </div>
             </div>
-            }
         </div>
     </div>
+    }
 </hf-app-shell>
