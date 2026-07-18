@@ -1,6 +1,7 @@
+import { Location } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { Member } from '../../../core/models/member.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
@@ -54,9 +55,14 @@ export class ProfileComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly maxGalleryItems = 6;
+    /** Monotonic token so a prior navigation's late responses can't overwrite the
+     * current member's data when routing quickly between profiles (T-0165). */
+    private loadToken = 0;
 
     constructor(
         private route: ActivatedRoute,
+        private router: Router,
+        private location: Location,
         private membersService: MembersService,
         private galleryService: GalleryService,
         private auth: AuthService,
@@ -64,14 +70,38 @@ export class ProfileComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        // Angular reuses this component instance when navigating between
+        // /app/profile/:id routes, so re-load on every param change rather than
+        // reading the id once — otherwise the previous member lingers (T-0165).
+        this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            this.loadMember(params.get('id'));
+        });
+    }
+
+    private loadMember(routeId: string | null): void {
         this.isAdmin = this.auth.isAdmin();
-        const routeId = this.route.snapshot.paramMap.get('id');
         const currentUser = this.auth.currentUser();
         // A bare /app/profile resolves to the signed-in user's own uid (T-0139).
         const id = routeId ?? currentUser?.id ?? '';
         // Own profile ONLY when the resolved id matches the signed-in uid.
         this.isOwnProfile = !!currentUser && currentUser.id === id;
         this.canViewPrivate = this.isOwnProfile || this.isAdmin;
+
+        // Bump the load token; any in-flight response from a prior navigation is
+        // now stale and will be dropped by the guards below.
+        const token = ++this.loadToken;
+
+        // Reset per-navigation state so nothing from the previous member lingers.
+        this.member = null;
+        this.galleryItems = [];
+        this.eventHistory = [];
+        this.rsvps = [];
+        this.serviceRecord = [];
+        this.notFound = false;
+        this.loading = true;
+        this.editing = false;
+        this.viewerOpen = false;
+        this.adminTarget = null;
 
         if (!id) {
             this.loading = false;
@@ -84,29 +114,53 @@ export class ProfileComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (member) => {
+                    if (token !== this.loadToken) {
+                        return;
+                    }
                     this.loading = false;
                     if (!member) {
                         this.notFound = true;
                         return;
                     }
                     this.member = member;
-                    this.loadRelated(id);
+                    this.loadRelated(id, token);
                 },
                 error: () => {
+                    if (token !== this.loadToken) {
+                        return;
+                    }
                     this.loading = false;
                     this.notFound = true;
                 },
             });
     }
 
-    /** Load the tabs + timeline once we have a valid member. */
-    private loadRelated(id: string): void {
+    /** Return to the previous page (back button — T-0166). */
+    back(): void {
+        this.location.back();
+    }
+
+    /** Navigate to the dedicated account-deletion page (T-0169). */
+    goToAccountDeletion(): void {
+        this.editing = false;
+        void this.router.navigate(['/app/account-deletion']);
+    }
+
+    /** Load the tabs + timeline once we have a valid member. `token` guards against
+     * a superseded navigation writing stale data after the user moved on. */
+    private loadRelated(id: string, token: number): void {
+        // Scope the tab to the profiled member's own approved items. There is no
+        // by-author gallery endpoint yet, so filter the public feed by author id
+        // client-side (a dedicated per-author endpoint is a backend follow-up).
         this.galleryService
             .getAll()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((items) => {
+                if (token !== this.loadToken) {
+                    return;
+                }
                 this.galleryItems = items
-                    .filter((i) => i.submittedBy && i.status === 'approved')
+                    .filter((i) => i.submittedByMemberId === id && i.status === 'approved')
                     .slice(0, this.maxGalleryItems);
             });
 
@@ -117,7 +171,11 @@ export class ProfileComponent implements OnInit {
                 catchError(() => of<RegimentEvent[]>([])),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe((events) => (this.eventHistory = events));
+            .subscribe((events) => {
+                if (token === this.loadToken) {
+                    this.eventHistory = events;
+                }
+            });
 
         this.membersService
             .getRsvps(id)
@@ -125,7 +183,11 @@ export class ProfileComponent implements OnInit {
                 catchError(() => of<RegimentEvent[]>([])),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe((events) => (this.rsvps = events));
+            .subscribe((events) => {
+                if (token === this.loadToken) {
+                    this.rsvps = events;
+                }
+            });
 
         // Service Record is privacy-gated; the backend also returns 403 for a
         // non-admin viewing another member, so swallow errors to an empty list.
@@ -136,7 +198,11 @@ export class ProfileComponent implements OnInit {
                     catchError(() => of<ServiceRecordEntry[]>([])),
                     takeUntilDestroyed(this.destroyRef),
                 )
-                .subscribe((entries) => (this.serviceRecord = entries));
+                .subscribe((entries) => {
+                    if (token === this.loadToken) {
+                        this.serviceRecord = entries;
+                    }
+                });
         }
     }
 

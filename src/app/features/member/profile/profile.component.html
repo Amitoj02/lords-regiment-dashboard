@@ -1,4 +1,7 @@
-<hf-app-shell [activeRoute]="'roster'" [crumbs]="['Roster', member?.inGameName ?? 'Profile']">
+<hf-app-shell [activeRoute]="'profile'" [crumbs]="['Roster', member?.inGameName ?? 'Profile']">
+    <button type="button" class="btn btn-ghost btn-sm back-link" (click)="back()">
+        &larr; Back
+    </button>
     @if (member) {
     <div class="profile-page">
         <!-- Banner (data-driven; falls back to the default asset via --bg) -->
@@ -155,13 +158,8 @@
                 <div>
                     @if (galleryItems.length > 0) {
                     <div class="profile-gallery-grid">
-                        @for (item of galleryItems; track item) {
-                        <div class="profile-gallery-thumb">
-                            <img [src]="item.thumbnailUrl" [alt]="item.title" />
-                            <div class="profile-gallery-overlay">
-                                <span class="profile-gallery-caption">{{ item.title }}</span>
-                            </div>
-                        </div>
+                        @for (item of galleryItems; track item.id; let i = $index) {
+                        <hf-gallery-card [item]="item" [aspectIndex]="i % 3"></hf-gallery-card>
                         }
                     </div>
                     } @if (galleryItems.length === 0) {
@@ -341,9 +339,24 @@
                 <hf-notice variant="err">{{ saveError }}</hf-notice>
                 }
 
-                <!-- Danger zone: account deletion moved into the edit modal (T-0144) -->
+                <!-- Danger zone: account deletion lives on its own page (T-0169) -->
                 <hf-crest-divider>Danger zone</hf-crest-divider>
-                <app-account-deletion (closed)="cancelEdit()"></app-account-deletion>
+                <div class="profile-danger-zone">
+                    <div class="profile-danger-copy">
+                        <div class="profile-danger-title">Delete my profile</div>
+                        <p class="profile-danger-text">
+                            Permanently delete your account and anonymise your data. This can't be
+                            undone.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn btn-destructive btn-sm"
+                        (click)="goToAccountDeletion()"
+                    >
+                        Delete my profile
+                    </button>
+                </div>
             </div>
             <div class="panel-footer profile-edit-actions">
                 <button type="button" class="btn btn-ghost btn-sm" (click)="cancelEdit()">

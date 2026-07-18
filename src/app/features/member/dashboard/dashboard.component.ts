@@ -149,6 +149,12 @@ export class DashboardComponent implements OnInit {
         return this.auth.hasCapability('manage_events');
     }
 
+    /** Whether the role-gated right column has any content (T-0168). When false,
+     * the main column spans the full width instead of leaving a blank gutter. */
+    get hasAside(): boolean {
+        return this.isStaff || this.canManageEvents;
+    }
+
     /** ms → a compact "2d 3h" / "4h 12m" / "8m" uptime label. */
     formatUptime(ms: number | null): string {
         if (ms == null) return '—';

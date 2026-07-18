@@ -357,10 +357,12 @@ export interface ApiGalleryFile {
     thumbnailColor: string | null;
 }
 
-/** Flattened `{ memberId, name }` reference (author + tagged members). */
+/** Flattened `{ memberId, name, avatarUrl }` reference (author + tagged members). */
 export interface ApiGalleryMemberRef {
     memberId: string;
     name: string;
+    /** Author avatar (custom, else linked Discord avatar), or null. */
+    avatarUrl?: string | null;
 }
 
 export interface ApiGalleryItem {
@@ -392,6 +394,8 @@ export function mapGalleryItem(g: ApiGalleryItem): GalleryItem {
         thumbnailUrl: g.thumbnailUrl ?? '',
         mediaUrl: g.files?.[0]?.url ?? g.linkUrl ?? undefined,
         submittedBy: g.author?.name ?? '',
+        submittedByMemberId: g.author?.memberId,
+        submittedByAvatarUrl: g.author?.avatarUrl ?? null,
         submittedAt: g.submittedAt,
         status: g.status,
         likes: g.likesCount,

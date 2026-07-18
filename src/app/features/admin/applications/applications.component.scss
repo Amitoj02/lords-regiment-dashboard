@@ -17,6 +17,19 @@
     gap: 0;
 }
 
+// The .empty-state classes live (view-encapsulated) in the dashboard component,
+// so they have no effect here — scope a padded copy for the queue + detail
+// empty states (T-0167).
+.empty-state {
+    color: var(--t-400);
+    font-size: 13px;
+}
+
+.empty-state--md {
+    padding: 16px;
+    text-align: center;
+}
+
 .queue-item {
     width: 100%;
     margin: 0;

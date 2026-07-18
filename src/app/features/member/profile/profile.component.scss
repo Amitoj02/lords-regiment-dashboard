@@ -2,6 +2,34 @@
     min-height: 100%;
 }
 
+/* Back button (T-0166) — matches the gallery-detail ghost back link. */
+.back-link {
+    margin-bottom: 16px;
+}
+
+/* Danger zone: navigates to the dedicated account-deletion page (T-0169). */
+.profile-danger-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.profile-danger-title {
+    font-weight: 600;
+    color: var(--t-100);
+    font-size: 14px;
+}
+
+.profile-danger-text {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: var(--t-400);
+    max-width: 42ch;
+}
+
 /* Banner */
 .profile-banner {
     height: 200px;
@@ -84,43 +112,8 @@
 /* Gallery grid */
 .profile-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-.profile-gallery-thumb {
-    aspect-ratio: 4/3;
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-    background: var(--ink-800);
-    cursor: pointer;
-
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.25s;
-    }
-
-    &:hover img {
-        transform: scale(1.05);
-    }
-}
-
-.profile-gallery-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
-    display: flex;
-    align-items: flex-end;
-    padding: 8px;
-    opacity: 0;
-    transition: opacity 0.2s;
-
-    .profile-gallery-thumb:hover & {
-        opacity: 1;
-    }
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
 }
 
 /* Event history */
@@ -194,8 +187,10 @@
 }
 
 .profile-avatar {
+    // The host now hugs the round avatar (hf-avatar :host is inline-flex), so the
+    // frame is circular around it instead of an empty rounded-square box (T-0170).
     border: 4px solid var(--ink-850);
-    border-radius: 8px;
+    border-radius: 50%;
 }
 
 .profile-name-row {

@@ -30,9 +30,9 @@ const routes: Routes = [
     // component (T-0139); any member/mercenary is viewable at /app/profile/:id.
     { path: 'profile', component: ProfileComponent },
     { path: 'profile/:id', component: ProfileComponent },
-    // Account deletion now lives inside the profile edit modal's "Danger zone"
-    // (T-0144); the standalone /app/account-deletion route was removed. The
-    // component is still declared below because the modal embeds it.
+    // Account deletion is a dedicated page again (T-0169): the edit-profile dialog
+    // now shows a "Delete my profile" button that navigates here.
+    { path: 'account-deletion', component: AccountDeletionComponent },
     // Events: members read the index + detail; only moderator+ may author.
     // create MUST precede :id so it is not captured as an id.
     { path: 'dashboard/events', component: EventsAdminComponent },

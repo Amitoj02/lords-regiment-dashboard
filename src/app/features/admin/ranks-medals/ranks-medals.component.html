@@ -47,6 +47,167 @@
         <hf-notice [variant]="rowWarn ? 'err' : 'ok'">{{ rowFlash }}</hf-notice>
         }
 
+        <!-- Editor -->
+        @if (editorMode) {
+        <div class="panel editor-panel">
+            <div class="panel-header between">
+                <span class="panel-title">Editor &mdash; {{ editorTitle }}</span>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="closeEditor()">
+                    Close
+                </button>
+            </div>
+            <div class="panel-body">
+                <!-- Rank editor -->
+                @if (editorMode === 'rank') {
+                <div class="editor-cols">
+                    <div class="editor-preview">
+                        <hf-chevrons [count]="editRankChevrons"></hf-chevrons>
+                    </div>
+
+                    <div class="editor-form">
+                        <div>
+                            <label class="field-label" for="rank-name">Name</label>
+                            <input
+                                id="rank-name"
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="editRankName"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="rank-chevrons">Chevrons</label>
+                            <input
+                                id="rank-chevrons"
+                                class="hf-input field-width-precedence"
+                                type="number"
+                                min="0"
+                                [(ngModel)]="editRankChevrons"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="rank-precedence">Precedence</label>
+                            <input
+                                id="rank-precedence"
+                                class="hf-input field-width-precedence"
+                                type="number"
+                                [(ngModel)]="editRankPrecedence"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="editor-discord">
+                        <ng-container [ngTemplateOutlet]="discordPanel"></ng-container>
+                        <div class="editor-actions">
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="closeEditor()"
+                            >
+                                Discard
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                [disabled]="saving"
+                                (click)="saveRank()"
+                            >
+                                {{ editingRankId ? 'Save rank' : 'Create rank' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Medal editor -->
+                @if (editorMode === 'medal') {
+                <div class="editor-cols">
+                    <div class="editor-preview">
+                        <hf-medal [letter]="editLetter" [ribbon]="editRibbon" size="lg"></hf-medal>
+                        <div class="ribbon-picker">
+                            <div class="field-label">Ribbon colour</div>
+                            <div class="ribbon-swatches">
+                                @for (r of ribbonOptions; track r) {
+                                <button
+                                    type="button"
+                                    class="ribbon-swatch"
+                                    [ngClass]="[
+                                            'ribbon-swatch--' + r,
+                                            editRibbon === r ? 'ribbon-swatch--active' : '',
+                                        ]"
+                                    (click)="editRibbon = r"
+                                    [title]="r"
+                                ></button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="editor-form">
+                        <div>
+                            <label class="field-label" for="medal-title">Title</label>
+                            <input
+                                id="medal-title"
+                                class="hf-input"
+                                type="text"
+                                [(ngModel)]="editTitle"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-letter">Disk letter</label>
+                            <input
+                                id="medal-letter"
+                                class="hf-input field-width-letter"
+                                type="text"
+                                [(ngModel)]="editLetter"
+                                maxlength="1"
+                            />
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-description">Description</label>
+                            <textarea
+                                id="medal-description"
+                                class="hf-textarea"
+                                rows="3"
+                                [(ngModel)]="editDescription"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-precedence">Precedence</label>
+                            <input
+                                id="medal-precedence"
+                                class="hf-input field-width-precedence"
+                                type="number"
+                                [(ngModel)]="editPrecedence"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="editor-discord">
+                        <ng-container [ngTemplateOutlet]="discordPanel"></ng-container>
+                        <div class="editor-actions">
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="discardMedal()"
+                            >
+                                Discard
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                [disabled]="saving"
+                                (click)="saveMedal()"
+                            >
+                                {{ editingMedalId ? 'Save medal' : 'Create medal' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
         <div class="grid-2 ladder-grid">
             <!-- Rank Ladder -->
             <div class="panel">
@@ -222,167 +383,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Editor -->
-        @if (editorMode) {
-        <div class="panel editor-panel">
-            <div class="panel-header between">
-                <span class="panel-title">Editor &mdash; {{ editorTitle }}</span>
-                <button type="button" class="btn btn-ghost btn-sm" (click)="closeEditor()">
-                    Close
-                </button>
-            </div>
-            <div class="panel-body">
-                <!-- Rank editor -->
-                @if (editorMode === 'rank') {
-                <div class="editor-cols">
-                    <div class="editor-preview">
-                        <hf-chevrons [count]="editRankChevrons"></hf-chevrons>
-                    </div>
-
-                    <div class="editor-form">
-                        <div>
-                            <label class="field-label" for="rank-name">Name</label>
-                            <input
-                                id="rank-name"
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="editRankName"
-                            />
-                        </div>
-                        <div>
-                            <label class="field-label" for="rank-chevrons">Chevrons</label>
-                            <input
-                                id="rank-chevrons"
-                                class="hf-input field-width-precedence"
-                                type="number"
-                                min="0"
-                                [(ngModel)]="editRankChevrons"
-                            />
-                        </div>
-                        <div>
-                            <label class="field-label" for="rank-precedence">Precedence</label>
-                            <input
-                                id="rank-precedence"
-                                class="hf-input field-width-precedence"
-                                type="number"
-                                [(ngModel)]="editRankPrecedence"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="editor-discord">
-                        <ng-container [ngTemplateOutlet]="discordPanel"></ng-container>
-                        <div class="editor-actions">
-                            <button
-                                type="button"
-                                class="btn btn-ghost btn-sm"
-                                (click)="closeEditor()"
-                            >
-                                Discard
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-sm"
-                                [disabled]="saving"
-                                (click)="saveRank()"
-                            >
-                                {{ editingRankId ? 'Save rank' : 'Create rank' }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                }
-
-                <!-- Medal editor -->
-                @if (editorMode === 'medal') {
-                <div class="editor-cols">
-                    <div class="editor-preview">
-                        <hf-medal [letter]="editLetter" [ribbon]="editRibbon" size="lg"></hf-medal>
-                        <div class="ribbon-picker">
-                            <div class="field-label">Ribbon colour</div>
-                            <div class="ribbon-swatches">
-                                @for (r of ribbonOptions; track r) {
-                                <button
-                                    type="button"
-                                    class="ribbon-swatch"
-                                    [ngClass]="[
-                                            'ribbon-swatch--' + r,
-                                            editRibbon === r ? 'ribbon-swatch--active' : '',
-                                        ]"
-                                    (click)="editRibbon = r"
-                                    [title]="r"
-                                ></button>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="editor-form">
-                        <div>
-                            <label class="field-label" for="medal-title">Title</label>
-                            <input
-                                id="medal-title"
-                                class="hf-input"
-                                type="text"
-                                [(ngModel)]="editTitle"
-                            />
-                        </div>
-                        <div>
-                            <label class="field-label" for="medal-letter">Disk letter</label>
-                            <input
-                                id="medal-letter"
-                                class="hf-input field-width-letter"
-                                type="text"
-                                [(ngModel)]="editLetter"
-                                maxlength="1"
-                            />
-                        </div>
-                        <div>
-                            <label class="field-label" for="medal-description">Description</label>
-                            <textarea
-                                id="medal-description"
-                                class="hf-textarea"
-                                rows="3"
-                                [(ngModel)]="editDescription"
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label class="field-label" for="medal-precedence">Precedence</label>
-                            <input
-                                id="medal-precedence"
-                                class="hf-input field-width-precedence"
-                                type="number"
-                                [(ngModel)]="editPrecedence"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="editor-discord">
-                        <ng-container [ngTemplateOutlet]="discordPanel"></ng-container>
-                        <div class="editor-actions">
-                            <button
-                                type="button"
-                                class="btn btn-ghost btn-sm"
-                                (click)="discardMedal()"
-                            >
-                                Discard
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-sm"
-                                [disabled]="saving"
-                                (click)="saveMedal()"
-                            >
-                                {{ editingMedalId ? 'Save medal' : 'Create medal' }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                }
-            </div>
-        </div>
-        }
     </div>
 </hf-app-shell>
 

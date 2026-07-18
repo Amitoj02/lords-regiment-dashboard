@@ -1,3 +1,10 @@
+// The host wraps the sized inner tile exactly, so a border/frame applied to the
+// <hf-avatar> element (e.g. .profile-avatar) hugs the avatar instead of drawing
+// an empty box beside a zero-height inline host (T-0170).
+:host {
+    display: inline-flex;
+}
+
 .hf-avatar {
     display: inline-flex;
     align-items: center;
