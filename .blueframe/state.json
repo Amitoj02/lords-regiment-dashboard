@@ -4,7 +4,7 @@
   "lastSyncedCommit": "c5e3df435ea1a1979d3881ca7a68089732a9d426",
   "lastSyncedAt": "2026-07-16T02:45:00Z",
   "notesForNextSession": "Dashboard-polish epic (T-0128..T-0160, all 33) implemented + verified → deploy_ready. Models/services foundation reshaped centrally (member.name → inGameName sole identity; dropped platform/timezone/attendanceRate/shortTag/publicRoster; added establishedAt/enrolledExcludingMercenaries/hasServerPassword/applicantType/audit member ids; new members.getEvents/getRsvps + events.unarchive/archived flag; NotificationsService + DiscordService.announce removed), then 33 component tasks built across 7 disjoint-file clusters. format/lint/ng build/113 unit green; browser cross-stack E2E (desktop) verified landing/login/dashboard/sidebar-groups/profile-overhaul/settings/roster/gallery/events-archive/applications-tabbar/audit; mobile shell (bottom-nav + 480/640/820 breakpoints) confirmed present (window could not be resized <1229px in the harness for a full mobile render). Ship WITH backend PR feat/planned-tasks-be — contracts change in lockstep (this retires the T-0062 cross-repo deploy-coupling concern for this epic: both repos ship together).",
-  "nextIdCounter": 161,
+  "nextIdCounter": 173,
   "connections": [],
   "tasks": [
     {
@@ -9082,6 +9082,586 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented (7-cluster parallel build over a frozen models/services foundation) + verified: format/lint/ng build/113 unit green; browser cross-stack E2E against the live backend."
+        }
+      ]
+    },
+    {
+      "id": "T-0161",
+      "title": "Medal.tv posters in MediaEmbedService; render on public gallery + dashboard",
+      "summary": "Extend MediaEmbedService.resolve() to supply a posterUrl for medaltv items by calling the backend Medal thumbnail proxy (today only youtube gets a poster; medaltv falls through to the placeholder). This lights up the already poster-aware hf-gallery-card used on the public /gallery page and the /app/dashboard recent-gallery section, so both surfaces show Medal and YouTube thumbnails.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/shared/services/media-embed.service.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/features/public/gallery-page/gallery-page.component.html",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/environments/environment.ts"
+      ],
+      "dependsOn": ["lords-dashboard-backend:T-0110"],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "A medal.tv item shows a real poster (not the flat placeholder) on /gallery and the dashboard recent-gallery section", "status": "pending" },
+        { "desc": "A YouTube item continues to show its i.ytimg hqdefault poster with the play overlay", "status": "pending" },
+        { "desc": "An item with no derivable poster falls back to the existing placeholder without console errors", "status": "pending" }
+      ],
+      "regressionRisk": [
+        { "desc": "MediaEmbedService is shared by every gallery surface (public, dashboard, admin, mod, detail, profile); a resolve() change affects all of them.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: Medal.tv poster support in the shared media resolver"
+        }
+      ]
+    },
+    {
+      "id": "T-0162",
+      "title": "/app/gallery: show video/medal thumbnails and link cards to /gallery/:id",
+      "summary": "The /app/gallery grid paints a CSS background via thumb(), which cannot show a video frame or a Medal.tv poster (both render as a flat colour) and the card has no click behaviour. Replace the inline card with the shared hf-gallery-card (or add a video/poster branch) so direct-video and Medal/YouTube items get real thumbnails, and make each card navigate to the public detail route /gallery/:id.",
+      "status": "planned",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-admin/gallery-admin.component.html",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.ts",
+        "src/app/features/admin/gallery-admin/gallery-admin.component.scss",
+        "src/app/shared/components/gallery-card/gallery-card.component.ts"
+      ],
+      "dependsOn": ["T-0161"],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "A direct-upload video item at /app/gallery shows a video thumbnail/first-frame instead of a flat colour", "status": "pending" },
+        { "desc": "A Medal.tv item shows its poster and a YouTube item shows its poster at /app/gallery", "status": "pending" },
+        { "desc": "Clicking any card navigates to /gallery/:id (the public detail page)", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: /app/gallery thumbnails for video/medal + click-through to detail"
+        }
+      ]
+    },
+    {
+      "id": "T-0163",
+      "title": "Profile gallery tab: fix blank image/video thumbnails",
+      "summary": "The profile page gallery tab binds an img src to item.thumbnailUrl, but that legacy column is never populated by the upload flow (mapped to an empty string), so nothing renders and videos have no branch at all. Replace it with hf-gallery-card (or resolve mediaUrl through MediaEmbedService) so images, direct video, Medal and YouTube items all show a thumbnail, and scope the tab to the profiled member.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.scss"
+      ],
+      "dependsOn": ["T-0161"],
+      "blocks": [],
+      "questions": [
+        { "q": "Is there a by-member gallery endpoint, or should the profile tab keep filtering the public feed client-side? A dedicated per-author endpoint may be a backend follow-up.", "answer": null, "askedAt": "2026-07-17T00:00:00Z" }
+      ],
+      "testPlan": [
+        { "desc": "Image gallery items on a profile show their picture", "status": "pending" },
+        { "desc": "Video / Medal / YouTube gallery items on a profile show a thumbnail with the play overlay", "status": "pending" },
+        { "desc": "The gallery tab lists only the profiled member's approved items", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: fix blank thumbnails in the profile gallery tab"
+        }
+      ]
+    },
+    {
+      "id": "T-0164",
+      "title": "Gallery submit: detect Medal.tv/YouTube link and show a live preview",
+      "summary": "The submit form link tab is a bare input with no provider detection or preview. Inject MediaEmbedService (and the backend resolver for Medal posters) so that when a user pastes an external link the form detects the provider and shows a live embed/poster preview before submitting.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-submit/gallery-submit.component.ts",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.html",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.scss",
+        "src/app/shared/services/media-embed.service.ts"
+      ],
+      "dependsOn": ["T-0161", "lords-dashboard-backend:T-0110"],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "Pasting a medal.tv clip URL shows a Medal poster/embed preview and detects a link-type item", "status": "pending" },
+        { "desc": "Pasting a YouTube URL shows the video thumbnail/embed preview", "status": "pending" },
+        { "desc": "Pasting a direct image/video URL shows an image/video preview; an unrecognised URL shows a neutral link preview", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: submit-form provider detection + live preview"
+        }
+      ]
+    },
+    {
+      "id": "T-0165",
+      "title": "Fix stale profile when navigating between /app/profile/:id routes",
+      "summary": "Both /app/profile and /app/profile/:id resolve to ProfileComponent, which reads the id once via route.snapshot.paramMap in ngOnInit; Angular reuses the instance on param-only navigation, so going User -> My profile keeps the previous member until a hard refresh. Subscribe to route.paramMap and reload the member (and recompute isOwnProfile / canViewPrivate) on every param change.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "Roster -> User1 profile -> My profile immediately shows the current user without a hard refresh", "status": "pending" },
+        { "desc": "isOwnProfile and private-field visibility recompute correctly after the switch", "status": "pending" },
+        { "desc": "Deep-linking directly to /app/profile/:id still loads correctly", "status": "pending" }
+      ],
+      "regressionRisk": [
+        { "desc": "Moving data-load from ngOnInit to a paramMap subscription risks duplicate or leaked subscriptions on the profile component.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: fix stale profile on route-param-only navigation"
+        }
+      ]
+    },
+    {
+      "id": "T-0166",
+      "title": "Add a back button to the user profile page (desktop + mobile)",
+      "summary": "The profile page has no back control on either desktop or mobile. Add a back button to the profile header (reusing the existing .back-link ghost-button pattern from the gallery detail page, or Location.back()), visible and usable at both desktop and mobile widths.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "A back button is visible in the profile header on desktop and returns to the previous page", "status": "pending" },
+        { "desc": "The back button is visible and tappable at mobile widths", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: profile page back button (desktop + mobile)"
+        }
+      ]
+    },
+    {
+      "id": "T-0167",
+      "title": "Pad the applications admin empty-state text",
+      "summary": "At /app/admin/applications the empty-state text 'No applications in this view.' uses .empty-state / .empty-state--md classes that have no CSS in this component's scope (defined only, view-encapsulated, in dashboard.component.scss), so it renders with near-zero padding inside the padding-stripped .queue-list. Add a padded .empty-state rule to the applications SCSS (this also covers the detail-column empty state).",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.scss",
+        "src/app/features/admin/applications/applications.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "The empty-state text renders with comfortable padding and centering", "status": "pending" },
+        { "desc": "The detail-column empty state is likewise padded", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: pad the applications empty-state"
+        }
+      ]
+    },
+    {
+      "id": "T-0168",
+      "title": "Dashboard: expand main to full width when the role-gated aside is empty",
+      "summary": "On /app/dashboard the .dashboard-grid reserves a 1fr right column even when every .dashboard-aside panel is role-gated away (non-moderator, no manage_events), leaving dead whitespace. Wrap the aside in a role check and add a grid modifier so .dashboard-main spans the full width when the aside is not rendered.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/member/dashboard/dashboard.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "A non-moderator (no manage_events) sees the main sections span the full width with no empty right column", "status": "pending" },
+        { "desc": "A moderator/admin still sees the two-column layout with the aside panels", "status": "pending" },
+        { "desc": "The mobile single-column layout is unchanged", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: full-width dashboard main for non-moderators"
+        }
+      ]
+    },
+    {
+      "id": "T-0169",
+      "title": "Move account deletion from the edit-profile dialog to a dedicated page",
+      "summary": "The Edit My Profile dialog embeds the full app-account-deletion danger-zone form. Re-add a member route (/app/account-deletion, previously removed in T-0144) for AccountDeletionComponent, and replace the embed in the dialog with a single Delete my profile button that navigates to that page.",
+      "status": "planned",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/member.module.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/account-deletion/account-deletion.component.ts",
+        "src/app/features/member/account-deletion/account-deletion.component.html"
+      ],
+      "dependsOn": ["lords-dashboard-backend:T-0113"],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "The edit-profile dialog shows only a Delete my profile button with no inline deletion form", "status": "pending" },
+        { "desc": "Clicking it navigates to /app/account-deletion which renders the full deletion flow", "status": "pending" },
+        { "desc": "Completing the flow performs a real account deletion end-to-end (with backend T-0113)", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: move account deletion out of the edit dialog to its own page"
+        }
+      ]
+    },
+    {
+      "id": "T-0170",
+      "title": "Fix empty bordered box below the profile avatar",
+      "summary": "The .profile-avatar border is applied to the hf-avatar host, which has no :host display rule, so the 124px inner avatar overflows an empty inline line-box and the rounded --ink-850 border draws an empty box beneath it. Add :host { display: inline-flex } to the avatar component (or move the border onto the sized inner tile / .profile-avatar-wrap).",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "shared",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/avatar/avatar.component.scss",
+        "src/app/features/member/profile/profile.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "No empty bordered/shadowed box appears below the avatar on the profile page", "status": "pending" },
+        { "desc": "The avatar border still frames the avatar correctly and other avatar usages are unaffected", "status": "pending" }
+      ],
+      "regressionRisk": [
+        { "desc": "avatar.component is a shared component used across roster/topbar/profile; a :host display change affects every avatar.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: remove empty bordered box below profile avatar"
+        }
+      ]
+    },
+    {
+      "id": "T-0171",
+      "title": "Ranks & Medals: render the New/Edit form above the ladder & cabinet",
+      "summary": "At /app/admin/ranks the editorMode editor panel is placed after the rank-ladder/medal-cabinet grid, so clicking New opens the form below both sections. Move the editor block to before the ladder grid (after the notices) so it appears on top - a pure template reorder, no TS change.",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "Clicking New (or Edit) shows the editor form above the ladder and cabinet", "status": "pending" },
+        { "desc": "Rank ladder and medal cabinet still render and function below the editor", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: ranks editor form on top of ladder/cabinet"
+        }
+      ]
+    },
+    {
+      "id": "T-0172",
+      "title": "Highlight 'My profile' in the sidebar when viewing a profile",
+      "summary": "The profile page hardcodes activeRoute to 'roster', so the side-nav (and mobile bottom-nav) highlight Members instead of My profile on any /app/profile/:id. Change the profile page activeRoute to 'profile' so both nav surfaces highlight the correct item.",
+      "status": "planned",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "Opening any /app/profile/:id highlights My profile in the sidebar", "status": "pending" },
+        { "desc": "The mobile bottom-nav likewise highlights My profile", "status": "pending" },
+        { "desc": "Breadcrumbs still read correctly", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: sidebar 'My profile' active-state on profile pages"
+        }
+      ]
+    },
+    {
+      "id": "T-0173",
+      "title": "Remove the like counter from the gallery card",
+      "summary": "Remove the heart icon + like-count element from the shared hf-gallery-card (markup + styles); likes are not needed yet. Leave GalleryItem.likes and the backend likesCount intact - only the UI display is removed. Because the card is shared, this also removes the counter from the dashboard Recent Gallery.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/shared/components/gallery-card/gallery-card.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "/gallery cards no longer render the heart icon or like count", "status": "pending" },
+        { "desc": "Dashboard Recent Gallery cards (same shared component) also no longer show likes", "status": "pending" },
+        { "desc": "Card meta row still renders the submitter cleanly with the likes element removed (no dangling flex gap)", "status": "pending" },
+        { "desc": "gallery-card component spec passes (update any assertion that referenced likes)", "status": "pending" }
+      ],
+      "regressionRisk": [
+        { "desc": "hf-gallery-card is shared by the public /gallery masonry and the dashboard Recent Gallery; removing the likes element changes both surfaces, not just /gallery.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: remove the like counter from the shared gallery card"
+        }
+      ]
+    },
+    {
+      "id": "T-0174",
+      "title": "Show the submitter avatar and fix its clipping in the gallery card",
+      "summary": "The gallery card passes only [name] to hf-avatar, so the submitter's profile picture never renders, and the avatar is being visually clipped. Carry the submitter avatar URL through the GalleryItem model + mapGalleryItem (from the new backend author.avatarUrl) and bind it to hf-avatar [avatarUrl], then fix the clipping by adjusting the card's submitter-row padding/margins - not the shared avatar component. Fixes both /gallery and the dashboard Recent Gallery.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/gallery.model.ts",
+        "src/app/core/services/gallery.service.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/shared/components/gallery-card/gallery-card.component.scss"
+      ],
+      "dependsOn": ["lords-dashboard-backend:T-0114"],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "GalleryItem model + mapGalleryItem carry the submitter avatar URL from the API author.avatarUrl", "status": "pending" },
+        { "desc": "/gallery card renders the submitter's profile picture, falling back to initials when the URL is absent or the image fails to load", "status": "pending" },
+        { "desc": "Dashboard Recent Gallery card shows the same submitter avatar", "status": "pending" },
+        { "desc": "Avatar is fully circular and no longer clipped by the card padding/margins on desktop and mobile", "status": "pending" },
+        { "desc": "The shared hf-avatar component styles are untouched (clipping fixed via the card container only)", "status": "pending" }
+      ],
+      "regressionRisk": [
+        { "desc": "Edits the shared hf-gallery-card and mapGalleryItem used across /gallery, dashboard Recent Gallery, and any other card consumer; a mapping or layout change affects all of them.", "status": "open", "notedAt": "2026-07-17T00:00:00Z" },
+        { "desc": "CROSS-REPO DEPLOY COUPLING: relies on lords-dashboard-backend:T-0114 exposing author.avatarUrl; deploying this frontend before that backend leaves the avatar blank (falls back to initials).", "status": "open", "notedAt": "2026-07-17T00:00:00Z" }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: render submitter avatar + fix avatar clipping in the gallery card (depends on backend author.avatarUrl)"
+        }
+      ]
+    },
+    {
+      "id": "T-0175",
+      "title": "Remove the non-functional 'Filters' button on the audit page",
+      "summary": "The 'Filters' button in the audit page header has no click handler and does nothing; the real filter controls live in the filter row below. Remove the dead button and leave the working search/actor/action filter row (including the currently-unwired time-range select) and the STAFF Export CSV button intact.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/audit/audit.component.html",
+        "src/app/features/admin/audit/audit.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        { "desc": "The 'Filters' button no longer appears in the /app/admin/audit header", "status": "pending" },
+        { "desc": "The Export CSV button still renders for STAFF and still exports", "status": "pending" },
+        { "desc": "The working filter row (search + actor/action/time-range selects) is unaffected", "status": "pending" },
+        { "desc": "audit component spec passes (remove any assertion tied to the Filters button)", "status": "pending" }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-17T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-17T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during bf-plan: remove the dead 'Filters' button from the audit page"
         }
       ]
     }
