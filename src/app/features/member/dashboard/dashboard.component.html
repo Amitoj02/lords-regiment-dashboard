@@ -34,7 +34,7 @@
     </div>
 
     <!-- Two-column layout -->
-    <div class="dashboard-grid">
+    <div class="dashboard-grid" [class.dashboard-grid--full]="!hasAside">
         <!-- Left Column -->
         <div class="dashboard-main">
             <!-- Upcoming Events (next 5) -->
@@ -94,7 +94,9 @@
             </div>
         </div>
 
-        <!-- Right Column -->
+        <!-- Right Column (role-gated; omitted entirely for plain members so the
+             main column spans full width — T-0168) -->
+        @if (hasAside) {
         <div class="dashboard-aside">
             <!-- Gallery submissions (ManageEvents holders; pending queue preview) -->
             @if (canManageEvents) {
@@ -199,5 +201,6 @@
             </div>
             }
         </div>
+        }
     </div>
 </hf-app-shell>

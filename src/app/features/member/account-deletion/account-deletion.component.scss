@@ -1,3 +1,8 @@
+/* Back button spacing (the shared .back-link rule is view-encapsulated elsewhere). */
+.back-link {
+    margin-bottom: 16px;
+}
+
 .acct-del-center {
     max-width: 720px;
     margin: 0 auto;

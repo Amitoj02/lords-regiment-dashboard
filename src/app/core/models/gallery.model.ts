@@ -8,6 +8,10 @@ export interface GalleryItem {
     thumbnailUrl: string;
     mediaUrl?: string;
     submittedBy: string;
+    /** Author member id (used to scope a profile's gallery tab to its owner). */
+    submittedByMemberId?: string;
+    /** Author avatar (custom or Discord fallback); null → the card shows initials. */
+    submittedByAvatarUrl?: string | null;
     submittedAt: string;
     status: GalleryItemStatus;
     likes: number;

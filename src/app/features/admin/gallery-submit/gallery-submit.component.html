@@ -81,9 +81,42 @@
                         placeholder="https://medal.tv/clips/…"
                         [(ngModel)]="linkUrl"
                         [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onLinkChange()"
                     />
                 </div>
-                }
+
+                <!-- Live provider-detected preview (T-0164) -->
+                @if (linkPreview) {
+                <div class="link-preview">
+                    <div class="link-preview-media">
+                        @if (linkPreview.kind === 'image') {
+                        <img [src]="linkPreview.rawUrl" alt="Link preview" />
+                        } @else if (linkPreview.kind === 'video') {
+                        <video
+                            [src]="linkPreview.rawUrl"
+                            preload="metadata"
+                            muted
+                            playsinline
+                        ></video>
+                        } @else if (linkPreview.posterUrl && !linkPosterFailed) {
+                        <img
+                            [src]="linkPreview.posterUrl"
+                            alt="Link preview"
+                            (error)="linkPosterFailed = true"
+                        />
+                        <span class="link-preview-play">▶</span>
+                        } @else {
+                        <div class="link-preview-fallback">
+                            <span class="badge brass">{{ linkPreview.kind }}</span>
+                        </div>
+                        }
+                    </div>
+                    <div class="link-preview-meta">
+                        <span class="link-preview-kind">Detected: {{ linkPreview.kind }}</span>
+                        <span class="link-preview-url mono">{{ linkPreview.rawUrl }}</span>
+                    </div>
+                </div>
+                } }
             </div>
 
             <div class="submit-side">

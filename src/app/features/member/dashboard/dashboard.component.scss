@@ -82,6 +82,11 @@
     align-items: start;
 }
 
+/* Full-width main when the role-gated aside is omitted (T-0168). */
+.dashboard-grid--full {
+    grid-template-columns: 1fr;
+}
+
 .dashboard-main,
 .dashboard-aside {
     display: flex;

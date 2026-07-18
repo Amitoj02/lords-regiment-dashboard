@@ -54,7 +54,7 @@ describe('GalleryAdminComponent', () => {
     it('renders only approved items in the archive grid', () => {
         setup([item({ id: 'g1', status: 'approved' }), item({ id: 'g2', status: 'pending' })]);
         expect(component.items.length).toBe(1);
-        const cards = fixture.nativeElement.querySelectorAll('.gallery-card');
+        const cards = fixture.nativeElement.querySelectorAll('hf-gallery-card');
         expect(cards.length).toBe(1);
     });
 
@@ -82,6 +82,6 @@ describe('GalleryAdminComponent', () => {
         setup([]);
         const el: HTMLElement = fixture.nativeElement;
         expect(el.querySelector('.empty')).toBeTruthy();
-        expect(el.querySelectorAll('.gallery-card').length).toBe(0);
+        expect(el.querySelectorAll('hf-gallery-card').length).toBe(0);
     });
 });

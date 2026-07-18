@@ -5,8 +5,8 @@ import { MediaEmbed, MediaEmbedService } from '../../services/media-embed.servic
 /**
  * Reusable gallery card (T-0077). Renders a single approved gallery item — a
  * media preview (with a varied aspect ratio driven by `aspectIndex`), a
- * video/link overlay, title, submitter and like count — and links to the detail
- * page (T-0078) unless `linkToDetail` is disabled. Extracted from the inline
+ * video/link overlay, title and submitter — and links to the detail page
+ * (T-0078) unless `linkToDetail` is disabled. Extracted from the inline
  * public-gallery card so the public archive AND the dashboard "Recent Gallery"
  * strip share one component.
  *
@@ -26,10 +26,13 @@ export class GalleryCardComponent {
     private _item!: GalleryItem;
     /** The resolved media preview for the current item. */
     preview: MediaEmbed | null = null;
+    /** Set when the poster image fails to load, so the card falls back to the placeholder. */
+    posterFailed = false;
 
     @Input({ required: true })
     set item(value: GalleryItem) {
         this._item = value;
+        this.posterFailed = false;
         this.preview = this.mediaEmbed.resolve(value?.mediaUrl ?? value?.thumbnailUrl);
     }
     get item(): GalleryItem {

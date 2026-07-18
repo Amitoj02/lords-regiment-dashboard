@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { environment } from '../../../environments/environment';
 
 export type MediaEmbedKind = 'youtube' | 'medaltv' | 'image' | 'video' | 'link';
 
@@ -11,7 +12,8 @@ export interface MediaEmbed {
     rawUrl: string;
     /**
      * A still-image URL usable as a compact thumbnail/poster where an inline
-     * iframe is undesirable (e.g. gallery cards). Currently YouTube only.
+     * iframe is undesirable (e.g. gallery cards). YouTube (i.ytimg) and Medal.tv
+     * (via the backend thumbnail proxy).
      */
     posterUrl?: string;
 }
@@ -61,6 +63,9 @@ export class MediaEmbedService {
                 kind: 'medaltv',
                 rawUrl: raw,
                 safeUrl: this.trust(`https://medal.tv/clip/${medalId}/embed`),
+                // Medal thumbnails are signed/expiring and not CORS-enabled, so the
+                // poster comes from the backend proxy (stable, same-origin URL).
+                posterUrl: `${environment.apiBaseUrl}/gallery/media/medal/${medalId}/thumbnail`,
             };
         }
 

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryFileInput, GalleryService } from '../../../core/services/gallery.service';
 import { StorageService } from '../../../core/services/storage.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 interface UploadedFile {
     id: string;
@@ -39,6 +40,10 @@ export class GallerySubmitComponent {
     readonly quickTags = ['clutch', 'melee', 'artillery', 'longshot', 'multikills'];
 
     linkUrl = '';
+    /** Live provider-detected preview of the pasted external link (T-0164). */
+    linkPreview: MediaEmbed | null = null;
+    /** Set when the resolved poster image fails to load (falls back to a link chip). */
+    linkPosterFailed = false;
     submitting = false;
 
     private fileSeq = 0;
@@ -49,7 +54,14 @@ export class GallerySubmitComponent {
         private storage: StorageService,
         private auth: AuthService,
         private router: Router,
+        private media: MediaEmbedService,
     ) {}
+
+    /** Re-resolve the link preview whenever the URL input changes. */
+    onLinkChange(): void {
+        this.linkPosterFailed = false;
+        this.linkPreview = this.media.resolve(this.linkUrl.trim());
+    }
 
     /** Capability gate for a template action. */
     can(capability: string): boolean {

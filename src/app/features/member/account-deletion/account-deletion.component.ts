@@ -1,6 +1,8 @@
+import { Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { switchMap } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 /** Shape of POST /members/me/deletion-request (only the token is used here). */
@@ -15,9 +17,6 @@ interface DeletionRequestResult {
     standalone: false,
 })
 export class AccountDeletionComponent {
-    /** Emitted when the caller dismisses the danger zone (host closes the modal). */
-    @Output() closed = new EventEmitter<void>();
-
     confirmText = '';
     checkbox1 = false;
     checkbox2 = false;
@@ -28,6 +27,8 @@ export class AccountDeletionComponent {
     error: string | null = null;
 
     private readonly http = inject(HttpClient);
+    private readonly auth = inject(AuthService);
+    private readonly location = inject(Location);
     private readonly base = `${environment.apiBaseUrl}/members/me`;
 
     get canExecute(): boolean {
@@ -68,9 +69,10 @@ export class AccountDeletionComponent {
     }
 
     /**
-     * Deferred deletion (GDPR): request a deletion (which returns a confirm token),
-     * then immediately confirm it. The token is normally delivered out-of-band via
-     * Discord re-auth; the backend returns it directly so the flow can complete here.
+     * Deferred deletion (GDPR): run the full request → confirm → execute chain.
+     * `request` returns a confirm token (normally delivered out-of-band via Discord
+     * re-auth, returned directly here); `confirm` re-authorises the request and
+     * `execute` performs the terminal soft-delete + PII anonymisation.
      */
     execute(): void {
         if (!this.canExecute) {
@@ -89,6 +91,7 @@ export class AccountDeletionComponent {
                         token: res.confirmToken,
                     }),
                 ),
+                switchMap(() => this.http.post(`${this.base}/deletion-request/execute`, {})),
             )
             .subscribe({
                 next: () => {
@@ -105,8 +108,14 @@ export class AccountDeletionComponent {
             });
     }
 
+    /** Leave without deleting — back to the previous page (the profile). */
     cancel(): void {
-        this.closed.emit();
+        this.location.back();
+    }
+
+    /** Sign out after a completed deletion (the account is now anonymised). */
+    finish(): void {
+        this.auth.logout();
     }
 
     /** Surface the backend's user-facing message when present, else a fallback. */

@@ -33,14 +33,8 @@
         </div>
         } @else {
         <div class="gallery-grid">
-            @for (item of items; track item.id) {
-            <div class="gallery-card">
-                <div class="gallery-card__thumb" [ngStyle]="{ background: thumb(item) }"></div>
-                <div class="gallery-card__info">
-                    <span class="gallery-card__caption">{{ item.caption || item.title }}</span>
-                    <span class="gallery-card__by">by {{ item.submittedBy }}</span>
-                </div>
-            </div>
+            @for (item of items; track item.id; let i = $index) {
+            <hf-gallery-card [item]="item" [aspectIndex]="i % 3"></hf-gallery-card>
             }
         </div>
         }

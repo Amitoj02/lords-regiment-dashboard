@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 @Component({
     selector: 'app-gallery-admin',
@@ -25,7 +24,6 @@ export class GalleryAdminComponent implements OnInit {
     constructor(
         private galleryService: GalleryService,
         private auth: AuthService,
-        private media: MediaEmbedService,
     ) {}
 
     can(capability: string): boolean {
@@ -62,21 +60,5 @@ export class GalleryAdminComponent implements OnInit {
                     error: (err) => console.error('Failed to load the moderation queue count', err),
                 });
         }
-    }
-
-    /**
-     * A CSS `background` for a card thumbnail. Derived from the real media
-     * (`mediaUrl`) via MediaEmbedService (T-0146) — an image file or a YouTube
-     * poster becomes a cover image; video/other links fall back to a stable tint
-     * (a CSS background can't play a clip inline).
-     */
-    thumb(item: GalleryItem): string {
-        const embed = this.media.resolve(item.mediaUrl);
-        const imageUrl = embed?.kind === 'image' ? embed.rawUrl : embed?.posterUrl;
-        if (imageUrl) {
-            return `center / cover no-repeat url('${imageUrl}')`;
-        }
-        const hue = Array.from(item.id).reduce((sum, c) => sum + c.charCodeAt(0), 0) % 360;
-        return `oklch(0.32 0.05 ${hue})`;
     }
 }
