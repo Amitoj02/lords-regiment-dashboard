@@ -1,4 +1,12 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    ViewChild,
+    inject,
+    OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditLog, DiscordSyncStatus } from '../../../core/models/audit-log.model';
 import { AuditService } from '../../../core/services/audit.service';
@@ -26,6 +34,11 @@ export class AuditComponent implements OnInit {
     exporting = false;
     loading = true;
     loadError = '';
+
+    /** The dialog container — focused on open so the modal is announced (a11y). */
+    @ViewChild('auditDialog') auditDialog?: ElementRef<HTMLElement>;
+    /** The element that opened the dialog, so focus can be restored on close. */
+    private lastFocused: HTMLElement | null = null;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -55,7 +68,8 @@ export class AuditComponent implements OnInit {
                     this.loading = false;
                     this.logs = logs;
                     this.filteredLogs = logs;
-                    this.selectedLog = logs[0] ?? null;
+                    // No auto-select: the page opens with the detail dialog closed;
+                    // it opens on row click (T-0189).
                     this.actors = [...new Set(logs.map((l) => l.actor))];
                     this.actions = [...new Set(logs.map((l) => l.action))];
                 },
@@ -80,14 +94,41 @@ export class AuditComponent implements OnInit {
         });
     }
 
+    /** Open the detail dialog for a row. */
     selectLog(log: AuditLog): void {
+        // Remember the trigger so focus can return to it when the dialog closes.
+        this.lastFocused = document.activeElement as HTMLElement | null;
         this.selectedLog = log;
+        // Move focus into the dialog once it has rendered, so screen readers
+        // announce it and keyboard focus is no longer on the obscured background.
+        setTimeout(() => this.auditDialog?.nativeElement.focus());
     }
 
-    /** Pin the ledger to a single actor (the detail panel's "All by …" affordance). */
+    /** Close the detail dialog and restore focus to the row that opened it. */
+    closeDetail(): void {
+        this.selectedLog = null;
+        this.lastFocused?.focus?.();
+        this.lastFocused = null;
+    }
+
+    /** Close when the backdrop (not the dialog) is clicked. */
+    onBackdrop(event: MouseEvent): void {
+        if (event.target === event.currentTarget) this.closeDetail();
+    }
+
+    /** Escape closes the dialog for keyboard users (the backdrop click is mouse-only). */
+    @HostListener('document:keydown.escape')
+    onEscapeKey(): void {
+        if (this.selectedLog) this.closeDetail();
+    }
+
+    /** Pin the ledger to a single actor (the dialog's "All by …" affordance). */
     filterByActor(actor: string): void {
         this.filterActor = actor;
         this.applyFilters();
+        // Close the dialog so the freshly-filtered table is visible (the modal
+        // overlay would otherwise keep covering it).
+        this.closeDetail();
     }
 
     /** Human label for the entry's Discord cross-post state. */

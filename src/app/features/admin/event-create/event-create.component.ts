@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RecurrenceCadence, RegimentEvent } from '../../../core/models/event.model';
 import { EventsService } from '../../../core/services/events.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { StorageService } from '../../../core/services/storage.service';
+import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/storage.service';
 
 @Component({
     selector: 'app-event-create',
@@ -66,6 +66,9 @@ export class EventCreateComponent implements OnInit {
     bannerPreview: string | null = null;
     bannerUploading = false;
     bannerError: string | null = null;
+    /** Accepted-types + max-size hint, seeded from the static policy then refreshed
+     * from GET /storage/policy so it mirrors the backend limit (T-0187). */
+    bannerHint = StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'event-banner');
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -94,6 +97,15 @@ export class EventCreateComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // Refresh the banner hint from the live storage policy (T-0187); falls back
+        // to the default already shown if the fetch fails.
+        this.storage
+            .getPolicy()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((policy) => {
+                this.bannerHint = StorageService.uploadHint(policy, 'event-banner');
+            });
+
         this.editId = this.route.snapshot.paramMap.get('id');
         if (this.editId) {
             this.eventsService

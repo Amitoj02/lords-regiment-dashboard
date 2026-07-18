@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { StorageService, PresignedUpload } from './storage.service';
+import {
+    DEFAULT_STORAGE_POLICY,
+    StorageService,
+    PresignedUpload,
+    StoragePolicy,
+} from './storage.service';
 
 function ticket(overrides: Partial<PresignedUpload> = {}): PresignedUpload {
     return {
@@ -57,5 +62,62 @@ describe('StorageService', () => {
         put.flush(null);
 
         expect(resolvedKey).toBe('events/reg/uuid.png');
+    });
+
+    // ── Upload policy (T-0187) ───────────────────────────────────────────────
+    describe('getPolicy()', () => {
+        function policyBody(overrides: Partial<StoragePolicy> = {}): StoragePolicy {
+            return { ...DEFAULT_STORAGE_POLICY, maxUploadMb: 50, ...overrides };
+        }
+
+        it('GETs /api/storage/policy and returns the body', () => {
+            let result: StoragePolicy | undefined;
+            service.getPolicy().subscribe((p) => (result = p));
+
+            const req = httpMock.expectOne('/api/storage/policy');
+            expect(req.request.method).toBe('GET');
+            req.flush(policyBody());
+
+            expect(result?.maxUploadMb).toBe(50);
+        });
+
+        it('caches the policy — a second subscription does not re-request (shareReplay)', () => {
+            service.getPolicy().subscribe();
+            httpMock.expectOne('/api/storage/policy').flush(policyBody());
+
+            let cached: StoragePolicy | undefined;
+            service.getPolicy().subscribe((p) => (cached = p));
+            httpMock.expectNone('/api/storage/policy');
+            expect(cached?.maxUploadMb).toBe(50);
+        });
+
+        it('falls back to the default policy when the fetch fails', () => {
+            let result: StoragePolicy | undefined;
+            service.getPolicy().subscribe((p) => (result = p));
+
+            httpMock
+                .expectOne('/api/storage/policy')
+                .flush('boom', { status: 500, statusText: 'Server Error' });
+
+            expect(result).toBe(DEFAULT_STORAGE_POLICY);
+        });
+    });
+
+    describe('hint formatting', () => {
+        it('formatExtensions joins with commas and a trailing "or"', () => {
+            expect(StorageService.formatExtensions(['png', 'jpg', 'webp'])).toBe(
+                'PNG, JPG or WebP',
+            );
+            expect(StorageService.formatExtensions(['png'])).toBe('PNG');
+        });
+
+        it('uploadHint renders accepted types + the target size cap', () => {
+            expect(StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'member-avatar')).toBe(
+                'PNG, JPG or WebP · max 8 MB',
+            );
+            expect(StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'member-banner')).toBe(
+                'PNG, JPG or WebP · max 12 MB',
+            );
+        });
     });
 });

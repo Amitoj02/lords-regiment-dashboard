@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
-  "lastSyncedAt": "2026-07-18T04:56:34Z",
-  "notesForNextSession": "Planned-tasks polish T-0176..T-0186 implemented -> deploy_ready (FE 72c9585). Gallery: usage-ranked tag bar + animated More/Less expander (public /gallery only; /app/gallery is GalleryAdminComponent), submitter-avatar inset on the shared hf-gallery-card, media-detail byline real avatar + profile link + moderator edit(caption/tags via new GalleryService.update->PATCH)/delete. Profile: back-button clears the full-bleed banner (desktop + 820/480 mobile), My-profile nav highlight only on own profile. Admin ranks: New Role + New Medal toolbar buttons, panel \"+ New\" removed. Roster: derived Suspended/Banned/Inactive pills + tooltips (filter + CSV in lockstep). Audit: real actor avatars (initials fallback) + dark detail/state boxes. format/lint/build/133 FE specs green; browser-verified end-to-end (signed in as owner via minted JWT). SHIP WITH backend PR feat/gallery-moderation-audit-avatars (2e082cb): T-0183 consumes PATCH /gallery/:id (backend T-0115) and T-0185 consumes actorAvatarUrl (backend T-0117) — deploy the two together. No planned tasks remain.",
-  "nextIdCounter": 187,
+  "lastSyncedCommit": "b703e83f97be4e13e4d2eb164c4f77deaa395c92",
+  "lastSyncedAt": "2026-07-18T18:00:00Z",
+  "notesForNextSession": "T-0187/T-0188/T-0189 implemented -> deploy_ready (feat commit b703e83, branch feat/upload-hints-unsuspend-audit-dialog, STACKED on PR #12 branch feat/gallery-profile-roster-audit-polish). T-0187 upload hints (consumes backend T-0119 GET /storage/policy + GET /settings, graceful fallback). T-0188 Unsuspend button (consumes backend T-0118 POST /members/:id/unsuspend). T-0189 audit detail modal (+ focus mgmt + All-by-closes-dialog from adversarial review). Ships COUPLED with the backend PR. CI green locally: format/lint/build(no budget warn)/138 unit. Browser-verified desktop + mobile (owner minted-JWT). No FE planned tasks remain; 5 review-status legacy reverse-engineered features (T-0006/8/9/10/20) remain review, not planned.",
+  "nextIdCounter": 190,
   "connections": [],
   "tasks": [
     {
@@ -11743,6 +11743,282 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0187",
+      "title": "Show upload size & accepted-type hints on every file-upload control",
+      "summary": "Add a consistent 'accepted types - max size' hint next to every file-upload control so users know the limits before choosing a file. Covers the profile avatar and banner uploaders, the event-banner uploader, and the gallery-submit dropzone (which today lists types but omits the size and item caps). Hint values must mirror the backend storage policy: avatar 8 MB, member banner 12 MB, event banner 12 MB (png/jpg/webp); gallery image 12 MB / video 80 MB / max 10 items (png/jpg/webp + mp4/webm/mov), the gallery caps sourced from GET /api/settings since they are admin-configurable. Complements the existing reactive oversize-error work (T-0160).",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "platform",
+      "feature": "uploads",
+      "subfeature": "size-type-hints",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html (avatar input ~308-313, banner input ~331-336 - add hint under each)",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.html (drop-zone__hint ~39 - add image/video size + max-items)",
+        "src/app/features/admin/gallery-submit/gallery-submit.component.ts (source gallery caps ~71-110)",
+        "src/app/features/admin/event-create/event-create.component.html (banner field-hint ~90-92 - add max size)",
+        "src/app/core/services/settings.service.ts (read gallery caps from GET /api/settings)",
+        "reference only: src/app/core/services/storage.service.ts TARGET_POLICY; design-reference/screens-admin.jsx:687"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Gallery caps are admin-configurable (GET /api/settings exposes galleryMaxImageSizeMb/VideoSizeMb/ItemsPerSubmission + allowed types). Source the gallery hint LIVE from settings (truthful, extra fetch) or hardcode the 12 MB / 80 MB / 10-item defaults to match the wireframe?",
+          "answer": "Live from GET /settings (galleryMaxImageSizeMb/VideoSizeMb/ItemsPerSubmission), seeded from the backend defaults (12 MB / 80 MB / 10 items) and falling back to them if the fetch fails — truthful and drift-free, and never blocks submission.",
+          "askedAt": "2026-07-18T05:30:00Z"
+        },
+        {
+          "q": "The static avatar/banner/event caps are hardcoded in backend storage.service.ts and not exposed by any API. Hardcode matching constants on the FE, or consume a new backend storage-policy endpoint (lords-dashboard-backend:T-0119) as a single source of truth?",
+          "answer": "Consume GET /storage/policy (backend T-0119, built this session) as the single source of truth for the static avatar/banner/event caps, with a hardcoded DEFAULT_STORAGE_POLICY fallback rendered immediately so hints never wait on the network and survive a fetch failure.",
+          "askedAt": "2026-07-18T05:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Profile avatar uploader shows an accepted-types + 8 MB max hint next to the Choose-image control",
+          "status": "passed"
+        },
+        {
+          "desc": "Profile banner uploader shows an accepted-types + 12 MB max hint",
+          "status": "passed"
+        },
+        {
+          "desc": "Event create/edit banner shows the 12 MB max alongside the existing type + 1920x600 dimension hint",
+          "status": "passed"
+        },
+        {
+          "desc": "Gallery-submit dropzone hint includes image size (12 MB), video size (80 MB) and max items (10) plus the accepted types",
+          "status": "passed"
+        },
+        {
+          "desc": "Gallery hint reflects the values returned by GET /api/settings (or documented hardcoded defaults if that option is chosen)",
+          "status": "passed"
+        },
+        {
+          "desc": "Hint values agree with actual enforcement: an oversize file still triggers the T-0160 error (no hint/limit mismatch)",
+          "status": "passed"
+        },
+        {
+          "desc": "No layout regression: hints wrap cleanly beneath each control at mobile widths",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "If the live-settings option is chosen, gallery-submit gains a GET /api/settings dependency - a settings fetch failure must degrade gracefully (fall back to defaults, never block submission)",
+          "status": "resolved",
+          "notedAt": "2026-07-18T05:30:00Z",
+          "resolvedAt": "2026-07-18T18:00:00Z",
+          "resolvedBy": "claude",
+          "note": "Resolved: gallery-submit seeds the hint from the backend defaults and only overwrites on a successful GET /settings (error handler keeps the default; submission is never gated on the fetch). Profile/event hints use the same graceful-fallback via getPolicy()'s catchError -> DEFAULT_STORAGE_POLICY. Browser-verified all four surfaces desktop + mobile."
+        }
+      ],
+      "skippedByClaude": [
+        "Medal/rank image uploaders and the settings regiment-crest/logo/banner uploader are specced in design-reference but not built - no upload control exists to annotate, so they are out of scope here.",
+        "The gallery-submit external-link (URL paste) tab is not a file upload - no size/type hint applies there."
+      ],
+      "lastTouchedCommit": "b703e83",
+      "createdAt": "2026-07-18T05:30:00Z",
+      "updatedAt": "2026-07-18T18:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-18T05:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T18:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + verified; hints on profile avatar/banner, event banner, gallery dropzone (live from /storage/policy + /settings, hardcoded fallback); accept attr corrected (drop GIF, add MOV). Browser-verified desktop + mobile. deploy_ready — consumes backend T-0119."
+        }
+      ]
+    },
+    {
+      "id": "T-0188",
+      "title": "Add an 'Unsuspend member' button to the admin action modal (only when actively suspended)",
+      "summary": "In the member admin-action modal, add an 'Unsuspend member' button beside the existing Suspend controls, shown only when the member is currently suspended (suspendedUntil in the future). Mirrors the existing Unban pattern already in the same modal. Adds MembersService.unsuspend() -> POST /members/:id/unsuspend and refreshes the member on success so the button and the 'Currently suspended until' line clear. Gated by the manage_roles capability like the other disciplinary actions.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "member-actions",
+      "subfeature": "unsuspend",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.html (Suspend section ~131-164; mirror Unban ~166-182)",
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.ts (add unsuspend(); mirror unban() ~240-245, suspend() ~204-221)",
+        "src/app/core/services/members.service.ts (add unsuspend(id) -> POST /members/:id/unsuspend; mirror unban() ~108-110)",
+        "src/app/core/models/member.model.ts (suspendedUntil ~68; deriveMemberStatus 'Suspended' ~103 drives visibility)"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0118"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Show the button only when suspendedUntil is in the FUTURE (actively suspended, matching deriveMemberStatus), or also when suspendedUntil is set-but-past (expired) so an admin can clear a stale timestamp?",
+          "answer": "Only when actively suspended (suspendedUntil in the future) — matches deriveMemberStatus and the backend 409 guard. An expired suspension has already lapsed (member is Active again) so there is nothing to lift; the button stays hidden.",
+          "askedAt": "2026-07-18T05:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Unsuspend button is visible only when the member is actively suspended (suspendedUntil in the future); hidden otherwise",
+          "status": "passed"
+        },
+        {
+          "desc": "Clicking Unsuspend calls POST /members/:id/unsuspend; on success the member updates so the button disappears and the 'Currently suspended until' line clears",
+          "status": "passed"
+        },
+        {
+          "desc": "Button is gated by manage_roles (canRoles) like Suspend/Ban; hidden without the capability",
+          "status": "passed"
+        },
+        {
+          "desc": "Existing Suspend, Ban and Unban actions in the same modal still function (no regression)",
+          "status": "passed"
+        },
+        {
+          "desc": "Works from both hosts of the modal - roster and profile",
+          "status": "passed"
+        },
+        {
+          "desc": "Owner cannot be unsuspended (backend rejects; FE surfaces the error) - consistent with suspend/ban",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "admin-action-modal is reused by both the roster and profile pages; adding the Unsuspend control must not disturb the existing rank/role/medal/suspend/ban sections in either host",
+          "status": "resolved",
+          "notedAt": "2026-07-18T05:30:00Z",
+          "resolvedAt": "2026-07-18T18:00:00Z",
+          "resolvedBy": "claude",
+          "note": "Resolved: the Unsuspend control is additive inside the existing Suspend section (own unsuspendBusy flag, does not touch rank/role/medal/suspend/ban). Browser-verified from BOTH hosts (roster + profile); full happy-path exercised (suspend -> unsuspend -> roster pill SUSPENDED->ACTIVE -> member.unsuspend audit written)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "b703e83",
+      "createdAt": "2026-07-18T05:30:00Z",
+      "updatedAt": "2026-07-18T18:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-18T05:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T18:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + verified; isActivelySuspended gate + unsuspend() -> POST /members/:id/unsuspend. Browser-verified end-to-end desktop + mobile (roster + profile hosts). deploy_ready — consumes backend T-0118."
+        }
+      ]
+    },
+    {
+      "id": "T-0189",
+      "title": "Show audit-entry details in a modal dialog instead of the side panel",
+      "summary": "On the audit ledger (/app/admin/audit), replace the sticky two-column side detail panel with a modal dialog opened on row click. Collapse the .audit-layout grid to a single full-width table, move the existing detail markup into an @if(selectedLog)-gated backdrop + dialog (role=dialog, aria-modal, ESC-to-close, guarded backdrop click, aria-labelled close button) following the hf-admin-action-modal convention, and stop auto-selecting the first row so the page opens with no dialog. Preserve all current detail content (actor avatar, before/after state, metadata, View-profile link, All-by-actor filter).",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "audit-log",
+      "subfeature": "detail-dialog",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/audit/audit.component.html (table ~56-103; side detail panel ~106-195 -> move into modal)",
+        "src/app/features/admin/audit/audit.component.ts (selectedLog ~16; selectLog ~83-85; drop auto-select first row ~58; add close/ESC handlers)",
+        "src/app/features/admin/audit/audit.component.scss (.audit-layout two-column grid ~14-24 -> single column + backdrop/dialog styles)",
+        "reference pattern: src/app/features/member/admin-action-modal/admin-action-modal.component.{ts,html,scss}"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Existing app dialogs (admin-action-modal, profile modal) have no focus trap / focus-restore. Match that baseline for consistency, or add a hand-rolled focus trap (no Angular CDK in the repo) for better accessibility on the new audit dialog?",
+          "answer": "Went beyond the app baseline for the new dialog: on open focus moves into the dialog (role=dialog + aria-modal announce it) and on close it restores to the triggering row — the two highest-impact WCAG 2.4.3 fixes surfaced by the adversarial review. Stopped short of a full Tab-cycling focus trap (no Angular CDK in the repo; a hand-rolled trap would diverge from the app-wide modal pattern).",
+          "askedAt": "2026-07-18T05:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Page loads with NO detail dialog open (first row is no longer auto-selected)",
+          "status": "passed"
+        },
+        {
+          "desc": "Clicking - or Enter/Space on - an audit row opens a centered modal dialog with that entry's full details",
+          "status": "passed"
+        },
+        {
+          "desc": "Dialog closes via the close button, Escape, and backdrop click; inner clicks do not close it",
+          "status": "passed"
+        },
+        {
+          "desc": "With the side panel gone, the audit table spans full width (single column) with no empty right rail",
+          "status": "passed"
+        },
+        {
+          "desc": "All prior detail content renders inside the dialog: actor avatar (T-0185), dark-theme boxes (T-0186), before/after state, target user, Discord-sync dot, requestId, severity, plus the View-profile link and All-by-actor filter (T-0157)",
+          "status": "passed"
+        },
+        {
+          "desc": "'All by <actor>' filter and 'View profile' navigation still work from inside the dialog",
+          "status": "passed"
+        },
+        {
+          "desc": "Dialog is accessible: role=dialog, aria-modal, labelled title, keyboard reachable",
+          "status": "passed"
+        },
+        {
+          "desc": "Mobile: the dialog is usable and scrolls within the viewport at narrow widths",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The audit detail markup - recently reworked by T-0185 (actor avatars) and T-0186 (dark theme), both not yet deployed - is being restructured into a modal; must preserve those changes plus the T-0157 View-profile / All-by actions and admin-only export",
+          "status": "resolved",
+          "notedAt": "2026-07-18T05:30:00Z",
+          "resolvedAt": "2026-07-18T18:00:00Z",
+          "resolvedBy": "claude",
+          "note": "Resolved: all prior detail content preserved in the modal — actor avatar (T-0185), dark before/after + description boxes (T-0186), View-profile + All-by-actor (T-0157), Discord-sync dot, requestId, severity; admin-only Export CSV untouched. This FE branch is stacked on the PR #12 branch so the T-0185/186 work is present in the base. Browser-verified desktop + mobile; review-flagged focus + All-by-closes-dialog gaps fixed."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "b703e83",
+      "createdAt": "2026-07-18T05:30:00Z",
+      "updatedAt": "2026-07-18T18:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-18T05:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-18T18:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "implemented + verified; audit detail moved to a modal dialog (full-width table, grid collapses + JSON wraps on mobile, empty-desc hidden, focus-in/restore, All-by closes dialog). Browser-verified desktop + mobile; adversarial review findings fixed. deploy_ready (pure FE)."
         }
       ]
     }

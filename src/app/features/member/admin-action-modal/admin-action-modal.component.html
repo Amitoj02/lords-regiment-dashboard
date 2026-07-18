@@ -132,10 +132,20 @@
             @if (canRoles) {
             <section class="aam-section">
                 <div class="field-label">Suspend</div>
-                @if (member.suspendedUntil) {
-                <div class="aam-current">
-                    Currently suspended until
-                    <strong>{{ member.suspendedUntil | date: 'MMM d, y, h:mm a' }}</strong>
+                @if (isActivelySuspended) {
+                <div class="aam-current aam-current-suspended">
+                    <span>
+                        Currently suspended until
+                        <strong>{{ member.suspendedUntil | date: 'MMM d, y, h:mm a' }}</strong>
+                    </span>
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-sm aam-self-start"
+                        [disabled]="unsuspendBusy"
+                        (click)="unsuspend()"
+                    >
+                        {{ unsuspendBusy ? 'Lifting…' : 'Unsuspend member' }}
+                    </button>
                 </div>
                 }
                 <div class="aam-stack">

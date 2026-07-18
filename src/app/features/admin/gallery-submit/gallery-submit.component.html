@@ -30,13 +30,13 @@
                 <label class="drop-zone">
                     <input
                         type="file"
-                        accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
+                        accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime"
                         multiple
                         hidden
                         (change)="onFilesSelected($event)"
                     />
                     <div class="drop-zone__title">Choose images or videos</div>
-                    <div class="drop-zone__hint">PNG, JPG, WEBP, GIF, MP4 or WEBM</div>
+                    <div class="drop-zone__hint">{{ galleryHint }}</div>
                 </label>
 
                 @for (f of uploadedFiles; track f.id) {

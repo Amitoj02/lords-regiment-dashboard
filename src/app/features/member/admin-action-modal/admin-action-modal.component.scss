@@ -153,6 +153,15 @@
     }
 }
 
+// Active-suspension row: the "suspended until" line stacked above the Unsuspend
+// button (T-0188), left-aligned so the button hugs the content.
+.aam-current-suspended {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
 .aam-confirm {
     margin-bottom: 2px;
 }

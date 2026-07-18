@@ -9,7 +9,7 @@ import { RegimentEvent } from '../../../core/models/event.model';
 import { MembersService, ServiceRecordEntry } from '../../../core/services/members.service';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { StorageService } from '../../../core/services/storage.service';
+import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/storage.service';
 
 @Component({
     selector: 'hf-profile',
@@ -49,6 +49,10 @@ export class ProfileComponent implements OnInit {
     bannerPreview: string | null = null;
     bannerKey: string | null = null;
     bannerUploading = false;
+    /** Accepted-types + max-size hints, seeded from the static policy then refreshed
+     * from GET /storage/policy so they mirror the backend limits (T-0187). */
+    avatarHint = StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'member-avatar');
+    bannerHint = StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'member-banner');
 
     // ── Full-size avatar viewer (T-0122) ─────────────────────────────────────
     viewerOpen = false;
@@ -76,6 +80,16 @@ export class ProfileComponent implements OnInit {
         this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             this.loadMember(params.get('id'));
         });
+
+        // Refresh the upload hints from the live backend storage policy (T-0187);
+        // getPolicy() falls back to the defaults already shown if the fetch fails.
+        this.storage
+            .getPolicy()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((policy) => {
+                this.avatarHint = StorageService.uploadHint(policy, 'member-avatar');
+                this.bannerHint = StorageService.uploadHint(policy, 'member-banner');
+            });
     }
 
     private loadMember(routeId: string | null): void {
