@@ -8,6 +8,8 @@ export interface AuditLog {
     actor: string;
     /** Member id of the actor, when a roster member (drives "View profile" / "All by"). */
     actorMemberId?: string | null;
+    /** Actor avatar (custom, else linked Discord avatar); null for system/bot actors. */
+    actorAvatarUrl?: string | null;
     action: string;
     detail: string;
     severity: AuditSeverity;

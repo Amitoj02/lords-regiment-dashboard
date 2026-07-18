@@ -150,8 +150,12 @@
                             </span>
                         </td>
                         <td data-label="Status">
-                            <span class="badge" [ngClass]="getStatusClass(member.status)"
-                                >{{ member.status }}</span
+                            @let ds = deriveStatus(member);
+                            <span
+                                class="badge"
+                                [ngClass]="statusVariant(ds)"
+                                [title]="statusTooltip(member)"
+                                >{{ ds }}</span
                             >
                         </td>
                         <td data-label="Last Seen">

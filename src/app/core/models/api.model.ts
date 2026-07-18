@@ -423,6 +423,7 @@ export interface ApiAuditEntry {
     actorType: string;
     actorMemberId: string | null;
     actorLabel: string | null;
+    actorAvatarUrl: string | null;
     targetType: string | null;
     targetId: string | null;
     targetMemberId: string | null;
@@ -440,6 +441,7 @@ export function mapAuditLog(a: ApiAuditEntry): AuditLog {
         timestamp: a.occurredAt,
         actor: a.actorLabel ?? a.actorMemberId ?? 'System',
         actorMemberId: a.actorMemberId,
+        actorAvatarUrl: a.actorAvatarUrl ?? null,
         action: a.action,
         detail: a.detail ?? '',
         severity: a.severity,

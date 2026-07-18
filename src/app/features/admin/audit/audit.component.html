@@ -79,7 +79,10 @@
                             <td class="mono ts-cell">{{ formatTimestamp(log.timestamp) }}</td>
                             <td>
                                 <div class="row actor-row">
-                                    <hf-avatar [name]="log.actor"></hf-avatar>
+                                    <hf-avatar
+                                        [name]="log.actor"
+                                        [avatarUrl]="log.actorAvatarUrl"
+                                    ></hf-avatar>
                                     <span>{{ log.actor }}</span>
                                 </div>
                             </td>
@@ -109,7 +112,11 @@
                     <div class="panel-body">
                         <!-- Actor info -->
                         <div class="row detail-actor-row">
-                            <hf-avatar [name]="selectedLog.actor" [size]="36"></hf-avatar>
+                            <hf-avatar
+                                [name]="selectedLog.actor"
+                                [avatarUrl]="selectedLog.actorAvatarUrl"
+                                [size]="36"
+                            ></hf-avatar>
                             <div>
                                 <div class="detail-actor-name">{{ selectedLog.actor }}</div>
                                 <div class="mono detail-timestamp">
@@ -118,7 +125,7 @@
                             </div>
                         </div>
                         <!-- Description -->
-                        <div class="detail-desc parchment serif">{{ selectedLog.detail }}</div>
+                        <div class="detail-desc serif">{{ selectedLog.detail }}</div>
                         <!-- Before/After -->
                         @if (selectedLog.beforeState || selectedLog.afterState) {
                         <div class="grid-2 state-grid">

@@ -1,7 +1,12 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { Member } from '../../../core/models/member.model';
+import {
+    Member,
+    deriveMemberStatus,
+    statusTooltip,
+    statusVariant,
+} from '../../../core/models/member.model';
 import { MembersService } from '../../../core/services/members.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -35,7 +40,12 @@ export class RosterComponent implements OnInit {
         'Applicant',
     ];
     roles = ['Owner', 'Admin', 'Moderator', 'Member', 'Mercenary', 'Applicant'];
-    statuses = ['Active', 'Inactive', 'Pending'];
+    statuses = ['Active', 'Inactive', 'Pending', 'Suspended', 'Banned'];
+
+    // Pure status-derivation helpers exposed to the template (T-0184).
+    readonly deriveStatus = deriveMemberStatus;
+    readonly statusVariant = statusVariant;
+    readonly statusTooltip = statusTooltip;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -77,7 +87,8 @@ export class RosterComponent implements OnInit {
             m.discordTag,
             m.rank,
             m.role,
-            m.status,
+            // Export the derived status so the CSV matches the visible pill.
+            deriveMemberStatus(m),
             m.lastSeen,
         ]);
         const csv = [headers, ...rows]
@@ -140,7 +151,7 @@ export class RosterComponent implements OnInit {
         }
 
         if (this.filterStatus) {
-            results = results.filter((m) => m.status === this.filterStatus);
+            results = results.filter((m) => deriveMemberStatus(m) === this.filterStatus);
         }
 
         this.filteredMembers = results;
@@ -175,19 +186,6 @@ export class RosterComponent implements OnInit {
                 return 'blue';
             case 'Member':
                 return 'parch';
-            default:
-                return '';
-        }
-    }
-
-    getStatusClass(status: string): string {
-        switch (status) {
-            case 'Active':
-                return 'laurel';
-            case 'Inactive':
-                return 'parch';
-            case 'Pending':
-                return 'brass';
             default:
                 return '';
         }

@@ -1,14 +1,16 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
-import { GalleryService } from '../../../core/services/gallery.service';
+import { GalleryService, UpdateGalleryPayload } from '../../../core/services/gallery.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 /**
  * Public gallery detail page (T-0078) at /gallery/:id. Reads the id from the
  * route and renders the full item — media, submitter, date, tags, caption — using
- * the existing GalleryService.getById (no new service method needed).
+ * the existing GalleryService.getById (no new service method needed). Moderators
+ * additionally get an inline edit (caption + tags) / delete panel (T-0183).
  */
 @Component({
     selector: 'hf-gallery-detail',
@@ -22,10 +24,26 @@ export class GalleryDetailComponent implements OnInit {
     loading = true;
     notFound = false;
 
+    // Moderator edit state (T-0183). The media itself is never editable here.
+    editing = false;
+    editCaption = '';
+    editTags: string[] = [];
+    tagInput = '';
+    readonly maxTags = 10;
+    saving = false;
+    deleting = false;
+
     private readonly destroyRef = inject(DestroyRef);
     private readonly route = inject(ActivatedRoute);
     private readonly gallery = inject(GalleryService);
+    private readonly auth = inject(AuthService);
+    private readonly router = inject(Router);
     private readonly mediaEmbed = inject(MediaEmbedService);
+
+    /** Capability gate for the moderator edit/delete panel (T-0183). */
+    can(capability: string): boolean {
+        return this.auth.hasCapability(capability);
+    }
 
     ngOnInit(): void {
         const id = this.route.snapshot.paramMap.get('id');
@@ -53,5 +71,90 @@ export class GalleryDetailComponent implements OnInit {
 
     get mediaUrl(): string | null {
         return this.item?.mediaUrl ?? this.item?.thumbnailUrl ?? null;
+    }
+
+    /** Whether the tag input has hit the 10-tag cap. */
+    get tagsAtLimit(): boolean {
+        return this.editTags.length >= this.maxTags;
+    }
+
+    /** Enter edit mode, seeding the form from the current item. */
+    startEdit(): void {
+        if (!this.item) {
+            return;
+        }
+        this.editCaption = this.item.caption ?? '';
+        this.editTags = [...this.item.tags];
+        this.tagInput = '';
+        this.editing = true;
+    }
+
+    cancelEdit(): void {
+        this.editing = false;
+        this.tagInput = '';
+    }
+
+    addTag(value?: string): void {
+        const t = (value ?? this.tagInput).trim().toLowerCase();
+        if (t && !this.editTags.includes(t) && !this.tagsAtLimit) {
+            this.editTags.push(t);
+        }
+        this.tagInput = '';
+    }
+
+    removeTag(t: string): void {
+        this.editTags = this.editTags.filter((tag) => tag !== t);
+    }
+
+    /** Persist the caption/tags edit (PATCH /gallery/:id). */
+    save(): void {
+        if (!this.item || this.saving) {
+            return;
+        }
+        this.saving = true;
+        const payload: UpdateGalleryPayload = {
+            caption: this.editCaption.trim() || undefined,
+            tags: [...this.editTags],
+        };
+        this.gallery
+            .update(this.item.id, payload)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (updated) => {
+                    this.item = updated;
+                    this.editing = false;
+                    this.saving = false;
+                },
+                error: (err) => {
+                    console.error('Failed to update gallery item', err);
+                    this.saving = false;
+                },
+            });
+    }
+
+    /** Delete the item + its stored media, then return to the gallery (T-0183). */
+    deleteItem(): void {
+        if (
+            !this.item ||
+            this.deleting ||
+            !confirm(
+                'Delete this dispatch permanently? This also removes the stored media and cannot be undone.',
+            )
+        ) {
+            return;
+        }
+        this.deleting = true;
+        this.gallery
+            .delete(this.item.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.router.navigateByUrl('/gallery');
+                },
+                error: (err) => {
+                    console.error('Failed to delete gallery item', err);
+                    this.deleting = false;
+                },
+            });
     }
 }

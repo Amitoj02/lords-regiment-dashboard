@@ -100,27 +100,33 @@
     color: var(--t-400);
 }
 
+// Dark recessed surface consistent with the admin theme (the enclosing panel is
+// --ink-800); previously used light --parch-* tokens that read as white on the
+// dark panel (T-0186). The `parchment` class was dropped in the template so its
+// forced dark text colour no longer fights this surface.
 .detail-desc {
-    background: var(--parch-100);
-    border: 1px solid var(--parch-300);
+    background: var(--ink-850);
+    border: 1px solid var(--rule-2);
     border-radius: 6px;
     padding: 12px 14px;
     font-size: 0.875rem;
     line-height: 1.6;
     margin-bottom: 16px;
+    color: var(--t-200);
 }
 
 .state-grid {
     margin-bottom: 16px;
     padding: 12px;
-    background: var(--parch-50);
+    background: var(--ink-850);
     border-radius: 6px;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--rule-2);
 }
 
 .state-value {
     font-weight: 600;
     margin-top: 4px;
+    color: var(--t-100);
 }
 
 .detail-metadata {

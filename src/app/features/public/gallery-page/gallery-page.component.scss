@@ -41,6 +41,58 @@
     cursor: pointer;
 }
 
+/* The More/Less expander reads as a brass gallery-tag chip (reuses the exact
+   .badge.brass token values so it matches the active tag chips). */
+.gallery-tag-toggle {
+    color: var(--brass-300);
+    border-color: var(--brass-700);
+    background: rgba(99, 73, 20, 0.18);
+
+    &:hover {
+        border-color: var(--brass-500);
+    }
+}
+
+/* Expandable overflow region. `.gallery-tag-list` carries the shared `.row`
+   class, whose `> * { width: auto }` override would collapse this child — pin it
+   full-width so the revealed tags wrap onto their own line. The height animates
+   via the grid 0fr→1fr technique (the inner `overflow: hidden` clips it) plus an
+   opacity fade, so the reveal is smooth rather than a hard jump (T-0177). */
+.gallery-tag-overflow {
+    flex: 0 0 100%;
+    width: 100%;
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+    margin-top: 0;
+    transition:
+        grid-template-rows 0.28s ease,
+        opacity 0.28s ease,
+        margin-top 0.28s ease;
+
+    &.expanded {
+        grid-template-rows: 1fr;
+        opacity: 1;
+        pointer-events: auto;
+        margin-top: 6px;
+    }
+}
+
+.gallery-tag-overflow-inner {
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gallery-tag-overflow {
+        transition: none;
+    }
+}
+
 /* Masonry */
 .gallery-masonry {
     column-count: 3;

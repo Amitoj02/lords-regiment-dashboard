@@ -155,6 +155,19 @@ describe('GalleryService', () => {
         expect(state).toEqual({ likesCount: 5, liked: true });
     });
 
+    it('update() PATCHes the caption + tags and maps the result (T-0183)', () => {
+        let result: GalleryItem | undefined;
+        service.update('g1', { caption: 'New caption', tags: ['siege'] }).subscribe((i) => {
+            result = i;
+        });
+        const req = httpMock.expectOne('/api/gallery/g1');
+        expect(req.request.method).toBe('PATCH');
+        expect(req.request.body).toEqual({ caption: 'New caption', tags: ['siege'] });
+        req.flush(apiItem({ caption: 'New caption', tags: ['siege'] }));
+        expect(result?.caption).toBe('New caption');
+        expect(result?.tags).toEqual(['siege']);
+    });
+
     it('delete() issues a DELETE', () => {
         service.delete('g1').subscribe();
         const req = httpMock.expectOne('/api/gallery/g1');

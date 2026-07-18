@@ -95,14 +95,23 @@
     line-height: 1.4;
 }
 
+// Both rows carry the shared `.row` class, which leaks Bootstrap's grid negative
+// horizontal gutter (~-12px each). Compounded inside the 12px card body, that
+// dragged the submitter avatar left of the card's `overflow: hidden` edge and
+// clipped it. Zero the leaked gutters so both rows respect the body padding and
+// the full avatar sits inside the card on every surface (T-0181).
 .gallery-card-meta {
     margin-top: 8px;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .gallery-submitter {
     gap: 6px;
     align-items: center;
     min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
 
     // Keep the round avatar at its intrinsic size so the card padding/name never
     // clip it (the shared hf-avatar itself is left untouched).

@@ -29,7 +29,10 @@
                 </button>
                 }
                 <button type="button" class="btn btn-primary btn-sm" (click)="newRank()">
-                    + New
+                    New Role
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="newMedal()">
+                    New Medal
                 </button>
             </div>
         </div>
@@ -213,15 +216,12 @@
             <div class="panel">
                 <div class="panel-header between">
                     <span class="panel-title">Rank Ladder</span>
-                    <button type="button" class="btn btn-ghost btn-sm" (click)="newRank()">
-                        + New
-                    </button>
                 </div>
                 <div class="panel-body rank-list">
                     @if (loadingRanks) {
                     <div class="empty">Loading ranks…</div>
                     } @else if (!ranks.length) {
-                    <div class="empty">No ranks yet. Use "+ New" to add one.</div>
+                    <div class="empty">No ranks yet. Use "New Role" to add one.</div>
                     } @else { @for (rank of ranks; track rank.id; let i = $index) {
                     <div
                         class="rank-row"
@@ -299,15 +299,12 @@
             <div class="panel">
                 <div class="panel-header between">
                     <span class="panel-title">Medal Cabinet</span>
-                    <button type="button" class="btn btn-ghost btn-sm" (click)="newMedal()">
-                        + New
-                    </button>
                 </div>
                 <div class="panel-body medal-list">
                     @if (loadingMedals) {
                     <div class="empty">Loading medals…</div>
                     } @else if (!medals.length) {
-                    <div class="empty">No medals yet. Use "+ New" to add one.</div>
+                    <div class="empty">No medals yet. Use "New Medal" to add one.</div>
                     } @else { @for (medal of medals; track medal.id; let i = $index) {
                     <div
                         class="medal-row"

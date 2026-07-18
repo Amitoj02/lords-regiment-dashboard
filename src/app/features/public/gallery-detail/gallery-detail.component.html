@@ -51,9 +51,21 @@
                 <h1 class="detail-title serif-display">{{ item.title }}</h1>
 
                 <div class="row detail-byline">
-                    <hf-avatar [name]="item.submittedBy" [size]="30"></hf-avatar>
+                    <hf-avatar
+                        [name]="item.submittedBy"
+                        [avatarUrl]="item.submittedByAvatarUrl"
+                        [size]="30"
+                    ></hf-avatar>
                     <div class="detail-byline-text">
+                        @if (item.submittedByMemberId) {
+                        <a
+                            [routerLink]="['/app/profile', item.submittedByMemberId]"
+                            class="detail-submitter-link"
+                            >{{ item.submittedBy }}</a
+                        >
+                        } @else {
                         <div class="detail-submitter-name">{{ item.submittedBy }}</div>
+                        }
                         <div class="detail-date">{{ item.submittedAt }}</div>
                     </div>
                 </div>
@@ -64,6 +76,90 @@
                 <div class="row detail-tags">
                     @for (tag of item.tags; track tag) {
                     <span class="badge brass">#{{ tag }}</span>
+                    }
+                </div>
+                }
+
+                <!-- Moderator edit/delete (T-0183). Media itself is not editable. -->
+                @if (can('moderate_gallery')) {
+                <div class="detail-mod">
+                    @if (!editing) {
+                    <div class="detail-mod-actions">
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            (click)="startEdit()"
+                        >
+                            Edit details
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm"
+                            [disabled]="deleting"
+                            (click)="deleteItem()"
+                        >
+                            {{ deleting ? 'Deleting…' : 'Delete' }}
+                        </button>
+                    </div>
+                    } @else {
+                    <div class="detail-edit-form">
+                        <label class="detail-edit-label" for="gd-caption">Caption</label>
+                        <textarea
+                            id="gd-caption"
+                            class="hf-textarea"
+                            rows="3"
+                            maxlength="512"
+                            [(ngModel)]="editCaption"
+                            [ngModelOptions]="{ standalone: true }"
+                        ></textarea>
+
+                        <label class="detail-edit-label" for="gd-tags">Tags</label>
+                        @if (editTags.length) {
+                        <div class="tag-chips">
+                            @for (tag of editTags; track tag) {
+                            <span class="badge brass tag-chip">
+                                {{ tag }}
+                                <button
+                                    type="button"
+                                    class="tag-remove"
+                                    [attr.aria-label]="'Remove tag ' + tag"
+                                    (click)="removeTag(tag)"
+                                >
+                                    &times;
+                                </button>
+                            </span>
+                            }
+                        </div>
+                        }
+                        <input
+                            id="gd-tags"
+                            class="hf-input tag-input"
+                            type="text"
+                            [placeholder]="tagsAtLimit ? 'Tag limit reached' : 'Add a tag…'"
+                            [disabled]="tagsAtLimit"
+                            [(ngModel)]="tagInput"
+                            [ngModelOptions]="{ standalone: true }"
+                            (keydown.enter)="addTag(); $event.preventDefault()"
+                        />
+
+                        <div class="detail-edit-actions">
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                [disabled]="saving"
+                                (click)="save()"
+                            >
+                                {{ saving ? 'Saving…' : 'Save' }}
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-sm"
+                                (click)="cancelEdit()"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                     }
                 </div>
                 }

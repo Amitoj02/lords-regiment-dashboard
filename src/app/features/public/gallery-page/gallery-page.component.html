@@ -45,7 +45,7 @@
                 >
                     #all
                 </button>
-                @for (tag of allTags; track tag) {
+                @for (tag of visibleTags; track tag) {
                 <button
                     type="button"
                     class="badge gallery-tag"
@@ -54,6 +54,34 @@
                 >
                     #{{ tag }}
                 </button>
+                } @if (hasOverflowTags) {
+                <button
+                    type="button"
+                    class="badge gallery-tag gallery-tag-toggle"
+                    [attr.aria-expanded]="tagsExpanded"
+                    (click)="toggleTags()"
+                >
+                    {{ tagsExpanded ? 'Less' : 'More' }}
+                </button>
+
+                <div
+                    class="gallery-tag-overflow"
+                    [class.expanded]="tagsExpanded"
+                    [attr.aria-hidden]="!tagsExpanded"
+                >
+                    <div class="gallery-tag-overflow-inner">
+                        @for (tag of overflowTags; track tag) {
+                        <button
+                            type="button"
+                            class="badge gallery-tag"
+                            [ngClass]="{ 'brass': activeTag === tag }"
+                            (click)="setTag(tag)"
+                        >
+                            #{{ tag }}
+                        </button>
+                        }
+                    </div>
+                </div>
                 }
             </div>
         </div>
