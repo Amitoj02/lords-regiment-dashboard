@@ -27,6 +27,16 @@ export interface Application {
     discordDmMessage?: string;
     /** Whether the applicant's Discord identity is blocked from applying (T-0128). */
     blocked?: boolean;
+    /** Member id created on approval — drives the profile deep-link (T-0222/T-0223). */
+    promotedMemberId?: string | null;
+    /**
+     * The applicant's current display name (reflecting post-approval renames):
+     * the promoted member's name, else the linked Discord global name. When null,
+     * consumers fall back to {@link applicantName} (the submit-time snapshot).
+     */
+    currentDisplayName?: string | null;
+    /** The applicant's current avatar URL; when null the avatar falls back to initials. */
+    currentAvatarUrl?: string | null;
 }
 
 /**

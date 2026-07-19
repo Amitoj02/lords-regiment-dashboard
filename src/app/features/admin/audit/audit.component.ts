@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditLog, DiscordSyncStatus } from '../../../core/models/audit-log.model';
 import { AuditService } from '../../../core/services/audit.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { DiffLine, diffLines, isJsonValue, prettyAuditValue } from './audit-diff.util';
 
 @Component({
     selector: 'app-audit',
@@ -39,6 +40,20 @@ export class AuditComponent implements OnInit {
     @ViewChild('auditDialog') auditDialog?: ElementRef<HTMLElement>;
     /** The element that opened the dialog, so focus can be restored on close. */
     private lastFocused: HTMLElement | null = null;
+
+    // ── Before/After view (T-0219..T-0221), derived once per opened entry ─────────
+    /** Before/After, JSON-prettified (2-space) when parseable, else verbatim. */
+    beforePretty = '';
+    afterPretty = '';
+    /** Whether each side is JSON (drives mono block vs plain-text rendering). */
+    beforeIsJson = false;
+    afterIsJson = false;
+    /** Git-style line diff of the prettified states (only when both are present). */
+    stateDiff: DiffLine[] = [];
+    /** Both Before and After present — the only case a diff is meaningful. */
+    bothStatesPresent = false;
+    /** Toggle: show the raw side-by-side view instead of the diff (defaults to diff). */
+    showRawState = false;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -99,9 +114,37 @@ export class AuditComponent implements OnInit {
         // Remember the trigger so focus can return to it when the dialog closes.
         this.lastFocused = document.activeElement as HTMLElement | null;
         this.selectedLog = log;
+        this.prepareStateView(log);
         // Move focus into the dialog once it has rendered, so screen readers
         // announce it and keyboard focus is no longer on the obscured background.
         setTimeout(() => this.auditDialog?.nativeElement.focus());
+    }
+
+    /**
+     * Derive the Before/After view for an opened entry (T-0219..T-0221): prettify
+     * each side (JSON → indented, else verbatim), decide whether a git-style diff
+     * is meaningful (both sides present), and default to the diff view. Computed
+     * once here rather than in template getters so the O(n·m) diff never re-runs on
+     * every change-detection pass.
+     */
+    private prepareStateView(log: AuditLog): void {
+        const before = log.beforeState ?? '';
+        const after = log.afterState ?? '';
+        this.beforeIsJson = isJsonValue(before);
+        this.afterIsJson = isJsonValue(after);
+        this.beforePretty = prettyAuditValue(before);
+        this.afterPretty = prettyAuditValue(after);
+        this.bothStatesPresent = !!before && !!after;
+        this.stateDiff = this.bothStatesPresent
+            ? diffLines(this.beforePretty, this.afterPretty)
+            : [];
+        // Default to the diff view whenever one is available.
+        this.showRawState = false;
+    }
+
+    /** Flip between the git-style diff and the raw side-by-side Before/After view. */
+    toggleStateView(): void {
+        this.showRawState = !this.showRawState;
     }
 
     /** Close the detail dialog and restore focus to the row that opened it. */

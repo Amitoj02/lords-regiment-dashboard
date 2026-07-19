@@ -73,6 +73,15 @@ export class ApplicationsComponent implements OnInit {
         return this.applications.find((a) => a.id === this.selectedId) ?? null;
     }
 
+    /**
+     * The applicant's live display name (T-0222): the promoted member's name or
+     * linked Discord global name, falling back to the submit-time snapshot when
+     * the backend has no live identity for them.
+     */
+    displayName(app: Application): string {
+        return app.currentDisplayName || app.applicantName;
+    }
+
     private selectFirst(): void {
         this.selectApplication(this.queue[0]?.id ?? null);
     }

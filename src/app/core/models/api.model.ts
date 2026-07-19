@@ -111,6 +111,10 @@ export interface ApiApplication {
     moderatorNote: string | null;
     declineReason: string | null;
     promotedMemberId: string | null;
+    /** Live applicant display name — promoted member's name, else Discord global name (T-0129). */
+    currentDisplayName: string | null;
+    /** Live applicant avatar — promoted member's avatar, else Discord avatar (T-0129). */
+    currentAvatarUrl: string | null;
     decidedByMemberId: string | null;
     submittedAt: string;
     decidedAt: string | null;
@@ -234,6 +238,10 @@ export function mapApplication(a: ApiApplication): Application {
         declineReason: a.declineReason ?? undefined,
         decidedAt: a.decidedAt ?? undefined,
         blocked: a.blocked ?? false,
+        // Live applicant identity + profile deep-link target (T-0222).
+        promotedMemberId: a.promotedMemberId,
+        currentDisplayName: a.currentDisplayName,
+        currentAvatarUrl: a.currentAvatarUrl,
     };
 }
 

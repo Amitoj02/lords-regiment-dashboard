@@ -146,17 +146,63 @@
                 @if (selectedLog.detail) {
                 <div class="detail-desc serif">{{ selectedLog.detail }}</div>
                 }
-                <!-- Before/After -->
+                <!-- Before/After (T-0219 JSON prettify · T-0220 diff · T-0221 toggle) -->
                 @if (selectedLog.beforeState || selectedLog.afterState) {
-                <div class="grid-2 state-grid">
-                    <div>
-                        <div class="admin-label brass">Before</div>
-                        <div class="state-value">{{ selectedLog.beforeState || '—' }}</div>
+                <div class="state-section">
+                    @if (bothStatesPresent) {
+                    <div class="state-head">
+                        <span class="admin-label brass">
+                            {{ showRawState ? 'Before / After' : 'Changes' }}
+                        </span>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm state-toggle"
+                            (click)="toggleStateView()"
+                        >
+                            {{ showRawState ? 'View diff' : 'View raw' }}
+                        </button>
                     </div>
-                    <div>
-                        <div class="admin-label brass">After</div>
-                        <div class="state-value">{{ selectedLog.afterState || '—' }}</div>
+                    } @if (bothStatesPresent && !showRawState) {
+                    <!-- Git-style line diff: removed lines red, added lines green,
+                         with +/- gutter markers so the change reads without colour. -->
+                    <div class="state-diff mono">
+                        @for (line of stateDiff; track $index) {
+                        <div class="diff-line diff-line--{{ line.op }}">
+                            <span class="diff-gutter" aria-hidden="true"
+                                >{{ line.op === 'add' ? '+' : line.op === 'remove' ? '−' : ' '
+                                }}</span
+                            >
+                            <!-- Screen-reader label so add/remove is conveyed without
+                                 relying on colour or the (aria-hidden) +/- gutter. -->
+                            <span class="visually-hidden"
+                                >{{ line.op === 'add' ? 'Added:' : line.op === 'remove' ? 'Removed:'
+                                : 'Unchanged:' }}</span
+                            >
+                            <span class="diff-text">{{ line.text }}</span>
+                        </div>
+                        }
                     </div>
+                    } @else {
+                    <!-- Raw side-by-side: JSON in a mono block, plain text as-is. -->
+                    <div class="grid-2 state-grid">
+                        <div>
+                            <div class="admin-label brass">Before</div>
+                            @if (beforeIsJson) {
+                            <pre class="state-json mono">{{ beforePretty }}</pre>
+                            } @else {
+                            <div class="state-value">{{ beforePretty || '—' }}</div>
+                            }
+                        </div>
+                        <div>
+                            <div class="admin-label brass">After</div>
+                            @if (afterIsJson) {
+                            <pre class="state-json mono">{{ afterPretty }}</pre>
+                            } @else {
+                            <div class="state-value">{{ afterPretty || '—' }}</div>
+                            }
+                        </div>
+                    </div>
+                    }
                 </div>
                 }
                 <!-- Metadata -->

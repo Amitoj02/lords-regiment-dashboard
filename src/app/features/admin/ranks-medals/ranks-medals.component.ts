@@ -18,8 +18,8 @@ import {
 
 type EditorMode = 'rank' | 'medal';
 
-/** Accepted icon MIME types (PNG + SVG), mirroring the backend icon policy. */
-const ICON_MIME_TYPES = ['image/png', 'image/svg+xml'];
+/** Accepted icon MIME types (PNG + SVG + WebP), mirroring the backend icon policy. */
+const ICON_MIME_TYPES = ['image/png', 'image/svg+xml', 'image/webp'];
 
 @Component({
     selector: 'app-ranks-medals',
@@ -661,14 +661,14 @@ export class RanksMedalsComponent implements OnInit {
     }
 
     /**
-     * Client-side icon validation (T-0194/T-0195): PNG or SVG only, and — for a
-     * raster PNG — at most 250px on each side (mirrors the backend cap). SVG is a
-     * vector, so it is exempt from the pixel cap. Returns an error message, or null
-     * when the file is acceptable.
+     * Client-side icon validation (T-0194/T-0195; WebP added T-0215): PNG, SVG or
+     * WebP only, and — for a raster PNG/WebP — at most 250px on each side (mirrors
+     * the backend cap). SVG is a vector, so it is exempt from the pixel cap.
+     * Returns an error message, or null when the file is acceptable.
      */
     private validateIconFile(file: File): Promise<string | null> {
         if (!ICON_MIME_TYPES.includes(file.type)) {
-            return Promise.resolve('Please choose a PNG or SVG image.');
+            return Promise.resolve('Please choose a PNG, SVG, or WebP image.');
         }
         if (file.type === 'image/svg+xml') {
             return Promise.resolve(null);

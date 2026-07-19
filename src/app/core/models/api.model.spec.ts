@@ -19,6 +19,8 @@ function apiApplication(overrides: Partial<ApiApplication> = {}): ApiApplication
         moderatorNote: null,
         declineReason: null,
         promotedMemberId: null,
+        currentDisplayName: null,
+        currentAvatarUrl: null,
         decidedByMemberId: null,
         submittedAt: '2026-07-18T00:00:00.000Z',
         decidedAt: null,
@@ -35,5 +37,25 @@ describe('mapApplication', () => {
 
     it('defaults blocked to false when the field is absent', () => {
         expect(mapApplication(apiApplication()).blocked).toBe(false);
+    });
+
+    it('maps the live applicant identity + promoted member id (T-0222)', () => {
+        const mapped = mapApplication(
+            apiApplication({
+                promotedMemberId: 'mem-42',
+                currentDisplayName: 'RenamedRecruit',
+                currentAvatarUrl: 'https://cdn/member.png',
+            }),
+        );
+        expect(mapped.promotedMemberId).toBe('mem-42');
+        expect(mapped.currentDisplayName).toBe('RenamedRecruit');
+        expect(mapped.currentAvatarUrl).toBe('https://cdn/member.png');
+    });
+
+    it('passes through null live-identity fields for an unpromoted applicant (T-0222)', () => {
+        const mapped = mapApplication(apiApplication());
+        expect(mapped.promotedMemberId).toBeNull();
+        expect(mapped.currentDisplayName).toBeNull();
+        expect(mapped.currentAvatarUrl).toBeNull();
     });
 });

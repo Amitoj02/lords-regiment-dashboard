@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "6da2aae446a36f440b3f72fae202bf6e76390d91",
-  "lastSyncedAt": "2026-07-19T00:18:56Z",
-  "notesForNextSession": "Planned-tasks T-0190..T-0211 implemented -> deploy_ready (FE 6da2aae). Rank/medal custom icons (retired chevrons/ribbon; new hf-rank-icon + image-with-fallback hf-medal; admin PNG/SVG icon-upload controls with client-side type+250px validation, glyph kept as medal fallback), gallery title-edit + author-delete gating + byline margin, events polish (preview-tag align, When padding/AM-PM, detail row align, RSVP-gated reveal via new ToastService+hf-toast, RSVP-roster Attendees, client-side Ongoing/Concluded), public nav CTA sizes + Officers/Charter removal + login step-ring centering, white date/time picker icons, roster Discord-column removal, back-arrow alignment, admin applications dark answer fields + conditional Block/Re-enable + Open-in-Discord removal. SHIP WITH backend branch feat/rank-medal-icons-rsvp-gallery (400e1cc): consumes chevrons/ribbon drop (BE T-0122/23), png+svg/250px icon policy (BE T-0124/25), gallery title PATCH (BE T-0120), author delete (BE T-0121), GET /events/:id/rsvps roster (BE T-0127), applications blocked flag (BE T-0128) -> deploy the two together. FE CI green (build/format/lint/146 unit); browser-verified desktop 1440px + mobile 500px incl. rank-icon upload+250px reject, gallery title round-trip, RSVP reveal toast, RSVP roster. No planned tasks remain.",
-  "nextIdCounter": 225,
+  "lastSyncedCommit": "e9247891416f828350d3321db5086fda2d07b224",
+  "lastSyncedAt": "2026-07-19T04:10:00Z",
+  "notesForNextSession": "BLUEFRAME GOTCHA (fixed in T-0225): testPlan item status MUST be one of pending|passed|failed. \"done\" is NOT valid and silently breaks the ENTIRE repo in the Blueframe UI \u2014 state.json fails schema validation, so the server at 127.0.0.1:7317 reports taskCount: 0 and shows no tasks. After editing state.json verify with: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == invalid file); curl -s 'http://127.0.0.1:7317/api/state?repo=<key>' prints the exact schema errors. Note the file is written ASCII-escaped (ensure_ascii) \u2014 keep it that way or every em-dash line shows as a spurious diff. PREVIOUS HANDOFF: Planned-tasks T-0212..T-0224 implemented -> deploy_ready (FE da5e75b). Ranks/medals: dark kebab menu (T-0212) + dark medal-row hover (T-0213), WebP accepted in icon uploads (T-0214/T-0215, couples with backend T-0130), centred icon-preview (T-0216). Settings: brighter active section-nav (T-0217), left-aligned save/op rows via zeroing the Bootstrap .row negative margin (T-0218). Audit: JSON prettify + git-style LCS line diff + diff/raw toggle with a11y add/remove labels, pure logic in audit-diff.util.ts (T-0219..T-0221). Applications: live applicant identity (currentDisplayName/currentAvatarUrl/promotedMemberId) in the view-model/mapper + detail header profile deep-link + queue, aligned margins (T-0222..T-0224). SHIP WITH backend branch feat/webp-icons-live-applicant-identity (364d05e): consumes T-0129 (live identity) + T-0130 (webp icon policy) -> deploy the two together. FE CI green locally: format + lint + prod build + 162 unit tests. Browser-verified end-to-end as Owner (1920px viewport; env locks the CSS viewport so media-query mobile emulation was not possible, but responsive rules are intact + changes are additive/contained). Adversarial multi-agent review: 1 a11y finding fixed (diff add/remove now announced to AT), cross-repo coupling confirmed + documented. No planned FE tasks remain.",
+  "nextIdCounter": 226,
   "connections": [],
   "tasks": [
     {
@@ -12914,7 +12914,7 @@
       "id": "T-0212",
       "title": "Darken the ranks/medals per-row kebab menu background",
       "summary": "On /app/admin/ranks the per-row options drop-down (.row-menu) uses a light parchment background (var(--parch-100)) that reads as white against the dark shell. Switch it to a dark surface (e.g. an --ink-* token) with matching dark hover/text/rule colours so the menu matches the rest of the dark UI.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12931,18 +12931,18 @@
       "testPlan": [
         {
           "desc": "Opening a rank/medal row kebab menu shows a dark menu background (not white/parchment) matching the dark UI",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Menu item hover and text/danger colours remain legible on the new dark background",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T01:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -12950,6 +12950,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; darken the ranks/medals kebab .row-menu background from parch to an ink token."
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Darkened the ranks/medals kebab .row-menu to an ink surface (light text, brighter oxblood danger). Browser-verified."
         }
       ]
     },
@@ -12957,7 +12964,7 @@
       "id": "T-0213",
       "title": "Darken the Medal Cabinet row hover to stay above the panel bg",
       "summary": "The Medal Cabinet list rows (.medal-row:hover) highlight with a light parchment fill (var(--parch-50)) that reads as white. Change the hover to a dark fill that is lighter than the panel background (--ink-800) \u2014 e.g. --ink-750/--ink-700 \u2014 so the hover stays visible without being darker than the surface it sits on.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12974,18 +12981,18 @@
       "testPlan": [
         {
           "desc": "Hovering a Medal Cabinet row shows a subtle dark highlight (not white) on /app/admin/ranks",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The hover fill is lighter than the panel background (--ink-800) so the hover effect stays perceptible",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T01:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -12993,6 +13000,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; darken .medal-row:hover from parch-50 to an ink token lighter than the panel bg."
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Darkened the Medal Cabinet row hover to --ink-700 (a step above the panel bg). Browser-verified."
         }
       ]
     },
@@ -13000,7 +13014,7 @@
       "id": "T-0214",
       "title": "Add WebP to the rank/medal icon upload policy",
       "summary": "Extend the rank/medal icon accepted-type policy from PNG+SVG to PNG+SVG+WebP in the storage-service source of truth (ICON_TYPES mime + extension lists and the DEFAULT_STORAGE_POLICY fallback for the rank-image and medal-image targets). The data-driven upload hints derive their accepted-type copy from this policy, so they update automatically once WebP is added.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -13012,35 +13026,38 @@
         "src/app/core/services/storage.service.ts"
       ],
       "dependsOn": [
-        "lords-dashboard-backend:T-0129"
+        "lords-dashboard-backend:T-0130"
       ],
       "blocks": [],
       "questions": [],
       "testPlan": [
         {
           "desc": "ICON_TYPES.mimeTypes includes image/webp and extensions include webp",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "DEFAULT_STORAGE_POLICY rank-image and medal-image targets advertise WebP as an accepted image type",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The rank/medal icon upload hint copy lists WebP alongside PNG and SVG (auto-derived from the policy, EXT_LABELS has a webp label)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "ICON_TYPES / DEFAULT_STORAGE_POLICY are shared upload-policy constants consumed by every icon-upload hint and the storage service; a wrong edit could mis-advertise accepted types for ranks and medals.",
-          "status": "open",
-          "notedAt": "2026-07-19T02:00:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-19T02:00:00Z",
+          "resolvedAt": "2026-07-19T03:32:11Z",
+          "resolvedBy": "claude",
+          "note": "ICON_TYPES/DEFAULT_STORAGE_POLICY edited minimally (webp appended to PNG/SVG); the data-driven hint auto-updates. Browser-verified the live rank hint reads \"PNG, SVG or WebP\" and the accept attr includes image/webp; PNG/SVG advertising unchanged. 162 unit tests green."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T02:00:00Z",
-      "updatedAt": "2026-07-19T02:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T02:00:00Z",
@@ -13048,6 +13065,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; add image/webp to the rank/medal icon accepted-type policy."
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Added image/webp to ICON_TYPES + DEFAULT_STORAGE_POLICY; hints auto-derive WebP. Couples with backend T-0130."
         }
       ]
     },
@@ -13055,7 +13079,7 @@
       "id": "T-0215",
       "title": "Accept WebP in the rank & medal icon upload controls",
       "summary": "Allow WebP files in the admin rank-icon and medal-image upload controls: add image/webp to the component ICON_MIME_TYPES allowlist, update the rejection copy from 'Please choose a PNG or SVG image' to name WebP, and add image/webp to both file-input accept attributes. WebP is raster, so validateIconFile already routes it through the existing 250px-per-side cap \u2014 no new dimension logic is needed. Update the icon-validation specs to cover WebP accept + oversized-WebP reject.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13070,39 +13094,42 @@
       ],
       "dependsOn": [
         "T-0214",
-        "lords-dashboard-backend:T-0129"
+        "lords-dashboard-backend:T-0130"
       ],
       "blocks": [],
       "questions": [],
       "testPlan": [
         {
           "desc": "A valid WebP <= 250px on each side is accepted by both the rank-icon and medal-image controls",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A WebP larger than 250px on a side is rejected with the 250px cap message (raster path applies to WebP as it does to PNG)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A non-allowed type (e.g. image/gif) is still rejected, and the rejection copy names PNG, SVG, and WebP",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Both file-input accept attributes include image/webp so the native picker surfaces WebP files",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "validateIconFile and ICON_MIME_TYPES gate both the rank-icon and medal-image editors; a change to the allowlist or the raster/vector branch affects PNG and SVG uploads too.",
-          "status": "open",
-          "notedAt": "2026-07-19T02:00:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-19T02:00:00Z",
+          "resolvedAt": "2026-07-19T03:32:11Z",
+          "resolvedBy": "claude",
+          "note": "validateIconFile/ICON_MIME_TYPES accept image/webp; raster WebP routes through the existing 250px Image cap (no new branch). Added specs: webp accept, oversized-webp reject, gif reject copy names PNG/SVG/WebP, svg exempt. 162 unit tests green + browser-verified accept attrs."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T02:00:00Z",
-      "updatedAt": "2026-07-19T02:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T02:00:00Z",
@@ -13110,6 +13137,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; accept image/webp in the rank & medal icon upload controls (validation, accept attrs, copy, specs)."
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Accept WebP in the rank/medal icon controls (allowlist, accept attrs, copy, specs). Couples with backend T-0130."
         }
       ]
     },
@@ -13117,7 +13151,7 @@
       "id": "T-0216",
       "title": "Ranks & Medals editor: fix uneven gap on right/bottom of the custom icon placeholder",
       "summary": "In the /app/admin/ranks editor, the boxed live-preview placeholder (.icon-preview wrapping hf-rank-icon / hf-medal) shows a small extra gap on the right and bottom edges \u2014 the icon is not centred within the 96px square box, so padding is asymmetric. Centre the icon component inside .icon-preview (flex centring / consistent inset) so the gap is even on all four sides.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -13135,22 +13169,22 @@
       "testPlan": [
         {
           "desc": "In the rank editor, the icon placeholder has visually even margins on all four sides (no extra gap on right/bottom).",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "In the medal editor, the same placeholder is centred with even margins on all four sides.",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Both a wide and a tall custom icon stay centred within the box without clipping (object-fit: contain preserved).",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T03:00:00Z",
-      "updatedAt": "2026-07-19T03:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T03:00:00Z",
@@ -13158,6 +13192,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; centre the rank/medal editor icon placeholder so the right/bottom gap is even."
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Flex-centred the editor .icon-preview via a wrapper div \u2014 even 8px gap on all four sides (verified via DOM measurement)."
         }
       ]
     },
@@ -13165,7 +13206,7 @@
       "id": "T-0217",
       "title": "Brighten active section-nav text on admin Settings",
       "summary": "On /app/admin/settings the secondary (in-page) sidebar nav (Profile & visibility, Discord & Adjutant, Roles & permissions) marks the active item with a dim brass text colour. Switch the active item's text to a brighter yellow/brass so the current section is clearly legible.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -13182,22 +13223,22 @@
       "testPlan": [
         {
           "desc": "On /app/admin/settings the active section-nav item text renders in a brighter yellow/brass than before, clearly distinct from the muted inactive items",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Clicking each of Profile & visibility, Discord & Adjutant, Roles & permissions moves the highlight and keeps the active text bright",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Inactive items and hover state are unchanged; active pill background/weight still applied",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:48:43Z",
-      "updatedAt": "2026-07-19T00:48:43Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T00:48:43Z",
@@ -13205,6 +13246,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Brightened the active Settings section-nav text to --brass-300 (verified rgb(213,177,103))."
         }
       ]
     },
@@ -13212,7 +13260,7 @@
       "id": "T-0218",
       "title": "Left-align save buttons & recent-ops rows on Settings \u203a Discord & Adjutant",
       "summary": "On /app/admin/settings \u203a Discord & Adjutant the \"Save invite link\" and \"Save bot settings\" button rows, plus the \"Recent operations\" list items, sit flush to a different left edge than the field-rows and toggle-rows above them. Give the .invite-save / .bot-save button rows and the .op-line rows a left margin (or padding) equal to or greater than the section's other items so every control lines up on the same left edge.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -13230,26 +13278,26 @@
       "testPlan": [
         {
           "desc": "On /app/admin/settings \u203a Discord & Adjutant the \"Save invite link\" button's left edge is aligned with (or further right than) the Invite URL field-row above it",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The \"Save bot settings\" button's left edge is aligned with (or further right than) the bot toggle-rows / channel pickers above it",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Each \"Recent operations\" list item (status dot + label + Resolve) shares the same left edge as the section's other panel items",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Other settings sections (Profile & visibility, Roles & permissions) and the Discord connection / Save permissions rows are visually unchanged",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:05:00Z",
-      "updatedAt": "2026-07-19T01:05:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T01:05:00Z",
@@ -13257,6 +13305,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Zeroed the Bootstrap .row negative left margin on the save-button + recent-ops rows so they align on the section left edge (verified all at x=533)."
         }
       ]
     },
@@ -13264,7 +13319,7 @@
       "id": "T-0219",
       "title": "Detect & pretty-print JSON in audit Before/After values",
       "summary": "In the audit detail dialog, when a Before or After value parses as JSON, render it indented and syntax-tidied in a monospace block instead of a single unreadable line. Values that are not valid JSON keep rendering as-is. Add a small pure helper that safely tries to parse and format, so malformed input never throws.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13283,32 +13338,35 @@
       "testPlan": [
         {
           "desc": "A Before/After value that is a valid JSON object renders indented (2-space) in a mono block, not one flat line",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "A plain-string (non-JSON) Before/After value still renders as readable plain text \u2014 no '[object]' or thrown error",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "An empty/absent Before or After still shows the em-dash placeholder",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Malformed/near-JSON input (e.g. trailing comma) falls back to raw text without a console error",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Audit detail modal Before/After render path changed \u2014 non-JSON string values must still display verbatim",
-          "status": "open",
-          "notedAt": "2026-07-19T00:52:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-19T00:52:00Z",
+          "resolvedAt": "2026-07-19T03:32:11Z",
+          "resolvedBy": "claude",
+          "note": "prettyAuditValue returns non-JSON/malformed/empty verbatim (audit-diff.util.spec); the audit Before/After render path was rebuilt but plain strings still show as-is and absent sides show the em-dash. Browser-verified all render paths with no console errors."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:52:00Z",
-      "updatedAt": "2026-07-19T00:52:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T00:52:00Z",
@@ -13316,6 +13374,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "JSON-prettify Before/After in a mono block; non-JSON verbatim. Pure helper in audit-diff.util.ts with specs."
         }
       ]
     },
@@ -13323,7 +13388,7 @@
       "id": "T-0220",
       "title": "Git-style green/red line diff between Before and After",
       "summary": "When both Before and After are present (and ideally JSON-prettified), compute a line-level diff and render added lines in green and removed lines in red, git-style, so reviewers see exactly what changed. Compute the diff in a pure helper; fall back to the side-by-side Before/After view when a diff is not meaningful (e.g. only one side present or non-textual).",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -13344,26 +13409,26 @@
       "testPlan": [
         {
           "desc": "Two JSON states differing by one field show that field's old line in red and new line in green, unchanged lines neutral",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Removed-only and added-only lines are coloured correctly (red vs green) with no off-by-one line pairing",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "When only Before or only After is present, the dialog falls back to the plain Before/After view (no broken diff)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Long lines wrap or scroll inside the diff block without forcing the whole dialog to scroll horizontally",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:52:00Z",
-      "updatedAt": "2026-07-19T00:52:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T00:52:00Z",
@@ -13371,6 +13436,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Git-style LCS line diff (red -/green +) between Before/After; pure diffLines helper + specs. Verified 3 add/3 remove/15 context on a real entry."
         }
       ]
     },
@@ -13378,7 +13450,7 @@
       "id": "T-0221",
       "title": "Polish diff/JSON view UI \u2014 theming, scroll containment, view toggle",
       "summary": "Style the prettified-JSON and diff blocks to match the dark military design system: monospace, contained scroll, accessible green/red that reads in the modal. Add a lightweight toggle to switch between the diff view and the raw Before/After view so users can always see the original values.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13399,26 +13471,26 @@
       "testPlan": [
         {
           "desc": "JSON and diff blocks use the mono font and design-token colours, with overflow contained (no dialog-wide horizontal scroll)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Green/red diff colours meet contrast against the modal background and are distinguishable (not colour-only \u2014 e.g. +/- gutter markers)",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "The diff/raw toggle switches views and defaults to the diff view when a diff is available",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Layout holds at desktop (1440px) and mobile (500px) modal widths",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:52:00Z",
-      "updatedAt": "2026-07-19T00:52:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T00:52:00Z",
@@ -13426,6 +13498,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Diff/raw toggle (defaults to diff), theme-matched, contained scroll, +/- gutters + visually-hidden add/remove labels for AT (a11y review fix). Verified at 440px width."
         }
       ]
     },
@@ -13433,7 +13512,7 @@
       "id": "T-0222",
       "title": "Applications: carry live applicant identity in view-model + API mapping",
       "summary": "Extend the Application view-model and mapApplication() to carry the applicant's live identity from the reshaped admin projection \u2014 currentAvatarUrl and currentDisplayName (reflecting post-approval renames and avatar changes) \u2014 alongside the already-mapped promotedMemberId used for the profile deep-link. Shared plumbing consumed by the detail header and queue list.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13454,28 +13533,31 @@
       "testPlan": [
         {
           "desc": "mapApplication() maps currentAvatarUrl, currentDisplayName and promotedMemberId from the API payload",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Application interface exposes the new optional live-identity fields; existing snapshot fields unchanged",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Unit spec covers a payload with and without a promoted member (null currentAvatarUrl falls back gracefully)",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "api.model mapApplication() shared mapper touched \u2014 consumed by apply status page, admin queue and detail",
-          "status": "open",
-          "notedAt": "2026-07-19T01:00:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-19T01:00:00Z",
+          "resolvedAt": "2026-07-19T03:32:11Z",
+          "resolvedBy": "claude",
+          "note": "mapApplication adds currentDisplayName/currentAvatarUrl/promotedMemberId with null passthrough; api.model.spec covers present + null-for-unpromoted. Shared mapper still feeds apply-status/queue/detail \u2014 browser-verified all three show the live identity, unpromoted falls back to applicantName."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T01:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13483,6 +13565,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "View-model + mapApplication carry currentDisplayName/currentAvatarUrl/promotedMemberId with null passthrough + specs."
         }
       ]
     },
@@ -13490,7 +13579,7 @@
       "id": "T-0223",
       "title": "Applications detail: live avatar + clickable name link to member profile",
       "summary": "In the application detail header, render the applicant's current avatar image (fallback to initials tile) and current display name instead of the submit-time snapshot, so the review always reflects the applicant's current profile. Make the name a link to /app/profile/:promotedMemberId when the applicant has a member record. Add left margin on the username so it aligns with the discord-tag line below it.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13511,26 +13600,26 @@
       "testPlan": [
         {
           "desc": "Detail header shows the current avatar image; falls back to initials when currentAvatarUrl is null/fails to load",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Header shows currentDisplayName (reflecting a post-approval rename), not the stale applicantName snapshot",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Clicking the name navigates to /app/profile/:promotedMemberId; name is not a link when there is no promoted member",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Username left margin visually aligns with the discord tag / date line beneath it",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T01:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13538,6 +13627,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Detail header live avatar + display name; name links to /app/profile/:promotedMemberId when promoted; aligned name with the meta line. Verified live name \"Test\" + href."
         }
       ]
     },
@@ -13545,7 +13641,7 @@
       "id": "T-0224",
       "title": "Applications queue: live avatar + aligned username/discord margins",
       "summary": "In the queue applicant list, show each applicant's current avatar image and current display name / discord tag (fallback to initials), and add left margin to the username and discord username so the two text lines align consistently beside the avatar.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13565,22 +13661,22 @@
       "testPlan": [
         {
           "desc": "Each queue row shows the applicant's current avatar image with initials fallback",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Queue row uses currentDisplayName over the stale snapshot name",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Username and discord-tag lines both carry the added left margin and align with each other",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T01:00:00Z",
+      "updatedAt": "2026-07-19T03:32:11Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13588,6 +13684,67 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-19T03:32:11Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Queue live avatar + display name; aligned username/discord margins beside the avatar (verified both at x=330)."
+        }
+      ]
+    },
+    {
+      "id": "T-0225",
+      "title": "Fix invalid testPlan status values breaking Blueframe state validation",
+      "summary": "The T-0212..T-0224 test plans recorded verified items with status \"done\", which is not a member of the testPlan status enum (pending|passed|failed). state.json therefore failed schema validation and the Blueframe server at 127.0.0.1:7317 reported the repo with taskCount: 0, surfacing no tasks at all. Remapped the 43 affected entries to \"passed\" (all were verified acceptance criteria on deploy_ready tasks); no other fields changed.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "tooling",
+      "subfeature": "blueframe-state",
+      "repo": "",
+      "paths": [
+        ".blueframe/state.json"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "GET /api/state?repo=<key> returns the parsed state instead of a validation error",
+          "status": "passed"
+        },
+        {
+          "desc": "GET /api/repos reports the repo's real taskCount (not 0)",
+          "status": "passed"
+        },
+        {
+          "desc": "No \"status\": \"done\" remains anywhere in state.json; every testPlan status is pending|passed|failed",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "e9247891416f828350d3321db5086fda2d07b224",
+      "createdAt": "2026-07-19T04:10:00Z",
+      "updatedAt": "2026-07-19T04:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-19T04:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-19T04:10:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Remapped 43 testPlan \"done\" -> \"passed\"; server now loads the repo (taskCount restored)."
         }
       ]
     }
