@@ -48,7 +48,9 @@
 
     &--active {
         background: color-mix(in srgb, var(--brass-400) 12%, transparent);
-        color: var(--brass-700);
+        // Brighter brass so the current section reads clearly against the dark
+        // shell — the old --brass-700 was too dim to stand out (T-0217).
+        color: var(--brass-300);
         font-weight: 600;
     }
 }
@@ -223,6 +225,15 @@
     margin-top: 12px;
 }
 
+// The save-button rows use the global `.row` flex utility, which inherits
+// Bootstrap grid's negative side margins (margin-left: calc(-.5 * gutter)); zero
+// it so the buttons line up on the same left edge as the field-rows / toggle-rows
+// above them instead of jutting ~12px to the left (T-0218).
+.invite-save,
+.bot-save {
+    margin-left: 0;
+}
+
 .bot-field {
     margin-top: 14px;
 }
@@ -230,6 +241,9 @@
 .op-line {
     align-items: center;
     padding: 8px 0;
+    // Same `.row` negative-margin reset as the save rows so each operation lines
+    // up on the section's left edge (T-0218).
+    margin-left: 0;
     border-bottom: 1px solid var(--rule);
 
     &:last-child {

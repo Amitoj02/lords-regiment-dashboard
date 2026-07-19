@@ -45,10 +45,10 @@ const IMAGE_TYPES = {
     mimeTypes: ['image/png', 'image/jpeg', 'image/webp'],
     extensions: ['png', 'jpg', 'webp'],
 };
-/** Rank/medal icons accept ONLY PNG + SVG (mirrors backend T-0124). */
+/** Rank/medal icons accept PNG + SVG + WebP (mirrors backend T-0124/T-0130). */
 const ICON_TYPES = {
-    mimeTypes: ['image/png', 'image/svg+xml'],
-    extensions: ['png', 'svg'],
+    mimeTypes: ['image/png', 'image/svg+xml', 'image/webp'],
+    extensions: ['png', 'svg', 'webp'],
 };
 const VIDEO_TYPES = {
     mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime'],

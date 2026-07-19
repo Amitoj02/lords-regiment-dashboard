@@ -277,4 +277,67 @@ describe('RanksMedalsComponent', () => {
         setup([], []);
         expect(fixture.nativeElement.querySelectorAll('.empty').length).toBe(2);
     });
+
+    // ── Icon validation (T-0194/T-0195; WebP accept added T-0215) ────────────────
+    describe('icon validation', () => {
+        const RealImage = window.Image;
+
+        /** Swap in a fake Image whose load fires with the given natural dimensions. */
+        function stubImage(width: number, height: number, fail = false): void {
+            class FakeImage {
+                naturalWidth = width;
+                naturalHeight = height;
+                onload: (() => void) | null = null;
+                onerror: (() => void) | null = null;
+                private _src = '';
+                set src(value: string) {
+                    this._src = value;
+                    // Fire on the next microtask, after onload/onerror are attached.
+                    void Promise.resolve().then(() => (fail ? this.onerror?.() : this.onload?.()));
+                }
+            }
+            (window as unknown as { Image: unknown }).Image = FakeImage;
+            spyOn(URL, 'createObjectURL').and.returnValue('blob:icon');
+            spyOn(URL, 'revokeObjectURL');
+        }
+
+        afterEach(() => {
+            (window as unknown as { Image: typeof Image }).Image = RealImage;
+        });
+
+        /** Reach the private validator directly (raster path stubbed above). */
+        function validate(file: File): Promise<string | null> {
+            return (
+                component as unknown as { validateIconFile(f: File): Promise<string | null> }
+            ).validateIconFile(file);
+        }
+
+        it('rejects a non-allowed type with copy naming PNG, SVG, and WebP', async () => {
+            setup();
+            const err = await validate(new File([''], 'icon.gif', { type: 'image/gif' }));
+            expect(err).toContain('PNG');
+            expect(err).toContain('SVG');
+            expect(err).toContain('WebP');
+        });
+
+        it('accepts a WebP within the 250px cap', async () => {
+            setup();
+            stubImage(200, 200);
+            expect(await validate(new File([''], 'icon.webp', { type: 'image/webp' }))).toBeNull();
+        });
+
+        it('rejects a WebP larger than 250px on a side with the cap message', async () => {
+            setup();
+            stubImage(300, 120);
+            const err = await validate(new File([''], 'big.webp', { type: 'image/webp' }));
+            expect(err).toContain('250px');
+        });
+
+        it('exempts an SVG from the pixel cap (vector has no raster dimension)', async () => {
+            setup();
+            expect(
+                await validate(new File([''], 'icon.svg', { type: 'image/svg+xml' })),
+            ).toBeNull();
+        });
+    });
 });

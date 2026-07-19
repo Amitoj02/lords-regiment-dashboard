@@ -61,11 +61,15 @@
                         (click)="selectApplication(item.id)"
                     >
                         <div class="queue-item__avatar">
-                            <hf-avatar [name]="item.applicantName" [size]="28"></hf-avatar>
+                            <hf-avatar
+                                [name]="displayName(item)"
+                                [avatarUrl]="item.currentAvatarUrl"
+                                [size]="28"
+                            ></hf-avatar>
                         </div>
                         <div class="queue-item__body">
                             <div class="row between">
-                                <span class="queue-item__name">{{ item.applicantName }}</span>
+                                <span class="queue-item__name">{{ displayName(item) }}</span>
                                 <span
                                     class="badge"
                                     [ngClass]="{
@@ -103,14 +107,26 @@
                 <div class="panel-header detail-header">
                     <div class="detail-header__identity">
                         <hf-avatar
-                            [name]="selectedApplication.applicantName"
+                            [name]="displayName(selectedApplication)"
+                            [avatarUrl]="selectedApplication.currentAvatarUrl"
                             [size]="36"
                         ></hf-avatar>
                         <div class="detail-header__id-text">
                             <div class="row gap-8 detail-header__name">
-                                <span class="panel-title"
-                                    >{{ selectedApplication.applicantName }}</span
+                                @if (selectedApplication.promotedMemberId) {
+                                <a
+                                    class="panel-title detail-header__name-link"
+                                    [routerLink]="[
+                                        '/app/profile',
+                                        selectedApplication.promotedMemberId
+                                    ]"
+                                    >{{ displayName(selectedApplication) }}</a
                                 >
+                                } @else {
+                                <span class="panel-title"
+                                    >{{ displayName(selectedApplication) }}</span
+                                >
+                                }
                                 <span
                                     class="badge"
                                     [ngClass]="{

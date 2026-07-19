@@ -71,17 +71,23 @@
         gap: 4px;
     }
 
+    // The name + discord lines sit inside `.row between` wrappers, which inherit
+    // Bootstrap grid's negative left margin (-0.75rem) and pull the text left into
+    // the avatar's gutter. Add a matching left margin so both lines line up with
+    // each other on a clean edge beside the avatar (T-0224).
     &__name {
         font-weight: 600;
         font-size: 0.875rem;
         // Light text: the queue panel is a dark (--ink-800) surface, so the name
         // must use a light token to read at rest and on the dark hover/active bg.
         color: var(--t-100);
+        margin-left: 0.75rem;
     }
 
     &__discord {
         font-size: 0.75rem;
         color: var(--t-400);
+        margin-left: 0.75rem;
     }
 
     &__time {
@@ -168,6 +174,24 @@
 
     &__name {
         flex-wrap: wrap;
+        // The name row uses the global `.row` flex utility, which inherits
+        // Bootstrap grid's negative left margin; zero it so the name lines up with
+        // the discord-tag / date line below it instead of jutting ~12px left (T-0223).
+        margin-left: 0;
+    }
+
+    // The applicant name links to their member profile once promoted; keep it
+    // looking like the plain title, underlining on hover for affordance (T-0223).
+    &__name-link {
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            text-decoration: underline;
+            color: var(--brass-300);
+        }
     }
 }
 

@@ -62,8 +62,10 @@
     &:last-child {
         border-bottom: none;
     }
+    // Dark hover, one step lighter than the panel background (--ink-800), so the
+    // highlight reads on the dark UI instead of flashing white (T-0213).
     &:hover {
-        background: var(--parch-50);
+        background: var(--ink-700);
     }
 
     &__grip {
@@ -135,9 +137,15 @@
 
 // Boxed live preview of the rank/medal icon in the editor — a fixed square so an
 // arbitrary aspect ratio never clips (the icon components use object-fit: contain).
+// Flex-centre the icon so the padding is even on all four sides (T-0216): the
+// sized icon component would otherwise sit top-left in the box, leaving an
+// uneven gap on the right/bottom.
 .icon-preview {
     width: 96px;
     height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--rule-2);
     border-radius: var(--r-2);
     background: var(--ink-900);
@@ -196,7 +204,9 @@
     display: flex;
     flex-direction: column;
     padding: 4px;
-    background: var(--parch-100);
+    // Dark elevated surface (one step above the panel bg) so the menu matches the
+    // dark UI instead of reading as a white parchment card (T-0212).
+    background: var(--ink-700);
     border: 1px solid var(--rule-2);
     border-radius: var(--r-2);
     box-shadow: var(--shadow-2);
@@ -208,17 +218,19 @@
         border: 0;
         border-radius: var(--r-1);
         background: none;
-        color: inherit;
+        // Light text on the dark menu surface.
+        color: var(--t-200);
         font: inherit;
         font-size: 0.8rem;
         text-align: left;
         cursor: pointer;
 
         &:hover {
-            background: var(--parch-50);
+            background: var(--ink-600);
         }
         &--danger {
-            color: var(--oxblood-400);
+            // Brighter oxblood so "Delete" stays legible on the dark menu.
+            color: var(--oxblood-300);
         }
     }
 }

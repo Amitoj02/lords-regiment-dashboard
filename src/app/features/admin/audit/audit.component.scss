@@ -149,8 +149,24 @@
     color: var(--t-200);
 }
 
-.state-grid {
+// Before/After section wrapper (T-0219..T-0221).
+.state-section {
     margin-bottom: 16px;
+}
+
+.state-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.state-toggle {
+    flex-shrink: 0;
+}
+
+.state-grid {
     padding: 12px;
     background: var(--ink-850);
     border-radius: 6px;
@@ -167,6 +183,83 @@
     font-weight: 600;
     margin-top: 4px;
     color: var(--t-100);
+    overflow-wrap: anywhere;
+}
+
+// Prettified JSON block inside a raw Before/After cell (T-0219). Transparent so it
+// sits inside the recessed .state-grid cell rather than a box-in-a-box; wraps long
+// lines and scrolls vertically so it never widens the dialog.
+.state-json {
+    margin: 4px 0 0;
+    max-height: 240px;
+    overflow: auto;
+    background: none;
+    color: var(--t-100);
+    font-size: 0.76rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+// Git-style line diff (T-0220/T-0221): a recessed mono block whose long lines wrap
+// and whose height is capped so the diff scrolls internally, never the dialog.
+.state-diff {
+    background: var(--ink-900);
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    padding: 8px 0;
+    max-height: 320px;
+    overflow: auto;
+    font-size: 0.76rem;
+    line-height: 1.5;
+}
+
+.diff-line {
+    display: flex;
+    gap: 8px;
+    padding: 0 12px;
+
+    // Added / removed carry BOTH a tint and a +/- gutter, so the change is legible
+    // without relying on colour alone (T-0221).
+    &--add {
+        background: color-mix(in srgb, var(--ok) 18%, transparent);
+        color: color-mix(in srgb, var(--ok) 45%, var(--t-100));
+    }
+    &--remove {
+        background: color-mix(in srgb, var(--err) 18%, transparent);
+        color: color-mix(in srgb, var(--err) 45%, var(--t-100));
+    }
+    &--context {
+        color: var(--t-300);
+    }
+}
+
+.diff-gutter {
+    flex-shrink: 0;
+    width: 0.75rem;
+    text-align: center;
+    user-select: none;
+    opacity: 0.85;
+}
+
+// Off-screen but AT-readable label carrying the add/remove/unchanged direction of
+// each diff line, so the diff is intelligible to screen readers (not colour-only).
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.diff-text {
+    flex: 1;
+    min-width: 0;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 

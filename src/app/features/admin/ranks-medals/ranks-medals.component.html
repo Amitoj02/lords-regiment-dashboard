@@ -64,12 +64,13 @@
                 @if (editorMode === 'rank') {
                 <div class="editor-cols">
                     <div class="editor-preview">
-                        <hf-rank-icon
-                            class="icon-preview"
-                            [imageUrl]="rankIconPreview"
-                            [name]="editRankName"
-                            [size]="80"
-                        ></hf-rank-icon>
+                        <div class="icon-preview">
+                            <hf-rank-icon
+                                [imageUrl]="rankIconPreview"
+                                [name]="editRankName"
+                                [size]="80"
+                            ></hf-rank-icon>
+                        </div>
                     </div>
 
                     <div class="editor-form">
@@ -88,7 +89,7 @@
                                 {{ rankImageUploading ? 'Uploading…' : 'Choose icon' }}
                                 <input
                                     type="file"
-                                    accept="image/png,image/svg+xml"
+                                    accept="image/png,image/svg+xml,image/webp"
                                     hidden
                                     (change)="onRankImageSelected($event)"
                                 />
@@ -136,13 +137,14 @@
                 @if (editorMode === 'medal') {
                 <div class="editor-cols">
                     <div class="editor-preview">
-                        <hf-medal
-                            class="icon-preview"
-                            size="lg"
-                            [imageUrl]="medalIconPreview"
-                            [letter]="editLetter"
-                            [title]="editTitle"
-                        ></hf-medal>
+                        <div class="icon-preview">
+                            <hf-medal
+                                size="lg"
+                                [imageUrl]="medalIconPreview"
+                                [letter]="editLetter"
+                                [title]="editTitle"
+                            ></hf-medal>
+                        </div>
                     </div>
 
                     <div class="editor-form">
@@ -161,7 +163,7 @@
                                 {{ medalImageUploading ? 'Uploading…' : 'Choose image' }}
                                 <input
                                     type="file"
-                                    accept="image/png,image/svg+xml"
+                                    accept="image/png,image/svg+xml,image/webp"
                                     hidden
                                     (change)="onMedalImageSelected($event)"
                                 />
