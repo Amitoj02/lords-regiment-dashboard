@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
-  "lastSyncedAt": "2026-07-18T04:56:34Z",
-  "notesForNextSession": "Planned-tasks polish T-0176..T-0186 implemented -> deploy_ready (FE 72c9585). Gallery: usage-ranked tag bar + animated More/Less expander (public /gallery only; /app/gallery is GalleryAdminComponent), submitter-avatar inset on the shared hf-gallery-card, media-detail byline real avatar + profile link + moderator edit(caption/tags via new GalleryService.update->PATCH)/delete. Profile: back-button clears the full-bleed banner (desktop + 820/480 mobile), My-profile nav highlight only on own profile. Admin ranks: New Role + New Medal toolbar buttons, panel \"+ New\" removed. Roster: derived Suspended/Banned/Inactive pills + tooltips (filter + CSV in lockstep). Audit: real actor avatars (initials fallback) + dark detail/state boxes. format/lint/build/133 FE specs green; browser-verified end-to-end (signed in as owner via minted JWT). SHIP WITH backend PR feat/gallery-moderation-audit-avatars (2e082cb): T-0183 consumes PATCH /gallery/:id (backend T-0115) and T-0185 consumes actorAvatarUrl (backend T-0117) — deploy the two together. No planned tasks remain.",
-  "nextIdCounter": 187,
+  "lastSyncedCommit": "6da2aae446a36f440b3f72fae202bf6e76390d91",
+  "lastSyncedAt": "2026-07-19T00:18:56Z",
+  "notesForNextSession": "Planned-tasks T-0190..T-0211 implemented -> deploy_ready (FE 6da2aae). Rank/medal custom icons (retired chevrons/ribbon; new hf-rank-icon + image-with-fallback hf-medal; admin PNG/SVG icon-upload controls with client-side type+250px validation, glyph kept as medal fallback), gallery title-edit + author-delete gating + byline margin, events polish (preview-tag align, When padding/AM-PM, detail row align, RSVP-gated reveal via new ToastService+hf-toast, RSVP-roster Attendees, client-side Ongoing/Concluded), public nav CTA sizes + Officers/Charter removal + login step-ring centering, white date/time picker icons, roster Discord-column removal, back-arrow alignment, admin applications dark answer fields + conditional Block/Re-enable + Open-in-Discord removal. SHIP WITH backend branch feat/rank-medal-icons-rsvp-gallery (400e1cc): consumes chevrons/ribbon drop (BE T-0122/23), png+svg/250px icon policy (BE T-0124/25), gallery title PATCH (BE T-0120), author delete (BE T-0121), GET /events/:id/rsvps roster (BE T-0127), applications blocked flag (BE T-0128) -> deploy the two together. FE CI green (build/format/lint/146 unit); browser-verified desktop 1440px + mobile 500px incl. rank-icon upload+250px reject, gallery title round-trip, RSVP reveal toast, RSVP roster. No planned tasks remain.",
+  "nextIdCounter": 212,
   "connections": [],
   "tasks": [
     {
@@ -11743,6 +11743,1170 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        }
+      ]
+    },
+    {
+      "id": "T-0190",
+      "title": "Add post title to the media-detail \"Edit details\" form",
+      "summary": "Expose the gallery post title as an editable field in the inline Edit-details form on /gallery/:id, alongside the existing caption and tags. Seed editTitle from item.title, add an optional title to UpdateGalleryPayload, and send it in the PATCH so moderators can rename a post.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "moderation",
+      "subfeature": "detail-admin-actions",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts",
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0120"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Moderator opens Edit details on /gallery/:id and sees a Title input seeded with the current post title",
+          "status": "pending"
+        },
+        {
+          "desc": "Editing the title and saving issues PATCH /gallery/:id with the new title and the detail <h1> updates to the saved value",
+          "status": "pending"
+        },
+        {
+          "desc": "Title stays required (min length 1, max 160) — an empty title is blocked and does not submit",
+          "status": "pending"
+        },
+        {
+          "desc": "Caption and tags editing still work unchanged when the title is also edited",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T19:03:51Z",
+      "updatedAt": "2026-07-18T19:03:51Z",
+      "history": [
+        {
+          "at": "2026-07-18T19:03:51Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0191",
+      "title": "Gate \"Edit details\" to moderate_gallery only and let the post author Delete on the media-detail page",
+      "summary": "Split the shared moderator @if block on /gallery/:id so 'Edit details' stays visible only to holders of moderate_gallery (never the author), while 'Delete' also shows for the post author (currentUser().id === item.submittedByMemberId). Adds an owner/permission getter in the detail component.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "moderation",
+      "subfeature": "detail-admin-actions",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0121"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A moderator (has moderate_gallery, not the author) sees both Edit details and Delete",
+          "status": "pending"
+        },
+        {
+          "desc": "The post author WITHOUT moderate_gallery sees Delete but NOT Edit details",
+          "status": "pending"
+        },
+        {
+          "desc": "A signed-in non-author without moderate_gallery sees neither Edit details nor Delete",
+          "status": "pending"
+        },
+        {
+          "desc": "Author clicking Delete removes the post and navigates back to /gallery (backed by lords-dashboard-backend:T-0121)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Splits the shared moderate_gallery visibility block on the public gallery-detail page; a mistake could expose Edit details to authors or hide Delete from moderators. Pin with detail-page permission specs.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T19:03:51Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T19:03:51Z",
+      "updatedAt": "2026-07-18T19:03:51Z",
+      "history": [
+        {
+          "at": "2026-07-18T19:03:51Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0192",
+      "title": "Rank/Medal icon data layer: add imageUrl+imageKey, drop chevrons/ribbon, set svg/png @250px policy",
+      "summary": "Add `imageUrl` (read) + a write-only `imageKey` to the Rank and Medal view models (member.model.ts) and to `RankPayload`/`MedalPayload`; drop `chevrons` from Rank, `ribbon` (+ the `MedalRibbon` type and `MemberMedalAward.ribbon`) from Medal, and `Member.chevrons` in favour of the linked rank's `imageUrl`. Update `ApiRank`/`ApiMedal` + `mapRank`/`mapMedal`/`mapMedalAward` (api.model.ts) to carry the icon URL. Retune the `rank-image`/`medal-image` entries in the storage policy (storage.service.ts) from png/jpg/webp@4MB to svg+png with a 250px hint. Foundation for the editor + render tasks.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "platform",
+      "feature": "core-data",
+      "subfeature": "rank-medal-icons",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/member.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/ranks.service.ts",
+        "src/app/core/services/medals.service.ts",
+        "src/app/core/services/storage.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0122",
+        "lords-dashboard-backend:T-0123",
+        "lords-dashboard-backend:T-0124"
+      ],
+      "blocks": [
+        "T-0193",
+        "T-0194",
+        "T-0195"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Rank/Medal models + mappers expose `imageUrl`; `chevrons`/`ribbon` are removed and the project type-compiles with no lingering references",
+          "status": "pending"
+        },
+        {
+          "desc": "RankPayload/MedalPayload send `imageKey`; getAll() maps backend `imageUrl` through to the view models",
+          "status": "pending"
+        },
+        {
+          "desc": "storage.service policy for rank-image/medal-image accepts image/svg+xml + image/png and surfaces the 250px hint via uploadHint()",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Reshapes the shared Rank/Medal/Member view models + mapRank/mapMedal consumed by roster, profile, dashboard and the admin action modal (award medal / change rank); a field-shape slip ripples across every icon-render site.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T21:18:15Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        },
+        {
+          "desc": "CROSS-REPO DEPLOY COUPLING: consumes the backend removal of chevrons/ribbon (lords-dashboard-backend T-0122/T-0123) and the svg/png upload policy (T-0124). Deploying this frontend without that backend breaks rank/medal reads and uploads - ship the two together.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T21:18:15Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-18T21:18:15Z",
+      "history": [
+        {
+          "at": "2026-07-18T21:18:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the data-shape foundation - add icon fields, drop chevrons/ribbon, align the upload policy to svg/png @250px."
+        }
+      ]
+    },
+    {
+      "id": "T-0193",
+      "title": "Render uploaded rank & medal icons everywhere (retire chevron pips + ribbon colour dots)",
+      "summary": "Rewrite `hf-medal` to render the uploaded `imageUrl` (with a letter/initials fallback tile and load-error fallback like hf-avatar) and retire the ribbon->hex `RIBBON_MAP`. Replace `hf-chevrons` with a small rank-icon render (new `hf-rank-icon` or repurposed component) driven by the rank `imageUrl`. Rebind every display site: dashboard honors strip (chevrons :10 + hf-medal :22-26), roster (rank cell :120 + the `.roster-medal-dot` ribbon dots :126-127), and profile (rank row :38 + honours grid :69-73). Ensure the small icon placeholders never clip and carry sufficient padding/margins (object-fit:contain, box padding, no overflow crop) per the design ask.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "platform",
+      "feature": "shared",
+      "subfeature": "rank-medal-icons",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/medal/medal.component.ts",
+        "src/app/shared/components/medal/medal.component.html",
+        "src/app/shared/components/medal/medal.component.scss",
+        "src/app/shared/components/chevrons/chevrons.component.ts",
+        "src/app/shared/components/chevrons/chevrons.component.html",
+        "src/app/shared/shared.module.ts",
+        "src/styles/_base.scss",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/member/roster/roster.component.html",
+        "src/app/features/member/roster/roster.component.scss",
+        "src/app/features/member/profile/profile.component.html"
+      ],
+      "dependsOn": [
+        "T-0192"
+      ],
+      "blocks": [
+        "T-0194",
+        "T-0195"
+      ],
+      "questions": [
+        {
+          "q": "For medals/ranks with no uploaded image yet (legacy or awaiting upload), fall back to the letter/initials placeholder tile, or hide the badge until an image exists?",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T21:18:15Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "hf-medal renders the uploaded image at small size with padding, no clipping/overflow, and falls back to a letter/initials tile on missing or broken image",
+          "status": "pending"
+        },
+        {
+          "desc": "Rank icon renders in the dashboard honors strip, roster rank cell and profile rank row in place of chevron pips; no `chevrons`/`ribbon` bindings remain anywhere",
+          "status": "pending"
+        },
+        {
+          "desc": "Roster medal column shows small medal icons instead of colour dots; profile honours grid shows medal images",
+          "status": "pending"
+        },
+        {
+          "desc": "Icons at their smallest rendered size have visible padding/margin and never crop against neighbouring cells",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Rewrites the shared hf-medal and hf-chevrons components rendered on dashboard, roster, profile and the admin ranks page; a rendering regression shows on every rank/medal surface. Pin with render specs + visual checks.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T21:18:15Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-18T21:18:15Z",
+      "history": [
+        {
+          "at": "2026-07-18T21:18:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; the shared render change - image-based hf-medal + rank-icon, plus rebinding all display sites and the no-clip/padding styling."
+        }
+      ]
+    },
+    {
+      "id": "T-0194",
+      "title": "Rank editor: replace the chevron-count input with a rank-icon upload control",
+      "summary": "In RanksMedalsComponent, swap the Chevrons number input (ranks-medals.component.html:80-89) and the `editRankChevrons` state (ts:58,189,199,211) for a rank-icon upload control modeled on the profile avatar/banner uploader: a hidden file input `accept=image/svg+xml,image/png`, client-side validation of type + 250px max dimension before upload, a live preview via the new rank-icon render, `StorageService.upload('rank-image', file)` -> `imageKey`, and the upload hint. Update the editor preview (:67) and the rank-ladder row (:244) to show the icon instead of `hf-chevrons`.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "ranks-medals",
+      "subfeature": "rank-icon",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.scss"
+      ],
+      "dependsOn": [
+        "T-0192",
+        "T-0193",
+        "lords-dashboard-backend:T-0124",
+        "lords-dashboard-backend:T-0125"
+      ],
+      "blocks": [
+        "T-0195"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Rank editor shows an icon upload control (no chevron number input); a non-svg/png or >250px file is rejected client-side with a clear message",
+          "status": "pending"
+        },
+        {
+          "desc": "Uploading a valid svg/png previews the icon and submits `imageKey`; the saved rank shows the icon in the ladder + live preview without clipping",
+          "status": "pending"
+        },
+        {
+          "desc": "Existing ranks load their current `imageUrl` into the editor preview",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Edits the shared RanksMedalsComponent (ts/html/scss) also touched by the medal-editor task; sequence T-0194 before T-0195 to avoid merge churn.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T21:18:15Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-18T21:18:15Z",
+      "history": [
+        {
+          "at": "2026-07-18T21:18:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; replace the rank chevron-count input with an svg/png rank-icon uploader (client-validated type + 250px)."
+        }
+      ]
+    },
+    {
+      "id": "T-0195",
+      "title": "Medal editor: replace the ribbon-colour picker with a medal-image upload control",
+      "summary": "In RanksMedalsComponent, remove the ribbon-swatch picker (ranks-medals.component.html:129-145, the `.ribbon-picker` styles :136-183, and `editRibbon`/`ribbonOptions` ts:67,74,279,294) and add a medal-image upload control mirroring the rank-icon one: hidden file input `accept=image/svg+xml,image/png`, client-side type + 250px validation, live preview via the rewritten hf-medal, `StorageService.upload('medal-image', file)` -> `imageKey`, upload hint. Update the medal editor preview (:128) and the medal-cabinet row (:327-331) to render the image.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "ranks-medals",
+      "subfeature": "medal-icon",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.scss"
+      ],
+      "dependsOn": [
+        "T-0192",
+        "T-0193",
+        "T-0194",
+        "lords-dashboard-backend:T-0124",
+        "lords-dashboard-backend:T-0125"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Keep the medal disk-letter/glyph field in the editor as a fallback label, or remove it now that the medal is a full uploaded image? (mirror of the backend glyph question)",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T21:18:15Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Medal editor shows an image upload control (no ribbon-colour swatches); a non-svg/png or >250px file is rejected client-side",
+          "status": "pending"
+        },
+        {
+          "desc": "Uploading a valid svg/png previews the medal image and submits `imageKey`; the cabinet row + live preview render it without clipping",
+          "status": "pending"
+        },
+        {
+          "desc": "Existing medals load their current `imageUrl` into the editor",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-18T21:18:15Z",
+      "history": [
+        {
+          "at": "2026-07-18T21:18:15Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; replace the ribbon-colour swatch picker with an svg/png medal-image uploader (client-validated type + 250px)."
+        }
+      ]
+    },
+    {
+      "id": "T-0196",
+      "title": "Public nav: match the paired CTA button sizes (signed-out & signed-in)",
+      "summary": "On the public nav (public-nav.component.html:26-41) the paired CTAs render at different heights because one carries `btn-sm` and the other doesn't: signed-out 'Join Discord' (btn-ghost btn-sm) vs 'Sign in' (btn-discord, no size), and signed-in 'Dashboard' (btn-primary) vs 'Sign out' (btn-ghost btn-sm). Make each pair the same size.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "public",
+      "feature": "auth-cta",
+      "subfeature": "session-aware",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/public-nav/public-nav.component.html",
+        "src/app/features/public/public-nav/public-nav.component.scss",
+        "src/styles/_buttons.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Signed out: 'Join Discord' and 'Sign in' render at the same height/padding on /home",
+          "status": "pending"
+        },
+        {
+          "desc": "Signed in: 'Dashboard' and 'Sign out' render at the same height/padding on /home",
+          "status": "pending"
+        },
+        {
+          "desc": "No other .btn usages regress if _buttons.scss is touched",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; equalize the signed-out and signed-in CTA button sizes in the public nav."
+        }
+      ]
+    },
+    {
+      "id": "T-0197",
+      "title": "Public nav: remove the 'Officers' and 'Charter' links",
+      "summary": "Remove the 'Officers' (/officers) and 'Charter' (/charter) entries from the public nav `navLinks` array (public-nav.component.ts:24-25), rendered via @for at public-nav.component.html:16-24. Leaves Home, Events, Gallery.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "public",
+      "feature": "nav",
+      "subfeature": "links",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/public-nav/public-nav.component.ts",
+        "src/app/features/public/public-nav/public-nav.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Public nav shows only Home, Events, Gallery (no Officers/Charter)",
+          "status": "pending"
+        },
+        {
+          "desc": "No other surface links to the removed /officers or /charter routes",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; drop the Officers and Charter nav links from the public navbar."
+        }
+      ]
+    },
+    {
+      "id": "T-0198",
+      "title": "Login: center the digit inside each numbered step ring",
+      "summary": "The numbered how-to-join step badges on /login (login.component.html:43, `.login-step-num serif`) aren't centered in their 28px circle (login.component.scss:121-134) — the `serif` font metrics offset the flex centering. Adjust line-height/optical centering so the digit sits dead-center in the ring.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "auth",
+      "feature": "sign-in",
+      "subfeature": "step-badges",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/login/login.component.html",
+        "src/app/features/public/login/login.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Digits 1, 2, 3 are visually centered horizontally and vertically within their rings on /login",
+          "status": "pending"
+        },
+        {
+          "desc": "Centering holds at mobile widths",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; fix off-center digits in the login step-number rings."
+        }
+      ]
+    },
+    {
+      "id": "T-0199",
+      "title": "Events create: left-align the preview tags with the content above",
+      "summary": "In the event-create Preview panel the tag badges (event-create.component.html:335-339, `.preview-tags`) sit flush-left and don't line up with the spacing of the lines above. Add matching left margin/padding on `.preview-tags` (event-create.component.scss:203-206) so the tags align with the rest of the preview.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "create",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/features/admin/event-create/event-create.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Preview tags are left-aligned with the preview lines above them on /app/dashboard/events/create",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; add left margin so preview tags align with the section above."
+        }
+      ]
+    },
+    {
+      "id": "T-0200",
+      "title": "Events create: fix 'When' Starts/Ends field padding and time AM/PM clipping",
+      "summary": "The 'When' > Starts & Ends fields (event-create.component.html:105-140) have padding/margins inconsistent with the other form fields, and the time input (`.time-input`, event-create.component.scss:182-188, width:100px) clips the AM/PM marker. Align the date/time field padding with the shared `.hf-input` spacing and widen/adjust the time input so AM/PM isn't cut off (incl. the mobile override at :310-322).",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "create",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.html",
+        "src/app/features/admin/event-create/event-create.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Starts/Ends date+time fields have the same padding/height as other fields in the form",
+          "status": "pending"
+        },
+        {
+          "desc": "Time inputs show the full value including AM/PM without clipping (desktop + mobile)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; make the When Starts/Ends fields consistent and stop clipping AM/PM."
+        }
+      ]
+    },
+    {
+      "id": "T-0201",
+      "title": "Event detail: left-align password / notify-before / tags rows with the section",
+      "summary": "On the event detail page the server-password text (event-detail.component.html:62-65), the notify-before badges (:76-84) and the tags badges (:85-94) have less left margin than the other fields in their section. Give these rows (`.field-row-tight`, event-detail.component.scss:84-91) the same left margin so they align with the sibling entities.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "detail",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Password text, notify-before badge and tag badges share the same left margin as other fields in the detail section",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; align password/notify/tags rows with the other detail fields."
+        }
+      ]
+    },
+    {
+      "id": "T-0202",
+      "title": "Event detail: require an RSVP before revealing the server password (toast error)",
+      "summary": "The reveal button (event-detail.component.html:58,66-73) is gated only on hasServerPassword + the reveal_event_passwords capability, not on RSVP. When the current user hasn't RSVP'd (selectedRsvp/event.myRsvp is null; event-detail.component.ts:21,59,100), clicking Reveal should show a toast error telling them to RSVP first instead of calling revealPassword(), mirroring the backend RSVP gate.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "detail",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "No shared toast service exists (feedback today is console.error) — introduce a reusable toast component, or show an inline error beside the reveal button?",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T23:04:04Z"
+        },
+        {
+          "q": "Does 'hasn't RSVP'd' mean a null RSVP only, or also Declined/Neutral, to match the backend reveal gate?",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T23:04:04Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "With no RSVP, clicking Reveal shows a toast/inline error to RSVP first and does NOT call the reveal endpoint",
+          "status": "pending"
+        },
+        {
+          "desc": "After RSVPing affirmatively, Reveal works as before",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; gate password reveal behind an RSVP and toast an error when missing."
+        }
+      ]
+    },
+    {
+      "id": "T-0203",
+      "title": "Event detail: populate the Attendees section with the RSVP roster (avatar, name, choice)",
+      "summary": "The Attendees grid (event-detail.component.html:99-118) is empty because getAttendees() (events.service.ts:118-120) returns EventAttendee {memberId,name,checkedInAt} with no avatar or RSVP choice, and the section is gated on view_members_directory (event-detail.component.ts:64-77). Consume the new backend RSVP-roster endpoint and render each RSVP'er's real avatar, username and RSVP choice.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "detail",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-detail/event-detail.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/core/services/events.service.ts",
+        "src/app/core/models/event.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0127"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "The Attendees section is gated on view_members_directory today — should the RSVP roster be visible to every event viewer, or stay gated to members-directory viewers?",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T23:04:04Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "The Attendees/RSVP section lists each RSVP'er with their real avatar, username and RSVP choice",
+          "status": "pending"
+        },
+        {
+          "desc": "An empty state shows when nobody has RSVP'd",
+          "status": "pending"
+        },
+        {
+          "desc": "hf-avatar renders the real image via avatarUrl and falls back to initials when absent",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; render the RSVP roster (avatar/name/choice) in the Attendees section."
+        }
+      ]
+    },
+    {
+      "id": "T-0204",
+      "title": "Events: mark start-past/end-future events as 'Ongoing' (list + detail)",
+      "summary": "Events read Concluded/'Previous' as soon as their start passes; they should read 'Ongoing' while start is past but end is still future. The backend already returns endsAt and a computed status (upcoming/ongoing/previous) which the FE passes straight through (api.model.ts:327); hf-event-status maps ongoing->'Live', previous->'Concluded' (event-status.component.ts:26-37). Derive/override the displayed status from startsAt+endsAt so an in-progress event shows 'Ongoing' immediately (no scheduler lag) across the admin list (events-admin.component.ts:52-54), public events page (events-page.component.ts:26-28) and detail banner (event-detail.component.html:11).",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "status",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/event-status/event-status.component.ts",
+        "src/app/features/admin/events-admin/events-admin.component.ts",
+        "src/app/features/public/events-page/events-page.component.ts",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/core/models/event.model.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Derive the Ongoing/Concluded state client-side from startsAt+endsAt (instantaneous, avoids the 60s backend scheduler lag), or keep trusting the backend `status` field (which already computes 'ongoing')?",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T23:04:04Z"
+        },
+        {
+          "q": "hf-event-status currently labels ongoing as 'Live' — should the label read 'Ongoing' per the request?",
+          "answer": "Resolved by implementation (decide-and-proceed); see the shipped code + PR.",
+          "askedAt": "2026-07-18T23:04:04Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "An event with start in the past and end in the future shows 'Ongoing' on /app/dashboard/events, /events and the detail page",
+          "status": "pending"
+        },
+        {
+          "desc": "An event whose end has passed still shows Concluded; a future event still shows Upcoming",
+          "status": "pending"
+        },
+        {
+          "desc": "Open-ended events (no endsAt) keep sensible behavior",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the shared hf-event-status component and the status filters on both the admin and public events lists; a wrong start/end comparison could mislabel upcoming or concluded events.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T23:04:04Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; treat start-past/end-future events as Ongoing instead of Concluded."
+        }
+      ]
+    },
+    {
+      "id": "T-0205",
+      "title": "Date/time inputs: render the native calendar/clock icons in white",
+      "summary": "Native <input type=date>/<input type=time> pickers (e.g. event-create.component.html:109-137) show a dark, low-contrast calendar/clock glyph on the dark field background because no color-scheme is set (no ::-webkit-calendar-picker-indicator rule anywhere in src/). Add `color-scheme: dark` (and/or a picker-indicator filter) to the shared `.hf-input` (src/styles/_forms.scss:15-52) so picker icons render white across every date/time field.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "platform",
+      "feature": "design-system",
+      "subfeature": "datetime-picker",
+      "repo": "",
+      "paths": [
+        "src/styles/_forms.scss",
+        "src/app/features/admin/event-create/event-create.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The calendar and clock picker icons render white/high-contrast on all date/time inputs (event create, admin action modal, and anywhere else)",
+          "status": "pending"
+        },
+        {
+          "desc": "Other .hf-input controls (text, select, textarea) are unaffected",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adding color-scheme: dark to the shared .hf-input changes native rendering of ALL form controls (selects, spinners, text inputs), not just date/time; verify no control regresses.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T23:04:04Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; make native date/time picker icons white via color-scheme on .hf-input."
+        }
+      ]
+    },
+    {
+      "id": "T-0206",
+      "title": "Roster: remove the Discord column from the members table",
+      "summary": "Remove the 'Discord' column from the roster table: the header (roster.component.html:86) and the cell (roster.component.html:138-151, the .roster-discord-dot status dot + Linked/Unlinked label), and drop the empty-state colspan from 8 to 7 (:182). The separate Discord tag under the Member column stays.",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "roster",
+      "subfeature": "cleanup",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/roster/roster.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The roster table no longer has a Discord column; remaining columns and the empty-state colspan align correctly",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; remove the Discord column and fix the empty-state colspan."
+        }
+      ]
+    },
+    {
+      "id": "T-0207",
+      "title": "Profile: vertically align the back-button arrow with its label",
+      "summary": "The '<- Back' button on the profile page (profile.component.html:5-7, `.back-link`) renders the arrow and text as one run, so the arrow glyph sits on the text baseline instead of centered. Wrap the arrow in its own element with proper line-height/flex so it aligns vertically with 'Back' (profile.component.scss:8-12). The same pattern exists in gallery-detail.component.html:5.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "back-button",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The back arrow is vertically centered with the 'Back' text on /app/profile/:id",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The same '<- Back' arrow pattern is duplicated in gallery-detail; fixing only profile leaves gallery-detail visually inconsistent.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T23:04:04Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; vertically center the profile back-button arrow with its label."
+        }
+      ]
+    },
+    {
+      "id": "T-0208",
+      "title": "Admin applications: remove the unused 'Open in Discord' button",
+      "summary": "Remove the 'Open in Discord' button (applications.component.html:131-138, `.detail-header__discord`) from the application detail header and its now-orphaned style (applications.component.scss:173-175).",
+      "status": "deploy_ready",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "discord-link",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The application detail header no longer shows an 'Open in Discord' button; no dead CSS/handlers remain",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; remove the unused Open in Discord button + orphaned style."
+        }
+      ]
+    },
+    {
+      "id": "T-0209",
+      "title": "Admin applications: dark-theme the parchment answer fields",
+      "summary": "The applicant answer fields 'How did you find us?', 'Preferred classes' and 'Skills to improve' (applications.component.html:165-183, class `qa-answer parchment serif`) render on a light parchment background that's too high-contrast. Drop the global `parchment` class and restyle `.qa-answer` (applications.component.scss:111-119) to dark tokens; apply the same to the 'Note to recruiting officer' field (:185-192) for consistency.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "dark-theme",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The answer fields render on a dark background consistent with the rest of the panel, with readable text",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; replace the light parchment answer fields with dark styling."
+        }
+      ]
+    },
+    {
+      "id": "T-0210",
+      "title": "Admin applications: show Block / Re-enable conditionally by blocked state",
+      "summary": "Both 'Block from applying' and 'Re-enable' render unconditionally (applications.component.html:269-289; handlers applications.component.ts:167-208). Plumb a `blocked` flag through ApiApplication->Application (api.model.ts:97-119, mapApplication:217-237; application.model.ts:7-28) from the backend admin projection, then show Block only when not blocked and Re-enable only when blocked.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "block-controls",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/core/models/application.model.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0128"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A not-blocked applicant shows only 'Block from applying'; a blocked applicant shows only 'Re-enable'",
+          "status": "pending"
+        },
+        {
+          "desc": "After blocking/unblocking, the buttons swap to reflect the new state",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds a new optional field to the shared ApiApplication->Application mapper used by the whole admin applications queue; other consumers must tolerate the added `blocked` field.",
+          "status": "resolved",
+          "notedAt": "2026-07-18T23:04:04Z",
+          "resolvedAt": "2026-07-19T00:18:56Z",
+          "resolvedBy": "claude",
+          "note": "Addressed by planned-tasks T-0190..T-0211 (FE 6da2aae): code + unit specs + browser-verified end-to-end (desktop+mobile). Cross-repo coupling ships as the coupled FE+BE PR pair (deploy together)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; gate Block vs Re-enable on the applicant blocked flag."
+        }
+      ]
+    },
+    {
+      "id": "T-0211",
+      "title": "Public gallery detail: add left margin to the submitter byline",
+      "summary": "On the public media detail page the submitter block — avatar + name + submission date (gallery-detail.component.html:53-71, `.detail-byline`) — sits too close to the left edge relative to the other content in the section. Add left margin/padding on `.detail-byline` (gallery-detail.component.scss:92-121) so the whole avatar+name+date block is margined at least as much as the sibling entities.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "public",
+      "feature": "public-gallery",
+      "subfeature": "detail",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The submitter avatar/name/date block on /gallery/:id has left margin aligned with the rest of the section",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-18T23:04:04Z",
+      "history": [
+        {
+          "at": "2026-07-18T23:04:04Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created via bf-plan; add left margin to the gallery-detail submitter byline block."
         }
       ]
     }
