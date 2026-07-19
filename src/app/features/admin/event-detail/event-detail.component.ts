@@ -4,10 +4,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent, RsvpStatus } from '../../../core/models/event.model';
 import { EventsService } from '../../../core/services/events.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface AttendeeVM {
     name: string;
-    initials: string;
+    avatarUrl: string | null;
+    status: RsvpStatus;
 }
 
 @Component({
@@ -36,6 +38,7 @@ export class EventDetailComponent implements OnInit {
         private eventsService: EventsService,
         private auth: AuthService,
         private router: Router,
+        private toast: ToastService,
     ) {}
 
     /** Capability gate for a template action (see the spec's capability keys). */
@@ -63,33 +66,31 @@ export class EventDetailComponent implements OnInit {
 
         if (this.can('view_members_directory')) {
             this.eventsService
-                .getAttendees(this.eventId)
+                .getRsvps(this.eventId)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: (rows) => {
-                        this.attendees = rows.map((a) => {
-                            const name = a.name ?? a.memberId;
-                            return { name, initials: this.initials(name) };
-                        });
+                        this.attendees = rows.map((r) => ({
+                            name: r.name ?? r.memberId,
+                            avatarUrl: r.avatarUrl,
+                            status: r.status,
+                        }));
                     },
                     error: (err) => console.error('Failed to load attendees', err),
                 });
         }
     }
 
-    private initials(name: string): string {
-        return name
-            .split(' ')
-            .map((s) => s[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase();
-    }
-
     /** Reveal the decrypted server password (once) then toggle its visibility. */
     togglePassword(): void {
         if (this.revealedPassword !== null) {
             this.showPassword = !this.showPassword;
+            return;
+        }
+        // Mirror the backend gate: an RSVP must exist and not be 'declined'
+        // (interested/tentative/neutral pass; null/declined are blocked).
+        if (!this.selectedRsvp || this.selectedRsvp === 'declined') {
+            this.toast.error('RSVP as Interested or Tentative to reveal the server password.');
             return;
         }
         if (!this.eventId || this.revealing || !this.can('reveal_event_passwords')) {
@@ -107,6 +108,7 @@ export class EventDetailComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to reveal server password', err);
+                    this.toast.error('Could not reveal the server password.');
                     this.revealing = false;
                 },
             });

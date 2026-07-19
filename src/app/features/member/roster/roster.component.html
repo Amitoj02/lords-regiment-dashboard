@@ -83,7 +83,6 @@
                         <th>Rank</th>
                         <th>Medals</th>
                         <th>Role</th>
-                        <th>Discord</th>
                         <th>Status</th>
                         <th>Last Seen</th>
                         <th class="roster-th-actions"></th>
@@ -117,15 +116,24 @@
                         </td>
                         <td data-label="Rank">
                             <div class="row roster-rank-cell">
-                                <hf-chevrons [count]="member.chevrons"></hf-chevrons>
+                                <hf-rank-icon
+                                    [imageUrl]="member.rankImageUrl"
+                                    [name]="member.rank"
+                                    [size]="20"
+                                ></hf-rank-icon>
                                 <span class="roster-rank-label">{{ member.rank }}</span>
                             </div>
                         </td>
                         <td data-label="Medals">
                             <div class="row roster-medals-cell">
-                                @for (ribbon of member.medals; track ribbon) {
-                                <span class="badge dot roster-medal-dot" [ngClass]="ribbon"></span>
-                                } @if (member.medals.length === 0) {
+                                @for (award of member.medalAwards ?? []; track award.id) {
+                                <hf-medal
+                                    size="sm"
+                                    [imageUrl]="award.imageUrl"
+                                    [letter]="award.glyph"
+                                    [title]="award.title"
+                                ></hf-medal>
+                                } @if ((member.medalAwards ?? []).length === 0) {
                                 <span class="roster-medal-empty">—</span>
                                 }
                             </div>
@@ -134,20 +142,6 @@
                             <span class="badge" [ngClass]="getRoleClass(member.role)"
                                 >{{ member.role }}</span
                             >
-                        </td>
-                        <td data-label="Discord">
-                            <span
-                                class="status-dot roster-discord-dot"
-                                [ngClass]="member.discordLinked ? 'discord-on' : 'discord-off'"
-                                [ngStyle]="{
-                                        background: member.discordLinked
-                                            ? 'var(--ok)'
-                                            : 'var(--t-500)',
-                                    }"
-                            ></span>
-                            <span class="mono roster-discord-label">
-                                {{ member.discordLinked ? 'Linked' : 'Unlinked' }}
-                            </span>
                         </td>
                         <td data-label="Status">
                             @let ds = deriveStatus(member);
@@ -179,7 +173,7 @@
                     </tr>
                     } @if (filteredMembers.length === 0) {
                     <tr>
-                        <td colspan="8" class="roster-empty">
+                        <td colspan="7" class="roster-empty">
                             No members match your current filters.
                         </td>
                     </tr>

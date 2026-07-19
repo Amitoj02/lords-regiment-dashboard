@@ -12,6 +12,14 @@ export interface EventAttendee {
     checkedInAt: string | null;
 }
 
+/** One RSVP-roster row (GET /events/:id/rsvps). Mirrors RsvpRosterEntryDto. */
+export interface EventRsvpRosterEntry {
+    memberId: string;
+    name: string | null;
+    avatarUrl: string | null;
+    status: RsvpStatus;
+}
+
 /** Response of POST /events/:id/reveal-password (SENSITIVE — decrypted password). */
 export interface RevealedPassword {
     serverName: string | null;
@@ -121,6 +129,11 @@ export class EventsService {
 
     setAttendees(id: string, memberIds: string[]): Observable<EventAttendee[]> {
         return this.http.post<EventAttendee[]>(`${this.base}/${id}/attendees`, { memberIds });
+    }
+
+    /** The event's RSVP roster (who RSVP'd + their choice). Gated on ViewMembersDirectory. */
+    getRsvps(id: string): Observable<EventRsvpRosterEntry[]> {
+        return this.http.get<EventRsvpRosterEntry[]>(`${this.base}/${id}/rsvps`);
     }
 
     /** Reveal the decrypted server password (RevealEventPasswords; must have RSVP'd). */

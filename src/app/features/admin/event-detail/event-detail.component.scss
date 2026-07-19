@@ -85,6 +85,14 @@
     margin-bottom: 4px;
 }
 
+// Inline value rows (password / notify-before / tags) — self-contained,
+// replacing the Bootstrap `.row` whose negative gutter shifted them left.
+.detail-inline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 // Tighter gap for inline badge rows (notify-before / tags)
 .field-row-tight {
     gap: 6px;
@@ -116,6 +124,25 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 70px;
+}
+
+// The member's RSVP choice, colour-coded to match the roll-up intents.
+.attendee-status {
+    text-transform: capitalize;
+    font-size: 0.6rem;
+
+    &--interested {
+        color: var(--ok);
+        border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+    }
+    &--tentative {
+        color: var(--warn);
+        border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+    }
+    &--declined {
+        color: var(--err);
+        border-color: color-mix(in srgb, var(--err) 45%, transparent);
+    }
 }
 
 .rsvp-options {

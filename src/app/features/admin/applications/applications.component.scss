@@ -109,13 +109,13 @@
 }
 
 .qa-answer {
-    background: var(--parch-100);
-    border: 1px solid var(--parch-300);
+    background: var(--ink-900);
+    border: 1px solid var(--rule-2);
     border-radius: 6px;
     padding: 12px 14px;
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--t-on-parch);
+    color: var(--t-200);
 }
 
 .mod-tools {
@@ -145,9 +145,9 @@
     overflow-wrap: anywhere;
 }
 
-// Detail-panel identity header: avatar + name/status on the left, the
-// "Open in Discord" action on the right. Extends `.panel-header` (which already
-// supplies display:flex / align-items:center / justify-content:space-between).
+// Detail-panel identity header: avatar + name/status. Extends `.panel-header`
+// (which already supplies display:flex / align-items:center /
+// justify-content:space-between).
 .detail-header {
     flex-wrap: wrap;
     gap: 12px 16px;
@@ -156,8 +156,8 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        // Grow to fill the row so space-between pushes the action to the right,
-        // and allow the text to shrink/wrap rather than overflow.
+        // Grow to fill the row and allow the text to shrink/wrap rather than
+        // overflow.
         flex: 1 1 auto;
         min-width: 0;
     }
@@ -168,10 +168,6 @@
 
     &__name {
         flex-wrap: wrap;
-    }
-
-    &__discord {
-        flex: 0 0 auto;
     }
 }
 
@@ -211,8 +207,7 @@
 // in _responsive.scss; these rules keep the detail panel's controls, tab bar and
 // info grids from overflowing horizontally on narrow phones.
 @media (max-width: 560px) {
-    // Identity block takes the full first line so the Discord action wraps
-    // cleanly below it instead of crowding/overlapping the name.
+    // Identity block takes the full first line on narrow phones.
     .detail-header__identity {
         flex: 1 1 100%;
     }

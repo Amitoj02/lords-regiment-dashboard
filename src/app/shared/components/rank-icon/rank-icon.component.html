@@ -1,0 +1,13 @@
+<span
+    class="rank-icon"
+    [style.width.px]="size"
+    [style.height.px]="size"
+    [style.font-size.px]="size * 0.5"
+    [attr.title]="name || null"
+>
+    @if (showImage) {
+    <img class="rank-icon__img" [src]="imageUrl" [alt]="name" (error)="onImgError()" />
+    } @else {
+    <span class="rank-icon__fallback">{{ initial }}</span>
+    }
+</span>

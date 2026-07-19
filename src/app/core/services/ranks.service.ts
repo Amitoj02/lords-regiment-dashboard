@@ -7,7 +7,8 @@ import { Rank } from '../models/member.model';
 
 export interface RankPayload {
     name?: string;
-    chevrons?: number;
+    /** Storage key of a freshly-uploaded rank icon (backend resolves it to imageUrl). */
+    imageKey?: string;
     precedence?: number;
     discordRoleName?: string;
 }

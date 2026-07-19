@@ -1,0 +1,37 @@
+:host {
+    display: inline-flex;
+}
+
+.rank-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // Breathing room so the icon never touches its neighbours / crops (T-0193).
+    padding: 2px;
+    border-radius: var(--r-1);
+    box-sizing: border-box;
+}
+
+.rank-icon__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.rank-icon__fallback {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-1);
+    background: var(--ink-700);
+    border: 1px solid var(--rule-2);
+    color: var(--brass-400, var(--t-200));
+    font-family: var(--serif);
+    font-weight: 700;
+    line-height: 1;
+    // Font size is set on the .rank-icon host proportional to `size`.
+    font-size: 1em;
+}

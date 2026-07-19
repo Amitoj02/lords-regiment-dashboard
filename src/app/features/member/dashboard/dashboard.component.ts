@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { Application } from '../../../core/models/application.model';
-import { MedalRibbon } from '../../../core/models/member.model';
 import { ApplicationsService } from '../../../core/services/applications.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MembersService } from '../../../core/services/members.service';
@@ -12,8 +11,8 @@ import { GallerySubmissionSummary, GalleryService } from '../../../core/services
 import { BotStatus, DiscordService } from '../../../core/services/discord.service';
 
 interface HonorMedal {
+    imageUrl: string | null;
     letter: string;
-    ribbon: MedalRibbon;
     title: string;
 }
 
@@ -47,9 +46,9 @@ export class DashboardComponent implements OnInit {
     currentMember: {
         name: string;
         rank: string;
-        chevrons: number;
+        rankImageUrl: string | null;
         medals: HonorMedal[];
-    } = { name: '', rank: '—', chevrons: 0, medals: [] };
+    } = { name: '', rank: '—', rankImageUrl: null, medals: [] };
 
     ngOnInit(): void {
         const user = this.auth.currentUser();
@@ -58,7 +57,7 @@ export class DashboardComponent implements OnInit {
             this.currentMember.rank = user.rank ?? '—';
         }
 
-        // Load the caller's own roster record for chevrons/medals.
+        // Load the caller's own roster record for the rank icon + medals.
         if (user?.isMember) {
             this.membersService
                 .getById(user.id)
@@ -67,10 +66,10 @@ export class DashboardComponent implements OnInit {
                     this.currentMember = {
                         name: m.inGameName,
                         rank: m.rank || '—',
-                        chevrons: m.chevrons,
+                        rankImageUrl: m.rankImageUrl ?? null,
                         medals: (m.medalAwards ?? []).map((a) => ({
+                            imageUrl: a.imageUrl ?? null,
                             letter: a.glyph,
-                            ribbon: a.ribbon,
                             title: a.title,
                         })),
                     };

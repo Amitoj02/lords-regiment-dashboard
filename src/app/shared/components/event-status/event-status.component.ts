@@ -26,7 +26,7 @@ export class EventStatusComponent {
     get label(): string {
         switch (this.status) {
             case 'ongoing':
-                return 'Live';
+                return 'Ongoing';
             case 'upcoming':
                 return 'Upcoming';
             case 'previous':

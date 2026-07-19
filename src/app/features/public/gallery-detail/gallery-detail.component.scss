@@ -92,6 +92,9 @@
 .detail-byline {
     gap: 10px;
     align-items: center;
+    /* Cancel Bootstrap's negative .row gutter so the byline's left edge
+       aligns with the title/caption (T-0211). */
+    margin-left: 0;
 }
 
 .detail-byline-text {

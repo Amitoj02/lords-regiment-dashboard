@@ -1,4 +1,7 @@
-<span class="medal" [attr.title]="title || null">
-    <span class="rib" [style.background]="ribbonStyle"></span>
-    <span class="disk">{{ letter }}</span>
+<span class="hf-medal" [class]="'hf-medal--' + size" [attr.title]="title || null">
+    @if (showImage) {
+    <img class="hf-medal__img" [src]="imageUrl" [alt]="title" (error)="onImgError()" />
+    } @else {
+    <span class="hf-medal__fallback">{{ letter }}</span>
+    }
 </span>

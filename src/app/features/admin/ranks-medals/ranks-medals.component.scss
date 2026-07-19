@@ -133,57 +133,29 @@
     justify-content: flex-end;
 }
 
-.ribbon-picker {
-    width: 100%;
+// Boxed live preview of the rank/medal icon in the editor — a fixed square so an
+// arbitrary aspect ratio never clips (the icon components use object-fit: contain).
+.icon-preview {
+    width: 96px;
+    height: 96px;
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-2);
+    background: var(--ink-900);
 }
 
-.ribbon-swatches {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 6px;
-}
-
-.ribbon-swatch {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid transparent;
+.icon-upload-btn {
+    margin-top: 4px;
     cursor: pointer;
-    transition: transform 0.12s;
+}
 
-    &:hover {
-        transform: scale(1.15);
-    }
-    &--active {
-        border-color: var(--ink-800) !important;
-        transform: scale(1.15);
-    }
-
-    &--blue {
-        background: var(--regblue-500);
-    }
-    &--red {
-        background: var(--oxblood-400);
-    }
-    &--gold {
-        background: var(--brass-400);
-    }
-    &--green {
-        background: var(--laurel-600);
-    }
-    &--tricolor {
-        background: linear-gradient(
-            to bottom,
-            var(--regblue-500) 33%,
-            var(--white) 33% 66%,
-            var(--oxblood-400) 66%
-        );
-    }
+.upload-error {
+    margin-top: 6px;
+    color: var(--oxblood-300, var(--err, #e06a6a));
+    font-size: 12px;
 }
 
 .field-width-letter {
-    width: 60px;
+    width: 72px;
 }
 
 .field-width-precedence {

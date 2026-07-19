@@ -58,7 +58,7 @@
                         @if (event.hasServerPassword && can('reveal_event_passwords')) {
                         <div class="field-group">
                             <div class="field-label">Password</div>
-                            <div class="row gap-8">
+                            <div class="detail-inline gap-8">
                                 <span class="mono"
                                     >{{ showPassword && revealedPassword !== null ? revealedPassword
                                     || '—' : '••••••••' }}</span
@@ -76,7 +76,7 @@
                         } @if (event.notifyBefore?.length) {
                         <div class="field-group">
                             <div class="field-label">Notify before</div>
-                            <div class="row field-row-tight">
+                            <div class="detail-inline field-row-tight">
                                 @for (n of event.notifyBefore; track n) {
                                 <span class="badge">{{ n }}</span>
                                 }
@@ -85,7 +85,7 @@
                         } @if (event.tags.length) {
                         <div class="field-group">
                             <div class="field-label">Tags</div>
-                            <div class="row field-row-tight">
+                            <div class="detail-inline field-row-tight">
                                 @for (tag of event.tags; track tag) {
                                 <span class="badge brass">{{ tag }}</span>
                                 }
@@ -99,20 +99,27 @@
                 <div class="panel">
                     <div class="panel-header between">
                         <span class="panel-title">Attendees</span>
-                        <span class="badge">{{ event.attendeesCount ?? attendees.length }}</span>
+                        <span class="badge">{{ attendees.length }}</span>
                     </div>
                     <div class="panel-body">
                         @if (attendees.length) {
                         <div class="attendees-grid">
                             @for (a of attendees; track a) {
                             <div class="attendee-item">
-                                <hf-avatar [name]="a.name" [size]="26"></hf-avatar>
+                                <hf-avatar
+                                    [name]="a.name"
+                                    [avatarUrl]="a.avatarUrl"
+                                    [size]="26"
+                                ></hf-avatar>
                                 <span class="attendee-name">{{ a.name }}</span>
+                                <span class="badge attendee-status attendee-status--{{ a.status }}"
+                                    >{{ a.status }}</span
+                                >
                             </div>
                             }
                         </div>
                         } @else {
-                        <span class="field-hint">No confirmed attendees yet.</span>
+                        <span class="field-hint">Nobody has RSVP'd yet.</span>
                         }
                     </div>
                 </div>

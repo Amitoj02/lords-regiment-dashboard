@@ -1,4 +1,62 @@
-// Global .medal styles from _base.scss apply
 :host {
     display: inline-flex;
+}
+
+.hf-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // Padding so the icon never touches the tile edges / crops (T-0193).
+    padding: 2px;
+    border-radius: var(--r-1);
+    box-sizing: border-box;
+
+    &--sm {
+        width: 20px;
+        height: 20px;
+    }
+    &--md {
+        width: 30px;
+        height: 30px;
+    }
+    &--lg {
+        width: 64px;
+        height: 64px;
+        padding: 4px;
+    }
+}
+
+.hf-medal__img {
+    width: 100%;
+    height: 100%;
+    // Contain (never crop) regardless of the source aspect ratio.
+    object-fit: contain;
+    display: block;
+}
+
+// Fallback disk (no image) — a brass letter tile, mirroring the old medal disk.
+.hf-medal__fallback {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #c69a45, #7a5a1a);
+    color: #2a1d06;
+    font-family: var(--serif);
+    font-weight: 700;
+    line-height: 1;
+    // Scale the letter with the tile.
+    font-size: 0.6em;
+}
+
+.hf-medal--sm .hf-medal__fallback {
+    font-size: 11px;
+}
+.hf-medal--md .hf-medal__fallback {
+    font-size: 14px;
+}
+.hf-medal--lg .hf-medal__fallback {
+    font-size: 30px;
 }

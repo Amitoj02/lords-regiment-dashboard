@@ -45,10 +45,21 @@ const IMAGE_TYPES = {
     mimeTypes: ['image/png', 'image/jpeg', 'image/webp'],
     extensions: ['png', 'jpg', 'webp'],
 };
+/** Rank/medal icons accept ONLY PNG + SVG (mirrors backend T-0124). */
+const ICON_TYPES = {
+    mimeTypes: ['image/png', 'image/svg+xml'],
+    extensions: ['png', 'svg'],
+};
 const VIDEO_TYPES = {
     mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime'],
     extensions: ['mp4', 'webm', 'mov'],
 };
+
+/** Max pixel dimension (per side) for a rank/medal icon (mirrors backend T-0125). */
+export const ICON_MAX_DIMENSION_PX = 250;
+
+/** The upload targets whose icons are size-capped + restricted to PNG/SVG. */
+const ICON_TARGETS: StorageTarget[] = ['rank-image', 'medal-image'];
 
 /**
  * Static fallback mirroring the backend storage TARGET_POLICY. Rendered
@@ -90,16 +101,16 @@ export const DEFAULT_STORAGE_POLICY: StoragePolicy = {
             kinds: ['image'],
             maxImageMb: 4,
             maxVideoMb: null,
-            acceptedMimeTypes: IMAGE_TYPES.mimeTypes,
-            acceptedExtensions: IMAGE_TYPES.extensions,
+            acceptedMimeTypes: ICON_TYPES.mimeTypes,
+            acceptedExtensions: ICON_TYPES.extensions,
         },
         {
             target: 'rank-image',
             kinds: ['image'],
             maxImageMb: 4,
             maxVideoMb: null,
-            acceptedMimeTypes: IMAGE_TYPES.mimeTypes,
-            acceptedExtensions: IMAGE_TYPES.extensions,
+            acceptedMimeTypes: ICON_TYPES.mimeTypes,
+            acceptedExtensions: ICON_TYPES.extensions,
         },
         {
             target: 'gallery',
@@ -118,6 +129,7 @@ const EXT_LABELS: Record<string, string> = {
     jpg: 'JPG',
     jpeg: 'JPG',
     webp: 'WebP',
+    svg: 'SVG',
     gif: 'GIF',
     mp4: 'MP4',
     webm: 'WEBM',
@@ -166,7 +178,9 @@ export class StorageService {
      */
     static uploadHint(policy: StoragePolicy, target: StorageTarget): string {
         const p = StorageService.targetPolicy(policy, target);
-        return `${StorageService.formatExtensions(p.acceptedExtensions)} · max ${p.maxImageMb} MB`;
+        const base = `${StorageService.formatExtensions(p.acceptedExtensions)} · max ${p.maxImageMb} MB`;
+        // Rank/medal icons are additionally capped to a max pixel dimension (T-0125).
+        return ICON_TARGETS.includes(target) ? `${base} · ${ICON_MAX_DIMENSION_PX}px max` : base;
     }
 
     /** Join extension labels as "PNG, JPG or WebP". */

@@ -7,7 +7,7 @@ import { AvatarComponent } from './components/avatar/avatar.component';
 import { BadgeComponent } from './components/badge/badge.component';
 import { NoticeComponent } from './components/notice/notice.component';
 import { MedalComponent } from './components/medal/medal.component';
-import { ChevronsComponent } from './components/chevrons/chevrons.component';
+import { RankIconComponent } from './components/rank-icon/rank-icon.component';
 import { CrestDividerComponent } from './components/crest-divider/crest-divider.component';
 import { PlatformBadgesComponent } from './components/platform-badges/platform-badges.component';
 import { EventStatusComponent } from './components/event-status/event-status.component';
@@ -18,13 +18,14 @@ import { TopbarComponent } from './components/topbar/topbar.component';
 import { BottomNavComponent } from './components/bottom-nav/bottom-nav.component';
 import { ComingSoonComponent } from './components/coming-soon/coming-soon.component';
 import { GalleryCardComponent } from './components/gallery-card/gallery-card.component';
+import { ToastComponent } from './components/toast/toast.component';
 
 const SHARED_COMPONENTS = [
     AvatarComponent,
     BadgeComponent,
     NoticeComponent,
     MedalComponent,
-    ChevronsComponent,
+    RankIconComponent,
     CrestDividerComponent,
     PlatformBadgesComponent,
     EventStatusComponent,
@@ -35,6 +36,7 @@ const SHARED_COMPONENTS = [
     BottomNavComponent,
     ComingSoonComponent,
     GalleryCardComponent,
+    ToastComponent,
 ];
 
 @NgModule({

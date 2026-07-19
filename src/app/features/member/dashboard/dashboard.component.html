@@ -7,7 +7,11 @@
                 <div class="honor-block">
                     <div class="field-label field-label--rank">Current Rank</div>
                     <div class="row honor-row-tight">
-                        <hf-chevrons [count]="currentMember.chevrons"></hf-chevrons>
+                        <hf-rank-icon
+                            [imageUrl]="currentMember.rankImageUrl"
+                            [name]="currentMember.rank"
+                            [size]="28"
+                        ></hf-rank-icon>
                         <span class="rank-name">{{ currentMember.rank }}</span>
                     </div>
                 </div>
@@ -20,8 +24,8 @@
                     <div class="row honor-row-medals">
                         @for (medal of currentMember.medals; track medal) {
                         <hf-medal
+                            [imageUrl]="medal.imageUrl"
                             [letter]="medal.letter"
-                            [ribbon]="medal.ribbon"
                             [title]="medal.title"
                         ></hf-medal>
                         } @if (currentMember.medals.length === 0) {
