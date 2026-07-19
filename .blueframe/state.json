@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
-  "lastSyncedAt": "2026-07-19T03:32:11Z",
-  "notesForNextSession": "Planned-tasks T-0212..T-0224 implemented -> deploy_ready (FE da5e75b). Ranks/medals: dark kebab menu (T-0212) + dark medal-row hover (T-0213), WebP accepted in icon uploads (T-0214/T-0215, couples with backend T-0130), centred icon-preview (T-0216). Settings: brighter active section-nav (T-0217), left-aligned save/op rows via zeroing the Bootstrap .row negative margin (T-0218). Audit: JSON prettify + git-style LCS line diff + diff/raw toggle with a11y add/remove labels, pure logic in audit-diff.util.ts (T-0219..T-0221). Applications: live applicant identity (currentDisplayName/currentAvatarUrl/promotedMemberId) in the view-model/mapper + detail header profile deep-link + queue, aligned margins (T-0222..T-0224). SHIP WITH backend branch feat/webp-icons-live-applicant-identity (364d05e): consumes T-0129 (live identity) + T-0130 (webp icon policy) -> deploy the two together. FE CI green locally: format + lint + prod build + 162 unit tests. Browser-verified end-to-end as Owner (1920px viewport; env locks the CSS viewport so media-query mobile emulation was not possible, but responsive rules are intact + changes are additive/contained). Adversarial multi-agent review: 1 a11y finding fixed (diff add/remove now announced to AT), cross-repo coupling confirmed + documented. No planned FE tasks remain.",
-  "nextIdCounter": 225,
+  "lastSyncedCommit": "e9247891416f828350d3321db5086fda2d07b224",
+  "lastSyncedAt": "2026-07-19T04:10:00Z",
+  "notesForNextSession": "BLUEFRAME GOTCHA (fixed in T-0225): testPlan item status MUST be one of pending|passed|failed. \"done\" is NOT valid and silently breaks the ENTIRE repo in the Blueframe UI \u2014 state.json fails schema validation, so the server at 127.0.0.1:7317 reports taskCount: 0 and shows no tasks. After editing state.json verify with: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == invalid file); curl -s 'http://127.0.0.1:7317/api/state?repo=<key>' prints the exact schema errors. Note the file is written ASCII-escaped (ensure_ascii) \u2014 keep it that way or every em-dash line shows as a spurious diff. PREVIOUS HANDOFF: Planned-tasks T-0212..T-0224 implemented -> deploy_ready (FE da5e75b). Ranks/medals: dark kebab menu (T-0212) + dark medal-row hover (T-0213), WebP accepted in icon uploads (T-0214/T-0215, couples with backend T-0130), centred icon-preview (T-0216). Settings: brighter active section-nav (T-0217), left-aligned save/op rows via zeroing the Bootstrap .row negative margin (T-0218). Audit: JSON prettify + git-style LCS line diff + diff/raw toggle with a11y add/remove labels, pure logic in audit-diff.util.ts (T-0219..T-0221). Applications: live applicant identity (currentDisplayName/currentAvatarUrl/promotedMemberId) in the view-model/mapper + detail header profile deep-link + queue, aligned margins (T-0222..T-0224). SHIP WITH backend branch feat/webp-icons-live-applicant-identity (364d05e): consumes T-0129 (live identity) + T-0130 (webp icon policy) -> deploy the two together. FE CI green locally: format + lint + prod build + 162 unit tests. Browser-verified end-to-end as Owner (1920px viewport; env locks the CSS viewport so media-query mobile emulation was not possible, but responsive rules are intact + changes are additive/contained). Adversarial multi-agent review: 1 a11y finding fixed (diff add/remove now announced to AT), cross-repo coupling confirmed + documented. No planned FE tasks remain.",
+  "nextIdCounter": 226,
   "connections": [],
   "tasks": [
     {
@@ -13691,6 +13691,60 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Queue live avatar + display name; aligned username/discord margins beside the avatar (verified both at x=330)."
+        }
+      ]
+    },
+    {
+      "id": "T-0225",
+      "title": "Fix invalid testPlan status values breaking Blueframe state validation",
+      "summary": "The T-0212..T-0224 test plans recorded verified items with status \"done\", which is not a member of the testPlan status enum (pending|passed|failed). state.json therefore failed schema validation and the Blueframe server at 127.0.0.1:7317 reported the repo with taskCount: 0, surfacing no tasks at all. Remapped the 43 affected entries to \"passed\" (all were verified acceptance criteria on deploy_ready tasks); no other fields changed.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "tooling",
+      "subfeature": "blueframe-state",
+      "repo": "",
+      "paths": [
+        ".blueframe/state.json"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "GET /api/state?repo=<key> returns the parsed state instead of a validation error",
+          "status": "passed"
+        },
+        {
+          "desc": "GET /api/repos reports the repo's real taskCount (not 0)",
+          "status": "passed"
+        },
+        {
+          "desc": "No \"status\": \"done\" remains anywhere in state.json; every testPlan status is pending|passed|failed",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "e9247891416f828350d3321db5086fda2d07b224",
+      "createdAt": "2026-07-19T04:10:00Z",
+      "updatedAt": "2026-07-19T04:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-19T04:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-19T04:10:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "Remapped 43 testPlan \"done\" -> \"passed\"; server now loads the repo (taskCount restored)."
         }
       ]
     }
