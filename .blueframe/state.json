@@ -12931,11 +12931,11 @@
       "testPlan": [
         {
           "desc": "Opening a rank/medal row kebab menu shows a dark menu background (not white/parchment) matching the dark UI",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Menu item hover and text/danger colours remain legible on the new dark background",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -12981,11 +12981,11 @@
       "testPlan": [
         {
           "desc": "Hovering a Medal Cabinet row shows a subtle dark highlight (not white) on /app/admin/ranks",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "The hover fill is lighter than the panel background (--ink-800) so the hover effect stays perceptible",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13033,15 +13033,15 @@
       "testPlan": [
         {
           "desc": "ICON_TYPES.mimeTypes includes image/webp and extensions include webp",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "DEFAULT_STORAGE_POLICY rank-image and medal-image targets advertise WebP as an accepted image type",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "The rank/medal icon upload hint copy lists WebP alongside PNG and SVG (auto-derived from the policy, EXT_LABELS has a webp label)",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -13101,19 +13101,19 @@
       "testPlan": [
         {
           "desc": "A valid WebP <= 250px on each side is accepted by both the rank-icon and medal-image controls",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "A WebP larger than 250px on a side is rejected with the 250px cap message (raster path applies to WebP as it does to PNG)",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "A non-allowed type (e.g. image/gif) is still rejected, and the rejection copy names PNG, SVG, and WebP",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Both file-input accept attributes include image/webp so the native picker surfaces WebP files",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -13169,15 +13169,15 @@
       "testPlan": [
         {
           "desc": "In the rank editor, the icon placeholder has visually even margins on all four sides (no extra gap on right/bottom).",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "In the medal editor, the same placeholder is centred with even margins on all four sides.",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Both a wide and a tall custom icon stay centred within the box without clipping (object-fit: contain preserved).",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13223,15 +13223,15 @@
       "testPlan": [
         {
           "desc": "On /app/admin/settings the active section-nav item text renders in a brighter yellow/brass than before, clearly distinct from the muted inactive items",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Clicking each of Profile & visibility, Discord & Adjutant, Roles & permissions moves the highlight and keeps the active text bright",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Inactive items and hover state are unchanged; active pill background/weight still applied",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13278,19 +13278,19 @@
       "testPlan": [
         {
           "desc": "On /app/admin/settings \u203a Discord & Adjutant the \"Save invite link\" button's left edge is aligned with (or further right than) the Invite URL field-row above it",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "The \"Save bot settings\" button's left edge is aligned with (or further right than) the bot toggle-rows / channel pickers above it",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Each \"Recent operations\" list item (status dot + label + Resolve) shares the same left edge as the section's other panel items",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Other settings sections (Profile & visibility, Roles & permissions) and the Discord connection / Save permissions rows are visually unchanged",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13338,19 +13338,19 @@
       "testPlan": [
         {
           "desc": "A Before/After value that is a valid JSON object renders indented (2-space) in a mono block, not one flat line",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "A plain-string (non-JSON) Before/After value still renders as readable plain text \u2014 no '[object]' or thrown error",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "An empty/absent Before or After still shows the em-dash placeholder",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Malformed/near-JSON input (e.g. trailing comma) falls back to raw text without a console error",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -13409,19 +13409,19 @@
       "testPlan": [
         {
           "desc": "Two JSON states differing by one field show that field's old line in red and new line in green, unchanged lines neutral",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Removed-only and added-only lines are coloured correctly (red vs green) with no off-by-one line pairing",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "When only Before or only After is present, the dialog falls back to the plain Before/After view (no broken diff)",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Long lines wrap or scroll inside the diff block without forcing the whole dialog to scroll horizontally",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13471,19 +13471,19 @@
       "testPlan": [
         {
           "desc": "JSON and diff blocks use the mono font and design-token colours, with overflow contained (no dialog-wide horizontal scroll)",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Green/red diff colours meet contrast against the modal background and are distinguishable (not colour-only \u2014 e.g. +/- gutter markers)",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "The diff/raw toggle switches views and defaults to the diff view when a diff is available",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Layout holds at desktop (1440px) and mobile (500px) modal widths",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13533,15 +13533,15 @@
       "testPlan": [
         {
           "desc": "mapApplication() maps currentAvatarUrl, currentDisplayName and promotedMemberId from the API payload",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Application interface exposes the new optional live-identity fields; existing snapshot fields unchanged",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Unit spec covers a payload with and without a promoted member (null currentAvatarUrl falls back gracefully)",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -13600,19 +13600,19 @@
       "testPlan": [
         {
           "desc": "Detail header shows the current avatar image; falls back to initials when currentAvatarUrl is null/fails to load",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Header shows currentDisplayName (reflecting a post-approval rename), not the stale applicantName snapshot",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Clicking the name navigates to /app/profile/:promotedMemberId; name is not a link when there is no promoted member",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Username left margin visually aligns with the discord tag / date line beneath it",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
@@ -13661,15 +13661,15 @@
       "testPlan": [
         {
           "desc": "Each queue row shows the applicant's current avatar image with initials fallback",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Queue row uses currentDisplayName over the stale snapshot name",
-          "status": "done"
+          "status": "passed"
         },
         {
           "desc": "Username and discord-tag lines both carry the added left margin and align with each other",
-          "status": "done"
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
