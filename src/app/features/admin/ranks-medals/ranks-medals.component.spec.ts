@@ -12,12 +12,13 @@ import {
     DiscordService,
 } from '../../../core/services/discord.service';
 import { Medal, Rank } from '../../../core/models/member.model';
+import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/storage.service';
 
 function rank(overrides: Partial<Rank> = {}): Rank {
     return {
         id: 'r1',
         name: 'Sergeant',
-        chevrons: 3,
+        imageUrl: null,
         holders: 8,
         discordRole: '@Sergeant',
         discordRoleId: 'd1',
@@ -31,7 +32,7 @@ function medal(overrides: Partial<Medal> = {}): Medal {
     return {
         id: 'm1',
         letter: 'M',
-        ribbon: 'blue',
+        imageUrl: null,
         title: 'Marksman, First Class',
         description: 'Exceptional accuracy.',
         holders: 7,
@@ -65,6 +66,7 @@ describe('RanksMedalsComponent', () => {
     let ranksService: jasmine.SpyObj<RanksService>;
     let medalsService: jasmine.SpyObj<MedalsService>;
     let discord: jasmine.SpyObj<DiscordService>;
+    let storage: jasmine.SpyObj<StorageService>;
 
     function setup(ranks: Rank[] = [rank()], medals: Medal[] = [medal()]): void {
         ranksService = jasmine.createSpyObj<RanksService>('RanksService', [
@@ -115,6 +117,10 @@ describe('RanksMedalsComponent', () => {
         discord.getConnection.and.returnValue(of(connection));
         discord.resync.and.returnValue(of(3));
 
+        storage = jasmine.createSpyObj<StorageService>('StorageService', ['getPolicy', 'upload']);
+        storage.getPolicy.and.returnValue(of(DEFAULT_STORAGE_POLICY));
+        storage.upload.and.returnValue(of('ranks/reg/icon.png'));
+
         TestBed.configureTestingModule({
             imports: [CommonModule],
             declarations: [RanksMedalsComponent],
@@ -122,6 +128,7 @@ describe('RanksMedalsComponent', () => {
                 { provide: RanksService, useValue: ranksService },
                 { provide: MedalsService, useValue: medalsService },
                 { provide: DiscordService, useValue: discord },
+                { provide: StorageService, useValue: storage },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         });
@@ -149,7 +156,7 @@ describe('RanksMedalsComponent', () => {
     });
 
     it('selectRankEdit opens the rank editor from the row; saveRank updates by id', () => {
-        setup([rank({ id: 'r7', name: 'Major', chevrons: 4, order: 3 })]);
+        setup([rank({ id: 'r7', name: 'Major', order: 3 })]);
         component.selectRankEdit(component.ranks[0]);
         expect(component.editorMode).toBe('rank');
         expect(component.editingRankId).toBe('r7');
@@ -159,7 +166,7 @@ describe('RanksMedalsComponent', () => {
         component.saveRank();
         expect(ranksService.update).toHaveBeenCalledWith(
             'r7',
-            jasmine.objectContaining({ name: 'Major', chevrons: 4, precedence: 3 }),
+            jasmine.objectContaining({ name: 'Major', precedence: 3 }),
         );
         // Refetched after the mutation (once on init, once after save).
         expect(ranksService.getAll.calls.count()).toBe(2);

@@ -26,6 +26,7 @@ export class GalleryDetailComponent implements OnInit {
 
     // Moderator edit state (T-0183). The media itself is never editable here.
     editing = false;
+    editTitle = '';
     editCaption = '';
     editTags: string[] = [];
     tagInput = '';
@@ -43,6 +44,25 @@ export class GalleryDetailComponent implements OnInit {
     /** Capability gate for the moderator edit/delete panel (T-0183). */
     can(capability: string): boolean {
         return this.auth.hasCapability(capability);
+    }
+
+    /** The signed-in member is the post's author (T-0191). */
+    get isAuthor(): boolean {
+        return (
+            !!this.item &&
+            this.auth.isAuthenticated() &&
+            this.auth.currentUser()?.id === this.item.submittedByMemberId
+        );
+    }
+
+    /** Editing details (title/caption/tags) requires the moderate_gallery capability (T-0191). */
+    get canEditDetails(): boolean {
+        return this.can('moderate_gallery');
+    }
+
+    /** Moderators may delete any post; the author may delete their own (T-0191). */
+    get canDelete(): boolean {
+        return this.canEditDetails || this.isAuthor;
     }
 
     ngOnInit(): void {
@@ -83,6 +103,7 @@ export class GalleryDetailComponent implements OnInit {
         if (!this.item) {
             return;
         }
+        this.editTitle = this.item.title;
         this.editCaption = this.item.caption ?? '';
         this.editTags = [...this.item.tags];
         this.tagInput = '';
@@ -111,8 +132,14 @@ export class GalleryDetailComponent implements OnInit {
         if (!this.item || this.saving) {
             return;
         }
+        const title = this.editTitle.trim();
+        if (!title) {
+            // Title is required (backend column is NOT NULL) — refuse an empty save.
+            return;
+        }
         this.saving = true;
         const payload: UpdateGalleryPayload = {
+            title,
             caption: this.editCaption.trim() || undefined,
             tags: [...this.editTags],
         };

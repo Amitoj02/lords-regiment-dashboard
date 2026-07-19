@@ -105,7 +105,7 @@
                         <div class="grid-2">
                             <div class="field-row">
                                 <div class="field-label">Starts</div>
-                                <div class="row time-row">
+                                <div class="time-row">
                                     <input
                                         class="hf-input flex-1"
                                         type="date"
@@ -122,7 +122,7 @@
                             </div>
                             <div class="field-row">
                                 <div class="field-label">Ends</div>
-                                <div class="row time-row">
+                                <div class="time-row">
                                     <input
                                         class="hf-input flex-1"
                                         type="date"
@@ -332,7 +332,7 @@
                                 {{ form.get('date')?.value || 'Date TBD' }} &middot; {{
                                 form.get('startTime')?.value }} {{ form.get('timezone')?.value }}
                             </div>
-                            <div class="row preview-tags">
+                            <div class="preview-tags">
                                 @for (tag of tags; track tag) {
                                 <span class="badge brass">{{ tag }}</span>
                                 }

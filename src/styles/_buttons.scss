@@ -144,3 +144,12 @@
         border-color: var(--parch-300);
     }
 }
+
+// Back-button arrow — its own flex child so the glyph is vertically centered with
+// the label (the .btn already supplies gap:8px). Global so profile + gallery-detail
+// share it (view-encapsulated component styles could not). (T-0207)
+.back-arrow {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}

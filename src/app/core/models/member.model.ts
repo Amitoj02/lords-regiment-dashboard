@@ -1,13 +1,14 @@
 export type MemberStatus = 'Active' | 'Inactive' | 'Pending';
 export type MemberRole = 'Owner' | 'Admin' | 'Moderator' | 'Member' | 'Mercenary' | 'Applicant';
 export type Platform = 'steam' | 'xbox' | 'ps';
-export type MedalRibbon = 'blue' | 'red' | 'gold' | 'green' | 'tricolor';
 
 export interface Medal {
     /** Catalogue id (from the backend). Optional so legacy stub data still types. */
     id?: string;
+    /** Short glyph/letter — the fallback label shown when no image is uploaded. */
     letter: string;
-    ribbon: MedalRibbon;
+    /** Public URL of the uploaded medal image (null → letter fallback tile). */
+    imageUrl?: string | null;
     title: string;
     description: string;
     holders?: number;
@@ -26,7 +27,8 @@ export interface Rank {
     /** Rank id (from the backend). Optional so legacy stub data still types. */
     id?: string;
     name: string;
-    chevrons: number;
+    /** Public URL of the uploaded rank insignia image (null → initials fallback tile). */
+    imageUrl?: string | null;
     holders: number;
     discordRole: string;
     discordLinked: boolean;
@@ -41,8 +43,10 @@ export interface MemberMedalAward {
     id: string;
     medalId: string;
     title: string;
+    /** Short glyph — the fallback label when the medal has no image. */
     glyph: string;
-    ribbon: MedalRibbon;
+    /** Public URL of the medal image (null → glyph fallback tile). */
+    imageUrl?: string | null;
     detail?: string | null;
     awardedAt: string;
 }
@@ -55,9 +59,9 @@ export interface Member {
     rank: string;
     /** Rank id (from the backend), needed to change a member's rank. */
     rankId?: string;
-    chevrons: number;
-    medals: MedalRibbon[];
-    /** Full medal awards (populated on the detail view; drives the admin modal). */
+    /** Public URL of the member's rank insignia image (null → initials fallback). */
+    rankImageUrl?: string | null;
+    /** Full medal awards (populated on list + detail; drives roster/profile/dashboard). */
     medalAwards?: MemberMedalAward[];
     role: MemberRole;
     discordLinked: boolean;

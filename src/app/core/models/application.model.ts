@@ -25,6 +25,8 @@ export interface Application {
     declineReason?: string;
     decidedAt?: string;
     discordDmMessage?: string;
+    /** Whether the applicant's Discord identity is blocked from applying (T-0128). */
+    blocked?: boolean;
 }
 
 /**

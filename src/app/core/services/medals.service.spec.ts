@@ -10,7 +10,7 @@ function apiMedal(overrides: Partial<ApiMedal> = {}): ApiMedal {
         id: 'm1',
         title: 'Marksman, First Class',
         glyph: 'M',
-        ribbon: 'blue',
+        imageUrl: null,
         description: 'Exceptional accuracy.',
         precedence: 2,
         discordRoleName: '@Marksman',
@@ -54,10 +54,16 @@ describe('MedalsService', () => {
     });
 
     it('create() POSTs the payload to /medals', () => {
-        service.create({ title: 'Campaign Medal', glyph: 'C', ribbon: 'red' }).subscribe();
+        service
+            .create({ title: 'Campaign Medal', glyph: 'C', imageKey: 'medals/reg/img.svg' })
+            .subscribe();
         const req = httpMock.expectOne('/api/medals');
         expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ title: 'Campaign Medal', glyph: 'C', ribbon: 'red' });
+        expect(req.request.body).toEqual({
+            title: 'Campaign Medal',
+            glyph: 'C',
+            imageKey: 'medals/reg/img.svg',
+        });
         req.flush(apiMedal());
     });
 

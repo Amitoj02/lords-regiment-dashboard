@@ -21,8 +21,6 @@ export class PublicNavComponent {
         { label: 'Home', path: '/' },
         { label: 'Events', path: '/events' },
         { label: 'Gallery', path: '/gallery' },
-        { label: 'Officers', path: '/officers' },
-        { label: 'Charter', path: '/charter' },
     ];
 
     isActive(path: string): boolean {

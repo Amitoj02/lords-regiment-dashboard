@@ -37,10 +37,12 @@ export interface GallerySubmitPayload {
 
 /**
  * Body for PATCH /gallery/:id (moderator edit — T-0115 backend counterpart).
- * Only the caption and tags are editable; the media itself (files/type/link) is
- * immutable once submitted. Mirrors the backend UpdateGalleryItemDto.
+ * The title (1..160), caption, and tags are editable; the media itself
+ * (files/type/link) is immutable once submitted. Mirrors the backend
+ * UpdateGalleryItemDto.
  */
 export interface UpdateGalleryPayload {
+    title?: string;
     caption?: string;
     tags?: string[];
 }

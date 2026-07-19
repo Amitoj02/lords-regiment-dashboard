@@ -1,20 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { MedalRibbon } from '../../../core/models/member.model';
 
-interface RibbonColors {
-    top: string;
-    bottom: string;
-    stripes?: string[];
-}
+/** Rendered size of a medal tile. */
+export type MedalSize = 'sm' | 'md' | 'lg';
 
-const RIBBON_MAP: Record<MedalRibbon, RibbonColors> = {
-    blue: { top: '#2b5fa8', bottom: '#1a3d6e' },
-    red: { top: '#a63028', bottom: '#6e1c17' },
-    gold: { top: '#c69a45', bottom: '#7a5a1a' },
-    green: { top: '#4a7a3a', bottom: '#2c4a22' },
-    tricolor: { top: '#1a3d6e', bottom: '#6e1c17', stripes: ['#1a3d6e', '#f0f0f0', '#a63028'] },
-};
-
+/**
+ * A medal decoration: renders the uploaded medal image (padded, never cropped)
+ * and falls back to the glyph/letter tile when the image is missing or fails to
+ * load — mirroring hf-avatar's image-with-initials pattern (T-0193).
+ */
 @Component({
     standalone: false,
     selector: 'hf-medal',
@@ -22,23 +15,20 @@ const RIBBON_MAP: Record<MedalRibbon, RibbonColors> = {
     styleUrls: ['./medal.component.scss'],
 })
 export class MedalComponent {
-    @Input() ribbon: MedalRibbon = 'blue';
+    /** Public URL of the medal image; when absent/broken the letter tile shows. */
+    @Input() imageUrl?: string | null;
+    /** Fallback label (medal glyph) shown when there is no image. */
     @Input() letter = '';
     @Input() title = '';
+    @Input() size: MedalSize = 'md';
 
-    get ribbonColors(): RibbonColors {
-        return RIBBON_MAP[this.ribbon] ?? RIBBON_MAP.blue;
+    imageFailed = false;
+
+    onImgError(): void {
+        this.imageFailed = true;
     }
 
-    get ribbonStyle(): string {
-        const c = this.ribbonColors;
-        if (this.ribbon === 'tricolor' && c.stripes) {
-            const thirds = 100 / c.stripes.length;
-            const stops = c.stripes
-                .map((s, i) => `${s} ${i * thirds}%, ${s} ${(i + 1) * thirds}%`)
-                .join(', ');
-            return `linear-gradient(90deg, ${stops})`;
-        }
-        return `linear-gradient(180deg, ${c.top}, ${c.bottom})`;
+    get showImage(): boolean {
+        return !!this.imageUrl && !this.imageFailed;
     }
 }

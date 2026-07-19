@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
-import { Medal, MedalRibbon, Rank } from '../../../core/models/member.model';
+import { Medal, Rank } from '../../../core/models/member.model';
 import {
     DiscordConnection,
     DiscordRole,
@@ -10,8 +10,16 @@ import {
 } from '../../../core/services/discord.service';
 import { MedalPayload, MedalsService } from '../../../core/services/medals.service';
 import { RankPayload, RanksService } from '../../../core/services/ranks.service';
+import {
+    DEFAULT_STORAGE_POLICY,
+    ICON_MAX_DIMENSION_PX,
+    StorageService,
+} from '../../../core/services/storage.service';
 
 type EditorMode = 'rank' | 'medal';
+
+/** Accepted icon MIME types (PNG + SVG), mirroring the backend icon policy. */
+const ICON_MIME_TYPES = ['image/png', 'image/svg+xml'];
 
 @Component({
     selector: 'app-ranks-medals',
@@ -55,8 +63,15 @@ export class RanksMedalsComponent implements OnInit {
     // Rank editor fields
     editingRankId: string | null = null;
     editRankName = '';
-    editRankChevrons = 0;
     editRankPrecedence = 0;
+    // Rank-icon upload (T-0194): a freshly-picked file's object-URL preview + the
+    // resolved storage key, plus the already-saved icon URL loaded when editing.
+    editRankImageKey: string | null = null;
+    editRankImagePreview: string | null = null;
+    editRankImageUrl: string | null = null;
+    rankImageUploading = false;
+    rankImageError = '';
+    rankHint = StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'rank-image');
 
     // Medal editor fields
     editingMedalId: string | null = null;
@@ -64,14 +79,20 @@ export class RanksMedalsComponent implements OnInit {
     editLetter = '';
     editDescription = '';
     editPrecedence = 0;
-    editRibbon: MedalRibbon = 'blue';
+    // Medal-image upload (T-0195); glyph (editLetter) is retained as the fallback label.
+    editMedalImageKey: string | null = null;
+    editMedalImagePreview: string | null = null;
+    editMedalImageUrl: string | null = null;
+    medalImageUploading = false;
+    medalImageError = '';
+    medalHint = StorageService.uploadHint(DEFAULT_STORAGE_POLICY, 'medal-image');
 
     // Shared Discord-role selection for whichever entity is being edited.
     editDiscordRoleId = '';
     editDiscordRoleName = '';
     editDiscordLinked = false;
 
-    ribbonOptions: MedalRibbon[] = ['blue', 'red', 'gold', 'green', 'tricolor'];
+    private readonly iconMaxPx = ICON_MAX_DIMENSION_PX;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -79,6 +100,7 @@ export class RanksMedalsComponent implements OnInit {
         private ranksService: RanksService,
         private medalsService: MedalsService,
         private discord: DiscordService,
+        private storage: StorageService,
     ) {}
 
     ngOnInit(): void {
@@ -86,6 +108,15 @@ export class RanksMedalsComponent implements OnInit {
         this.loadMedals();
         this.loadRoles();
         this.loadConnection();
+        // Refresh the upload hints from the live per-target policy (falls back to
+        // the static default when the request fails).
+        this.storage
+            .getPolicy()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((policy) => {
+                this.rankHint = StorageService.uploadHint(policy, 'rank-image');
+                this.medalHint = StorageService.uploadHint(policy, 'medal-image');
+            });
     }
 
     get loading(): boolean {
@@ -186,8 +217,8 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = 'rank';
         this.editingRankId = null;
         this.editRankName = '';
-        this.editRankChevrons = 0;
         this.editRankPrecedence = this.ranks.length + 1;
+        this.resetRankIcon();
         this.resetEditorRole();
         this.clearRowFlash();
     }
@@ -196,21 +227,54 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = 'rank';
         this.editingRankId = rank.id ?? null;
         this.editRankName = rank.name;
-        this.editRankChevrons = rank.chevrons;
         this.editRankPrecedence = rank.order;
+        this.resetRankIcon();
+        this.editRankImageUrl = rank.imageUrl ?? null;
         this.editDiscordRoleId = rank.discordRoleId ?? '';
         this.editDiscordRoleName = rank.discordRole;
         this.editDiscordLinked = rank.discordLinked;
         this.clearRowFlash();
     }
 
+    /** Validate + upload a freshly-picked rank icon (T-0194). */
+    async onRankImageSelected(event: Event): Promise<void> {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        this.rankImageError = '';
+        const err = await this.validateIconFile(file);
+        if (err) {
+            this.rankImageError = err;
+            return;
+        }
+        this.editRankImagePreview = URL.createObjectURL(file);
+        this.rankImageUploading = true;
+        this.storage
+            .upload('rank-image', file)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (key) => {
+                    this.editRankImageKey = key;
+                    this.rankImageUploading = false;
+                },
+                error: (e) => {
+                    this.rankImageUploading = false;
+                    this.rankImageError = StorageService.uploadErrorMessage(
+                        e,
+                        'Icon upload failed. Please try again.',
+                    );
+                },
+            });
+    }
+
     saveRank(): void {
-        if (this.saving) return;
+        if (this.saving || this.rankImageUploading) return;
         const payload: RankPayload = {
             name: this.editRankName.trim(),
-            chevrons: this.editRankChevrons,
             precedence: this.editRankPrecedence,
         };
+        if (this.editRankImageKey) {
+            payload.imageKey = this.editRankImageKey;
+        }
         // On create, carry the picked role name so the backend can link it.
         if (!this.editingRankId && this.editDiscordRoleId) {
             payload.discordRoleName = this.roleName(this.editDiscordRoleId);
@@ -264,7 +328,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editLetter = '';
         this.editDescription = '';
         this.editPrecedence = this.medals.length + 1;
-        this.editRibbon = 'blue';
+        this.resetMedalIcon();
         this.resetEditorRole();
         this.clearRowFlash();
     }
@@ -276,7 +340,8 @@ export class RanksMedalsComponent implements OnInit {
         this.editLetter = medal.letter;
         this.editDescription = medal.description || '';
         this.editPrecedence = medal.precedence ?? 0;
-        this.editRibbon = medal.ribbon;
+        this.resetMedalIcon();
+        this.editMedalImageUrl = medal.imageUrl ?? null;
         this.editDiscordRoleId = medal.discordRoleId ?? '';
         this.editDiscordRoleName =
             (medal.discordRoleId ? this.roleName(medal.discordRoleId) : '') ||
@@ -286,15 +351,47 @@ export class RanksMedalsComponent implements OnInit {
         this.clearRowFlash();
     }
 
+    /** Validate + upload a freshly-picked medal image (T-0195). */
+    async onMedalImageSelected(event: Event): Promise<void> {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        this.medalImageError = '';
+        const err = await this.validateIconFile(file);
+        if (err) {
+            this.medalImageError = err;
+            return;
+        }
+        this.editMedalImagePreview = URL.createObjectURL(file);
+        this.medalImageUploading = true;
+        this.storage
+            .upload('medal-image', file)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (key) => {
+                    this.editMedalImageKey = key;
+                    this.medalImageUploading = false;
+                },
+                error: (e) => {
+                    this.medalImageUploading = false;
+                    this.medalImageError = StorageService.uploadErrorMessage(
+                        e,
+                        'Image upload failed. Please try again.',
+                    );
+                },
+            });
+    }
+
     saveMedal(): void {
-        if (this.saving) return;
+        if (this.saving || this.medalImageUploading) return;
         const payload: MedalPayload = {
             title: this.editTitle.trim(),
             glyph: this.editLetter.trim(),
-            ribbon: this.editRibbon,
             description: this.editDescription.trim(),
             precedence: this.editPrecedence,
         };
+        if (this.editMedalImageKey) {
+            payload.imageKey = this.editMedalImageKey;
+        }
         if (!this.editingMedalId && this.editDiscordRoleId) {
             payload.discordRoleName = this.roleName(this.editDiscordRoleId);
         }
@@ -535,6 +632,64 @@ export class RanksMedalsComponent implements OnInit {
         this.editDiscordRoleId = '';
         this.editDiscordRoleName = '';
         this.editDiscordLinked = false;
+    }
+
+    private resetRankIcon(): void {
+        this.editRankImageKey = null;
+        this.editRankImagePreview = null;
+        this.editRankImageUrl = null;
+        this.rankImageError = '';
+        this.rankImageUploading = false;
+    }
+
+    private resetMedalIcon(): void {
+        this.editMedalImageKey = null;
+        this.editMedalImagePreview = null;
+        this.editMedalImageUrl = null;
+        this.medalImageError = '';
+        this.medalImageUploading = false;
+    }
+
+    /** The icon to show in the rank editor preview (fresh pick first, else saved). */
+    get rankIconPreview(): string | null {
+        return this.editRankImagePreview ?? this.editRankImageUrl;
+    }
+
+    /** The image to show in the medal editor preview (fresh pick first, else saved). */
+    get medalIconPreview(): string | null {
+        return this.editMedalImagePreview ?? this.editMedalImageUrl;
+    }
+
+    /**
+     * Client-side icon validation (T-0194/T-0195): PNG or SVG only, and — for a
+     * raster PNG — at most 250px on each side (mirrors the backend cap). SVG is a
+     * vector, so it is exempt from the pixel cap. Returns an error message, or null
+     * when the file is acceptable.
+     */
+    private validateIconFile(file: File): Promise<string | null> {
+        if (!ICON_MIME_TYPES.includes(file.type)) {
+            return Promise.resolve('Please choose a PNG or SVG image.');
+        }
+        if (file.type === 'image/svg+xml') {
+            return Promise.resolve(null);
+        }
+        return new Promise((resolve) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                resolve(
+                    img.naturalWidth > this.iconMaxPx || img.naturalHeight > this.iconMaxPx
+                        ? `Image must be ${this.iconMaxPx}px or smaller on each side.`
+                        : null,
+                );
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve('Could not read the image — try another file.');
+            };
+            img.src = url;
+        });
     }
 
     private clearRowFlash(): void {

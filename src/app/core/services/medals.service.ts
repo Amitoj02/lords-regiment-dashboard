@@ -3,12 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiMedal, mapMedal } from '../models/api.model';
-import { Medal, MedalRibbon } from '../models/member.model';
+import { Medal } from '../models/member.model';
 
 export interface MedalPayload {
     title?: string;
     glyph?: string;
-    ribbon?: MedalRibbon;
+    /** Storage key of a freshly-uploaded medal image (backend resolves it to imageUrl). */
+    imageKey?: string;
     description?: string;
     precedence?: number;
     discordRoleName?: string;

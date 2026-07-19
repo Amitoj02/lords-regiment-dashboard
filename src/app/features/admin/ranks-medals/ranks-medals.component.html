@@ -64,7 +64,12 @@
                 @if (editorMode === 'rank') {
                 <div class="editor-cols">
                     <div class="editor-preview">
-                        <hf-chevrons [count]="editRankChevrons"></hf-chevrons>
+                        <hf-rank-icon
+                            class="icon-preview"
+                            [imageUrl]="rankIconPreview"
+                            [name]="editRankName"
+                            [size]="80"
+                        ></hf-rank-icon>
                     </div>
 
                     <div class="editor-form">
@@ -78,14 +83,20 @@
                             />
                         </div>
                         <div>
-                            <label class="field-label" for="rank-chevrons">Chevrons</label>
-                            <input
-                                id="rank-chevrons"
-                                class="hf-input field-width-precedence"
-                                type="number"
-                                min="0"
-                                [(ngModel)]="editRankChevrons"
-                            />
+                            <span class="field-label">Icon</span>
+                            <label class="btn btn-ghost btn-sm icon-upload-btn">
+                                {{ rankImageUploading ? 'Uploading…' : 'Choose icon' }}
+                                <input
+                                    type="file"
+                                    accept="image/png,image/svg+xml"
+                                    hidden
+                                    (change)="onRankImageSelected($event)"
+                                />
+                            </label>
+                            <div class="field-hint">{{ rankHint }}</div>
+                            @if (rankImageError) {
+                            <div class="upload-error">{{ rankImageError }}</div>
+                            }
                         </div>
                         <div>
                             <label class="field-label" for="rank-precedence">Precedence</label>
@@ -111,7 +122,7 @@
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm"
-                                [disabled]="saving"
+                                [disabled]="saving || rankImageUploading"
                                 (click)="saveRank()"
                             >
                                 {{ editingRankId ? 'Save rank' : 'Create rank' }}
@@ -125,24 +136,13 @@
                 @if (editorMode === 'medal') {
                 <div class="editor-cols">
                     <div class="editor-preview">
-                        <hf-medal [letter]="editLetter" [ribbon]="editRibbon" size="lg"></hf-medal>
-                        <div class="ribbon-picker">
-                            <div class="field-label">Ribbon colour</div>
-                            <div class="ribbon-swatches">
-                                @for (r of ribbonOptions; track r) {
-                                <button
-                                    type="button"
-                                    class="ribbon-swatch"
-                                    [ngClass]="[
-                                            'ribbon-swatch--' + r,
-                                            editRibbon === r ? 'ribbon-swatch--active' : '',
-                                        ]"
-                                    (click)="editRibbon = r"
-                                    [title]="r"
-                                ></button>
-                                }
-                            </div>
-                        </div>
+                        <hf-medal
+                            class="icon-preview"
+                            size="lg"
+                            [imageUrl]="medalIconPreview"
+                            [letter]="editLetter"
+                            [title]="editTitle"
+                        ></hf-medal>
                     </div>
 
                     <div class="editor-form">
@@ -156,13 +156,31 @@
                             />
                         </div>
                         <div>
-                            <label class="field-label" for="medal-letter">Disk letter</label>
+                            <span class="field-label">Image</span>
+                            <label class="btn btn-ghost btn-sm icon-upload-btn">
+                                {{ medalImageUploading ? 'Uploading…' : 'Choose image' }}
+                                <input
+                                    type="file"
+                                    accept="image/png,image/svg+xml"
+                                    hidden
+                                    (change)="onMedalImageSelected($event)"
+                                />
+                            </label>
+                            <div class="field-hint">{{ medalHint }}</div>
+                            @if (medalImageError) {
+                            <div class="upload-error">{{ medalImageError }}</div>
+                            }
+                        </div>
+                        <div>
+                            <label class="field-label" for="medal-letter"
+                                >Short label (fallback)</label
+                            >
                             <input
                                 id="medal-letter"
                                 class="hf-input field-width-letter"
                                 type="text"
                                 [(ngModel)]="editLetter"
-                                maxlength="1"
+                                maxlength="4"
                             />
                         </div>
                         <div>
@@ -198,7 +216,7 @@
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm"
-                                [disabled]="saving"
+                                [disabled]="saving || medalImageUploading"
                                 (click)="saveMedal()"
                             >
                                 {{ editingMedalId ? 'Save medal' : 'Create medal' }}
@@ -241,7 +259,11 @@
                                 <circle cx="7" cy="13" r="1.5" />
                             </svg>
                         </div>
-                        <hf-chevrons [count]="rank.chevrons" size="sm"></hf-chevrons>
+                        <hf-rank-icon
+                            [imageUrl]="rank.imageUrl"
+                            [name]="rank.name"
+                            [size]="20"
+                        ></hf-rank-icon>
                         <div
                             class="rank-row__info"
                             role="button"
@@ -325,9 +347,10 @@
                             </svg>
                         </div>
                         <hf-medal
-                            [letter]="medal.letter"
-                            [ribbon]="medal.ribbon"
                             size="sm"
+                            [imageUrl]="medal.imageUrl"
+                            [letter]="medal.letter"
+                            [title]="medal.title"
                         ></hf-medal>
                         <div
                             class="medal-row__info"

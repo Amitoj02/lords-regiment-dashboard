@@ -161,6 +161,21 @@ describe('EventsService', () => {
         expect(revealed?.serverPassword).toBe('topsecret');
     });
 
+    it('getRsvps() fetches the RSVP roster (T-0203)', () => {
+        let roster:
+            | { memberId: string; name: string | null; avatarUrl: string | null; status: string }[]
+            | undefined;
+        service.getRsvps('ev1').subscribe((r) => (roster = r));
+        const req = httpMock.expectOne('/api/events/ev1/rsvps');
+        expect(req.request.method).toBe('GET');
+        req.flush([
+            { memberId: 'm1', name: 'Nolt', avatarUrl: null, status: 'interested' },
+            { memberId: 'm2', name: null, avatarUrl: 'https://x/a.png', status: 'tentative' },
+        ]);
+        expect(roster?.length).toBe(2);
+        expect(roster?.[0].status).toBe('interested');
+    });
+
     it('delete() issues a DELETE', () => {
         service.delete('ev1').subscribe();
         const req = httpMock.expectOne('/api/events/ev1');

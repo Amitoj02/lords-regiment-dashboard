@@ -3,7 +3,7 @@
     [crumbs]="['Roster', member?.inGameName ?? 'Profile']"
 >
     <button type="button" class="btn btn-ghost btn-sm back-link" (click)="back()">
-        &larr; Back
+        <span class="back-arrow" aria-hidden="true">&larr;</span> Back
     </button>
     @if (member) {
     <div class="profile-page">
@@ -35,7 +35,11 @@
                     >
                 </div>
                 <div class="row profile-rank-row">
-                    <hf-chevrons [count]="member.chevrons"></hf-chevrons>
+                    <hf-rank-icon
+                        [imageUrl]="member.rankImageUrl"
+                        [name]="member.rank"
+                        [size]="24"
+                    ></hf-rank-icon>
                     <span class="profile-rank">{{ member.rank }}</span>
                 </div>
                 <div class="mono profile-discord">{{ member.discordTag }}</div>
@@ -67,8 +71,9 @@
                             @for (award of member.medalAwards; track award.id) {
                             <div class="medal-item">
                                 <hf-medal
+                                    size="lg"
+                                    [imageUrl]="award.imageUrl"
                                     [letter]="award.glyph"
-                                    [ribbon]="award.ribbon"
                                     [title]="award.title"
                                 ></hf-medal>
                                 <div class="medal-info">

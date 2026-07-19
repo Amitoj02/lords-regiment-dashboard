@@ -180,11 +180,13 @@
 }
 
 .time-row {
+    display: flex;
+    align-items: center;
     gap: 6px;
 }
 
 .time-input {
-    width: 100px;
+    width: 132px;
 }
 
 .timezone-select {
@@ -201,6 +203,9 @@
 }
 
 .preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 6px;
     margin-top: 6px;
 }
@@ -318,6 +323,6 @@
     }
 
     .time-input {
-        min-width: 110px;
+        min-width: 132px;
     }
 }

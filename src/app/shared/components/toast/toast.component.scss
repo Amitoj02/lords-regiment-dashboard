@@ -1,0 +1,78 @@
+.toast-stack {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    // Let clicks pass through the container; individual cards re-enable them.
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 360px;
+    padding: 10px 12px 10px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    border-left-width: 3px;
+    background: var(--parch-100);
+    box-shadow: var(--shadow-2);
+    font-size: 0.85rem;
+    color: var(--t-200);
+
+    &--error {
+        border-color: var(--oxblood-500);
+        border-left-color: var(--oxblood-400);
+    }
+
+    &--success {
+        border-color: var(--laurel-500);
+        border-left-color: var(--laurel-400);
+    }
+
+    &--info {
+        border-color: var(--regblue-500);
+        border-left-color: var(--regblue-300);
+    }
+}
+
+.toast-message {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.4;
+}
+
+.toast-dismiss {
+    flex: none;
+    background: none;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 680px) {
+    .toast-stack {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        align-items: stretch;
+    }
+
+    .toast {
+        max-width: none;
+    }
+}

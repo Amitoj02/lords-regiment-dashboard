@@ -10,7 +10,6 @@ import { EventStatus, RegimentEvent, RsvpStatus } from './event.model';
 import { GalleryItem, GalleryItemStatus, GalleryItemType } from './gallery.model';
 import {
     Medal,
-    MedalRibbon,
     Member,
     MemberMedalAward,
     MemberRole,
@@ -37,7 +36,7 @@ export interface ApiMemberMedal {
     medalId: string;
     title: string;
     glyph: string;
-    ribbon: MedalRibbon;
+    imageUrl: string | null;
     detail: string | null;
     awardedAt: string;
 }
@@ -49,7 +48,7 @@ export interface ApiMember {
     status: MemberStatus;
     rank: string | null;
     rankId: string;
-    chevrons: number;
+    rankImageUrl: string | null;
     rankPrecedence: number | null;
     discordTag: string | null;
     discordLinked: boolean;
@@ -68,7 +67,7 @@ export interface ApiMember {
 export interface ApiRank {
     id: string;
     name: string;
-    chevrons: number;
+    imageUrl: string | null;
     precedence: number;
     discordRoleName: string | null;
     discordRoleId: string | null;
@@ -82,7 +81,7 @@ export interface ApiMedal {
     id: string;
     title: string;
     glyph: string;
-    ribbon: MedalRibbon;
+    imageUrl: string | null;
     description: string | null;
     precedence: number;
     discordRoleName: string | null;
@@ -116,6 +115,8 @@ export interface ApiApplication {
     submittedAt: string;
     decidedAt: string | null;
     createdAt: string;
+    /** Whether the applicant's Discord identity is blocked from applying (T-0128). */
+    blocked?: boolean;
 }
 
 export interface RegimentProfile {
@@ -156,7 +157,7 @@ export function mapMedalAward(m: ApiMemberMedal): MemberMedalAward {
         medalId: m.medalId,
         title: m.title,
         glyph: m.glyph,
-        ribbon: m.ribbon,
+        imageUrl: m.imageUrl,
         detail: m.detail,
         awardedAt: m.awardedAt,
     };
@@ -169,8 +170,7 @@ export function mapMember(m: ApiMember): Member {
         inGameName: m.inGameName ?? '',
         rank: m.rank ?? '',
         rankId: m.rankId,
-        chevrons: m.chevrons,
-        medals: (m.medals ?? []).map((x) => x.ribbon),
+        rankImageUrl: m.rankImageUrl,
         medalAwards: (m.medals ?? []).map(mapMedalAward),
         role: m.role,
         discordLinked: m.discordLinked,
@@ -189,7 +189,7 @@ export function mapRank(r: ApiRank): Rank {
     return {
         id: r.id,
         name: r.name,
-        chevrons: r.chevrons,
+        imageUrl: r.imageUrl,
         holders: r.holdersCount,
         discordRole: r.discordRoleName ?? '',
         discordRoleId: r.discordRoleId,
@@ -202,7 +202,7 @@ export function mapMedal(m: ApiMedal): Medal {
     return {
         id: m.id,
         letter: m.glyph,
-        ribbon: m.ribbon,
+        imageUrl: m.imageUrl,
         title: m.title,
         description: m.description ?? '',
         holders: m.holdersCount,
@@ -233,6 +233,7 @@ export function mapApplication(a: ApiApplication): Application {
         moderatorNote: a.moderatorNote ?? undefined,
         declineReason: a.declineReason ?? undefined,
         decidedAt: a.decidedAt ?? undefined,
+        blocked: a.blocked ?? false,
     };
 }
 
@@ -307,6 +308,34 @@ export function parseNotifyOffset(label: string): number {
     return match[2] === 'h' ? value * 60 : value;
 }
 
+/**
+ * Derive an event's live status from its start/end instants (T-0204). Both
+ * `startsAt`/`endsAt` are UTC ISO strings (backend `.toISOString()`), so
+ * `new Date(...)` yields absolute instants and the comparison is timezone-safe.
+ * Returns null for unparseable dates so the caller can fall back to the backend
+ * `status` (which lags up to the 60s scheduler tick). An open-ended event (no
+ * `endsAt`) that has started stays `ongoing` — it never auto-concludes here.
+ */
+export function deriveEventStatus(
+    startsAt: string,
+    endsAt: string | null,
+    now: Date = new Date(),
+): EventStatus | null {
+    const start = new Date(startsAt);
+    if (isNaN(start.getTime())) {
+        return null;
+    }
+    if (now < start) {
+        return 'upcoming';
+    }
+    const end = endsAt ? new Date(endsAt) : null;
+    if (end && !isNaN(end.getTime())) {
+        return now < end ? 'ongoing' : 'previous';
+    }
+    // Started, open-ended → ongoing.
+    return 'ongoing';
+}
+
 export function mapEvent(e: ApiEvent): RegimentEvent {
     const start = splitIsoDateTime(e.startsAt);
     const end = e.endsAt ? splitIsoDateTime(e.endsAt) : null;
@@ -324,7 +353,10 @@ export function mapEvent(e: ApiEvent): RegimentEvent {
         endTime: end?.time ?? '',
         timezone: e.timezone,
         platforms: e.platforms,
-        status: e.status,
+        // Derive Ongoing/Upcoming/Concluded client-side for instantaneous accuracy
+        // (avoids the ~60s backend scheduler lag); fall back to the backend status
+        // only when the dates are unparseable.
+        status: deriveEventStatus(e.startsAt, e.endsAt) ?? e.status,
         recurrenceCadence: e.recurrenceCadence ?? undefined,
         recurrenceActive: e.recurrenceActive,
         isRecurring: e.isRecurring,

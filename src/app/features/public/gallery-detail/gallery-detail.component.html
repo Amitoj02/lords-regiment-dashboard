@@ -2,7 +2,9 @@
     <hf-public-nav [activeLink]="'/gallery'"></hf-public-nav>
 
     <div class="page gallery-detail-wrap">
-        <a routerLink="/gallery" class="btn btn-ghost btn-sm back-link">&larr; Back to gallery</a>
+        <a routerLink="/gallery" class="btn btn-ghost btn-sm back-link"
+            ><span class="back-arrow" aria-hidden="true">&larr;</span> Back to gallery</a
+        >
 
         @if (loading) {
         <div class="notice info">Loading…</div>
@@ -80,11 +82,13 @@
                 </div>
                 }
 
-                <!-- Moderator edit/delete (T-0183). Media itself is not editable. -->
-                @if (can('moderate_gallery')) {
+                <!-- Moderator edit / author-or-moderator delete (T-0183 / T-0191).
+                     Media itself is not editable. -->
+                @if (canEditDetails || canDelete) {
                 <div class="detail-mod">
                     @if (!editing) {
                     <div class="detail-mod-actions">
+                        @if (canEditDetails) {
                         <button
                             type="button"
                             class="btn btn-secondary btn-sm"
@@ -92,6 +96,7 @@
                         >
                             Edit details
                         </button>
+                        } @if (canDelete) {
                         <button
                             type="button"
                             class="btn btn-destructive btn-sm"
@@ -100,9 +105,21 @@
                         >
                             {{ deleting ? 'Deleting…' : 'Delete' }}
                         </button>
+                        }
                     </div>
                     } @else {
                     <div class="detail-edit-form">
+                        <label class="detail-edit-label" for="gd-title">Title</label>
+                        <input
+                            id="gd-title"
+                            class="hf-input"
+                            type="text"
+                            maxlength="160"
+                            required
+                            [(ngModel)]="editTitle"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+
                         <label class="detail-edit-label" for="gd-caption">Caption</label>
                         <textarea
                             id="gd-caption"
@@ -146,7 +163,7 @@
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm"
-                                [disabled]="saving"
+                                [disabled]="saving || !editTitle.trim()"
                                 (click)="save()"
                             >
                                 {{ saving ? 'Saving…' : 'Save' }}

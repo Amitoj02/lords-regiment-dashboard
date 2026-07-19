@@ -51,6 +51,20 @@
     }
 }
 
+// Native date/time picker glyphs (the spinner/calendar icon) inherit the
+// browser's default light color-scheme, rendering dark-on-dark and invisible
+// on our dark `.hf-input`. Scope `color-scheme: dark` to the date/time input
+// TYPES only — never the shared selector, so selects/text/spinners are unaffected.
+.hf-input {
+    &[type='date'],
+    &[type='time'],
+    &[type='datetime-local'],
+    &[type='month'],
+    &[type='week'] {
+        color-scheme: dark;
+    }
+}
+
 .hf-textarea {
     height: auto;
     min-height: 96px;

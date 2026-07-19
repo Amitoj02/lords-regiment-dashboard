@@ -9,7 +9,7 @@ function apiRank(overrides: Partial<ApiRank> = {}): ApiRank {
     return {
         id: 'r1',
         name: 'Sergeant',
-        chevrons: 3,
+        imageUrl: null,
         precedence: 5,
         discordRoleName: '@Sergeant',
         discordRoleId: 'd1',
@@ -51,10 +51,16 @@ describe('RanksService', () => {
     });
 
     it('create() POSTs the payload to /ranks', () => {
-        service.create({ name: 'Major', chevrons: 4, precedence: 3 }).subscribe();
+        service
+            .create({ name: 'Major', imageKey: 'ranks/reg/icon.png', precedence: 3 })
+            .subscribe();
         const req = httpMock.expectOne('/api/ranks');
         expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ name: 'Major', chevrons: 4, precedence: 3 });
+        expect(req.request.body).toEqual({
+            name: 'Major',
+            imageKey: 'ranks/reg/icon.png',
+            precedence: 3,
+        });
         req.flush(apiRank());
     });
 
