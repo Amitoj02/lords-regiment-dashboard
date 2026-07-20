@@ -19,7 +19,7 @@
             </p>
         </div>
 
-        @if (loading) {
+        @if (!ready) {
         <div class="panel apply-panel">
             <div class="panel-body" style="text-align: center; padding: 32px">Loading…</div>
         </div>
@@ -41,7 +41,7 @@
         }
 
         <!-- Form -->
-        @if (!submitted && !loading) {
+        @if (!submitted && ready) {
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
             <!-- Discord Identity -->
             <div class="panel apply-panel">
@@ -93,10 +93,11 @@
                     <div class="field-group">
                         <div class="field-label">Joining as</div>
                         <div class="field-hint type-card-hint">
-                            Members are reviewed by an officer and expected at drill. Mercenaries
-                            play alongside the regiment with limited access.
+                            @if (showMercenaryCard) { Officers review every application. Choose the
+                            track you want to be considered for. } @else { The mercenary track is
+                            closed right now, so applications are for full regiment membership. }
                         </div>
-                        <div style="display: flex; gap: 12px">
+                        <div class="type-card-row">
                             <button
                                 type="button"
                                 class="type-card"
@@ -107,9 +108,12 @@
                             >
                                 <div class="type-card-title">Member</div>
                                 <div class="type-card-desc">
-                                    Full enlistment. Reviewed by an officer and expected at drill.
+                                    Enlist as a regiment member. Participate in rankings and earn
+                                    medals.
                                 </div>
                             </button>
+                            <!-- Withdrawn entirely while the Mercenary track is closed (T-0229). -->
+                            @if (showMercenaryCard) {
                             <button
                                 type="button"
                                 class="type-card"
@@ -120,11 +124,18 @@
                             >
                                 <div class="type-card-title">Mercenary</div>
                                 <div class="type-card-desc">
-                                    Play alongside the regiment without full enlistment. Limited
-                                    access.
+                                    Play alongside the regiment, share memorable experiences, and
+                                    participate in select events.
                                 </div>
                             </button>
+                            }
                         </div>
+                        @if (mercenaryTrackClosedWarning) {
+                        <div class="field-hint field-error type-card-warning">
+                            The mercenary track has closed since you applied. Switch to Member to
+                            resubmit — saving this as a mercenary application will be rejected.
+                        </div>
+                        }
                     </div>
                     <!-- Current Regiment -->
                     <div class="field-group">
