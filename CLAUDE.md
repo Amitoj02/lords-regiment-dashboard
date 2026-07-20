@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-Angular 19 frontend for a military regiment management dashboard (Holdfast: Nations at War). Single-page app with lazy-loaded feature modules, stub services ready for HTTP backend replacement, and a custom dark military design system.
+Angular 19 frontend for a military regiment management dashboard (Holdfast: Nations at War). Single-page app with lazy-loaded feature modules, services fully wired to the NestJS API over `HttpClient`, and a custom dark military design system.
 
 ## Companion Repository — Backend API
 
-This frontend is one half of a two-repo system. The **REST API it consumes lives in a separate backend repository** — when wiring real HTTP (see [Services Pattern](#services-pattern) below), read that repo for the actual endpoint contracts instead of inventing them.
+This frontend is one half of a two-repo system. The **REST API it consumes lives in a separate backend repository** — read that repo for the actual endpoint contracts instead of inventing them. The two share an API contract and **must be deployed together**.
 
 | | |
 |---|---|
@@ -47,7 +47,7 @@ All visual decisions (layout, spacing, colour, component shape) must be grounded
 - **Angular 19** — NgModule architecture (`standalone: false` on ALL components)
 - **Bootstrap 5.3** — Grid/reboot/utilities only (no Bootstrap components)
 - **SCSS** — Custom design tokens via CSS custom properties
-- **RxJS** — `Observable` + `of()` stubs in all services (swap for `HttpClient` later)
+- **RxJS** — `Observable`-based `HttpClient` services + a functional JWT interceptor
 
 ## Module Structure
 
@@ -123,19 +123,23 @@ Uses Angular `signal()` for `currentUser`. Stub logged-in user: Jameson Nolt (Li
 
 ## Services Pattern
 
-All services return `Observable<T>` using `of(stubData)`. To wire real HTTP:
+All 13 services in `src/app/core/services/` call `HttpClient` against the real API. They are **not
+stubs** — do not "wire them up", they are already wired.
 
 ```typescript
-// Before (stub)
+// The actual pattern. environment.apiBaseUrl is the RELATIVE string '/api', so
+// the built bundle is host-agnostic: it works behind any domain as long as
+// something proxies /api to the backend. There is no hostname in the bundle.
 getAll(): Observable<Member[]> {
-  return of(this.members);
-}
-
-// After (HTTP)
-getAll(): Observable<Member[]> {
-  return this.http.get<Member[]>('/api/members');
+  return this.http.get<Member[]>(`${this.base}/members`);
 }
 ```
+
+Remaining `of(...)` calls are `catchError` fallbacks and one `DEFAULT_STORAGE_POLICY`, not stub
+data. `jwt.interceptor.ts` attaches `Authorization: Bearer <token>` to any request whose URL starts
+with `environment.apiBaseUrl`, reading the token from `localStorage` under `lords_access_token`.
+Because auth is a bearer header over a relative path, **the SPA and API must be same-origin** —
+in production Caddy serves this app and proxies `/api` to the API container.
 
 ## Assets
 
@@ -144,7 +148,9 @@ Images in `src/assets/images/` — served at `/assets/images/*` via `angular.jso
 ## Known Non-Issues
 
 - Sass `@import` deprecation warnings — non-blocking, future migration to `@use`/`@forward`
-- Gallery/events images show broken img icons — expected (stub URLs, no real backend)
+- Gallery/events images show broken img icons when the object store is unreachable — check
+  `S3_PUBLIC_BASE_URL` on the API. Media URLs arrive fully-qualified from the API; the frontend
+  has no storage/CDN base URL of its own.
 
 <!-- blueframe:start -->
 ## Blueframe state protocol (managed — do not edit inside these markers)

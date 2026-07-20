@@ -4,7 +4,7 @@
   "lastSyncedCommit": "e9247891416f828350d3321db5086fda2d07b224",
   "lastSyncedAt": "2026-07-19T04:10:00Z",
   "notesForNextSession": "BLUEFRAME GOTCHA (fixed in T-0225): testPlan item status MUST be one of pending|passed|failed. \"done\" is NOT valid and silently breaks the ENTIRE repo in the Blueframe UI \u2014 state.json fails schema validation, so the server at 127.0.0.1:7317 reports taskCount: 0 and shows no tasks. After editing state.json verify with: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == invalid file); curl -s 'http://127.0.0.1:7317/api/state?repo=<key>' prints the exact schema errors. Note the file is written ASCII-escaped (ensure_ascii) \u2014 keep it that way or every em-dash line shows as a spurious diff. PREVIOUS HANDOFF: Planned-tasks T-0212..T-0224 implemented -> deploy_ready (FE da5e75b). Ranks/medals: dark kebab menu (T-0212) + dark medal-row hover (T-0213), WebP accepted in icon uploads (T-0214/T-0215, couples with backend T-0130), centred icon-preview (T-0216). Settings: brighter active section-nav (T-0217), left-aligned save/op rows via zeroing the Bootstrap .row negative margin (T-0218). Audit: JSON prettify + git-style LCS line diff + diff/raw toggle with a11y add/remove labels, pure logic in audit-diff.util.ts (T-0219..T-0221). Applications: live applicant identity (currentDisplayName/currentAvatarUrl/promotedMemberId) in the view-model/mapper + detail header profile deep-link + queue, aligned margins (T-0222..T-0224). SHIP WITH backend branch feat/webp-icons-live-applicant-identity (364d05e): consumes T-0129 (live identity) + T-0130 (webp icon policy) -> deploy the two together. FE CI green locally: format + lint + prod build + 162 unit tests. Browser-verified end-to-end as Owner (1920px viewport; env locks the CSS viewport so media-query mobile emulation was not possible, but responsive rules are intact + changes are additive/contained). Adversarial multi-agent review: 1 a11y finding fixed (diff add/remove now announced to AT), cross-repo coupling confirmed + documented. No planned FE tasks remain.",
-  "nextIdCounter": 226,
+  "nextIdCounter": 229,
   "connections": [],
   "tasks": [
     {
@@ -13745,6 +13745,178 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Remapped 43 testPlan \"done\" -> \"passed\"; server now loads the repo (taskCount restored)."
+        }
+      ]
+    },
+    {
+      "id": "T-0226",
+      "title": "Reword Member/Mercenary applicant-type cards on /onboarding/apply",
+      "summary": "Replace the descriptive copy under the Member and Mercenary selector cards on the apply form with the new approved wording. Member emphasises enlistment, rankings and medals; Mercenary emphasises playing alongside the regiment, shared experiences and select events. Copy-only change \u2014 no control, form or validation behaviour changes.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "onboarding",
+      "feature": "application",
+      "subfeature": "applicant-type",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-form/application-form.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/onboarding/apply Member card reads 'Enlist as a regiment member. Participate in rankings and earn medals.'",
+          "status": "pending"
+        },
+        {
+          "desc": "/onboarding/apply Mercenary card reads 'Play alongside the regiment, share memorable experiences, and participate in select events.'",
+          "status": "pending"
+        },
+        {
+          "desc": "Selecting either card still toggles applicantType and the active card styling; form submits unchanged",
+          "status": "pending"
+        },
+        {
+          "desc": "Longer copy does not overflow or misalign the two cards at mobile widths",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-19T00:00:00Z",
+      "updatedAt": "2026-07-19T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-19T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0227",
+      "title": "Show applicant type (Member vs Mercenary) on the admin application detail",
+      "summary": "The admin application detail pane never surfaces which enlistment track the applicant chose, so moderators approve without knowing whether the person becomes a Member or a Mercenary. Add an 'Applying as' row to the detail info grid, driven by the existing applicantType field already returned by the API and already mapped in api.model.ts.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "applicant-type",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Plain label/value row in the info grid, or a coloured pill in the detail header next to the status badge?",
+          "answer": null,
+          "askedAt": "2026-07-19T00:00:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Selecting an application with applicantType 'Mercenary' renders 'Mercenary' in the detail pane",
+          "status": "pending"
+        },
+        {
+          "desc": "Selecting an application with applicantType 'Member' renders 'Member'",
+          "status": "pending"
+        },
+        {
+          "desc": "Info grid stays a clean 2-column layout with the added cell and collapses to one column under the existing responsive breakpoint",
+          "status": "pending"
+        },
+        {
+          "desc": "Existing applications.component spec suite stays green",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Shared .info-grid layout in applications.component.scss is touched; an odd cell count can leave a dangling cell in the last row",
+          "status": "open",
+          "notedAt": "2026-07-19T00:00:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-19T00:00:00Z",
+      "updatedAt": "2026-07-19T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-19T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0228",
+      "title": "Add a Mercenary pill to the admin application queue rows",
+      "summary": "Follow-on to T-0227: distinguish the two enlistment tracks in the queue list itself so moderators can triage without opening each application. Render a badge on queue items using the existing global .badge modifiers, alongside the status and Re-apply badges.",
+      "status": "planned",
+      "type": "feature",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "applicant-type",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [
+        "T-0227"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Badge on every row, or only on Mercenary rows (treating Member as the unmarked default)?",
+          "answer": null,
+          "askedAt": "2026-07-19T00:00:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "A Mercenary application shows the pill in its queue row",
+          "status": "pending"
+        },
+        {
+          "desc": "Badges do not wrap or overflow the queue row alongside an existing Re-apply badge",
+          "status": "pending"
+        },
+        {
+          "desc": "Reuses global .badge modifiers from styles/_components.scss with no new colour tokens",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-19T00:00:00Z",
+      "updatedAt": "2026-07-19T00:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-19T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
         }
       ]
     }
