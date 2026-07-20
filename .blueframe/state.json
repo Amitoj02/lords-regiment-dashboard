@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
-  "lastSyncedAt": "2026-07-20T05:00:00Z",
-  "notesForNextSession": "MERCENARY TRACK EPIC shipped as a PAIR - frontend PR (feat/mercenary-track-ux) + backend PR (feat/mercenary-track-enforcement). MERGE THEM TOGETHER: the apply form reads allowMercenaries off the PUBLIC GET /api/regiment, which only exists after backend T-0137 (GET /settings is unusable here - it needs ManageSettings and an Applicant cannot read it). The field is declared OPTIONAL and absent is treated as permissive, so a frontend-first deploy degrades safely rather than hiding the card wrongly. T-0230 was NOT in the backlog - adversarial review of the T-0227/T-0228 diff found that approve/decline/hold swallowed server errors into console.error, so the new 403 would have made Approve look silently broken. block/unblock had the same defect and were fixed with it. BADGE COLOURS ARE EXHAUSTED: brass/laurel/ox/blue are the four application statuses, blue is also Re-apply, and parch is now the Mercenary pill. Any further badge on this screen needs a new token or it will collide with a badge sitting beside it. FIRST SPECS for applications.component and application-form.component (neither had one). They assert RENDERED DOM, not component getters - a reviewer proved the getter-only style let the whole warning banner be deleted with 175/175 still green. Keep new assertions DOM-based. RISK SWEEP: 13 frontend risks retired with evidence. T-0081#0 was retired after verifying the T-0076 lockstep DID happen - on the BotStatus interface (rendered by dashboard.component.html) rather than DiscordConnection, whose omission is harmless since structural typing ignores unknown JSON fields. Still open: T-0023#0 (admin-action-modal has no spec) and T-0077#0 (hf-gallery-card has no spec and its blast radius has GROWN to four surfaces) - both are genuine untested-surface risks worth a dedicated spec task. Admin applications route is /app/admin/applications (not /admin/applications). Keep this file ASCII-escaped (ensure_ascii) or every em-dash line shows as a spurious diff; testPlan status MUST be pending|passed|failed.",
-  "nextIdCounter": 231,
+  "lastSyncedCommit": "89b0dd921cdb3db128187cd8f92f223950723d98",
+  "lastSyncedAt": "2026-07-20T22:10:00Z",
+  "notesForNextSession": "FIRST PRODUCTION DEPLOY happened and immediately surfaced T-0231: the site rendered half-styled. Root cause was NOT the Cloudflare beacon error in the console (that is cosmetic) - it was Angular's inlineCritical emitting <link media=\"print\" onload=\"this.media='all'\">, whose INLINE EVENT HANDLER the production script-src 'self' blocks, leaving the main stylesheet permanently scoped to print. Fixed in angular.json (PR #20, branch fix/csp-broken-critical-css) by pinning optimization.styles.inlineCritical:false. VERIFY AFTER DEPLOY that /home renders fully styled (T-0231 has a pending testPlan item for this). THE CLASS OF BUG TO WATCH FOR: anything that only manifests under the production CSP is invisible locally - the development configuration sets optimization:false so the inliner never runs, and ng serve sends no CSP header at all. A local prod build would ALSO have passed. When touching build optimisation or adding any third-party origin, diff the emitted dist index.html against the live CSP by hand. THE CSP LIVES IN THE BACKEND REPO (lords-dashboard-backend Caddyfile), not here. OPEN DECISION for the user: the Cloudflare Web Analytics beacon (static.cloudflareinsights.com) is CSP-blocked - either disable Web Analytics in the CF dashboard (recommended, keeps script-src tight) or add it to script-src plus cloudflareinsights.com to connect-src in the backend Caddyfile. No backend PR raised pending that call. STATE IS STILL BROADLY STALE: ~70 tasks (T-0161..T-0230) are merged to main AND now actually in production but still sit at deploy_ready - run /bf-sync to sweep them to deployed, deliberately left out of PR #20 to keep it focused. Keep this file ASCII-escaped (ensure_ascii) or every em-dash line shows as a spurious diff; testPlan status MUST be pending|passed|failed.",
+  "nextIdCounter": 232,
   "connections": [],
   "tasks": [
     {
@@ -14119,6 +14119,75 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "found by adversarial review of the T-0227/T-0228 diff"
+        }
+      ]
+    },
+    {
+      "id": "T-0231",
+      "title": "Fix production CSS broken by CSP-blocked critical-CSS deferral",
+      "summary": "The first production deploy rendered half-styled. Angular's inlineCritical (beasties, on by default under optimization:true) emits the deferred-stylesheet pattern - the main sheet is linked at media=\"print\" and an inline onload=\"this.media='all'\" handler promotes it once loaded. The edge serves script-src 'self', so the browser blocks that inline event handler, the sheet stays scoped to print and is never applied to screen; only the inlined critical subset renders. The asset itself was always fine (200 text/css). Inline handlers cannot be hash-whitelisted without 'unsafe-hashes', so the fix is in the build, not the CSP: pin optimization.styles.inlineCritical:false for production so a plain render-blocking <link> is emitted. Costs ~18kB gzipped of blocking CSS. scripts/fonts/styles.minify stay true, so Google Fonts CSS is still inlined (CSP-safe via style-src 'unsafe-inline'). Invisible outside production: the development configuration sets optimization:false and ng serve sends no CSP header. Documented as a do-not-re-enable warning in CLAUDE.md.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "tooling",
+      "subfeature": "production-build",
+      "repo": "",
+      "paths": [
+        "angular.json",
+        "CLAUDE.md"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Prod build emits <link rel=\"stylesheet\"> with no onload and no media=\"print\"",
+          "status": "passed"
+        },
+        {
+          "desc": "No inline event handlers remain anywhere in the emitted index.html",
+          "status": "passed"
+        },
+        {
+          "desc": "Google Fonts @font-face CSS is still inlined into a <style> block",
+          "status": "passed"
+        },
+        {
+          "desc": "Bundle hashes unchanged and initial bundle stays within the 540kB warning budget",
+          "status": "passed"
+        },
+        {
+          "desc": "186/186 unit tests pass",
+          "status": "passed"
+        },
+        {
+          "desc": "After deploy: lordsofholdfast.com/home renders fully styled with no CSP error for the stylesheet",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Changes the production optimization block from the implicit boolean true to an object. Any sub-flag omitted from the object falls back to its schema default rather than to true, so a future edit that drops scripts/fonts/styles.minify would silently de-optimise the bundle. The budget check in CI is the backstop - initial total is currently 122.36kB transfer against a 540kB raw warning threshold, so a de-optimised build would not necessarily trip it.",
+          "status": "open",
+          "notedAt": "2026-07-20T22:10:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not touch the backend Caddyfile CSP - the Cloudflare Insights beacon being blocked is cosmetic (analytics do not report; nothing user-facing breaks) and the choice between disabling Web Analytics vs widening script-src to a third-party origin is the user's. Raised in the PR body as a follow-up.",
+        "Did not sweep the ~70 merged tasks still parked at deploy_ready to deployed - that is a bf-sync job and does not belong in a focused build-fix PR."
+      ],
+      "lastTouchedCommit": "89b0dd921cdb3db128187cd8f92f223950723d98",
+      "createdAt": "2026-07-20T22:10:00Z",
+      "updatedAt": "2026-07-20T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-07-20T22:10:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "found from a production console report after the first deploy; PR #20 opened"
         }
       ]
     }

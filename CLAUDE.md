@@ -152,6 +152,24 @@ Images in `src/assets/images/` — served at `/assets/images/*` via `angular.jso
   `S3_PUBLIC_BASE_URL` on the API. Media URLs arrive fully-qualified from the API; the frontend
   has no storage/CDN base URL of its own.
 
+## ⚠️ Do NOT re-enable `inlineCritical` in angular.json
+
+The production build pins `optimization.styles.inlineCritical: false`. Angular's critical-CSS
+inliner (beasties) rewrites the stylesheet link into a **deferred** form:
+
+```html
+<link rel="stylesheet" href="styles-*.css" media="print" onload="this.media='all'">
+```
+
+That `onload` is an **inline event handler**. Production serves
+`script-src 'self'` (Caddyfile in `lords-dashboard-backend`), so the browser blocks it, the sheet
+stays at `media="print"`, and it is never applied to screen — the site renders with only the
+inlined critical subset and looks half-styled. Inline event handlers cannot be whitelisted by hash
+without `'unsafe-hashes'`, so weakening the CSP is the wrong trade for ~18 kB of render-blocking CSS.
+
+This fails **only in production**: `development` sets `optimization: false` (no inliner), and
+`ng serve` sends no CSP header. Do not "re-enable an optimization" here without a CSP change first.
+
 <!-- blueframe:start -->
 ## Blueframe state protocol (managed — do not edit inside these markers)
 
