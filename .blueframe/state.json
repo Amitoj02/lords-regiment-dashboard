@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "e9247891416f828350d3321db5086fda2d07b224",
-  "lastSyncedAt": "2026-07-19T04:10:00Z",
-  "notesForNextSession": "BLUEFRAME GOTCHA (fixed in T-0225): testPlan item status MUST be one of pending|passed|failed. \"done\" is NOT valid and silently breaks the ENTIRE repo in the Blueframe UI \u2014 state.json fails schema validation, so the server at 127.0.0.1:7317 reports taskCount: 0 and shows no tasks. After editing state.json verify with: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == invalid file); curl -s 'http://127.0.0.1:7317/api/state?repo=<key>' prints the exact schema errors. Note the file is written ASCII-escaped (ensure_ascii) \u2014 keep it that way or every em-dash line shows as a spurious diff. PREVIOUS HANDOFF: Planned-tasks T-0212..T-0224 implemented -> deploy_ready (FE da5e75b). Ranks/medals: dark kebab menu (T-0212) + dark medal-row hover (T-0213), WebP accepted in icon uploads (T-0214/T-0215, couples with backend T-0130), centred icon-preview (T-0216). Settings: brighter active section-nav (T-0217), left-aligned save/op rows via zeroing the Bootstrap .row negative margin (T-0218). Audit: JSON prettify + git-style LCS line diff + diff/raw toggle with a11y add/remove labels, pure logic in audit-diff.util.ts (T-0219..T-0221). Applications: live applicant identity (currentDisplayName/currentAvatarUrl/promotedMemberId) in the view-model/mapper + detail header profile deep-link + queue, aligned margins (T-0222..T-0224). SHIP WITH backend branch feat/webp-icons-live-applicant-identity (364d05e): consumes T-0129 (live identity) + T-0130 (webp icon policy) -> deploy the two together. FE CI green locally: format + lint + prod build + 162 unit tests. Browser-verified end-to-end as Owner (1920px viewport; env locks the CSS viewport so media-query mobile emulation was not possible, but responsive rules are intact + changes are additive/contained). Adversarial multi-agent review: 1 a11y finding fixed (diff add/remove now announced to AT), cross-repo coupling confirmed + documented. No planned FE tasks remain.",
-  "nextIdCounter": 229,
+  "lastSyncedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
+  "lastSyncedAt": "2026-07-20T05:00:00Z",
+  "notesForNextSession": "MERCENARY TRACK EPIC shipped as a PAIR - frontend PR (feat/mercenary-track-ux) + backend PR (feat/mercenary-track-enforcement). MERGE THEM TOGETHER: the apply form reads allowMercenaries off the PUBLIC GET /api/regiment, which only exists after backend T-0137 (GET /settings is unusable here - it needs ManageSettings and an Applicant cannot read it). The field is declared OPTIONAL and absent is treated as permissive, so a frontend-first deploy degrades safely rather than hiding the card wrongly. T-0230 was NOT in the backlog - adversarial review of the T-0227/T-0228 diff found that approve/decline/hold swallowed server errors into console.error, so the new 403 would have made Approve look silently broken. block/unblock had the same defect and were fixed with it. BADGE COLOURS ARE EXHAUSTED: brass/laurel/ox/blue are the four application statuses, blue is also Re-apply, and parch is now the Mercenary pill. Any further badge on this screen needs a new token or it will collide with a badge sitting beside it. FIRST SPECS for applications.component and application-form.component (neither had one). They assert RENDERED DOM, not component getters - a reviewer proved the getter-only style let the whole warning banner be deleted with 175/175 still green. Keep new assertions DOM-based. RISK SWEEP: 13 frontend risks retired with evidence. T-0081#0 was retired after verifying the T-0076 lockstep DID happen - on the BotStatus interface (rendered by dashboard.component.html) rather than DiscordConnection, whose omission is harmless since structural typing ignores unknown JSON fields. Still open: T-0023#0 (admin-action-modal has no spec) and T-0077#0 (hf-gallery-card has no spec and its blast radius has GROWN to four surfaces) - both are genuine untested-surface risks worth a dedicated spec task. Admin applications route is /app/admin/applications (not /admin/applications). Keep this file ASCII-escaped (ensure_ascii) or every em-dash line shows as a spurious diff; testPlan status MUST be pending|passed|failed.",
+  "nextIdCounter": 231,
   "connections": [],
   "tasks": [
     {
@@ -2076,8 +2076,11 @@
       "regressionRisk": [
         {
           "desc": "Reshaped the shared Application/CreateApplicationPayload models + ApiApplication DTO + mapApplication mapper (removed platform/applicantType/source/whyJoin/priorExperience/timezone; added currentRegiment/preferredClasses/skillsToImprove/interestConfirmed/representativeNote). These are consumed by the admin applications screen AND the apply form; any field-shape drift from the backend enlistment contract ripples to both. Covered by build+lint+41 specs+browser verification, but no dedicated application-model/apply-form spec pins the reshape.",
-          "status": "open",
-          "notedAt": "2026-07-12T17:30:21Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T17:30:21Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The risk's stated gap (\"no dedicated application-model/apply-form spec pins the reshape\") is closed. /home/amitoj/Repositories/lords-regiment-dashboard/src/app/core/models/api.model.spec.ts now has a `describe('mapApplication')` block (line 32) with 4 tests, whose typed ApiApplication fixture (lines 9-15) carries exactly the reshaped fields \u2014 applicantType, currentRegiment, preferredClasses, interestConfirmed, representativeNote \u2014 so any backend contract drift fails typecheck in the spec itself. src/app/features/onboarding/application-form/application-form.component.spec.ts (8 tests, lines 113-177) pins the apply-form track/applicantType behaviour off a typed payload fixture, and src/app/features/admin/applications/applications.component.spec.ts pins the admin render for both Member and Mercenary applicantType values (lines 67, 80, 93-94, 108, 116). All three consumers of the reshaped model now have specs."
         }
       ],
       "skippedByClaude": [],
@@ -3779,8 +3782,11 @@
         },
         {
           "desc": "CROSS-REPO DEPLOY COUPLING: the ranks/medals wiring, decision DM, and audit honesty consume NEW backend endpoints in lords-dashboard-backend PR #7 (T-0059 decision DM, T-0062 /medals/reorder, T-0063 /discord/roles + unlink, T-0064 medal-role apply, T-0060/61 audit label + sync-status). Deploying this frontend WITHOUT that backend merged/deployed breaks reorder/unlink/role-picker/decision-DM and leaves audit labels/badges null. Deploy the two together.",
-          "status": "open",
-          "notedAt": "2026-07-12T22:35:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T22:35:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "Backend PR #7 (\"Admin owner-name epic + frontend counterparts (T-0057\u2013T-0064)\") is MERGED into lords-dashboard-backend main: mergedAt 2026-07-12T23:21:08Z, mergeCommit f0a476b90cb676843f7c7921ced0562bbe74d0fd, and `git merge-base --is-ancestor f0a476b HEAD` confirms it is an ancestor of backend main (HEAD 16ab3e1). All the coupled endpoints exist on backend main: /home/amitoj/Repositories/lords-dashboard-backend/src/medals/medals.controller.ts:65 (@Post('reorder')) and :118 (@Post(':id/unlink-discord')); src/ranks/ranks.controller.ts:65 and :118 (same pair); src/discord/discord.controller.ts:77 (@Get('roles') for the rank/medal link pickers). Backend has since shipped two further merges past PR #7 (PR #16 admin/applications, PR #17 production hardening for OVH VPS-1 + Cloudflare R2 with GHCR image publishing), so the backend is not merely merged but deployed ahead of the frontend. The deploy-ordering constraint is retired."
         }
       ],
       "skippedByClaude": [],
@@ -5065,8 +5071,11 @@
       "regressionRisk": [
         {
           "desc": "The DiscordConnection interface in discord.service.ts must gain the new metric fields in lockstep with the backend status DTO (lords-dashboard-backend:T-0076).",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "OVERRIDE (orchestrator-verified): the lockstep DID happen, on the BotStatus interface rather than DiscordConnection. discord.service.ts BotStatus declares wsPing/uptimeMs/memoryBytes/cpu/readyAt and dashboard.component.html:182-191 renders wsPing, uptimeMs and memoryBytes. DiscordConnection omitting the extras is harmless: TypeScript is structurally typed so unknown JSON fields are ignored at runtime, which is the escape the risk itself allowed (\"or it must ignore unknown fields\")."
         }
       ],
       "skippedByClaude": [
@@ -5136,13 +5145,19 @@
       "regressionRisk": [
         {
           "desc": "hf-topbar is a global shell component on every authenticated page; removing showSearch and restructuring the action area affects all app-shell pages.",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The hazard is gone by construction. `grep -rn 'showSearch' src/app` over the whole frontend returns zero hits \u2014 the input and every binding to it are removed, so no shell page can pass a dead input. hf-topbar has exactly one consumer: src/app/shared/components/app-shell/app-shell.component.html:17, which passes only [crumbs] and (menu), matching the component's surviving surface (topbar.component.ts:10 @Input() crumbs, :13 @Output() menu). The restructured action area is a single merged template (topbar.component.html) shared by that one shell, verified on main at c7bf691 after 8 subsequent feature merges."
         },
         {
           "desc": "Topbar lost the showSearch @Input and the search box (replaced by a back-home button + mobile brand); the topbar is used across every in-shell screen. Pinned by ng build + the sidebar/topbar specs.",
-          "status": "open",
-          "notedAt": "2026-07-13T05:55:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-13T05:55:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "Same code-level evidence as index 0: showSearch has zero references anywhere under src/app, and the only hf-topbar consumer (app-shell.component.html:17) binds just [crumbs]/(menu). Note the risk's stated pinning is partly inaccurate \u2014 there is NO topbar.component.spec.ts in the repo (full spec inventory checked); the sidebar spec covers the sidebar only. The risk is nonetheless retired because the removed input has no surviving consumer to break, and the topbar has shipped unchanged through PRs #10-#17 with the back-home button in place (topbar.component.html:40-57)."
         }
       ],
       "skippedByClaude": [
@@ -5210,8 +5225,11 @@
       "regressionRisk": [
         {
           "desc": "Touches the global topbar shell again; must not collide with the burger/home-button layout added in T-0082.",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "No collision occurred \u2014 the two layouts coexist in the current template on main. src/app/shared/components/topbar/topbar.component.html holds all three elements in one flow: the mobile hamburger at line 3 (class 'topbar-burger', (click)=\"menu.emit()\"), the T-0083 mobile brand at lines 22-26 (with an explanatory comment naming T-0083 and the regiment-logo-sm.png image), and the T-0082 back-home button at lines 40-57 (comment reads 'Back to home (T-0082 \u2014 replaced the decorative search box; T-0128 \u2192 public landing)'). Both changes landed and have survived the eight merges since without either being reverted or overwritten."
         }
       ],
       "skippedByClaude": [
@@ -5346,13 +5364,19 @@
       "regressionRisk": [
         {
           "desc": "Route relocation across modules: stale routerLinks/navigate() to /admin/events* (list 'Manage', create success, detail delete) and sidebar/bottom-nav must all be repointed or they 404. Verify the member session carries manage_events/rsvp_to_events/view_members_directory as expected.",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The route relocation is complete with no stale links. `grep -rn 'admin/events' src/app` over the frontend returns only two non-link hits: a comment at src/app/features/admin/admin.module.ts:18 ('Events relocated to /app/dashboard/events*') and an unrelated emit-payload string in sidebar.component.spec.ts:50. Every real navigation now targets /app/dashboard/events*: member.module.ts:38-49 (four routes), sidebar.component.ts:67, event-create.component.ts:289 (create success), event-detail.component.ts:202 and :228 (both delete paths), events-admin.component.html:19 and :68, dashboard.component.html:48,54. The capability side is pinned by src/app/core/guards/manage-events.guard.spec.ts (3 tests: allows manage_events, redirects a signed-in caller lacking it to /app/dashboard, redirects anonymous)."
         },
         {
           "desc": "Events relocated out of the admin route tree into MemberModule (/dashboard/events*); the three event components are now member-declared and guarded by manageEventsGuard for authoring. Shared routing + guard change. Pinned by events-admin + sidebar specs.",
-          "status": "open",
-          "notedAt": "2026-07-13T05:55:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-13T05:55:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The relocation + guard change is pinned by two specs. src/app/features/admin/events-admin/events-admin.component.spec.ts:67 ('renders a Manage link per event and the New event link') asserts the rendered hrefs are exactly '/app/dashboard/events/ev1' and '/app/dashboard/events/create' (lines 70-71). src/app/core/guards/manage-events.guard.spec.ts pins manageEventsGuard's three branches. The three event components are declared in src/app/features/member/member.module.ts:18,38-49 with the authoring routes guarded, and src/app/shared/components/sidebar/sidebar.component.spec.ts:14 pins the member-visible in-shell Events route."
         }
       ],
       "skippedByClaude": [
@@ -5419,8 +5443,11 @@
       "regressionRisk": [
         {
           "desc": "sidebar is a global shell component and its spec asserts the old Events route/visibility; the assertions must be updated in lockstep or CI breaks.",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The sidebar spec was updated in lockstep and now asserts the new route and visibility. src/app/shared/components/sidebar/sidebar.component.spec.ts:16 asserts `events?.route` is '/app/dashboard/events', and two further tests pin visibility: 'routes Events to the in-shell member surface and is member-visible' (line 14) and 'hides admin-only items from non-admins but keeps member-visible Events + Gallery' (line 26). The source agrees at src/app/shared/components/sidebar/sidebar.component.ts:67. No stale assertion against the old admin Events route remains, and CI is green through the subsequent merges (PRs #10-#17)."
         }
       ],
       "skippedByClaude": [
@@ -5864,13 +5891,19 @@
       "regressionRisk": [
         {
           "desc": "First consumer of the new storage upload flow; the FE upload helper + response shape must match the backend presign DTO (lords-dashboard-backend:T-0066).",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The FE upload helper and the backend presign DTO match field-for-field and are both pinned. /home/amitoj/Repositories/lords-regiment-dashboard/src/app/core/services/storage.service.ts:5-13 declares PresignedUpload {key, uploadUrl, publicUrl, expiresIn, requiredContentType}, identical to /home/amitoj/Repositories/lords-dashboard-backend/src/storage/dto/presigned-upload.dto.ts:9-26 (backend T-0066, merged and on main). storage.service.spec.ts pins the flow: 'requestUpload() posts the target + file metadata' (line 36) asserts the exact POST body {target, contentType, sizeBytes, fileName} against RequestUploadDto, and 'upload() presigns then PUTs the bytes and resolves to the key' (line 51) asserts the PUT goes to ticket.uploadUrl with Content-Type set from requiredContentType and resolves to ticket.key \u2014 the signature-matching header the backend requires."
         },
         {
           "desc": "events.service + event.model changed contract (getMine*, no publish()/isDraft, bannerKey + recurrenceCadence + split dates); every events surface + api.model mapEvent depends on it. Pinned by the updated events.service spec.",
-          "status": "open",
-          "notedAt": "2026-07-13T05:55:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-13T05:55:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The events.service/event.model contract change is pinned by src/app/core/services/events.service.spec.ts (11 tests). 'create() maps the view model onto the create DTO' (line 92) explicitly asserts the new shape: split dates (startsAt '2026-07-01T20:00:00' / endsAt '2026-07-02T21:00:00'), recurrenceCadence 'weekly' with `isRecurring` undefined, bannerKey 'events/reg/uuid.png', notifyOffsets, and `isDraft` undefined (line 125) \u2014 i.e. the removal of publish()/isDraft is pinned negatively. getAllMine() (line 129) and getMineById() (line 140) pin the new member endpoints /api/events/mine and /api/events/mine/:id including myRsvp mapping. mapEvent's rsvpCounts passthrough is exercised via the shared apiEvent fixture."
         }
       ],
       "skippedByClaude": [
@@ -5941,8 +5974,11 @@
       "regressionRisk": [
         {
           "desc": "RsvpStatus type + rsvpCounts + api mapper are shared with the events list/model; the backend enum still includes 'neutral', so the mapper must tolerate/normalize a legacy neutral value without crashing.",
-          "status": "open",
-          "notedAt": "2026-07-12T23:45:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-12T23:45:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "The mapper cannot crash on a legacy 'neutral' because the type union deliberately retains it and every consumer handles it explicitly. src/app/core/models/event.model.ts:2 keeps `RsvpStatus = 'interested' | 'tentative' | 'declined' | 'neutral'` and :31 keeps neutral in rsvpCounts; api.model.ts:291 mirrors it and mapEvent passes rsvpCounts straight through (:380). Every attendance total sums the neutral bucket rather than ignoring it: events-admin.component.ts:85, events-page.component.ts:34, event-detail.component.ts:241, event-create.component.ts:263. event-detail.component.ts:91-92 explicitly mirrors the backend gate with 'interested/tentative/neutral pass; null/declined are blocked'. The UI removal is real \u2014 event-detail.component.html only renders Interested/Tentative/Declined buttons (lines 139-162) and rollups (175-184), with no Neutral action. Spec fixtures in events.service.spec.ts:25,107 and events-admin.component.spec.ts:24 carry neutral through mapEvent under typecheck."
         }
       ],
       "skippedByClaude": [
@@ -13752,7 +13788,7 @@
       "id": "T-0226",
       "title": "Reword Member/Mercenary applicant-type cards on /onboarding/apply",
       "summary": "Replace the descriptive copy under the Member and Mercenary selector cards on the apply form with the new approved wording. Member emphasises enlistment, rankings and medals; Mercenary emphasises playing alongside the regiment, shared experiences and select events. Copy-only change \u2014 no control, form or validation behaviour changes.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -13761,7 +13797,8 @@
       "subfeature": "applicant-type",
       "repo": "",
       "paths": [
-        "src/app/features/onboarding/application-form/application-form.component.html"
+        "src/app/features/onboarding/application-form/application-form.component.html",
+        "src/app/features/onboarding/application-form/application-form.component.scss"
       ],
       "dependsOn": [],
       "blocks": [],
@@ -13769,26 +13806,30 @@
       "testPlan": [
         {
           "desc": "/onboarding/apply Member card reads 'Enlist as a regiment member. Participate in rankings and earn medals.'",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "/onboarding/apply Mercenary card reads 'Play alongside the regiment, share memorable experiences, and participate in select events.'",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Selecting either card still toggles applicantType and the active card styling; form submits unchanged",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Longer copy does not overflow or misalign the two cards at mobile widths",
-          "status": "pending"
+          "status": "passed"
+        },
+        {
+          "desc": "Verified in a real browser at 1440x900 and 390x844: cards stay level, copy wraps, no overflow",
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-19T00:00:00Z",
-      "updatedAt": "2026-07-19T00:00:00Z",
+      "updatedAt": "2026-07-20T05:00:00Z",
       "history": [
         {
           "at": "2026-07-19T00:00:00Z",
@@ -13796,6 +13837,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-20T05:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "approved copy applied; cards verified level at 1440px and stacked at 390px"
         }
       ]
     },
@@ -13803,7 +13851,7 @@
       "id": "T-0227",
       "title": "Show applicant type (Member vs Mercenary) on the admin application detail",
       "summary": "The admin application detail pane never surfaces which enlistment track the applicant chose, so moderators approve without knowing whether the person becomes a Member or a Mercenary. Add an 'Applying as' row to the detail info grid, driven by the existing applicantType field already returned by the API and already mapped in api.model.ts.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13821,39 +13869,42 @@
       "questions": [
         {
           "q": "Plain label/value row in the info grid, or a coloured pill in the detail header next to the status badge?",
-          "answer": null,
+          "answer": "Coloured pill in the detail header next to the status badge (user-confirmed), NOT a row in the info grid. The info grid is a .grid-2 holding exactly four cells, so a fifth would leave a dangling cell; putting the pill in the header avoids that hazard entirely rather than mitigating it. Member renders the neutral base .badge, Mercenary renders `parch`.",
           "askedAt": "2026-07-19T00:00:00Z"
         }
       ],
       "testPlan": [
         {
           "desc": "Selecting an application with applicantType 'Mercenary' renders 'Mercenary' in the detail pane",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Selecting an application with applicantType 'Member' renders 'Member'",
-          "status": "pending"
+          "status": "passed"
         },
         {
-          "desc": "Info grid stays a clean 2-column layout with the added cell and collapses to one column under the existing responsive breakpoint",
-          "status": "pending"
+          "desc": "Info grid is deliberately NOT touched (pill lives in the detail header), so its 2-column layout and responsive collapse are unchanged - confirmed by git diff showing no change to the .info-grid block or its SCSS",
+          "status": "passed"
         },
         {
-          "desc": "Existing applications.component spec suite stays green",
-          "status": "pending"
+          "desc": "applications.component.spec.ts created (none existed before) and green at 186 tests repo-wide",
+          "status": "passed"
         }
       ],
       "regressionRisk": [
         {
           "desc": "Shared .info-grid layout in applications.component.scss is touched; an odd cell count can leave a dangling cell in the last row",
-          "status": "open",
-          "notedAt": "2026-07-19T00:00:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-19T00:00:00Z",
+          "resolvedAt": "2026-07-20T05:00:00Z",
+          "resolvedBy": "claude",
+          "note": "Retired by construction: the approved design puts the pill in the detail header, so .info-grid and its SCSS are never modified and the dangling-odd-cell hazard cannot arise. git diff confirms no change to the .info-grid block. Verified visually at 1440x900 and 390x844."
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-19T00:00:00Z",
-      "updatedAt": "2026-07-19T00:00:00Z",
+      "updatedAt": "2026-07-20T05:00:00Z",
       "history": [
         {
           "at": "2026-07-19T00:00:00Z",
@@ -13861,6 +13912,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-20T05:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "applicant-type pill rendered beside the status badge in the detail header"
         }
       ]
     },
@@ -13868,7 +13926,7 @@
       "id": "T-0228",
       "title": "Add a Mercenary pill to the admin application queue rows",
       "summary": "Follow-on to T-0227: distinguish the two enlistment tracks in the queue list itself so moderators can triage without opening each application. Render a badge on queue items using the existing global .badge modifiers, alongside the status and Re-apply badges.",
-      "status": "planned",
+      "status": "deploy_ready",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -13887,29 +13945,33 @@
       "questions": [
         {
           "q": "Badge on every row, or only on Mercenary rows (treating Member as the unmarked default)?",
-          "answer": null,
+          "answer": "Only on Mercenary rows (user-confirmed). Member is the unmarked default, which keeps the queue quiet and makes a Mercenary row genuinely pop. `parch` chosen because brass/laurel/ox/blue are all taken by the four statuses and blue is also the Re-apply badge, so parch is the only modifier that can never collide with a badge beside it.",
           "askedAt": "2026-07-19T00:00:00Z"
         }
       ],
       "testPlan": [
         {
           "desc": "A Mercenary application shows the pill in its queue row",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Badges do not wrap or overflow the queue row alongside an existing Re-apply badge",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "Reuses global .badge modifiers from styles/_components.scss with no new colour tokens",
-          "status": "pending"
+          "status": "passed"
+        },
+        {
+          "desc": "Verified in a real browser: a row carrying MERCENARY + RE-APPLY together does not wrap or overflow at 1440px or 390px",
+          "status": "passed"
         }
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-19T00:00:00Z",
-      "updatedAt": "2026-07-19T00:00:00Z",
+      "updatedAt": "2026-07-20T05:00:00Z",
       "history": [
         {
           "at": "2026-07-19T00:00:00Z",
@@ -13917,6 +13979,146 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-20T05:00:00Z",
+          "from": "planned",
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "parch pill on Mercenary queue rows only; verified alongside a Re-apply badge"
+        }
+      ]
+    },
+    {
+      "id": "T-0229",
+      "title": "Stop offering the Mercenary card when the track is closed",
+      "summary": "The API now refuses a Mercenary application with 403 when RegimentSettings.allowMercenaries is false (backend T-0133). A form that keeps offering the card walks applicants into a wall, so the card is withdrawn instead. The flag is read from the public GET /api/regiment profile because an Applicant cannot read GET /settings. Permissive by design: the field is optional, a failed profile fetch keeps both cards, and a pre-filled Mercenary application keeps its card so hiding it can never silently rewrite a submission to Member. The cards are gated on the profile having settled so a closed track cannot remove the card after first paint and shift the form beneath it.",
+      "status": "deploy_ready",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "onboarding",
+      "feature": "application",
+      "subfeature": "applicant-type",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-form/application-form.component.ts",
+        "src/app/features/onboarding/application-form/application-form.component.html",
+        "src/app/features/onboarding/application-form/application-form.component.scss",
+        "src/app/features/onboarding/application-form/application-form.component.spec.ts",
+        "src/app/core/models/api.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0137"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Mercenary card hidden and Member card fills the row when allowMercenaries is false",
+          "status": "passed"
+        },
+        {
+          "desc": "A failed GET /regiment still renders the form with BOTH cards (permissive, never deadlocked behind a spinner)",
+          "status": "passed"
+        },
+        {
+          "desc": "Cards do not paint before the profile settles, so no ~120px layout shift on mobile",
+          "status": "passed"
+        },
+        {
+          "desc": "Edit mode on an already-Mercenary application keeps its card and shows a dismissable warning derived from the live control",
+          "status": "passed"
+        },
+        {
+          "desc": "Verified in a real browser at 1440x900 and 390x844 with the toggle flipped both ways",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "CROSS-REPO DEPLOY COUPLING: reads allowMercenaries from GET /api/regiment, which only exists after backend T-0137. The field is declared OPTIONAL and absent is treated as permissive, so a frontend-first deploy degrades safely (both cards shown, and the API refuses a Mercenary submit anyway) - but the gate is inert until the backend lands. Ship the two PRs together.",
+          "status": "open",
+          "notedAt": "2026-07-20T05:00:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
+      "createdAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-20T05:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-20T05:00:00Z",
+          "from": null,
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "created to keep T-0133 enforcement coherent end to end"
+        }
+      ]
+    },
+    {
+      "id": "T-0230",
+      "title": "Surface server refusals on admin application decisions",
+      "summary": "approve/decline/hold (and the block/unblock applicant actions) swallowed server errors into console.error, so a moderator refused by the new closed-mercenary-track 403 saw the detail pane sit unchanged with the application still Pending and nothing explaining why - the likely next action being repeated clicking. The server message now reaches the pane via the established hf-notice pattern, cleared when a new decision starts, when one succeeds, and when a different application is selected so a refusal never bleeds across applications.",
+      "status": "deploy_ready",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "decision-errors",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss",
+        "src/app/features/admin/applications/applications.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0133"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A 403 on approve renders the server message verbatim in the pane (asserted on rendered DOM, not a component field)",
+          "status": "passed"
+        },
+        {
+          "desc": "A body-less 5xx falls back to a generic line",
+          "status": "passed"
+        },
+        {
+          "desc": "The error clears when another application is selected and when a later decision succeeds",
+          "status": "passed"
+        },
+        {
+          "desc": "decline, hold, block and unblock share the same treatment",
+          "status": "passed"
+        },
+        {
+          "desc": "Verified in a real browser: approving a Mercenary with the track closed renders the exact backend message and leaves the application Pending",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches every decision path in the admin applications component (approve/decline/hold/block/unblock) via a shared decisionFailed helper. A bug here affects all moderation actions, not just the mercenary case. Pinned by 5 DOM-asserting specs in the component spec created alongside it.",
+          "status": "open",
+          "notedAt": "2026-07-20T05:00:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
+      "createdAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-20T05:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-20T05:00:00Z",
+          "from": null,
+          "to": "deploy_ready",
+          "by": "claude",
+          "note": "found by adversarial review of the T-0227/T-0228 diff"
         }
       ]
     }
