@@ -72,6 +72,11 @@ jobs:
             echo "${{ steps.img.outputs.name }}:latest"
             echo '```'
             echo ''
-            echo 'Deploy alongside the matching lords-api tag — the two repos'
-            echo 'share an API contract and must ship together.'
+            echo 'Nothing live has changed. Rolling this out is a manual step in'
+            echo 'the BACKEND repo — one workflow deploys both images, because the'
+            echo 'two share an API contract and must ship together:'
+            echo ''
+            echo '  lords-dashboard-backend → Actions → Deploy to production'
+            echo ''
+            echo "    web_tag = ${{ github.sha }}"
           } >> "$GITHUB_STEP_SUMMARY"
