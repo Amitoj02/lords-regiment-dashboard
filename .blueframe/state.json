@@ -2,8 +2,8 @@
   "version": 1,
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "89b0dd921cdb3db128187cd8f92f223950723d98",
-  "lastSyncedAt": "2026-07-20T22:10:00Z",
-  "notesForNextSession": "FIRST PRODUCTION DEPLOY happened and immediately surfaced T-0231: the site rendered half-styled. Root cause was NOT the Cloudflare beacon error in the console (that is cosmetic) - it was Angular's inlineCritical emitting <link media=\"print\" onload=\"this.media='all'\">, whose INLINE EVENT HANDLER the production script-src 'self' blocks, leaving the main stylesheet permanently scoped to print. Fixed in angular.json (PR #20, branch fix/csp-broken-critical-css) by pinning optimization.styles.inlineCritical:false. VERIFY AFTER DEPLOY that /home renders fully styled (T-0231 has a pending testPlan item for this). THE CLASS OF BUG TO WATCH FOR: anything that only manifests under the production CSP is invisible locally - the development configuration sets optimization:false so the inliner never runs, and ng serve sends no CSP header at all. A local prod build would ALSO have passed. When touching build optimisation or adding any third-party origin, diff the emitted dist index.html against the live CSP by hand. THE CSP LIVES IN THE BACKEND REPO (lords-dashboard-backend Caddyfile), not here. OPEN DECISION for the user: the Cloudflare Web Analytics beacon (static.cloudflareinsights.com) is CSP-blocked - either disable Web Analytics in the CF dashboard (recommended, keeps script-src tight) or add it to script-src plus cloudflareinsights.com to connect-src in the backend Caddyfile. No backend PR raised pending that call. STATE IS STILL BROADLY STALE: ~70 tasks (T-0161..T-0230) are merged to main AND now actually in production but still sit at deploy_ready - run /bf-sync to sweep them to deployed, deliberately left out of PR #20 to keep it focused. Keep this file ASCII-escaped (ensure_ascii) or every em-dash line shows as a spurious diff; testPlan status MUST be pending|passed|failed.",
+  "lastSyncedAt": "2026-07-20T22:20:00Z",
+  "notesForNextSession": "FIRST PRODUCTION DEPLOY happened and immediately surfaced T-0231: the site rendered half-styled. Root cause was NOT the Cloudflare beacon error in the console (that is cosmetic) - it was Angular's inlineCritical emitting <link media=\"print\" onload=\"this.media='all'\">, whose INLINE EVENT HANDLER the production script-src 'self' blocks, leaving the main stylesheet permanently scoped to print. Fixed in angular.json (PR #20, merged as 9bc5f07) by pinning optimization.styles.inlineCritical:false, and VERIFIED LIVE - production now serves a plain <link rel=\"stylesheet\"> with no onload. DEPLOYS ARE MANUAL BY DESIGN: merging only publishes images; production is rolled ONLY by the backend repo workflow_dispatch \"Deploy to production\", which takes BOTH api_tag and web_tag. A merged fix is NOT a shipped fix - this bug appeared to persist purely because that workflow had not been run since the merge. NOTE the styles-*.css hash does NOT change across this fix (the CSS content is identical, only how it is linked), so never use the asset hash to confirm a frontend deploy landed - grep the served index.html for the onload attribute instead. THE CLASS OF BUG TO WATCH FOR: anything that only manifests under the production CSP is invisible locally - the development configuration sets optimization:false so the inliner never runs, and ng serve sends no CSP header at all. A local prod build would ALSO have passed. When touching build optimisation or adding any third-party origin, diff the emitted dist index.html against the live CSP by hand. THE CSP LIVES IN THE BACKEND REPO (lords-dashboard-backend Caddyfile), not here. OPEN DECISION for the user: the Cloudflare Web Analytics beacon (static.cloudflareinsights.com) is CSP-blocked - either disable Web Analytics in the CF dashboard (recommended, keeps script-src tight) or add it to script-src plus cloudflareinsights.com to connect-src in the backend Caddyfile. No backend PR raised pending that call. STATE IS STILL BROADLY STALE: ~70 tasks (T-0161..T-0230) are merged to main AND now actually in production but still sit at deploy_ready - run /bf-sync to sweep them to deployed, deliberately left out of PR #20 to keep it focused. Keep this file ASCII-escaped (ensure_ascii) or every em-dash line shows as a spurious diff; testPlan status MUST be pending|passed|failed.",
   "nextIdCounter": 232,
   "connections": [],
   "tasks": [
@@ -14126,7 +14126,7 @@
       "id": "T-0231",
       "title": "Fix production CSS broken by CSP-blocked critical-CSS deferral",
       "summary": "The first production deploy rendered half-styled. Angular's inlineCritical (beasties, on by default under optimization:true) emits the deferred-stylesheet pattern - the main sheet is linked at media=\"print\" and an inline onload=\"this.media='all'\" handler promotes it once loaded. The edge serves script-src 'self', so the browser blocks that inline event handler, the sheet stays scoped to print and is never applied to screen; only the inlined critical subset renders. The asset itself was always fine (200 text/css). Inline handlers cannot be hash-whitelisted without 'unsafe-hashes', so the fix is in the build, not the CSP: pin optimization.styles.inlineCritical:false for production so a plain render-blocking <link> is emitted. Costs ~18kB gzipped of blocking CSS. scripts/fonts/styles.minify stay true, so Google Fonts CSS is still inlined (CSP-safe via style-src 'unsafe-inline'). Invisible outside production: the development configuration sets optimization:false and ng serve sends no CSP header. Documented as a do-not-re-enable warning in CLAUDE.md.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 1,
@@ -14164,7 +14164,7 @@
         },
         {
           "desc": "After deploy: lordsofholdfast.com/home renders fully styled with no CSP error for the stylesheet",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -14178,9 +14178,9 @@
         "Did not touch the backend Caddyfile CSP - the Cloudflare Insights beacon being blocked is cosmetic (analytics do not report; nothing user-facing breaks) and the choice between disabling Web Analytics vs widening script-src to a third-party origin is the user's. Raised in the PR body as a follow-up.",
         "Did not sweep the ~70 merged tasks still parked at deploy_ready to deployed - that is a bf-sync job and does not belong in a focused build-fix PR."
       ],
-      "lastTouchedCommit": "89b0dd921cdb3db128187cd8f92f223950723d98",
+      "lastTouchedCommit": "9bc5f0701c14c29629edfef429cc59baeee2f41c",
       "createdAt": "2026-07-20T22:10:00Z",
-      "updatedAt": "2026-07-20T22:10:00Z",
+      "updatedAt": "2026-07-20T22:20:00Z",
       "history": [
         {
           "at": "2026-07-20T22:10:00Z",
@@ -14188,6 +14188,13 @@
           "to": "review",
           "by": "claude",
           "note": "found from a production console report after the first deploy; PR #20 opened"
+        },
+        {
+          "at": "2026-07-20T22:20:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged as PR #20 (9bc5f07) and rolled to production via the backend deploy workflow (run 29782828905, web_tag pinned to 9bc5f07). Verified live: index.html now serves a plain <link rel=\"stylesheet\"> with no onload and no media=\"print\"."
         }
       ]
     }
