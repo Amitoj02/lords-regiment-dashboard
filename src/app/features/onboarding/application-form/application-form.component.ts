@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApplicationsService } from '../../../core/services/applications.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 
 /**
  * The enlistment form. Doubles as the EDIT surface for a pending application
@@ -10,6 +11,10 @@ import { AuthService } from '../../../core/services/auth.service';
  * application and PATCHes it instead of creating a new one. A returning
  * applicant who already has an open application (and is not editing) is bounced
  * to their status page rather than shown a blank form (T-0030).
+ *
+ * The Mercenary track can be closed regiment-wide (T-0229). The API rejects a
+ * Mercenary application with 403 when it is, so the form stops OFFERING the
+ * card rather than letting applicants walk into a wall.
  */
 @Component({
     selector: 'hf-application-form',
@@ -20,6 +25,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class ApplicationFormComponent implements OnInit {
     private readonly applications = inject(ApplicationsService);
     private readonly auth = inject(AuthService);
+    private readonly regiment = inject(RegimentService);
     private readonly route = inject(ActivatedRoute);
 
     form: FormGroup;
@@ -28,6 +34,47 @@ export class ApplicationFormComponent implements OnInit {
     editing = false;
     loading = true;
     error: string | null = null;
+
+    /**
+     * Has GET /regiment settled (either way)? The applicant-type cards must not
+     * paint before the Mercenary gate is known, or a closed track removes the
+     * Mercenary card after first paint and shifts every control below it. Set in
+     * BOTH handlers so a failed profile fetch still renders the form.
+     */
+    profileLoaded = false;
+
+    /**
+     * Is the Mercenary track open? Defaults to TRUE and stays true if the
+     * profile fetch fails or omits the flag — a transient API error must never
+     * silently narrow an applicant's options.
+     */
+    mercenariesAllowed = true;
+
+    /**
+     * Set when edit mode pre-fills an application that is ALREADY a Mercenary.
+     * Their stored answer stays visible and selected even with the track closed:
+     * hiding the card would silently rewrite their submission to Member.
+     */
+    mercenaryPreselected = false;
+
+    /** Both requests have settled — safe to paint the form without a layout shift. */
+    get ready(): boolean {
+        return !this.loading && this.profileLoaded;
+    }
+
+    /** Offer the Mercenary card while the track is open, or to keep a pre-filled one honest. */
+    get showMercenaryCard(): boolean {
+        return this.mercenariesAllowed || this.mercenaryPreselected;
+    }
+
+    /**
+     * True only in the awkward case: track closed, but the draft is CURRENTLY a
+     * Mercenary one. Derived from the live control so that acting on the
+     * banner's own instruction — clicking Member — dismisses it.
+     */
+    get mercenaryTrackClosedWarning(): boolean {
+        return !this.mercenariesAllowed && this.form.get('applicantType')?.value === 'Mercenary';
+    }
 
     // The signed-in Discord identity (falls back to a placeholder if not logged in).
     get discordUser() {
@@ -66,6 +113,20 @@ export class ApplicationFormComponent implements OnInit {
 
     ngOnInit(): void {
         const wantsEdit = this.route.snapshot.queryParamMap.get('edit') === '1';
+
+        // Public profile carries the Mercenary-track flag. Failure is permissive.
+        this.regiment.getProfile().subscribe({
+            next: (profile) => {
+                this.mercenariesAllowed = profile?.allowMercenaries !== false;
+                this.profileLoaded = true;
+                this.reconcileMercenaryGate();
+            },
+            error: () => {
+                this.mercenariesAllowed = true;
+                this.profileLoaded = true;
+            },
+        });
+
         this.applications.getMine().subscribe({
             next: (mine) => {
                 const app = mine.application;
@@ -73,6 +134,7 @@ export class ApplicationFormComponent implements OnInit {
                 if (wantsEdit && app?.status === 'pending') {
                     // Edit mode: pre-fill from the pending application.
                     this.editing = true;
+                    this.mercenaryPreselected = app.applicantType === 'Mercenary';
                     this.form.patchValue({
                         inGameName: app.inGameName,
                         applicantType: app.applicantType ?? 'Member',
@@ -85,6 +147,7 @@ export class ApplicationFormComponent implements OnInit {
                         ageConfirm: true,
                         interestConfirm: app.interestConfirmed,
                     });
+                    this.reconcileMercenaryGate();
                 } else if (open) {
                     // Has an open application and isn't editing → show status, not a blank form.
                     void this.router.navigateByUrl('/onboarding/status');
@@ -95,6 +158,18 @@ export class ApplicationFormComponent implements OnInit {
             // If we can't resolve the current application, fall back to a blank form.
             error: () => (this.loading = false),
         });
+    }
+
+    /**
+     * Keep the applicantType control in step with the gate. GET /regiment and
+     * GET /applications/mine settle in no guaranteed order, so both call this.
+     * A closed track snaps a fresh draft back to Member — but never touches a
+     * pre-filled Mercenary application (see `mercenaryPreselected`).
+     */
+    private reconcileMercenaryGate(): void {
+        if (this.showMercenaryCard) return;
+        const control = this.form.get('applicantType');
+        if (control?.value === 'Mercenary') control.setValue('Member');
     }
 
     onSubmit(): void {

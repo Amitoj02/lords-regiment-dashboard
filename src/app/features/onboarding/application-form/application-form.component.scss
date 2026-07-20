@@ -89,6 +89,14 @@
 }
 
 /* Type cards */
+.type-card-row {
+    // Stretch (the flex default) keeps both cards level even though the
+    // Mercenary blurb runs longer than the Member one.
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .type-card {
     // Neutralize default <button> chrome so it renders identically to the
     // former <div>: no UA font/color, left-aligned block content.
@@ -98,7 +106,9 @@
     width: 100%;
     display: block;
 
-    flex: 1;
+    // Basis 220px so the pair stacks rather than crushes on narrow phones;
+    // grow 1 so a lone card (Mercenary track closed) fills the row.
+    flex: 1 1 220px;
     padding: 16px;
     background: var(--ink-800);
     border: 1px solid var(--rule-2);

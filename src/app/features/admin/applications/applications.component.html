@@ -88,8 +88,18 @@
                                     >{{ item.submittedAt | date: 'MMM d' }}</span
                                 >
                             </div>
-                            @if (item.isPreviousApplicant) {
-                            <span class="badge blue sp">Re-apply</span>
+                            <!-- Row tags (T-0228): Mercenary is the marked exception —
+                                 Member rows stay unmarked. The tags row wraps so the
+                                 pill and the Re-apply badge share a line on a wide
+                                 queue and stack instead of overflowing a narrow one. -->
+                            @if (item.applicantType === 'Mercenary' || item.isPreviousApplicant) {
+                            <div class="queue-item__tags">
+                                @if (item.applicantType === 'Mercenary') {
+                                <span class="badge parch applicant-type">Mercenary</span>
+                                } @if (item.isPreviousApplicant) {
+                                <span class="badge blue">Re-apply</span>
+                                }
+                            </div>
                             }
                         </div>
                     </button>
@@ -136,6 +146,18 @@
                                         blue: selectedApplication.status === 'held'
                                     }"
                                     >{{ selectedApplication.status | titlecase }}</span
+                                >
+                                <!-- Enlistment track (T-0227): the moderator must see
+                                     which track they are about to approve. `parch` is
+                                     the one semantic badge colour no status claims, so
+                                     the Mercenary pill never collides with the status
+                                     badge beside it; Member keeps the neutral base. -->
+                                <span
+                                    class="badge applicant-type"
+                                    [ngClass]="{
+                                        parch: selectedApplication.applicantType === 'Mercenary'
+                                    }"
+                                    >{{ selectedApplication.applicantType }}</span
                                 >
                             </div>
                             <span class="mono applicant-meta"
@@ -226,6 +248,15 @@
                         approve, decline, or hold. Add a personal message above, or leave it blank
                         to use the default template.
                     </hf-notice>
+
+                    <!-- A decision the server refused (e.g. approving a Mercenary
+                         while the track is closed) is explained here, beside the
+                         buttons that raised it. -->
+                    @if (moderationError) {
+                    <hf-notice variant="err" class="decision-error" role="alert"
+                        >{{ moderationError }}</hf-notice
+                    >
+                    }
 
                     <!-- Navigation & Decisions -->
                     <div class="decisions-row">

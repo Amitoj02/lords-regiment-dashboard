@@ -137,6 +137,13 @@ export interface RegimentProfile {
     discordServerName: string | null;
     setupComplete: boolean;
     memberCount: number;
+    /**
+     * Whether the Mercenary applicant track is open (T-0229). Mirrored onto the
+     * PUBLIC profile because an Applicant cannot read GET /settings, and the
+     * apply form needs it to decide whether to offer the Mercenary card.
+     * Optional: an API that omits it is treated permissively (both tracks open).
+     */
+    allowMercenaries?: boolean;
 }
 
 export interface RegimentStats {

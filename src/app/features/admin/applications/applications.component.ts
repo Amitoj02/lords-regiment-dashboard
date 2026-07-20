@@ -18,6 +18,15 @@ export class ApplicationsComponent implements OnInit {
     moderatorNote = '';
     discordDmMessage = '';
 
+    /**
+     * Server-side refusal of the last decision (approve / decline / hold), shown
+     * beside the decision buttons. The API explains *why* it refused — e.g. the
+     * mercenary track being closed blocks approving a Mercenary onto it — and
+     * that message is the only thing telling the moderator what to do next, so
+     * it must reach the pane rather than the console.
+     */
+    moderationError: string | null = null;
+
     /** The full review queue (every status) loaded from the API. */
     applications: Application[] = [];
     loading = false;
@@ -90,6 +99,9 @@ export class ApplicationsComponent implements OnInit {
         this.selectedId = id;
         this.moderatorNote = '';
         this.discordDmMessage = '';
+        // A refusal belongs to the application it was raised on — never let it
+        // bleed onto the next one the moderator opens.
+        this.moderationError = null;
     }
 
     isSelected(id: string): boolean {
@@ -122,7 +134,19 @@ export class ApplicationsComponent implements OnInit {
     private afterDecision(): void {
         // Re-pull the queue so the decided application moves to its new bucket.
         this.selectedId = null;
+        this.moderationError = null;
         this.loadApplications();
+    }
+
+    /**
+     * Surface a refused decision. The server's own message is preferred — it is
+     * written for the moderator and names the actual blocker — with a generic
+     * line only when the failure carries no body (network drop, 5xx).
+     */
+    private decisionFailed(err: unknown, fallback: string): void {
+        console.error(fallback, err);
+        this.moderationError =
+            (err as { error?: { message?: string } })?.error?.message ?? fallback;
     }
 
     approve(): void {
@@ -130,6 +154,7 @@ export class ApplicationsComponent implements OnInit {
         if (!id) {
             return;
         }
+        this.moderationError = null;
         // Approve takes no moderator note server-side (it promotes to a member),
         // but the Discord DM message is sent to the applicant on approval too.
         this.applicationsService
@@ -137,7 +162,11 @@ export class ApplicationsComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
-                error: (err) => console.error('Failed to approve application', err),
+                error: (err) =>
+                    this.decisionFailed(
+                        err,
+                        'This application could not be approved. Please try again.',
+                    ),
             });
     }
 
@@ -146,12 +175,17 @@ export class ApplicationsComponent implements OnInit {
         if (!id) {
             return;
         }
+        this.moderationError = null;
         this.applicationsService
             .decline(id, this.moderatorNote, this.discordDmMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
-                error: (err) => console.error('Failed to decline application', err),
+                error: (err) =>
+                    this.decisionFailed(
+                        err,
+                        'This application could not be declined. Please try again.',
+                    ),
             });
     }
 
@@ -160,12 +194,17 @@ export class ApplicationsComponent implements OnInit {
         if (!id) {
             return;
         }
+        this.moderationError = null;
         this.applicationsService
             .hold(id, this.moderatorNote, this.discordDmMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
-                error: (err) => console.error('Failed to hold application', err),
+                error: (err) =>
+                    this.decisionFailed(
+                        err,
+                        'This application could not be held for committee. Please try again.',
+                    ),
             });
     }
 
@@ -178,6 +217,7 @@ export class ApplicationsComponent implements OnInit {
         if (!id) {
             return;
         }
+        this.moderationError = null;
         this.moderating = true;
         this.applicationsService
             .blockApplicant(id, this.moderatorNote || undefined)
@@ -189,7 +229,10 @@ export class ApplicationsComponent implements OnInit {
                 },
                 error: (err) => {
                     this.moderating = false;
-                    console.error('Failed to block applicant', err);
+                    this.decisionFailed(
+                        err,
+                        'This applicant could not be blocked. Please try again.',
+                    );
                 },
             });
     }
@@ -200,6 +243,7 @@ export class ApplicationsComponent implements OnInit {
         if (!id) {
             return;
         }
+        this.moderationError = null;
         this.moderating = true;
         this.applicationsService
             .unblockApplicant(id)
@@ -211,7 +255,10 @@ export class ApplicationsComponent implements OnInit {
                 },
                 error: (err) => {
                     this.moderating = false;
-                    console.error('Failed to unblock applicant', err);
+                    this.decisionFailed(
+                        err,
+                        'This applicant could not be re-enabled. Please try again.',
+                    );
                 },
             });
     }

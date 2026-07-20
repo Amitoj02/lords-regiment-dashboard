@@ -94,6 +94,17 @@
         font-size: 0.75rem;
         color: var(--t-400);
     }
+
+    // Row tags (Mercenary pill + Re-apply badge). A direct child of the body, so
+    // it needs no left margin to line up with the name/discord lines above — those
+    // only carry one to cancel the Bootstrap negative margin on their `.row`.
+    // Wrapping keeps the pills inside the 340px queue column at any width (T-0228).
+    &__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-width: 0;
+    }
 }
 
 .info-grid {
@@ -201,6 +212,16 @@
 
 .decision-notice {
     margin-top: 12px;
+}
+
+// Refused decision, sitting directly above the decision buttons. `display: block`
+// so the host element takes the full panel width like the notice above it.
+.decision-error {
+    display: block;
+    margin-top: 12px;
+    // Server messages are full sentences — let long ones wrap instead of
+    // widening the detail panel.
+    overflow-wrap: anywhere;
 }
 
 .tab-bar {
