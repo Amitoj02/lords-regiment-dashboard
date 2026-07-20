@@ -4,16 +4,19 @@ A management dashboard for a **Holdfast: Nations at War** military regiment — 
 gallery, applications, ranks/medals and an admin panel. Built as an **Angular 19 single-page app**
 with a custom dark military design system.
 
-> **Status:** UI-only. Every service returns stub data via RxJS `of(...)`; there is no backend yet.
-> Services are structured so each `of(stub)` can be swapped for an `HttpClient` call when an API
-> exists (see [`CLAUDE.md`](./CLAUDE.md)).
+> **Status:** Fully wired to the API. All 13 services in `src/app/core/services/` call `HttpClient`
+> against `environment.apiBaseUrl` — the relative string `/api`, so one build works behind any
+> domain provided something proxies `/api` to the backend. Sign-in is real Discord OAuth2.
+> The backend lives in the companion repo
+> [`lords-dashboard-backend`](https://github.com/Amitoj02/lords-dashboard-backend); the two share
+> an API contract and must be deployed together.
 
 ## Tech stack
 
 - **Angular 19** — NgModule architecture (`standalone: false` on all components), lazy-loaded features
 - **Bootstrap 5.3** — grid, reboot and utilities only (no Bootstrap JS components)
 - **SCSS** — custom design tokens exposed as CSS custom properties
-- **RxJS 7** — `Observable` + `of()` stub services
+- **RxJS 7** — `Observable`-based `HttpClient` services with a JWT interceptor
 - **ESLint (angular-eslint) + Prettier** — linting and formatting
 - **Karma + Jasmine** — unit tests
 
@@ -43,7 +46,7 @@ Requires Node `^18.19.1 || ^20.11.1 || >=22` (see `engines` in `package.json`).
 
 ```
 src/app/
-├── core/        # singleton services (stub data), guards, models — provided in root
+├── core/        # singleton HttpClient services, guards, interceptors, models — provided in root
 ├── shared/      # reusable design-system components (hf-*) + SharedModule
 └── features/    # lazy-loaded feature modules:
     ├── public/        '', 'home', 'events', 'gallery', 'login'
@@ -54,7 +57,9 @@ src/app/
 
 Member routes require authentication; admin routes additionally require an admin role. Both guards
 are functional (`CanActivateFn`) reading from `AuthService`, whose `currentUser` is an Angular
-`signal` (stubbed as a logged-in user).
+`signal` populated from `GET /api/auth/me`. An `APP_INITIALIZER` resolves that call before first
+render when a token is present, so guards always see the real state. Fine-grained access uses
+`hasCapability()`, backed by the API's role-permissions matrix.
 
 ## Design reference
 
