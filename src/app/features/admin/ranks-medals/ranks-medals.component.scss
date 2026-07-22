@@ -182,6 +182,69 @@
     margin-top: 10px;
 }
 
+// ── Bulk re-link: confirmation + progress (T-0254) ──────────────────────────
+// Both blocks sit inside the narrow (280px) Discord column of the editor, so
+// they are single-column and wrap freely rather than assuming any width.
+.relink-confirm {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid var(--brass-600);
+    border-radius: var(--r-2);
+    background: var(--ink-750);
+
+    &__title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--brass-300);
+    }
+    &__body {
+        margin: 6px 0 10px;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        color: var(--t-300);
+
+        strong {
+            color: var(--t-100);
+        }
+    }
+    &__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+}
+
+.relink-progress {
+    margin-top: 12px;
+
+    &__track {
+        height: 6px;
+        border-radius: var(--r-1);
+        background: var(--ink-700);
+        overflow: hidden;
+    }
+    &__fill {
+        display: block;
+        height: 100%;
+        background: var(--brass-500);
+        // Eased so a 2s poll step reads as movement rather than a jump.
+        transition: width 0.4s ease-out;
+    }
+    &__meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    &__pct {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--t-300);
+    }
+}
+
 .empty {
     padding: 28px 16px;
     text-align: center;

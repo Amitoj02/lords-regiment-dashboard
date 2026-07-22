@@ -207,6 +207,23 @@ export class EventDetailComponent implements OnInit {
             });
     }
 
+    /**
+     * Whether the Server Details panel has anything to show (T-0236). Each row in
+     * it is now conditional, so without this the panel could render as an empty
+     * box — worse than the blank field it replaced.
+     */
+    get hasServerDetails(): boolean {
+        if (!this.event) {
+            return false;
+        }
+        return (
+            !!this.event.hasServerName ||
+            !!this.event.hasServerPassword ||
+            !!this.event.notifyBefore?.length ||
+            this.event.tags.length > 0
+        );
+    }
+
     /** True when this event is part of a recurring series (template or occurrence). */
     get isSeries(): boolean {
         return !!this.event && (!!this.event.isRecurring || !!this.event.recurrenceTemplateId);

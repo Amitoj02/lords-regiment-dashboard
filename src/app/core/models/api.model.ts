@@ -4,8 +4,14 @@
  * whole app) lets the existing components stay unchanged while the services swap
  * `of(stub)` for real HTTP. Field names mirror the NestJS DTOs exactly.
  */
-import { ApplicantType, Application, ApplicationStatus } from './application.model';
+import {
+    ApplicantApplication,
+    ApplicantType,
+    Application,
+    ApplicationStatus,
+} from './application.model';
 import { AuditLog, AuditSeverity, DiscordSyncStatus } from './audit-log.model';
+import { instantToWallClock, viewerZoneLabel } from './event-time';
 import { EventStatus, RegimentEvent, RsvpStatus } from './event.model';
 import { GalleryItem, GalleryItemStatus, GalleryItemType } from './gallery.model';
 import {
@@ -75,6 +81,14 @@ export interface ApiRank {
     holdersCount: number;
     createdAt: string;
     updatedAt: string;
+    /**
+     * Handle for the bulk role re-sync this link/unlink just queued
+     * (lords-dashboard-backend:T-0158). Present ONLY on the link/unlink
+     * responses, and only when a run was actually enqueued — absent on every
+     * list/read projection, and absent when the change affected no linked
+     * holders. It is what the admin UI polls and cancels with.
+     */
+    relinkBatchId?: string | null;
 }
 
 export interface ApiMedal {
@@ -91,6 +105,14 @@ export interface ApiMedal {
     awardsCount: number;
     createdAt: string;
     updatedAt: string;
+    /**
+     * Handle for the bulk role re-sync this link/unlink just queued
+     * (lords-dashboard-backend:T-0158). Present ONLY on the link/unlink
+     * responses, and only when a run was actually enqueued — absent on every
+     * list/read projection, and absent when the change affected no linked
+     * holders. It is what the admin UI polls and cancels with.
+     */
+    relinkBatchId?: string | null;
 }
 
 export interface ApiApplication {
@@ -116,11 +138,99 @@ export interface ApiApplication {
     /** Live applicant avatar — promoted member's avatar, else Discord avatar (T-0129). */
     currentAvatarUrl: string | null;
     decidedByMemberId: string | null;
+    /**
+     * Who took the decision (lords-dashboard-backend:T-0155). Null while pending,
+     * and null when the decider's member row was later removed (the FK is
+     * ON DELETE SET NULL) — so render defensively rather than assuming a name.
+     * A HELD application has a decider even though `decidedAt` is still null.
+     */
+    decidedByName?: string | null;
+    decidedByAvatarUrl?: string | null;
+    /**
+     * The message written FOR THE APPLICANT on approve/decline/hold
+     * (lords-dashboard-backend:T-0153). Staff see it here so a reviewer can tell
+     * what the applicant was actually told; `moderatorNote` and `declineReason`
+     * stay staff-only and never reach the applicant projection.
+     */
+    userMessage?: string | null;
     submittedAt: string;
     decidedAt: string | null;
     createdAt: string;
     /** Whether the applicant's Discord identity is blocked from applying (T-0128). */
     blocked?: boolean;
+}
+
+/**
+ * The APPLICANT's own view of their application
+ * (lords-dashboard-backend:T-0154). Deliberately a separate interface rather
+ * than a `Partial<ApiApplication>`: the point of the split is that a staff field
+ * cannot leak here by default, so the shape is enumerated explicitly and has to
+ * be widened on purpose.
+ *
+ * Returned by `POST /api/applications`, `GET /api/applications/mine` and
+ * `PATCH /api/applications/mine`. It carries NO `moderatorNote`, NO
+ * `declineReason` and no decision attribution — `userMessage` is the only
+ * decision text an applicant is ever shown.
+ */
+export interface ApiApplicantApplication {
+    id: string;
+    applicantName: string;
+    discordTag: string | null;
+    inGameName: string;
+    applicantType: ApplicantType;
+    currentRegiment: string;
+    howFound: string;
+    preferredClasses: string;
+    skillsToImprove: string;
+    interestConfirmed: boolean;
+    representativeNote: string | null;
+    status: ApplicationStatus;
+    isReapplication: boolean;
+    /** The officer's message to the applicant; null when none was written. */
+    userMessage: string | null;
+    submittedAt: string;
+    decidedAt: string | null;
+    createdAt: string;
+}
+
+/**
+ * Admin-authored presentation for the landing and sign-in pages
+ * (lords-dashboard-backend:T-0147). Rides on the ANONYMOUS regiment profile
+ * because both consuming pages are logged-out surfaces.
+ *
+ * EVERY field is nullable and null means "unset — render the shipped default".
+ * Note `0` is a MEANINGFUL overlay density (a fully transparent scrim), so
+ * consumers must branch on `== null`, never on truthiness.
+ */
+export interface RegimentPresentation {
+    heroBannerUrl: string | null;
+    loginBannerUrl: string | null;
+    charterQuote: string | null;
+    charterQuoteAttribution: string | null;
+    loginQuote: string | null;
+    loginQuoteAttribution: string | null;
+    heroOverlayDensity: number | null;
+    loginOverlayDensity: number | null;
+}
+
+/** The three admin-editable legal documents (lords-dashboard-backend:T-0149). */
+export type RegimentDocumentSlug = 'terms' | 'privacy' | 'guidelines';
+
+/**
+ * One legal document from `GET /api/regiment/documents` (anonymous).
+ * `body` is MARKDOWN, never HTML, and is null when the document has never been
+ * edited — in which case the page renders its shipped fallback copy. A blank
+ * legal page must never ship, so callers branch on falsiness here.
+ */
+export interface ApiRegimentDocument {
+    slug: RegimentDocumentSlug;
+    body: string | null;
+    updatedAt: string | null;
+}
+
+/** The staff view of a document, adding who last saved it. */
+export interface ApiAdminRegimentDocument extends ApiRegimentDocument {
+    updatedByName: string | null;
 }
 
 export interface RegimentProfile {
@@ -144,6 +254,12 @@ export interface RegimentProfile {
      * Optional: an API that omits it is treated permissively (both tracks open).
      */
     allowMercenaries?: boolean;
+    /**
+     * Admin-authored landing/sign-in presentation
+     * (lords-dashboard-backend:T-0147). Optional so a SPA deployed ahead of the
+     * API degrades to the shipped copy instead of erroring.
+     */
+    presentation?: RegimentPresentation;
 }
 
 export interface RegimentStats {
@@ -244,6 +360,13 @@ export function mapApplication(a: ApiApplication): Application {
         moderatorNote: a.moderatorNote ?? undefined,
         declineReason: a.declineReason ?? undefined,
         decidedAt: a.decidedAt ?? undefined,
+        // The applicant-facing message + decision attribution (T-0247/T-0250).
+        // Left nullable rather than collapsed to undefined: the staff console
+        // re-fills its message box from `userMessage`, and null is the honest
+        // "nothing stored" for an application nobody has decided yet.
+        userMessage: a.userMessage ?? null,
+        decidedByName: a.decidedByName ?? null,
+        decidedByAvatarUrl: a.decidedByAvatarUrl ?? null,
         blocked: a.blocked ?? false,
         // Live applicant identity + profile deep-link target (T-0222).
         promotedMemberId: a.promotedMemberId,
@@ -252,9 +375,35 @@ export function mapApplication(a: ApiApplication): Application {
     };
 }
 
-/** Wire shape of GET /applications/mine. */
+/**
+ * Map the APPLICANT's own projection. Separate from {@link mapApplication} on
+ * purpose: it takes the narrow wire type and returns the narrow view model, so
+ * neither end can quietly acquire a staff-only field (T-0249).
+ */
+export function mapApplicantApplication(a: ApiApplicantApplication): ApplicantApplication {
+    return {
+        id: a.id,
+        applicantName: a.applicantName,
+        discordTag: a.discordTag ?? '',
+        inGameName: a.inGameName,
+        applicantType: a.applicantType,
+        currentRegiment: a.currentRegiment,
+        howFound: a.howFound,
+        preferredClasses: a.preferredClasses,
+        skillsToImprove: a.skillsToImprove,
+        interestConfirmed: a.interestConfirmed,
+        representativeNote: a.representativeNote ?? undefined,
+        submittedAt: a.submittedAt,
+        status: a.status,
+        isPreviousApplicant: a.isReapplication,
+        userMessage: a.userMessage,
+        decidedAt: a.decidedAt ?? undefined,
+    };
+}
+
+/** Wire shape of GET /applications/mine — the APPLICANT projection (T-0154). */
 export interface ApiMyApplication {
-    application: ApiApplication | null;
+    application: ApiApplicantApplication | null;
     blocked: boolean;
 }
 
@@ -290,11 +439,21 @@ export interface ApiEvent {
     tags: string[];
     rsvpCounts: { interested: number; tentative: number; declined: number; neutral: number };
     attendeesCount: number;
-    // Member-view-only fields (omitted entirely for public callers).
+    /**
+     * PRESENCE FLAGS — present on EVERY projection, public included
+     * (lords-dashboard-backend:T-0151). They carry no binding detail, only
+     * whether one exists, which is exactly what an anonymous page needs to
+     * decide between "Password protected — sign in to reveal" and showing
+     * nothing at all. Before this, the public feed omitted the server fields
+     * entirely, so the page could not tell a password-protected event from a
+     * plain one and badged every event identically.
+     */
+    hasServerName: boolean;
+    hasServerPassword: boolean;
+    // Member-view-only fields (omitted entirely for public callers). `serverName`
+    // is `null` — never `''` — when unset, so templates can branch on it.
     serverName?: string | null;
     serverRegion?: string | null;
-    /** Whether a server password is set (member view only). The password itself is never sent. */
-    hasServerPassword?: boolean;
     recurrenceRule?: string | null;
     recurrenceCadence?: 'daily' | 'weekly' | 'monthly' | null;
     recurrenceActive?: boolean;
@@ -304,7 +463,13 @@ export interface ApiEvent {
     myRsvp?: ApiRsvp | null;
 }
 
-/** ISO 8601 → wall-clock parts (no tz conversion; events carry their own timezone). */
+/**
+ * ISO 8601 sliced literally — the LAST-RESORT fallback for an instant `Intl`
+ * cannot parse. This used to be how every event was rendered, which meant every
+ * surface printed the stored UTC instant while labelling it with the event's
+ * timezone (T-0237). Real conversion now goes through `instantToWallClock`; this
+ * only stops an unparseable date rendering as `NaN`.
+ */
 function splitIsoDateTime(iso: string): { date: string; time: string } {
     const [date, rest = ''] = iso.split('T');
     return { date, time: rest.slice(0, 5) };
@@ -352,13 +517,20 @@ export function deriveEventStatus(
 }
 
 export function mapEvent(e: ApiEvent): RegimentEvent {
-    const start = splitIsoDateTime(e.startsAt);
-    const end = e.endsAt ? splitIsoDateTime(e.endsAt) : null;
+    // DISPLAY converts to the VIEWER's own zone — note there is NO zone argument
+    // (T-0237). Every surface therefore renders the same instant identically, and
+    // a cross-midnight or DST-straddling event gets the LOCAL date and the offset
+    // in force on that date. AUTHORING is the exact inverse and passes the
+    // event's zone explicitly; see event-time.ts and EventsService.toBody.
+    const start = instantToWallClock(e.startsAt) ?? splitIsoDateTime(e.startsAt);
+    const end = e.endsAt ? (instantToWallClock(e.endsAt) ?? splitIsoDateTime(e.endsAt)) : null;
     return {
         id: e.id,
         title: e.title,
         description: e.description ?? '',
-        serverName: e.serverName ?? '',
+        // Kept NULL rather than coerced to '' so templates can tell "no server"
+        // from "server redacted" and drop the field entirely (T-0236).
+        serverName: e.serverName ?? null,
         serverRegion: e.serverRegion ?? undefined,
         // The password is never in this projection — only the reveal endpoint returns it.
         serverPassword: undefined,
@@ -366,6 +538,13 @@ export function mapEvent(e: ApiEvent): RegimentEvent {
         endDate: end?.date,
         startTime: start.time,
         endTime: end?.time ?? '',
+        // The raw instants ride along so the authoring form can re-derive the
+        // wall clock in the EVENT's zone instead of the viewer's (T-0251).
+        startsAt: e.startsAt,
+        endsAt: e.endsAt,
+        // Label the converted time honestly — otherwise a viewer-local time is
+        // indistinguishable from one printed in the authored zone.
+        zoneLabel: viewerZoneLabel(e.startsAt),
         timezone: e.timezone,
         platforms: e.platforms,
         // Derive Ongoing/Upcoming/Concluded client-side for instantaneous accuracy
@@ -384,6 +563,7 @@ export function mapEvent(e: ApiEvent): RegimentEvent {
         bannerUrl: e.bannerUrl ?? undefined,
         notifyBefore: (e.notifyOffsets ?? []).map(formatNotifyOffset),
         myRsvp: e.myRsvp ? e.myRsvp.status : e.myRsvp === null ? null : undefined,
+        hasServerName: e.hasServerName,
         hasServerPassword: e.hasServerPassword,
         isArchived: e.isArchived,
     };
@@ -438,6 +618,11 @@ export function mapGalleryItem(g: ApiGalleryItem): GalleryItem {
         id: g.id,
         title: g.title,
         type: g.type,
+        // The API persists an uploaded clip's poster frame here, so this is real
+        // data, not a legacy column. '' is the "no poster" sentinel (GalleryItem
+        // types it as a plain string): consumers must test it for TRUTHINESS —
+        // a `??` fallback never fires against '' and silently drops the poster,
+        // which is what left uploaded videos thumbnail-less on iOS (T-0242).
         thumbnailUrl: g.thumbnailUrl ?? '',
         mediaUrl: g.files?.[0]?.url ?? g.linkUrl ?? undefined,
         submittedBy: g.author?.name ?? '',

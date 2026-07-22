@@ -421,7 +421,7 @@
                 class="hf-select"
                 [ngModel]="editDiscordRoleId"
                 (ngModelChange)="onRoleSelect($event)"
-                [disabled]="rolesUnavailable"
+                [disabled]="rolesUnavailable || relinkBusy || !!relinkPrompt"
             >
                 <option value="">— No role —</option>
                 @if (editDiscordRoleId && !roleLoaded(editDiscordRoleId)) {
@@ -432,14 +432,101 @@
                 <option [value]="role.id">{{ role.name }}</option>
                 }
             </select>
-            @if (editDiscordLinked) {
+            @if (editDiscordLinked && !relinkPrompt) {
             <button
                 type="button"
                 class="btn btn-ghost btn-sm discord-unlink-btn"
+                [disabled]="relinkBusy"
                 (click)="unlinkCurrentRole()"
             >
                 Unlink role
             </button>
+            }
+
+            <!--
+                Re-role confirmation (T-0254). Changing the linked role strips the
+                old Discord role from every holder and applies the new one — a bulk
+                action with no rollback, so it names the count AND both roles before
+                anything is submitted. A FIRST link never reaches here: there is
+                nothing to strip.
+            -->
+            @if (relinkPrompt) {
+            <div class="relink-confirm">
+                <div class="relink-confirm__title">
+                    Re-role {{ relinkPrompt.holders }} {{ relinkPrompt.holders === 1 ? 'member' :
+                    'members' }}?
+                </div>
+                <p class="relink-confirm__body">
+                    {{ relinkPrompt.holders }} {{ relinkPrompt.holders === 1 ? 'member holds' :
+                    'members hold' }}
+                    <strong>{{ relinkPrompt.entityLabel }}</strong>. @if (relinkPrompt.nextRoleId) {
+                    They lose the <strong>{{ relinkPrompt.fromRoleName }}</strong> role in Discord
+                    and are given <strong>{{ relinkPrompt.toRoleName }}</strong> instead. } @else {
+                    They lose the <strong>{{ relinkPrompt.fromRoleName }}</strong> role in Discord
+                    and are given nothing in its place. } This runs in the background and cannot be
+                    undone.
+                </p>
+                <div class="relink-confirm__actions">
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="cancelRelinkPrompt()"
+                    >
+                        Keep {{ relinkPrompt.fromRoleName }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-primary btn-sm"
+                        [disabled]="relinkBusy"
+                        (click)="confirmRelink()"
+                    >
+                        {{ relinkBusy ? 'Applying…' : 'Re-role them' }}
+                    </button>
+                </div>
+            </div>
+            }
+
+            <!-- Live progress of the queued run (polled; see RELINK_POLL_MS). -->
+            @if (relink) {
+            <div class="relink-progress">
+                <div
+                    class="relink-progress__track"
+                    role="progressbar"
+                    aria-label="Discord role update progress"
+                    [attr.aria-valuenow]="relinkPercent"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                >
+                    <span class="relink-progress__fill" [style.width.%]="relinkPercent"></span>
+                </div>
+                <div class="relink-progress__meta">
+                    <span class="relink-progress__pct">{{ relinkPercent }}%</span>
+                    @if (relink.state === 'running') {
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        [disabled]="cancellingRelink"
+                        (click)="cancelRelinkRun()"
+                    >
+                        {{ cancellingRelink ? 'Stopping…' : 'Stop' }}
+                    </button>
+                    } @else {
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="dismissRelink()">
+                        Dismiss
+                    </button>
+                    }
+                </div>
+                <hf-notice [variant]="relinkVariant" class="discord-link-notice">
+                    {{ relinkSummary }}
+                </hf-notice>
+                @if (relinkFailureReason) {
+                <hf-notice variant="err" class="discord-link-notice">
+                    {{ relinkFailureReason }}
+                </hf-notice>
+                }
+            </div>
+            } @if (relinkError) {
+            <hf-notice variant="err" class="discord-link-notice">{{ relinkError }}</hf-notice>
             } @if (rolesUnavailable) {
             <hf-notice variant="warn" class="discord-link-notice">
                 Connect the Discord bot (Settings &rarr; Discord) to load roles before linking.

@@ -35,7 +35,17 @@
             }
             <button type="button" class="btn btn-ghost" (click)="signOut()">Sign out</button>
             } @else {
-            <button type="button" class="btn btn-ghost">Join Discord</button>
+            <!-- Hidden entirely when no invite is configured (T-0234). -->
+            @if (discordInviteUrl) {
+            <a
+                [href]="discordInviteUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-ghost public-nav-discord"
+                (click)="closeMenu()"
+                >Join Discord</a
+            >
+            }
             <a routerLink="/login" class="btn btn-discord" (click)="closeMenu()">Sign in</a>
             }
         </div>

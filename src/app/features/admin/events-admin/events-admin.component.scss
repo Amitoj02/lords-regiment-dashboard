@@ -28,6 +28,12 @@
     color: var(--t-400);
 }
 
+/* The rendered time is the VIEWER's, not the event's authored zone (T-0237). */
+.date-zone {
+    color: var(--t-500);
+    font-size: 0.9em;
+}
+
 .col-action {
     text-align: right;
     white-space: nowrap;

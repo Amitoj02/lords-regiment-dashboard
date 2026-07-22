@@ -22,40 +22,54 @@ import { GalleryAdminComponent } from '../admin/gallery-admin/gallery-admin.comp
 import { GallerySubmitComponent } from '../admin/gallery-submit/gallery-submit.component';
 import { GalleryModComponent } from '../admin/gallery-mod/gallery-mod.component';
 
+// `title` feeds AppTitleStrategy (T-0244) and mirrors each page's own heading /
+// sidebar label, so a bookmark or history entry names the same thing the UI does.
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-    { path: 'dashboard', component: DashboardComponent },
-    { path: 'roster', component: RosterComponent },
+    { path: 'dashboard', component: DashboardComponent, title: 'Dashboard' },
+    { path: 'roster', component: RosterComponent, title: 'Regimental Roster' },
     // Bare /app/profile resolves to the signed-in user's own record in the
     // component (T-0139); any member/mercenary is viewable at /app/profile/:id.
-    { path: 'profile', component: ProfileComponent },
-    { path: 'profile/:id', component: ProfileComponent },
+    { path: 'profile', component: ProfileComponent, title: 'My Profile' },
+    { path: 'profile/:id', component: ProfileComponent, title: 'Profile' },
     // Account deletion is a dedicated page again (T-0169): the edit-profile dialog
     // now shows a "Delete my profile" button that navigates here.
-    { path: 'account-deletion', component: AccountDeletionComponent },
+    {
+        path: 'account-deletion',
+        component: AccountDeletionComponent,
+        title: 'Discharge & Account Deletion',
+    },
     // Events: members read the index + detail; only moderator+ may author.
     // create MUST precede :id so it is not captured as an id.
-    { path: 'dashboard/events', component: EventsAdminComponent },
+    { path: 'dashboard/events', component: EventsAdminComponent, title: 'Events' },
     {
         path: 'dashboard/events/create',
         component: EventCreateComponent,
         canActivate: [manageEventsGuard],
+        title: 'Create an Event',
     },
     {
         path: 'dashboard/events/:id/edit',
         component: EventCreateComponent,
         canActivate: [manageEventsGuard],
+        title: 'Edit Event',
     },
-    { path: 'dashboard/events/:id', component: EventDetailComponent },
+    { path: 'dashboard/events/:id', component: EventDetailComponent, title: 'Event' },
     // Gallery (T-0108): the archive list is open to any roster member; submit is
     // members-only, moderation is moderators+admins. Index MUST precede children.
-    { path: 'gallery', component: GalleryAdminComponent },
+    { path: 'gallery', component: GalleryAdminComponent, title: 'Gallery' },
     {
         path: 'gallery/submit',
         component: GallerySubmitComponent,
         canActivate: [submitGalleryGuard],
+        title: 'Submit to Gallery',
     },
-    { path: 'gallery/mod', component: GalleryModComponent, canActivate: [moderateGalleryGuard] },
+    {
+        path: 'gallery/mod',
+        component: GalleryModComponent,
+        canActivate: [moderateGalleryGuard],
+        title: 'Gallery Moderation',
+    },
 ];
 
 @NgModule({

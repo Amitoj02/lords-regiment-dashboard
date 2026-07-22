@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiRank, mapRank } from '../models/api.model';
 import { Rank } from '../models/member.model';
+import { LinkDiscordResult, toLinkResult } from './link-discord-result';
 
 export interface RankPayload {
     name?: string;
@@ -41,13 +42,20 @@ export class RanksService {
             .pipe(map((rows) => rows.map(mapRank)));
     }
 
-    linkDiscord(id: string, discordRoleId: string, discordRoleName?: string): Observable<Rank> {
+    linkDiscord(
+        id: string,
+        discordRoleId: string,
+        discordRoleName?: string,
+    ): Observable<LinkDiscordResult<Rank>> {
         return this.http
             .post<ApiRank>(`${this.base}/${id}/link-discord`, { discordRoleId, discordRoleName })
-            .pipe(map(mapRank));
+            .pipe(map(toLinkResult(mapRank)));
     }
 
-    unlinkDiscord(id: string): Observable<Rank> {
-        return this.http.post<ApiRank>(`${this.base}/${id}/unlink-discord`, {}).pipe(map(mapRank));
+    /** An unlink is a re-link to nothing, so it queues a run too — holders LOSE the role. */
+    unlinkDiscord(id: string): Observable<LinkDiscordResult<Rank>> {
+        return this.http
+            .post<ApiRank>(`${this.base}/${id}/unlink-discord`, {})
+            .pipe(map(toLinkResult(mapRank)));
     }
 }

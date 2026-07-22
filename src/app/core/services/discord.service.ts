@@ -85,6 +85,54 @@ export interface DiscordBotSettings {
 /** Partial update of the bot configuration (PATCH /discord/settings). */
 export type UpdateDiscordSettingsPayload = Partial<DiscordBotSettings>;
 
+/** Which catalogue a bulk role re-link belongs to (mirrors backend RoleRelinkSubject). */
+export type RoleRelinkSubject = 'rank' | 'medal';
+
+/**
+ * Lifecycle of one bulk re-link run (mirrors backend RoleRelinkBatchState).
+ * `partial` and `cancelled` are both operator stops and NEITHER is rolled back —
+ * they differ only in whether anything had already been applied.
+ */
+export type RoleRelinkBatchState = 'running' | 'completed' | 'partial' | 'cancelled';
+
+/**
+ * Why a run's failures happened, split by the CLASS of Discord error, so a role
+ * hierarchy problem is diagnosable from the progress poll alone.
+ */
+export interface RoleRelinkFailures {
+    /** Permanent on the first attempt (deleted role, bot below the target role). */
+    permanent: number;
+    /** Failed after burning every retry attempt. */
+    exhausted: number;
+    /** Failed at least once and still in retry backoff. */
+    retrying: number;
+    /** A few distinct error messages, enough to identify the cause. */
+    samples: string[];
+}
+
+/** Live progress — or the terminal summary — of one bulk re-link batch. */
+export interface RoleRelinkProgress {
+    batchId: string;
+    state: RoleRelinkBatchState;
+    subject: RoleRelinkSubject;
+    subjectLabel: string | null;
+    /** The role being stripped from holders. */
+    outgoingRoleId: string | null;
+    /** The role being applied to holders. */
+    incomingRoleId: string | null;
+    /** More pages of members are still being fanned out, so `total` is still growing. */
+    expanding: boolean;
+    total: number;
+    applied: number;
+    pending: number;
+    failed: number;
+    /** Per-member jobs dropped by a cancel (never applied). */
+    cancelled: number;
+    failures: RoleRelinkFailures;
+    startedAt: string;
+    finishedAt: string | null;
+}
+
 /** One recorded bot operation — a drained sync job's outcome (GET /discord/operations). */
 export interface BotOperation {
     id: string;
@@ -141,6 +189,35 @@ export class DiscordService {
         return this.http
             .post<{ enqueued: number }>(`${this.base}/resync`, {})
             .pipe(map((res) => res.enqueued));
+    }
+
+    // ── Bulk role re-link (T-0254) ───────────────────────────────────────────
+    // Changing a rank's/medal's linked role re-roles every holder in Discord. The
+    // backend answers the link/unlink call with `relinkBatchId` — the handle for
+    // the ONE bulk job that change queued — and only when a run was actually
+    // started (nothing is queued when the bot is off, role syncing is off, the
+    // role did not really change, or the rank/medal has no linked holders).
+    //
+    // WHY the link/unlink calls live here rather than on RanksService/MedalsService:
+    // those map their responses through `mapRank`/`mapMedal` into the domain
+    // models, which deliberately carry no transient job handle, so `relinkBatchId`
+    // is dropped before a caller can see it. It is a Discord-sync concern, so the
+    // raw body is read here. (`subject + 's'` is the collection segment: /ranks, /medals.)
+
+    /**
+     * Progress of one bulk re-link. Counts are derived from the job rows, so they
+     * survive an API restart and every polling tab sees the same numbers.
+     */
+    getRelinkProgress(batchId: string): Observable<RoleRelinkProgress> {
+        return this.http.get<RoleRelinkProgress>(`${this.base}/relink/${batchId}`);
+    }
+
+    /**
+     * Stop a run. Members already updated STAY updated — there is no rollback —
+     * and the run reports as `partial` (or `cancelled` if nothing had landed yet).
+     */
+    cancelRelink(batchId: string): Observable<RoleRelinkProgress> {
+        return this.http.post<RoleRelinkProgress>(`${this.base}/relink/${batchId}/cancel`, {});
     }
 
     /** Recent bot operations (first page; the backend caps `limit` at 100). */

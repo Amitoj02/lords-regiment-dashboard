@@ -8,14 +8,42 @@ export interface RegimentEvent {
     id: string;
     title: string;
     description: string;
-    serverName: string;
+    /**
+     * The bound server name, or null when the event has none — and null on every
+     * PUBLIC projection, which never carries the binding at all. Templates must
+     * branch on `hasServerName`, not on this: a public event WITH a server still
+     * reads null here.
+     */
+    serverName: string | null;
     serverRegion?: string;
     serverPassword?: string;
+    /**
+     * VIEWER-LOCAL wall-clock date (`YYYY-MM-DD`) of `startsAt`. Display only —
+     * authoring must go back through `startsAt` + `timezone` (see event-time.ts).
+     */
     date: string;
     /** End date; may differ from `date` for multi-day events. Falls back to `date`. */
     endDate?: string;
+    /** VIEWER-LOCAL `HH:mm` of `startsAt`. */
     startTime: string;
+    /** VIEWER-LOCAL `HH:mm` of `endsAt`; '' when the event is open-ended. */
     endTime: string;
+    /**
+     * The absolute start instant exactly as the API sent it (UTC ISO). The
+     * authoring form re-derives its wall clock from THIS in the event's own zone;
+     * `date`/`startTime` above are already converted to the viewer's zone and
+     * would silently rewrite the event if fed back into a save (T-0251).
+     */
+    startsAt?: string;
+    /** The absolute end instant, or null for an open-ended event. */
+    endsAt?: string | null;
+    /**
+     * Short label for the zone `date`/`startTime` are rendered in, e.g. `GMT+2`.
+     * Resolved per-instant so a summer and a winter event label differently. A
+     * converted time without this reads as if it were the authored zone.
+     */
+    zoneLabel?: string;
+    /** The zone the event was AUTHORED in — not the zone `date`/`startTime` are in. */
     timezone: string;
     platforms: string[];
     status: EventStatus;
@@ -37,7 +65,12 @@ export interface RegimentEvent {
     notifyBefore?: string[];
     /** The signed-in member's own RSVP to this event (member projection only). */
     myRsvp?: RsvpStatus | null;
-    /** Whether the event has a server password set (member projection only). */
+    /**
+     * Presence flags — set on EVERY projection, public included (T-0151/T-0236).
+     * They say only WHETHER a binding exists, which is what an anonymous page
+     * needs to decide between a "password protected" note and showing nothing.
+     */
+    hasServerName?: boolean;
     hasServerPassword?: boolean;
     /** Whether the event is archived (member projection only). */
     isArchived?: boolean;

@@ -78,6 +78,32 @@ describe('DiscordService', () => {
         expect(ops?.[0].operation).toBe('sync');
     });
 
+    // ── Bulk role re-link (T-0254) ───────────────────────────────────────────
+    // The link/unlink calls themselves live on RanksService/MedalsService (they
+    // return the updated row as well as the batch handle); their specs cover the
+    // `relinkBatchId` unwrapping. DiscordService owns only progress + cancel.
+    it('getRelinkProgress() reads the batch progress verbatim', () => {
+        let failures: string[] | undefined;
+        service.getRelinkProgress('batch-1').subscribe((p) => (failures = p.failures.samples));
+        const req = httpMock.expectOne('/api/discord/relink/batch-1');
+        expect(req.request.method).toBe('GET');
+        req.flush({
+            batchId: 'batch-1',
+            state: 'completed',
+            failures: { permanent: 1, exhausted: 0, retrying: 0, samples: ['Missing Permissions'] },
+        });
+        expect(failures).toEqual(['Missing Permissions']);
+    });
+
+    it('cancelRelink() posts the stop and returns the terminal summary', () => {
+        let state: string | undefined;
+        service.cancelRelink('batch-1').subscribe((p) => (state = p.state));
+        const req = httpMock.expectOne('/api/discord/relink/batch-1/cancel');
+        expect(req.request.method).toBe('POST');
+        req.flush({ batchId: 'batch-1', state: 'partial' });
+        expect(state).toBe('partial');
+    });
+
     it('resolveOperation() posts to the resolve endpoint', () => {
         service.resolveOperation('op1').subscribe();
         const req = httpMock.expectOne('/api/discord/operations/op1/resolve');

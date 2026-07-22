@@ -1,0 +1,148 @@
+.doc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 12px;
+}
+
+.doc-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--t-400);
+
+    &:hover {
+        color: var(--t-200);
+    }
+
+    &--active {
+        color: var(--brass-300);
+        border-bottom-color: var(--brass-400);
+        font-weight: 600;
+    }
+}
+
+/* Unsaved marker on a tab the author has left mid-edit. */
+.doc-tab-dot {
+    color: var(--brass-300);
+    margin-left: 4px;
+}
+
+.doc-meta {
+    margin: 0 0 12px;
+}
+
+.doc-editor {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.doc-editor--split {
+    /* Two panes side by side, but only where there is room for both to be
+       readable — below that the preview stacks under the source. */
+    @media (min-width: 900px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.doc-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.doc-pane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.doc-textarea {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 320px;
+}
+
+.doc-preview {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 16px 18px;
+    min-height: 320px;
+    max-height: 60vh;
+    overflow-y: auto;
+    line-height: 1.7;
+    font-size: 0.9rem;
+
+    /* The preview body is inserted via [innerHTML], so it carries no component
+       scoping attribute — ::ng-deep is the only selector that can reach it. The
+       rules deliberately mirror the public legal page's typography. */
+    ::ng-deep {
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 20px 0 6px;
+            font-size: 1.05rem;
+            color: var(--t-100);
+
+            &:first-child {
+                margin-top: 0;
+            }
+        }
+
+        p,
+        li {
+            color: var(--t-200);
+        }
+
+        p {
+            margin: 0 0 12px;
+        }
+
+        ul,
+        ol {
+            margin: 0 0 12px;
+            padding-left: 22px;
+        }
+
+        blockquote {
+            margin: 0 0 12px;
+            padding-left: 14px;
+            border-left: 2px solid var(--brass-400);
+            color: var(--t-300);
+            font-style: italic;
+        }
+
+        a {
+            color: var(--brass-300);
+        }
+
+        code {
+            font-family: var(--font-mono, monospace);
+            font-size: 0.85em;
+        }
+
+        pre {
+            overflow-x: auto;
+            padding: 10px 12px;
+            border: 1px solid var(--rule);
+            border-radius: 6px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 18px 0;
+        }
+    }
+}

@@ -15,8 +15,20 @@ import { ApplicationStatusComponent } from './application-status/application-sta
  * Settings panel as stubs — so /onboarding/setup* now redirects there.
  */
 const routes: Routes = [
-    { path: 'apply', component: ApplicationFormComponent, canActivate: [onboardingGuard] },
-    { path: 'status', component: ApplicationStatusComponent, canActivate: [onboardingGuard] },
+    // `title` feeds AppTitleStrategy (T-0244). The redirects carry none — the route
+    // they land on supplies it.
+    {
+        path: 'apply',
+        component: ApplicationFormComponent,
+        canActivate: [onboardingGuard],
+        title: 'Enlist',
+    },
+    {
+        path: 'status',
+        component: ApplicationStatusComponent,
+        canActivate: [onboardingGuard],
+        title: 'Application Status',
+    },
     // Retired owner-setup wizard → the real admin control panel.
     { path: 'setup/discord', redirectTo: '/app/admin/settings' },
     { path: 'setup', redirectTo: '/app/admin/settings' },

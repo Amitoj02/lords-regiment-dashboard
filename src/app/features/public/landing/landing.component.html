@@ -1,8 +1,14 @@
 <div class="landing-page">
     <hf-public-nav [activeLink]="'/'"></hf-public-nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
+    <!-- Hero Section. Background and scrim come from the admin presentation
+         (T-0238) and fall back to the shipped image/density — `--hero-scrim` is
+         a custom property so the ::before layer inherits it too. -->
+    <section
+        class="hero"
+        [style.background-image]="'url(' + heroBannerUrl + ')'"
+        [style.--hero-scrim]="heroScrim"
+    >
         <div class="hero-overlay"></div>
         <div class="hero-inner">
             <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
@@ -54,15 +60,20 @@
                             </div>
                             <div class="event-details">
                                 <div class="event-title">{{ event.title }}</div>
+                                <!-- Times are the viewer's own clock (T-0237), and the
+                                     Server field is omitted entirely — divider and
+                                     all — when the event has no server bound
+                                     (T-0236). -->
                                 <div class="event-meta row gap-8">
                                     <span class="mono event-meta-time">
-                                        {{ event.startTime }} – {{ event.endTime }} {{
-                                        event.timezone | slice:event.timezone.lastIndexOf('/')+1 }}
+                                        {{ eventTimeRange(event) }}
                                     </span>
+                                    @if (showsServer(event)) {
                                     <span class="event-meta-divider"></span>
-                                    <span class="mono event-meta-server"
-                                        >{{ event.serverName }}</span
-                                    >
+                                    <span class="mono event-meta-server">
+                                        {{ event.serverName || 'Server details on sign-in' }}
+                                    </span>
+                                    }
                                 </div>
                                 <hf-platform-badges
                                     [platforms]="event.platforms"
@@ -106,17 +117,18 @@
                 <div class="panel parchment charter-panel">
                     <div class="panel-body">
                         <div class="rule-ornament charter-ornament-top"></div>
-                        <blockquote class="serif charter-quote">
-                            "We stand not for glory alone, but for order in the line, honour on the
-                            field, and brotherhood in the mess. The regiment endures where the
-                            individual falls."
-                        </blockquote>
+                        <blockquote class="serif charter-quote">"{{ charterQuote }}"</blockquote>
                         <div class="rule-ornament charter-ornament-bottom"></div>
+                        <!-- No attribution → no dash. An admin who writes their own
+                             quote and leaves the attribution blank gets a clean
+                             unattributed pull-quote, not a bare "—". -->
+                        @if (charterQuoteAttribution) {
                         <div class="charter-attribution">
                             <span class="admin-label charter-attribution-label"
-                                >— Regiment Charter, Article I</span
+                                >— {{ charterQuoteAttribution }}</span
                             >
                         </div>
+                        }
                     </div>
                 </div>
 
@@ -147,9 +159,18 @@
                             Discord is required for all regiment operations — voice comms, orders,
                             and announcements.
                         </div>
-                        <button type="button" class="btn btn-discord btn-block">
-                            Join the Lord Regiment Server
-                        </button>
+                        <!-- Hidden entirely when no invite is configured (T-0234); the
+                             notice above still stands, since Discord is required
+                             either way. -->
+                        @if (discordInviteUrl) {
+                        <a
+                            [href]="discordInviteUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="btn btn-discord btn-block discord-cta"
+                            >Join the Lord Regiment Server</a
+                        >
+                        }
                     </div>
                 </div>
             </aside>

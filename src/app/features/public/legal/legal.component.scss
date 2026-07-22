@@ -31,3 +31,74 @@
     font-size: 0.85rem;
     margin-bottom: 20px;
 }
+
+/* Admin-authored body (T-0241).
+ *
+ * The Markdown is injected with [innerHTML], so it carries no component scoping
+ * attribute and the rules above cannot reach it — ::ng-deep is the only selector
+ * that can. These deliberately restate the shipped page's typography so an
+ * authored document is indistinguishable from the copy it replaces, rather than
+ * dumping browser-default markup onto a styled page.
+ *
+ * Anchored on `.legal-body`, the injected wrapper, NOT on the article: an
+ * unscoped `::ng-deep h1` also matches the page's own `.legal-title` heading and
+ * shrinks it to body size. */
+.legal-body ::ng-deep {
+    h1,
+    h2,
+    h3,
+    h4 {
+        margin-top: 24px;
+        margin-bottom: 6px;
+        font-size: 1.05rem;
+    }
+
+    p {
+        margin-bottom: 12px;
+        color: var(--t-200);
+    }
+
+    ul,
+    ol {
+        margin: 0 0 12px;
+        padding-left: 24px;
+        color: var(--t-200);
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    blockquote {
+        margin: 0 0 12px;
+        padding-left: 16px;
+        border-left: 2px solid var(--brass-400);
+        color: var(--t-300);
+        font-style: italic;
+    }
+
+    a {
+        color: var(--brass-300);
+    }
+
+    code {
+        font-family: var(--font-mono, monospace);
+        font-size: 0.9em;
+    }
+
+    /* Long code samples must scroll inside themselves rather than widening the
+       page — the legal column is fixed at 760px. */
+    pre {
+        overflow-x: auto;
+        padding: 12px 14px;
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        margin-bottom: 12px;
+    }
+
+    hr {
+        border: none;
+        border-top: 1px solid var(--rule);
+        margin: 22px 0;
+    }
+}

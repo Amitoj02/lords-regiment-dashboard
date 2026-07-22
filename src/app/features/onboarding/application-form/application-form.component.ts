@@ -105,7 +105,7 @@ export class ApplicationFormComponent implements OnInit {
             preferredClasses: ['', [Validators.required]],
             skillsToImprove: ['', [Validators.required]],
             representativeNote: [''],
-            // Client-only gate: confirms age + Code of Conduct. NOT sent to the API.
+            // Client-only gate: confirms age + the community guidelines. NOT sent to the API.
             ageConfirm: [false, [Validators.requiredTrue]],
             interestConfirm: [false, [Validators.requiredTrue]],
         });

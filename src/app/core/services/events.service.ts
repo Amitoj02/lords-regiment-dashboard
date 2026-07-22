@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, PaginatedResponse, mapEvent, parseNotifyOffset } from '../models/api.model';
+import { wallClockToInstant } from '../models/event-time';
 import { EventStatus, RegimentEvent, RsvpStatus } from '../models/event.model';
 
 /** A confirmed attendee row (GET/POST /events/:id/attendees). Mirrors AttendeeDto. */
@@ -141,6 +142,25 @@ export class EventsService {
         return this.http.post<RevealedPassword>(`${this.base}/${id}/reveal-password`, {});
     }
 
+    /**
+     * A wall clock the admin typed → the absolute instant it denotes IN THE
+     * EVENT'S CHOSEN ZONE (T-0251). This is the exact inverse of the viewer-local
+     * conversion `mapEvent` does for display; shipping one without the other is
+     * what makes an edit-save shift the event by an offset, because the form
+     * prefills through one conversion and submits through the other.
+     *
+     * Changing only the timezone dropdown therefore re-resolves the SAME wall
+     * clock to a new instant, which is what an admin means by that change.
+     *
+     * With no zone (a PATCH that omits `timezone`) it falls back to the naive
+     * wall-clock string rather than guessing: the backend anchors a naive value
+     * to the event's STORED zone (resolveEventInstant), which is right, whereas
+     * assuming the viewer's zone here would move the event.
+     */
+    private static toInstant(date: string, time: string, timezone?: string): string {
+        return (timezone && wallClockToInstant(date, time, timezone)) || `${date}T${time}:00`;
+    }
+
     /** Map the frontend view model onto the backend create/update DTO fields. */
     private toBody(e: Partial<RegimentEvent>): Record<string, unknown> {
         const body: Record<string, unknown> = {};
@@ -149,9 +169,14 @@ export class EventsService {
         // A freshly-uploaded banner is submitted as a storage key (T-0093); the
         // backend re-validates its namespace and stores the resolved public URL.
         if (e.bannerKey !== undefined) body['bannerKey'] = e.bannerKey;
-        if (e.date && e.startTime) body['startsAt'] = `${e.date}T${e.startTime}:00`;
+        if (e.date && e.startTime) {
+            body['startsAt'] = EventsService.toInstant(e.date, e.startTime, e.timezone);
+        }
         // End may fall on a different date than start (T-0089); default to `date`.
-        if (e.endTime) body['endsAt'] = `${e.endDate || e.date}T${e.endTime}:00`;
+        const endDate = e.endDate || e.date;
+        if (e.endTime && endDate) {
+            body['endsAt'] = EventsService.toInstant(endDate, e.endTime, e.timezone);
+        }
         if (e.timezone !== undefined) body['timezone'] = e.timezone;
         if (e.serverName !== undefined) body['serverName'] = e.serverName;
         if (e.serverRegion !== undefined) body['serverRegion'] = e.serverRegion;

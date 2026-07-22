@@ -261,14 +261,24 @@
                         <label for="ageConfirm" class="age-confirm-label">
                             I confirm that I am 18 years of age or older and agree to abide by the
                             regiment's
-                            <a href="#" class="age-confirm-link">Code of Conduct</a> and
-                            <a href="#" class="age-confirm-link">Charter</a>.
+                            <!-- Opens the guidelines in a new tab so a half-filled form is
+                                 never navigated away from (T-0245). stopPropagation keeps
+                                 the click from reaching the label at all — the box must not
+                                 flip just because someone went to read the rules. -->
+                            <a
+                                routerLink="/guidelines"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="age-confirm-link"
+                                (click)="$event.stopPropagation()"
+                                >community guidelines</a
+                            >.
                         </label>
                     </div>
                     @if ( form.get('ageConfirm')?.touched &&
                     form.get('ageConfirm')?.hasError('required') ) {
                     <div class="field-hint field-error age-confirm-error">
-                        You must confirm your age and agree to the terms.
+                        You must confirm your age and agree to the community guidelines.
                     </div>
                     }
                 </div>

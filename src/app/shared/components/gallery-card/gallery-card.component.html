@@ -13,21 +13,23 @@
     <div class="gallery-card-thumb" [ngClass]="aspectClass">
         @if (preview?.kind === 'image') {
         <img [src]="preview!.rawUrl" [alt]="item.title" class="gallery-card-img" />
-        } @else if (preview?.kind === 'video') {
+        } @else if (posterSrc && !posterFailed) {
+        <!-- Poster beats the clip: a still <img> is the only preview iOS Safari paints. -->
+        <img
+            [src]="posterSrc"
+            [alt]="item.title"
+            class="gallery-card-img"
+            (error)="posterFailed = true"
+        />
+        } @else if (preview?.kind === 'video' && !videoFailed) {
         <video
             [src]="preview!.rawUrl"
             class="gallery-card-img"
             preload="metadata"
             muted
             playsinline
+            (error)="videoFailed = true"
         ></video>
-        } @else if (preview?.posterUrl && !posterFailed) {
-        <img
-            [src]="preview!.posterUrl"
-            [alt]="item.title"
-            class="gallery-card-img"
-            (error)="posterFailed = true"
-        />
         } @else {
         <div class="gallery-card-placeholder"></div>
         } @if (showPlay) {

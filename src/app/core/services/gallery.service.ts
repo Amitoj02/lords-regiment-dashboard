@@ -30,7 +30,14 @@ export interface GallerySubmitPayload {
     caption?: string;
     type: GalleryItemType;
     linkUrl?: string;
-    thumbnailUrl?: string;
+    /**
+     * Storage key of a client-captured video poster frame
+     * (lords-dashboard-backend:T-0152). This REPLACED a raw `thumbnailUrl`: the
+     * API used to persist that verbatim with no namespace check, so any caller
+     * could point an item's thumbnail at an arbitrary URL. A key is validated
+     * against the `gallery-poster` namespace server-side before it is stored.
+     */
+    posterKey?: string;
     files?: GalleryFileInput[];
     tags?: string[];
 }

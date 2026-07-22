@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
+import { Observable, of, throwError } from 'rxjs';
+import { RegimentProfile } from '../../../core/models/api.model';
 import { AuthService, CurrentUser } from '../../../core/services/auth.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 import { PublicNavComponent } from './public-nav.component';
 
 /**
@@ -10,6 +13,9 @@ import { PublicNavComponent } from './public-nav.component';
  * dashboard, an applicant their status page, and an anonymous visitor the
  * original Join Discord + Sign in pair. These specs flip the mocked
  * AuthService.currentUser signal and assert the CTA labels + targets follow.
+ *
+ * The Join Discord CTA is also profile-driven (T-0234): it points at the
+ * regiment's configured invite, and disappears when there isn't one.
  */
 class MockAuthService {
     readonly currentUser = signal<CurrentUser | null>(null);
@@ -36,16 +42,40 @@ function makeUser(isMember: boolean): CurrentUser {
     };
 }
 
+function makeProfile(discordInviteUrl: string | null): RegimentProfile {
+    return {
+        id: 'r1',
+        name: 'Lord Regiment',
+        missionStatement: null,
+        accentTone: 'brass',
+        crestUrl: null,
+        bannerUrl: null,
+        establishedYear: 2019,
+        establishedAt: null,
+        discordInviteUrl,
+        discordServerName: null,
+        setupComplete: true,
+        memberCount: 42,
+    };
+}
+
 describe('PublicNavComponent (auth-aware CTA)', () => {
     let fixture: ComponentFixture<PublicNavComponent>;
     let auth: MockAuthService;
+    /** Read lazily by the mock, so a spec can swap it before the first CD. */
+    let profile$: Observable<RegimentProfile | null>;
 
     beforeEach(async () => {
         auth = new MockAuthService();
+        // Default: an invite IS configured, which is the shipped production state.
+        profile$ = of(makeProfile('https://discord.gg/lords'));
         await TestBed.configureTestingModule({
             imports: [CommonModule, RouterModule.forRoot([])],
             declarations: [PublicNavComponent],
-            providers: [{ provide: AuthService, useValue: auth }],
+            providers: [
+                { provide: AuthService, useValue: auth },
+                { provide: RegimentService, useValue: { getProfile: () => profile$ } },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PublicNavComponent);
@@ -60,6 +90,10 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
     }
     function hrefs(): string[] {
         return Array.from(cta().querySelectorAll('a')).map((a) => a.getAttribute('href') ?? '');
+    }
+    /** The Discord invite anchor, or null when it is absent from the DOM. */
+    function discordLink(): HTMLAnchorElement | null {
+        return cta().querySelector('.public-nav-discord');
     }
 
     it('shows Join Discord + Sign in for an anonymous visitor', () => {
@@ -94,5 +128,52 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
         fixture.componentInstance.signOut();
         expect(auth.logout).toHaveBeenCalled();
         expect(fixture.componentInstance.menuOpen).toBe(false);
+    });
+
+    describe('Join Discord CTA (T-0234)', () => {
+        it('points at the configured invite and opens it safely in a new tab', () => {
+            fixture.detectChanges();
+            const link = discordLink();
+            expect(link).not.toBeNull();
+            expect(link!.getAttribute('href')).toBe('https://discord.gg/lords');
+            expect(link!.getAttribute('target')).toBe('_blank');
+            // Prevents the opened tab from reaching back through window.opener.
+            expect(link!.getAttribute('rel')).toBe('noopener noreferrer');
+        });
+
+        it('hides the CTA entirely when no invite is configured', () => {
+            profile$ = of(makeProfile(null));
+            fixture.detectChanges();
+            expect(discordLink()).toBeNull();
+            expect(ctaText()).not.toContain('Join Discord');
+            // …and never leaves a dead link behind in its place.
+            expect(hrefs()).toEqual(['/login']);
+        });
+
+        it('treats a blank invite as unconfigured', () => {
+            profile$ = of(makeProfile('   '));
+            fixture.detectChanges();
+            expect(discordLink()).toBeNull();
+        });
+
+        it('hides the CTA when the profile fetch fails rather than breaking the bar', () => {
+            profile$ = throwError(() => new Error('network'));
+            fixture.detectChanges();
+            expect(discordLink()).toBeNull();
+            expect(ctaText()).toContain('Sign in');
+        });
+
+        it('closes the mobile menu when the invite is followed', () => {
+            fixture.detectChanges();
+            fixture.componentInstance.menuOpen = true;
+            const link = discordLink()!;
+            // Suppress the real navigation the karma runner would otherwise
+            // attempt; the binding under test has already run by then.
+            link.addEventListener('click', (e) => e.preventDefault());
+            // The anchor opens another tab; the collapsed menu must not be left
+            // hanging open behind it.
+            link.click();
+            expect(fixture.componentInstance.menuOpen).toBe(false);
+        });
     });
 });

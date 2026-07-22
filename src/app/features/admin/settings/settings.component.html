@@ -10,7 +10,7 @@
                     type="button"
                     class="nav-item"
                     [ngClass]="{ 'nav-item--active': activeSection === item.id }"
-                    (click)="activeSection = item.id"
+                    (click)="setSection(item.id)"
                 >
                     {{ item.label }}
                 </button>
@@ -597,6 +597,15 @@
                 </button>
             </div>
             } }
+
+            <!-- ═══ Public pages (T-0238..T-0240) ═══ -->
+            <!-- Both live in their own components: this template was already 600
+                 lines, and each editor owns a distinct API pair and capability. -->
+            @if (activeSection === 'presentation') {
+            <hf-regiment-presentation></hf-regiment-presentation>
+            } @if (activeSection === 'legal') {
+            <hf-legal-editor></hf-legal-editor>
+            }
         </main>
     </div>
 </hf-app-shell>

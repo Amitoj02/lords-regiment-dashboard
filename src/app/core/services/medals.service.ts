@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiMedal, mapMedal } from '../models/api.model';
 import { Medal } from '../models/member.model';
+import { LinkDiscordResult, toLinkResult } from './link-discord-result';
 
 export interface MedalPayload {
     title?: string;
@@ -43,15 +44,20 @@ export class MedalsService {
             .pipe(map((rows) => rows.map(mapMedal)));
     }
 
-    linkDiscord(id: string, discordRoleId: string, discordRoleName?: string): Observable<Medal> {
+    linkDiscord(
+        id: string,
+        discordRoleId: string,
+        discordRoleName?: string,
+    ): Observable<LinkDiscordResult<Medal>> {
         return this.http
             .post<ApiMedal>(`${this.base}/${id}/link-discord`, { discordRoleId, discordRoleName })
-            .pipe(map(mapMedal));
+            .pipe(map(toLinkResult(mapMedal)));
     }
 
-    unlinkDiscord(id: string): Observable<Medal> {
+    /** An unlink is a re-link to nothing, so it queues a run too — holders LOSE the role. */
+    unlinkDiscord(id: string): Observable<LinkDiscordResult<Medal>> {
         return this.http
             .post<ApiMedal>(`${this.base}/${id}/unlink-discord`, {})
-            .pipe(map(mapMedal));
+            .pipe(map(toLinkResult(mapMedal)));
     }
 }

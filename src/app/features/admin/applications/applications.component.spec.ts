@@ -1,6 +1,7 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApplicationsComponent } from './applications.component';
@@ -48,7 +49,9 @@ describe('ApplicationsComponent', () => {
         applicationsService.hold.and.returnValue(of(applications[0]));
 
         TestBed.configureTestingModule({
-            imports: [CommonModule, RouterModule.forRoot([])],
+            // FormsModule so the decision textareas are really bound — the
+            // prefill/reset behaviour under test is only observable through them.
+            imports: [CommonModule, FormsModule, RouterModule.forRoot([])],
             declarations: [ApplicationsComponent],
             providers: [{ provide: ApplicationsService, useValue: applicationsService }],
             schemas: [NO_ERRORS_SCHEMA],
@@ -221,5 +224,178 @@ describe('ApplicationsComponent', () => {
         clickApprove();
 
         expect(decisionError()).toBeFalsy();
+    });
+
+    // ── Decision text: two boxes, two audiences (T-0247 / T-0248) ───────────────
+
+    /**
+     * Read a decision textarea. `tick()` first: ngModel writes the model into the
+     * DOM on a microtask, so a bare detectChanges leaves the box looking empty.
+     */
+    function textarea(id: string): HTMLTextAreaElement {
+        tick();
+        fixture.detectChanges();
+        const el = fixture.nativeElement.querySelector(`#${id}`) as HTMLTextAreaElement;
+        expect(el).withContext(`the decision pane renders #${id}`).toBeTruthy();
+        return el;
+    }
+
+    /** The label element bound to a decision textarea. */
+    function labelFor(id: string): HTMLElement {
+        return fixture.nativeElement.querySelector(`label[for="${id}"]`);
+    }
+
+    it('names the applicant-facing box "User message" and marks the note staff-only', fakeAsync(() => {
+        setup([application()]);
+
+        expect(labelFor('user-message').textContent?.trim()).toBe('User message');
+        // Whose eyes each box reaches must be stated in the UI, not just implied
+        // by the field name — the two are one word apart and opposite in effect.
+        const userHint = textarea('user-message').parentElement!.querySelector('.field-hint');
+        expect(userHint?.textContent).toContain('applicant receives this');
+
+        const noteLabel = labelFor('moderator-note');
+        expect(noteLabel.textContent).toContain('Moderator note');
+        expect(noteLabel.querySelector('.note-audience')?.textContent?.trim()).toBe('Staff only');
+    }));
+
+    it('declines with the note staff-side and the message applicant-side', () => {
+        setup([application()]);
+
+        component.moderatorNote = 'Internal: no-showed twice';
+        component.userMessage = 'Not this time — do reapply.';
+
+        const btn = fixture.nativeElement.querySelector(
+            '.decisions-row .action-btns .btn-destructive',
+        ) as HTMLButtonElement;
+        btn.click();
+
+        // Argument ORDER is the invariant: the note must never travel in the
+        // applicant-visible slot (T-0248).
+        expect(applicationsService.decline).toHaveBeenCalledWith(
+            'a1',
+            'Internal: no-showed twice',
+            'Not this time — do reapply.',
+        );
+    });
+
+    it('re-fills both boxes from the stored values when an application is selected', fakeAsync(() => {
+        setup([
+            application({
+                id: 'a1',
+                status: 'declined',
+                moderatorNote: 'Internal: no-showed twice',
+                userMessage: 'Not this time — do reapply.',
+            }),
+        ]);
+        component.setTab('declined');
+        fixture.detectChanges();
+
+        expect(textarea('moderator-note').value).toBe('Internal: no-showed twice');
+        expect(textarea('user-message').value).toBe('Not this time — do reapply.');
+    }));
+
+    it('swaps cleanly between applications instead of carrying text across', fakeAsync(() => {
+        setup([
+            application({
+                id: 'a1',
+                applicantName: 'Decided One',
+                status: 'declined',
+                moderatorNote: 'Internal note for a1',
+                userMessage: 'Message for a1',
+            }),
+            application({ id: 'a2', applicantName: 'Pending Two', status: 'declined' }),
+        ]);
+        component.setTab('declined');
+        fixture.detectChanges();
+        expect(component.selectedId).toBe('a1');
+
+        queueRows()[1].click();
+        fixture.detectChanges();
+
+        // a2 stored nothing, so both boxes are empty and their placeholders show —
+        // a partial reset here is what used to leak a1's text onto a2.
+        expect(textarea('moderator-note').value).toBe('');
+        expect(textarea('user-message').value).toBe('');
+
+        queueRows()[0].click();
+        fixture.detectChanges();
+        expect(textarea('moderator-note').value).toBe('Internal note for a1');
+        expect(textarea('user-message').value).toBe('Message for a1');
+    }));
+
+    it('leaves a pending application with empty boxes', fakeAsync(() => {
+        setup([application({ status: 'pending' })]);
+
+        expect(textarea('moderator-note').value).toBe('');
+        expect(textarea('user-message').value).toBe('');
+        expect(textarea('user-message').placeholder).toContain('applicant');
+    }));
+
+    // ── Decision attribution (T-0250) ──────────────────────────────────────────
+
+    function attribution(): HTMLElement | null {
+        return fixture.nativeElement.querySelector('.decision-by');
+    }
+
+    it('shows who declined an application and when', () => {
+        setup([
+            application({
+                status: 'declined',
+                decidedByName: 'Colonel Hale',
+                decidedByAvatarUrl: 'https://cdn/hale.png',
+                decidedAt: '2026-07-19T12:00:00.000Z',
+            }),
+        ]);
+        component.setTab('declined');
+        fixture.detectChanges();
+
+        const text = attribution()?.textContent?.replace(/\s+/g, ' ').trim();
+        expect(text).toContain('Declined by Colonel Hale');
+        expect(text).toContain('Jul 19, 2026');
+    });
+
+    it('attributes a HELD application even though it has no decision timestamp', () => {
+        setup([
+            application({
+                status: 'held',
+                decidedByName: 'Sergeant Rook',
+                decidedAt: undefined,
+            }),
+        ]);
+        component.setTab('held');
+        fixture.detectChanges();
+
+        // A hold is not a final decision, so `decidedAt` stays null — driving the
+        // block off the timestamp would silently drop the held case.
+        const text = attribution()?.textContent?.replace(/\s+/g, ' ').trim();
+        expect(text).toContain('Held by Sergeant Rook');
+    });
+
+    it('renders the date alone when the decider’s member row was removed', () => {
+        setup([
+            application({
+                status: 'declined',
+                decidedByName: null,
+                decidedByAvatarUrl: null,
+                decidedAt: '2026-07-19T12:00:00.000Z',
+            }),
+        ]);
+        component.setTab('declined');
+        fixture.detectChanges();
+
+        const el = attribution();
+        expect(el).withContext('the decision itself is still reported').toBeTruthy();
+        expect(el!.textContent).not.toContain('null');
+        // No name → no avatar to render initials from.
+        expect(el!.querySelector('hf-avatar')).toBeFalsy();
+        expect(el!.textContent?.replace(/\s+/g, ' ')).toContain('Declined');
+    });
+
+    it('shows no attribution block on a pending application', () => {
+        setup([application({ status: 'pending' })]);
+
+        expect(attribution()).toBeFalsy();
+        expect(component.decisionAttribution).toBeNull();
     });
 });

@@ -1,0 +1,169 @@
+<!-- The Moderator case: adminGuard lets them onto /app/admin/settings, but the
+     API grants manage_regiment_details to Owner + Admin only. Say so plainly
+     instead of rendering controls that 403 on save. -->
+@if (!canEdit) {
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title">Public presentation</span>
+    </div>
+    <div class="panel-body">
+        <hf-notice variant="info">
+            Editing the landing and sign-in pages needs the "Manage regiment details" permission.
+            Ask an Owner or Admin to make the change, or to grant it under Roles &amp; permissions.
+        </hf-notice>
+    </div>
+</div>
+} @else if (loadError) {
+<div class="panel">
+    <div class="panel-body">
+        <hf-notice variant="err">{{ loadError }}</hf-notice>
+    </div>
+</div>
+} @else if (!draft) {
+<div class="panel">
+    <div class="panel-body">
+        <span class="field-hint">Loading the public presentation…</span>
+    </div>
+</div>
+} @else { @for (surface of surfaces; track surface.key) {
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title">{{ surface.title }}</span>
+    </div>
+    <div class="panel-body">
+        <p class="field-hint pres-blurb">{{ surface.blurb }}</p>
+
+        <!-- Live preview: background, scrim and quote exactly as the public page
+             composes them, so the density slider is judged against the result
+             rather than against a number. -->
+        <div
+            class="pres-preview"
+            [class.pres-preview--login]="surface.key === 'login'"
+            [style.background-image]="'url(' + bannerUrl(surface.key) + ')'"
+        >
+            <div class="pres-preview-scrim" [style.opacity]="scrim(surface.key)"></div>
+            <div class="pres-preview-inner">
+                <blockquote class="serif pres-preview-quote">
+                    "{{ effectiveQuote(surface.key) }}"
+                </blockquote>
+                @if (effectiveAttribution(surface.key)) {
+                <div class="pres-preview-attribution">
+                    — {{ effectiveAttribution(surface.key) }}
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Background image -->
+        <div class="field-row">
+            <label class="field-label" [attr.for]="'pres-banner-' + surface.key"
+                >Background image</label
+            >
+            <input
+                class="hf-input"
+                type="file"
+                [id]="'pres-banner-' + surface.key"
+                accept="image/png,image/jpeg,image/webp"
+                [disabled]="uploading[surface.key]"
+                (change)="onBannerSelected(surface.key, $event)"
+            />
+            <span class="field-hint">
+                Recommended 1920 × 1080 or wider · {{ hint(surface.key) }}
+            </span>
+            @if (uploading[surface.key]) {
+            <span class="field-hint flash">Uploading…</span>
+            } @if (uploadError[surface.key]) {
+            <hf-notice variant="err">{{ uploadError[surface.key] }}</hf-notice>
+            } @if (hasCustomBanner(surface.key)) {
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm pres-reset"
+                (click)="removeBanner(surface.key)"
+            >
+                Remove — use the shipped image
+            </button>
+            }
+        </div>
+
+        <!-- Pull-quote -->
+        <div class="field-row">
+            <label class="field-label" [attr.for]="'pres-quote-' + surface.key">Pull-quote</label>
+            <textarea
+                class="hf-textarea"
+                [id]="'pres-quote-' + surface.key"
+                rows="3"
+                [maxlength]="quoteMaxLength"
+                [placeholder]="defaultQuote(surface.key)"
+                [ngModel]="quote(surface.key)"
+                (ngModelChange)="setQuote(surface.key, $event)"
+            ></textarea>
+            <span class="field-hint">
+                {{ quote(surface.key).length }} / {{ quoteMaxLength }} · leave empty to use the
+                shipped quote.
+            </span>
+        </div>
+
+        <div class="field-row">
+            <label class="field-label" [attr.for]="'pres-attr-' + surface.key">Attribution</label>
+            <input
+                class="hf-input"
+                type="text"
+                [id]="'pres-attr-' + surface.key"
+                [maxlength]="attributionMaxLength"
+                [placeholder]="defaultAttribution(surface.key)"
+                [ngModel]="attribution(surface.key)"
+                (ngModelChange)="setAttribution(surface.key, $event)"
+            />
+            <span class="field-hint">
+                {{ attribution(surface.key).length }} / {{ attributionMaxLength }} · blank on a
+                custom quote prints no attribution line at all.
+            </span>
+        </div>
+
+        <!-- Overlay density -->
+        <div class="field-row">
+            <label class="field-label" [attr.for]="'pres-density-' + surface.key"
+                >Overlay density</label
+            >
+            <div class="row gap-12 pres-density-row">
+                <input
+                    class="pres-density"
+                    type="range"
+                    [id]="'pres-density-' + surface.key"
+                    min="0"
+                    [max]="densityMax"
+                    step="1"
+                    [ngModel]="sliderValue(surface.key)"
+                    (ngModelChange)="setDensity(surface.key, $event)"
+                />
+                <span class="mono pres-density-value">
+                    @if (densityUnset(surface.key)) { Default ({{ defaultDensity(surface.key) }}%) }
+                    @else { {{ density(surface.key) }}% }
+                </span>
+                @if (!densityUnset(surface.key)) {
+                <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    (click)="setDensity(surface.key, null)"
+                >
+                    Reset
+                </button>
+                }
+            </div>
+            <span class="field-hint">
+                How much the image is darkened behind the text. 0% leaves the photograph untouched.
+            </span>
+        </div>
+    </div>
+</div>
+}
+
+<div class="settings-footer">
+    @if (flash) {
+    <span class="field-hint flash">{{ flash }}</span>
+    }
+    <button type="button" class="btn btn-primary" [disabled]="!canSave" (click)="save()">
+        {{ saving ? 'Saving…' : 'Save presentation' }}
+    </button>
+</div>
+}

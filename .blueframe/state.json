@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "89b0dd921cdb3db128187cd8f92f223950723d98",
-  "lastSyncedAt": "2026-07-20T22:20:00Z",
-  "notesForNextSession": "FIRST PRODUCTION DEPLOY happened and immediately surfaced T-0231: the site rendered half-styled. Root cause was NOT the Cloudflare beacon error in the console (that is cosmetic) - it was Angular's inlineCritical emitting <link media=\"print\" onload=\"this.media='all'\">, whose INLINE EVENT HANDLER the production script-src 'self' blocks, leaving the main stylesheet permanently scoped to print. Fixed in angular.json (PR #20, merged as 9bc5f07) by pinning optimization.styles.inlineCritical:false, and VERIFIED LIVE - production now serves a plain <link rel=\"stylesheet\"> with no onload. DEPLOYS ARE MANUAL BY DESIGN: merging only publishes images; production is rolled ONLY by the backend repo workflow_dispatch \"Deploy to production\", which takes BOTH api_tag and web_tag. A merged fix is NOT a shipped fix - this bug appeared to persist purely because that workflow had not been run since the merge. NOTE the styles-*.css hash does NOT change across this fix (the CSS content is identical, only how it is linked), so never use the asset hash to confirm a frontend deploy landed - grep the served index.html for the onload attribute instead. THE CLASS OF BUG TO WATCH FOR: anything that only manifests under the production CSP is invisible locally - the development configuration sets optimization:false so the inliner never runs, and ng serve sends no CSP header at all. A local prod build would ALSO have passed. When touching build optimisation or adding any third-party origin, diff the emitted dist index.html against the live CSP by hand. THE CSP LIVES IN THE BACKEND REPO (lords-dashboard-backend Caddyfile), not here. OPEN DECISION for the user: the Cloudflare Web Analytics beacon (static.cloudflareinsights.com) is CSP-blocked - either disable Web Analytics in the CF dashboard (recommended, keeps script-src tight) or add it to script-src plus cloudflareinsights.com to connect-src in the backend Caddyfile. No backend PR raised pending that call. STATE IS STILL BROADLY STALE: ~70 tasks (T-0161..T-0230) are merged to main AND now actually in production but still sit at deploy_ready - run /bf-sync to sweep them to deployed, deliberately left out of PR #20 to keep it focused. Keep this file ASCII-escaped (ensure_ascii) or every em-dash line shows as a spurious diff; testPlan status MUST be pending|passed|failed.",
-  "nextIdCounter": 232,
+  "lastSyncedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+  "lastSyncedAt": "2026-07-22T20:05:00Z",
+  "notesForNextSession": "*** THIS SESSION: implemented all 22 planned SPA tasks T-0233..T-0254 on branch feat/planned-tasks-t0233-t0254 (status 'review' pending PR merge; flip to 'deployed' once merged). 438 specs green (from 186), ng lint + prettier + build clean. PAIRED WITH lords-dashboard-backend branch feat/planned-tasks-t0144-t0160 - THE TWO MUST DEPLOY TOGETHER: the applicant projection split is breaking for the current SPA main (it still renders moderatorNote/declineReason on the applicant status page), and the SPA's new surfaces need the new API routes. One deploy workflow rolls both images, so merge and roll both. NEW SHARED MODULES worth knowing: src/app/core/models/event-time.ts (Intl-only, DST-correct instant<->wall-clock, 32 specs incl. a five-zone round-trip invariant) and src/app/shared/services/markdown.service.ts (escape-first, dependency-free, protocol allow-listed; bind with plain [innerHTML] - NEVER bypassSecurityTrustHtml, Angular's sanitiser is the deliberate second layer). T-0243 IS BLOCKED ON ASSETS, NOT CODE - the generated icon set is not in the repo; the manifest and head links are wired and the exact filenames to drop into public/ are in a commented block in src/index.html. VERIFIED IN CHROME (anonymous surfaces only): /events renders 19:30-22:30 EDT for a 23:30Z instant with an America/Toronto viewer, no server block on an event with none, 'Login to RSVP' when signed out; /privacy renders the shipped fallback when unset AND a seeded hostile document safely (zero script elements, no alert, javascript: link produced no anchor); the hero computes to the shipped gradient when unconfigured. COULD NOT VERIFY AUTHENTICATED SURFACES: the local api container runs DISCORD_MOCK=false with real credentials from .env, so ?as=owner redirects to real Discord. Flip DISCORD_MOCK=true (and DISCORD_BOT_MOCK=true) and restart the api container before the next UI pass - see T-0255. The local dev DB needed the backend's new migration run against it; that has been done.",
+  "nextIdCounter": 258,
   "connections": [],
   "tasks": [
     {
@@ -223,7 +223,7 @@
       "id": "T-0006",
       "title": "Public site (landing, events, gallery, login)",
       "summary": "Unauthenticated public feature module: landing/home page, events listing, gallery grid, Discord login page, plus public-nav and public-footer chrome. Fully built against stub services; login only simulates the OAuth redirect.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -253,7 +253,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-22T17:54:57.974Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -268,6 +268,13 @@
           "to": "review",
           "by": "claude",
           "note": "Partial: the landing 'Apply to Join' CTA is now wired to the real sign-in flow (AuthService.applyToJoin) and the login is real OAuth. STILL DEFERRED before a public deploy: the landing stats + Officers' Mess are hardcoded mock arrays (landing.component.ts) \u2014 wire GET /regiment/stats and guard un-wired surfaces so no fabricated data is publicly visible (T-0032 dependency)."
+        },
+        {
+          "at": "2026-07-22T17:54:57.974Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "human",
+          "note": ""
         }
       ]
     },
@@ -330,7 +337,7 @@
       "id": "T-0008",
       "title": "Member area (dashboard, roster, profile)",
       "summary": "Authenticated member feature module (AuthGuard): dashboard, roster listing, own/other profile (profile/:id). Redirects '' -> dashboard. The old admin-action-modal shell was removed in the tech-debt cleanup; account-deletion (GDPR self-service) is now tracked separately (T-0020).",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -364,7 +371,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-22T17:54:58.881Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -372,6 +379,13 @@
           "to": "review",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        },
+        {
+          "at": "2026-07-22T17:54:58.881Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "human",
+          "note": ""
         }
       ]
     },
@@ -379,7 +393,7 @@
       "id": "T-0009",
       "title": "Admin panel (9 screens)",
       "summary": "Admin feature module (AuthGuard + AdminGuard) with 9 routes: applications review, ranks/medals, event create + detail, gallery submit + moderation, audit log, settings, and bot status. Redirects '' -> applications. The GDPR admin route was removed in the cleanup (GDPR is now the member-side account-deletion flow, T-0020).",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "XL",
       "sizeWeight": 8,
@@ -410,7 +424,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-22T17:54:59.582Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -418,6 +432,13 @@
           "to": "review",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; built but stub-driven and untested"
+        },
+        {
+          "at": "2026-07-22T17:54:59.582Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "human",
+          "note": ""
         }
       ]
     },
@@ -425,7 +446,7 @@
       "id": "T-0010",
       "title": "Stub auth service & route guards",
       "summary": "Signal-based AuthService with a hard-coded logged-in user (Jameson Nolt, Lieutenant/Moderator) exposing isAuthenticated/isAdmin/isOwnerOrAdmin, plus AuthGuard and AdminGuard. Login/logout are stubbed; no tokens or real identity.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -452,7 +473,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T00:44:53Z",
-      "updatedAt": "2026-07-11T01:45:00Z",
+      "updatedAt": "2026-07-22T17:55:02.646Z",
       "history": [
         {
           "at": "2026-07-11T00:44:53Z",
@@ -460,6 +481,13 @@
           "to": "review",
           "by": "claude",
           "note": "created via bf-init reverse-engineering; stub auth, real flow not implemented"
+        },
+        {
+          "at": "2026-07-22T17:55:02.646Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "human",
+          "note": ""
         }
       ]
     },
@@ -1053,7 +1081,7 @@
       "id": "T-0020",
       "title": "Member account-deletion (GDPR self-service)",
       "summary": "Member-side account-deletion flow (/dashboard account-deletion route) that replaced the removed admin GDPR screen: request deletion / export data, built against stub services. Will round-trip to the backend GDPR endpoints (deletion-request + confirm + export) once HTTP is wired.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -1081,7 +1109,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "c2e191e",
       "createdAt": "2026-07-11T01:45:00Z",
-      "updatedAt": "2026-07-12T19:02:09Z",
+      "updatedAt": "2026-07-22T17:55:01.418Z",
       "history": [
         {
           "at": "2026-07-11T01:45:00Z",
@@ -1096,6 +1124,13 @@
           "to": "review",
           "by": "claude",
           "note": "Deferred to a follow-up: the backend GDPR endpoints exist (POST /members/me/deletion-request + /confirm, GET /members/me/export) but the account-deletion component is still static UI with no service call. Out of the applicant self-service epic scope this session; next session wires it."
+        },
+        {
+          "at": "2026-07-22T17:55:01.418Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "human",
+          "note": ""
         }
       ]
     },
@@ -10171,7 +10206,7 @@
       "id": "T-0161",
       "title": "Medal.tv posters in MediaEmbedService; render on public gallery + dashboard",
       "summary": "Extend MediaEmbedService.resolve() to supply a posterUrl for medaltv items by calling the backend Medal thumbnail proxy (today only youtube gets a poster; medaltv falls through to the placeholder). This lights up the already poster-aware hf-gallery-card used on the public /gallery page and the /app/dashboard recent-gallery section, so both surfaces show Medal and YouTube thumbnails.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -10218,7 +10253,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10233,6 +10268,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10240,7 +10282,7 @@
       "id": "T-0162",
       "title": "/app/gallery: show video/medal thumbnails and link cards to /gallery/:id",
       "summary": "The /app/gallery grid paints a CSS background via thumb(), which cannot show a video frame or a Medal.tv poster (both render as a flat colour) and the card has no click behaviour. Replace the inline card with the shared hf-gallery-card (or add a video/poster branch) so direct-video and Medal/YouTube items get real thumbnails, and make each card navigate to the public detail route /gallery/:id.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -10276,7 +10318,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10291,6 +10333,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10298,7 +10347,7 @@
       "id": "T-0163",
       "title": "Profile gallery tab: fix blank image/video thumbnails",
       "summary": "The profile page gallery tab binds an img src to item.thumbnailUrl, but that legacy column is never populated by the upload flow (mapped to an empty string), so nothing renders and videos have no branch at all. Replace it with hf-gallery-card (or resolve mediaUrl through MediaEmbedService) so images, direct video, Medal and YouTube items all show a thumbnail, and scope the tab to the profiled member.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -10339,7 +10388,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10354,6 +10403,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10361,7 +10417,7 @@
       "id": "T-0164",
       "title": "Gallery submit: detect Medal.tv/YouTube link and show a live preview",
       "summary": "The submit form link tab is a bare input with no provider detection or preview. Inject MediaEmbedService (and the backend resolver for Medal posters) so that when a user pastes an external link the form detects the provider and shows a live embed/poster preview before submitting.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -10398,7 +10454,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10413,6 +10469,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10420,7 +10483,7 @@
       "id": "T-0165",
       "title": "Fix stale profile when navigating between /app/profile/:id routes",
       "summary": "Both /app/profile and /app/profile/:id resolve to ProfileComponent, which reads the id once via route.snapshot.paramMap in ngOnInit; Angular reuses the instance on param-only navigation, so going User -> My profile keeps the previous member until a hard refresh. Subscribe to route.paramMap and reload the member (and recompute isOwnProfile / canViewPrivate) on every param change.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -10461,7 +10524,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10476,6 +10539,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10483,7 +10553,7 @@
       "id": "T-0166",
       "title": "Add a back button to the user profile page (desktop + mobile)",
       "summary": "The profile page has no back control on either desktop or mobile. Add a back button to the profile header (reusing the existing .back-link ghost-button pattern from the gallery detail page, or Location.back()), visible and usable at both desktop and mobile widths.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -10512,7 +10582,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10527,6 +10597,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10534,7 +10611,7 @@
       "id": "T-0167",
       "title": "Pad the applications admin empty-state text",
       "summary": "At /app/admin/applications the empty-state text 'No applications in this view.' uses .empty-state / .empty-state--md classes that have no CSS in this component's scope (defined only, view-encapsulated, in dashboard.component.scss), so it renders with near-zero padding inside the padding-stripped .queue-list. Add a padded .empty-state rule to the applications SCSS (this also covers the detail-column empty state).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -10562,7 +10639,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10577,6 +10654,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10584,7 +10668,7 @@
       "id": "T-0168",
       "title": "Dashboard: expand main to full width when the role-gated aside is empty",
       "summary": "On /app/dashboard the .dashboard-grid reserves a 1fr right column even when every .dashboard-aside panel is role-gated away (non-moderator, no manage_events), leaving dead whitespace. Wrap the aside in a role check and add a grid modifier so .dashboard-main spans the full width when the aside is not rendered.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -10616,7 +10700,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10631,6 +10715,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10638,7 +10729,7 @@
       "id": "T-0169",
       "title": "Move account deletion from the edit-profile dialog to a dedicated page",
       "summary": "The Edit My Profile dialog embeds the full app-account-deletion danger-zone form. Re-add a member route (/app/account-deletion, previously removed in T-0144) for AccountDeletionComponent, and replace the embed in the dialog with a single Delete my profile button that navigates to that page.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -10676,7 +10767,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10691,6 +10782,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10698,7 +10796,7 @@
       "id": "T-0170",
       "title": "Fix empty bordered box below the profile avatar",
       "summary": "The .profile-avatar border is applied to the hf-avatar host, which has no :host display rule, so the 124px inner avatar overflows an empty inline line-box and the rounded --ink-850 border draws an empty box beneath it. Add :host { display: inline-flex } to the avatar component (or move the border onto the sized inner tile / .profile-avatar-wrap).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -10736,7 +10834,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10751,6 +10849,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10758,7 +10863,7 @@
       "id": "T-0171",
       "title": "Ranks & Medals: render the New/Edit form above the ladder & cabinet",
       "summary": "At /app/admin/ranks the editorMode editor panel is placed after the rank-ladder/medal-cabinet grid, so clicking New opens the form below both sections. Move the editor block to before the ladder grid (after the notices) so it appears on top - a pure template reorder, no TS change.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -10785,7 +10890,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10800,6 +10905,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10807,7 +10919,7 @@
       "id": "T-0172",
       "title": "Highlight 'My profile' in the sidebar when viewing a profile",
       "summary": "The profile page hardcodes activeRoute to 'roster', so the side-nav (and mobile bottom-nav) highlight Members instead of My profile on any /app/profile/:id. Change the profile page activeRoute to 'profile' so both nav surfaces highlight the correct item.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -10838,7 +10950,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10853,6 +10965,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10860,7 +10979,7 @@
       "id": "T-0173",
       "title": "Remove the like counter from the gallery card",
       "summary": "Remove the heart icon + like-count element from the shared hf-gallery-card (markup + styles); likes are not needed yet. Leave GalleryItem.likes and the backend likesCount intact - only the UI display is removed. Because the card is shared, this also removes the counter from the dashboard Recent Gallery.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -10906,7 +11025,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -10921,6 +11040,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -10928,7 +11054,7 @@
       "id": "T-0174",
       "title": "Show the submitter avatar and fix its clipping in the gallery card",
       "summary": "The gallery card passes only [name] to hf-avatar, so the submitter's profile picture never renders, and the avatar is being visually clipped. Carry the submitter avatar URL through the GalleryItem model + mapGalleryItem (from the new backend author.avatarUrl) and bind it to hf-avatar [avatarUrl], then fix the clipping by adjusting the card's submitter-row padding/margins - not the shared avatar component. Fixes both /gallery and the dashboard Recent Gallery.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -10989,7 +11115,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -11004,6 +11130,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11011,7 +11144,7 @@
       "id": "T-0175",
       "title": "Remove the non-functional 'Filters' button on the audit page",
       "summary": "The 'Filters' button in the audit page header has no click handler and does nothing; the real filter controls live in the filter row below. Remove the dead button and leave the working search/actor/action filter row (including the currently-unwired time-range select) and the STAFF Export CSV button intact.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -11047,7 +11180,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-17T00:00:00Z",
-      "updatedAt": "2026-07-17T00:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-17T00:00:00Z",
@@ -11062,6 +11195,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Implemented + verified; CI green (format/lint/build/tests), browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11069,7 +11209,7 @@
       "id": "T-0176",
       "title": "Rank gallery tags by usage and cap the filter bar to the top 5",
       "summary": "In GalleryPageComponent, count how often each tag appears across approved items, sort descending by count, and expose the top 5 as the default visible set plus the full ranked list behind an expanded flag. Ensure an active tag that falls outside the top 5 stays visible while the list is collapsed so the current filter is never hidden.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11121,7 +11261,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:42:44Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:42:44Z",
@@ -11136,6 +11276,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11143,7 +11290,7 @@
       "id": "T-0177",
       "title": "Add an animated 'More'/'Less' expander to reveal the full gallery tag list",
       "summary": "Add a 'More' chip after the top-5 tags that smoothly expands the tag bar to reveal every remaining tag (and a 'Less' control to collapse it), styled to match the brass gallery-tag chips. Any tag in the expanded list is clickable to filter, and the reveal uses a graceful height/opacity transition rather than a hard jump.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11196,7 +11343,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:42:44Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:42:44Z",
@@ -11211,6 +11358,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11218,7 +11372,7 @@
       "id": "T-0178",
       "title": "Fix profile back-button clipping into the user banner (desktop + mobile)",
       "summary": "The back button added in T-0166 sits directly above .profile-banner, whose negative top margin (margin: -24px -24px 0 on desktop; -16px / -14px at the mobile breakpoints) plus overflow:hidden rides the banner up under the button so it visually clips. Adjust the .back-link / .profile-banner spacing (and stacking) in profile.component.scss so the back control clears the banner at desktop and both mobile widths without losing the full-bleed banner gutter.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -11251,7 +11405,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11266,6 +11420,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11273,7 +11434,7 @@
       "id": "T-0179",
       "title": "Ranks & Medals: replace the single top button with 'New Role' + 'New Medal' and drop the section 'New' buttons",
       "summary": "At /app/admin/ranks, replace the single golden '+ New' button (calls newRank) in the header toolbar with two golden btn-primary buttons labelled 'New Role' (newRank) and 'New Medal' (newMedal) beside the Sync-with-Discord button, and remove the ghost '+ New' buttons from the Rank Ladder and Medal Cabinet panel headers. Update the 'Use \"+ New\"' empty-state copy in both panels. Template-only change - newRank()/newMedal() handlers already exist.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11309,7 +11470,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11324,6 +11485,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11331,7 +11499,7 @@
       "id": "T-0180",
       "title": "Highlight 'My profile' in the sidebar only when viewing your own profile",
       "summary": "Refines T-0172. The profile page hardcodes [activeRoute]=\"'profile'\", so opening any /app/profile/:id highlights 'My profile' even for another member (e.g. Ownr00000001). Bind activeRoute to the already-computed isOwnProfile flag (isOwnProfile ? 'profile' : '') so the side-nav and mobile bottom-nav highlight My profile only on your own profile and highlight nothing on others'.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -11364,7 +11532,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11379,6 +11547,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11386,7 +11561,7 @@
       "id": "T-0181",
       "title": "Add a left inset so the submitter avatar isn't clipped by the gallery card edge",
       "summary": "Follows T-0174. On /app/gallery, /gallery and the profile gallery tab the submitter avatar in the shared hf-gallery-card hugs the 12px card-body padding and is visually clipped by the card's overflow:hidden. Add extra left padding/margin to the .gallery-submitter row (card SCSS only, not the shared hf-avatar component) so the whole avatar sits inside the card on all three surfaces.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -11428,7 +11603,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11443,6 +11618,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11450,7 +11632,7 @@
       "id": "T-0182",
       "title": "Show the submitter avatar and link the name to their profile on the media detail page",
       "summary": "On the public media detail page (/gallery/:id) the byline renders hf-avatar with [name] only (always initials) and the submitter name is plain text. Bind [avatarUrl]=\"item.submittedByAvatarUrl\" (already carried on GalleryItem and returned by GET /gallery/:id) and wrap the name in a routerLink to /app/profile/:submittedByMemberId - the AuthGuard-protected profile route, so an unauthenticated visitor is routed through login as expected.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11489,7 +11671,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11504,6 +11686,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11511,7 +11700,7 @@
       "id": "T-0183",
       "title": "Add admin actions (edit description, edit tags, delete) to the media detail page",
       "summary": "Add a moderator-only actions block to the media detail page (/gallery/:id) gated by can('moderate_gallery'): edit the caption/description and the tags via a new gallery.service.update() -> PATCH /gallery/:id, and a Delete button (existing gallery.service.delete() -> DELETE /gallery/:id) that removes the item and its MinIO object. The media content itself (the uploaded/linked file) is not editable.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -11564,7 +11753,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11579,6 +11768,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11586,7 +11782,7 @@
       "id": "T-0184",
       "title": "Roster status column: derive Suspended/Banned/Inactive tags with explanatory tooltips",
       "summary": "Replace the raw member.status pill in the roster table with a derived status: Banned (bannedAt set), Suspended (suspendedUntil in the future), Inactive (no login for >3 weeks / 21 days from lastSeenAt), else Active/Pending. All fields are already exposed by GET /members (MemberDto: status, lastSeenAt, suspendedUntil, bannedAt) so no backend change is needed - derivation is client-side (the SCHEMA references a 30-day auto-inactive job that does not yet exist; use the 21-day threshold the user asked for). Add a title/tooltip on each tag explaining its meaning and extend the status colour map + filter options.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -11643,7 +11839,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11658,6 +11854,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11665,7 +11868,7 @@
       "id": "T-0185",
       "title": "Show real actor avatars on the audit page",
       "summary": "The audit table and detail panel already render hf-avatar but pass [name] only, so they show initials tiles. Add an actor avatar field to the audit-log model + ApiAuditEntry + mapAuditLog and bind [avatarUrl] on both hf-avatar usages, sourced from the new backend actorAvatarUrl projection; keep the initials fallback for system/bot actors.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11710,7 +11913,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11725,6 +11928,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11732,7 +11942,7 @@
       "id": "T-0186",
       "title": "Dark-theme the audit detail boxes (replace the parchment/white panels)",
       "summary": "On /app/admin/audit the .detail-desc and .state-grid (Before/After) boxes use light --parch-* backgrounds that read as white against the otherwise dark admin theme. Restyle them with dark surface/border tokens consistent with the rest of the admin UI in audit.component.scss, keeping the text legible.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -11764,7 +11974,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "72c9585558529e52b20f6eff70bd9e60f6691b1c",
       "createdAt": "2026-07-18T03:48:15Z",
-      "updatedAt": "2026-07-18T04:56:34Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T03:48:15Z",
@@ -11779,6 +11989,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "implemented + browser-verified; CI green (format/lint/build/133 specs)"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11786,7 +12003,7 @@
       "id": "T-0190",
       "title": "Add post title to the media-detail \"Edit details\" form",
       "summary": "Expose the gallery post title as an editable field in the inline Edit-details form on /gallery/:id, alongside the existing caption and tags. Seed editTitle from item.title, add an optional title to UpdateGalleryPayload, and send it in the PATCH so moderators can rename a post.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11826,7 +12043,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T19:03:51Z",
-      "updatedAt": "2026-07-18T19:03:51Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T19:03:51Z",
@@ -11834,6 +12051,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11841,7 +12065,7 @@
       "id": "T-0191",
       "title": "Gate \"Edit details\" to moderate_gallery only and let the post author Delete on the media-detail page",
       "summary": "Split the shared moderator @if block on /gallery/:id so 'Edit details' stays visible only to holders of moderate_gallery (never the author), while 'Delete' also shows for the post author (currentUser().id === item.submittedByMemberId). Adds an owner/permission getter in the detail component.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -11889,7 +12113,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T19:03:51Z",
-      "updatedAt": "2026-07-18T19:03:51Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T19:03:51Z",
@@ -11897,6 +12121,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11904,7 +12135,7 @@
       "id": "T-0192",
       "title": "Rank/Medal icon data layer: add imageUrl+imageKey, drop chevrons/ribbon, set svg/png @250px policy",
       "summary": "Add `imageUrl` (read) + a write-only `imageKey` to the Rank and Medal view models (member.model.ts) and to `RankPayload`/`MedalPayload`; drop `chevrons` from Rank, `ribbon` (+ the `MedalRibbon` type and `MemberMedalAward.ribbon`) from Medal, and `Member.chevrons` in favour of the linked rank's `imageUrl`. Update `ApiRank`/`ApiMedal` + `mapRank`/`mapMedal`/`mapMedalAward` (api.model.ts) to carry the icon URL. Retune the `rank-image`/`medal-image` entries in the storage policy (storage.service.ts) from png/jpg/webp@4MB to svg+png with a 250px hint. Foundation for the editor + render tasks.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -11965,7 +12196,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T21:18:15Z",
-      "updatedAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T21:18:15Z",
@@ -11973,6 +12204,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the data-shape foundation - add icon fields, drop chevrons/ribbon, align the upload policy to svg/png @250px."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -11980,7 +12218,7 @@
       "id": "T-0193",
       "title": "Render uploaded rank & medal icons everywhere (retire chevron pips + ribbon colour dots)",
       "summary": "Rewrite `hf-medal` to render the uploaded `imageUrl` (with a letter/initials fallback tile and load-error fallback like hf-avatar) and retire the ribbon->hex `RIBBON_MAP`. Replace `hf-chevrons` with a small rank-icon render (new `hf-rank-icon` or repurposed component) driven by the rank `imageUrl`. Rebind every display site: dashboard honors strip (chevrons :10 + hf-medal :22-26), roster (rank cell :120 + the `.roster-medal-dot` ribbon dots :126-127), and profile (rank row :38 + honours grid :69-73). Ensure the small icon placeholders never clip and carry sufficient padding/margins (object-fit:contain, box padding, no overflow crop) per the design ask.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -12046,7 +12284,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T21:18:15Z",
-      "updatedAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T21:18:15Z",
@@ -12054,6 +12292,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; the shared render change - image-based hf-medal + rank-icon, plus rebinding all display sites and the no-clip/padding styling."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12061,7 +12306,7 @@
       "id": "T-0194",
       "title": "Rank editor: replace the chevron-count input with a rank-icon upload control",
       "summary": "In RanksMedalsComponent, swap the Chevrons number input (ranks-medals.component.html:80-89) and the `editRankChevrons` state (ts:58,189,199,211) for a rank-icon upload control modeled on the profile avatar/banner uploader: a hidden file input `accept=image/svg+xml,image/png`, client-side validation of type + 250px max dimension before upload, a live preview via the new rank-icon render, `StorageService.upload('rank-image', file)` -> `imageKey`, and the upload hint. Update the editor preview (:67) and the rank-ladder row (:244) to show the icon instead of `hf-chevrons`.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -12111,7 +12356,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T21:18:15Z",
-      "updatedAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T21:18:15Z",
@@ -12119,6 +12364,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; replace the rank chevron-count input with an svg/png rank-icon uploader (client-validated type + 250px)."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12126,7 +12378,7 @@
       "id": "T-0195",
       "title": "Medal editor: replace the ribbon-colour picker with a medal-image upload control",
       "summary": "In RanksMedalsComponent, remove the ribbon-swatch picker (ranks-medals.component.html:129-145, the `.ribbon-picker` styles :136-183, and `editRibbon`/`ribbonOptions` ts:67,74,279,294) and add a medal-image upload control mirroring the rank-icon one: hidden file input `accept=image/svg+xml,image/png`, client-side type + 250px validation, live preview via the rewritten hf-medal, `StorageService.upload('medal-image', file)` -> `imageKey`, upload hint. Update the medal editor preview (:128) and the medal-cabinet row (:327-331) to render the image.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -12172,7 +12424,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T21:18:15Z",
-      "updatedAt": "2026-07-18T21:18:15Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T21:18:15Z",
@@ -12180,6 +12432,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; replace the ribbon-colour swatch picker with an svg/png medal-image uploader (client-validated type + 250px)."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12187,7 +12446,7 @@
       "id": "T-0196",
       "title": "Public nav: match the paired CTA button sizes (signed-out & signed-in)",
       "summary": "On the public nav (public-nav.component.html:26-41) the paired CTAs render at different heights because one carries `btn-sm` and the other doesn't: signed-out 'Join Discord' (btn-ghost btn-sm) vs 'Sign in' (btn-discord, no size), and signed-in 'Dashboard' (btn-primary) vs 'Sign out' (btn-ghost btn-sm). Make each pair the same size.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12221,7 +12480,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12229,6 +12488,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; equalize the signed-out and signed-in CTA button sizes in the public nav."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12236,7 +12502,7 @@
       "id": "T-0197",
       "title": "Public nav: remove the 'Officers' and 'Charter' links",
       "summary": "Remove the 'Officers' (/officers) and 'Charter' (/charter) entries from the public nav `navLinks` array (public-nav.component.ts:24-25), rendered via @for at public-nav.component.html:16-24. Leaves Home, Events, Gallery.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -12265,7 +12531,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12273,6 +12539,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; drop the Officers and Charter nav links from the public navbar."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12280,7 +12553,7 @@
       "id": "T-0198",
       "title": "Login: center the digit inside each numbered step ring",
       "summary": "The numbered how-to-join step badges on /login (login.component.html:43, `.login-step-num serif`) aren't centered in their 28px circle (login.component.scss:121-134) \u2014 the `serif` font metrics offset the flex centering. Adjust line-height/optical centering so the digit sits dead-center in the ring.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12309,7 +12582,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12317,6 +12590,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; fix off-center digits in the login step-number rings."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12324,7 +12604,7 @@
       "id": "T-0199",
       "title": "Events create: left-align the preview tags with the content above",
       "summary": "In the event-create Preview panel the tag badges (event-create.component.html:335-339, `.preview-tags`) sit flush-left and don't line up with the spacing of the lines above. Add matching left margin/padding on `.preview-tags` (event-create.component.scss:203-206) so the tags align with the rest of the preview.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12349,7 +12629,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12357,6 +12637,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; add left margin so preview tags align with the section above."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12364,7 +12651,7 @@
       "id": "T-0200",
       "title": "Events create: fix 'When' Starts/Ends field padding and time AM/PM clipping",
       "summary": "The 'When' > Starts & Ends fields (event-create.component.html:105-140) have padding/margins inconsistent with the other form fields, and the time input (`.time-input`, event-create.component.scss:182-188, width:100px) clips the AM/PM marker. Align the date/time field padding with the shared `.hf-input` spacing and widen/adjust the time input so AM/PM isn't cut off (incl. the mobile override at :310-322).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -12393,7 +12680,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12401,6 +12688,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; make the When Starts/Ends fields consistent and stop clipping AM/PM."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12408,7 +12702,7 @@
       "id": "T-0201",
       "title": "Event detail: left-align password / notify-before / tags rows with the section",
       "summary": "On the event detail page the server-password text (event-detail.component.html:62-65), the notify-before badges (:76-84) and the tags badges (:85-94) have less left margin than the other fields in their section. Give these rows (`.field-row-tight`, event-detail.component.scss:84-91) the same left margin so they align with the sibling entities.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12433,7 +12727,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12441,6 +12735,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; align password/notify/tags rows with the other detail fields."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12448,7 +12749,7 @@
       "id": "T-0202",
       "title": "Event detail: require an RSVP before revealing the server password (toast error)",
       "summary": "The reveal button (event-detail.component.html:58,66-73) is gated only on hasServerPassword + the reveal_event_passwords capability, not on RSVP. When the current user hasn't RSVP'd (selectedRsvp/event.myRsvp is null; event-detail.component.ts:21,59,100), clicking Reveal should show a toast error telling them to RSVP first instead of calling revealPassword(), mirroring the backend RSVP gate.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -12488,7 +12789,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12496,6 +12797,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; gate password reveal behind an RSVP and toast an error when missing."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12503,7 +12811,7 @@
       "id": "T-0203",
       "title": "Event detail: populate the Attendees section with the RSVP roster (avatar, name, choice)",
       "summary": "The Attendees grid (event-detail.component.html:99-118) is empty because getAttendees() (events.service.ts:118-120) returns EventAttendee {memberId,name,checkedInAt} with no avatar or RSVP choice, and the section is gated on view_members_directory (event-detail.component.ts:64-77). Consume the new backend RSVP-roster endpoint and render each RSVP'er's real avatar, username and RSVP choice.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -12547,7 +12855,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12555,6 +12863,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; render the RSVP roster (avatar/name/choice) in the Attendees section."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12562,7 +12877,7 @@
       "id": "T-0204",
       "title": "Events: mark start-past/end-future events as 'Ongoing' (list + detail)",
       "summary": "Events read Concluded/'Previous' as soon as their start passes; they should read 'Ongoing' while start is past but end is still future. The backend already returns endsAt and a computed status (upcoming/ongoing/previous) which the FE passes straight through (api.model.ts:327); hf-event-status maps ongoing->'Live', previous->'Concluded' (event-status.component.ts:26-37). Derive/override the displayed status from startsAt+endsAt so an in-progress event shows 'Ongoing' immediately (no scheduler lag) across the admin list (events-admin.component.ts:52-54), public events page (events-page.component.ts:26-28) and detail banner (event-detail.component.html:11).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -12618,7 +12933,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12626,6 +12941,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; treat start-past/end-future events as Ongoing instead of Concluded."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12633,7 +12955,7 @@
       "id": "T-0205",
       "title": "Date/time inputs: render the native calendar/clock icons in white",
       "summary": "Native <input type=date>/<input type=time> pickers (e.g. event-create.component.html:109-137) show a dark, low-contrast calendar/clock glyph on the dark field background because no color-scheme is set (no ::-webkit-calendar-picker-indicator rule anywhere in src/). Add `color-scheme: dark` (and/or a picker-indicator filter) to the shared `.hf-input` (src/styles/_forms.scss:15-52) so picker icons render white across every date/time field.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -12671,7 +12993,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12679,6 +13001,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; make native date/time picker icons white via color-scheme on .hf-input."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12686,7 +13015,7 @@
       "id": "T-0206",
       "title": "Roster: remove the Discord column from the members table",
       "summary": "Remove the 'Discord' column from the roster table: the header (roster.component.html:86) and the cell (roster.component.html:138-151, the .roster-discord-dot status dot + Linked/Unlinked label), and drop the empty-state colspan from 8 to 7 (:182). The separate Discord tag under the Member column stays.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -12710,7 +13039,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12718,6 +13047,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; remove the Discord column and fix the empty-state colspan."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12725,7 +13061,7 @@
       "id": "T-0207",
       "title": "Profile: vertically align the back-button arrow with its label",
       "summary": "The '<- Back' button on the profile page (profile.component.html:5-7, `.back-link`) renders the arrow and text as one run, so the arrow glyph sits on the text baseline instead of centered. Wrap the arrow in its own element with proper line-height/flex so it aligns vertically with 'Back' (profile.component.scss:8-12). The same pattern exists in gallery-detail.component.html:5.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12759,7 +13095,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12767,6 +13103,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; vertically center the profile back-button arrow with its label."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12774,7 +13117,7 @@
       "id": "T-0208",
       "title": "Admin applications: remove the unused 'Open in Discord' button",
       "summary": "Remove the 'Open in Discord' button (applications.component.html:131-138, `.detail-header__discord`) from the application detail header and its now-orphaned style (applications.component.scss:173-175).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -12799,7 +13142,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12807,6 +13150,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; remove the unused Open in Discord button + orphaned style."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12814,7 +13164,7 @@
       "id": "T-0209",
       "title": "Admin applications: dark-theme the parchment answer fields",
       "summary": "The applicant answer fields 'How did you find us?', 'Preferred classes' and 'Skills to improve' (applications.component.html:165-183, class `qa-answer parchment serif`) render on a light parchment background that's too high-contrast. Drop the global `parchment` class and restyle `.qa-answer` (applications.component.scss:111-119) to dark tokens; apply the same to the 'Note to recruiting officer' field (:185-192) for consistency.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -12839,7 +13189,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12847,6 +13197,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; replace the light parchment answer fields with dark styling."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12854,7 +13211,7 @@
       "id": "T-0210",
       "title": "Admin applications: show Block / Re-enable conditionally by blocked state",
       "summary": "Both 'Block from applying' and 'Re-enable' render unconditionally (applications.component.html:269-289; handlers applications.component.ts:167-208). Plumb a `blocked` flag through ApiApplication->Application (api.model.ts:97-119, mapApplication:217-237; application.model.ts:7-28) from the backend admin projection, then show Block only when not blocked and Re-enable only when blocked.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -12895,7 +13252,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12903,6 +13260,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; gate Block vs Re-enable on the applicant blocked flag."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12910,7 +13274,7 @@
       "id": "T-0211",
       "title": "Public gallery detail: add left margin to the submitter byline",
       "summary": "On the public media detail page the submitter block \u2014 avatar + name + submission date (gallery-detail.component.html:53-71, `.detail-byline`) \u2014 sits too close to the left edge relative to the other content in the section. Add left margin/padding on `.detail-byline` (gallery-detail.component.scss:92-121) so the whole avatar+name+date block is margined at least as much as the sibling entities.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12935,7 +13299,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-18T23:04:04Z",
-      "updatedAt": "2026-07-18T23:04:04Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-18T23:04:04Z",
@@ -12943,6 +13307,13 @@
           "to": "planned",
           "by": "claude",
           "note": "created via bf-plan; add left margin to the gallery-detail submitter byline block."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -12950,7 +13321,7 @@
       "id": "T-0212",
       "title": "Darken the ranks/medals per-row kebab menu background",
       "summary": "On /app/admin/ranks the per-row options drop-down (.row-menu) uses a light parchment background (var(--parch-100)) that reads as white against the dark shell. Switch it to a dark surface (e.g. an --ink-* token) with matching dark hover/text/rule colours so the menu matches the rest of the dark UI.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -12978,7 +13349,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -12993,6 +13364,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Darkened the ranks/medals kebab .row-menu to an ink surface (light text, brighter oxblood danger). Browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13000,7 +13378,7 @@
       "id": "T-0213",
       "title": "Darken the Medal Cabinet row hover to stay above the panel bg",
       "summary": "The Medal Cabinet list rows (.medal-row:hover) highlight with a light parchment fill (var(--parch-50)) that reads as white. Change the hover to a dark fill that is lighter than the panel background (--ink-800) \u2014 e.g. --ink-750/--ink-700 \u2014 so the hover stays visible without being darker than the surface it sits on.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -13028,7 +13406,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13043,6 +13421,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Darkened the Medal Cabinet row hover to --ink-700 (a step above the panel bg). Browser-verified."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13050,7 +13435,7 @@
       "id": "T-0214",
       "title": "Add WebP to the rank/medal icon upload policy",
       "summary": "Extend the rank/medal icon accepted-type policy from PNG+SVG to PNG+SVG+WebP in the storage-service source of truth (ICON_TYPES mime + extension lists and the DEFAULT_STORAGE_POLICY fallback for the rank-image and medal-image targets). The data-driven upload hints derive their accepted-type copy from this policy, so they update automatically once WebP is added.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -13093,7 +13478,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T02:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T02:00:00Z",
@@ -13108,6 +13493,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Added image/webp to ICON_TYPES + DEFAULT_STORAGE_POLICY; hints auto-derive WebP. Couples with backend T-0130."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13115,7 +13507,7 @@
       "id": "T-0215",
       "title": "Accept WebP in the rank & medal icon upload controls",
       "summary": "Allow WebP files in the admin rank-icon and medal-image upload controls: add image/webp to the component ICON_MIME_TYPES allowlist, update the rejection copy from 'Please choose a PNG or SVG image' to name WebP, and add image/webp to both file-input accept attributes. WebP is raster, so validateIconFile already routes it through the existing 250px-per-side cap \u2014 no new dimension logic is needed. Update the icon-validation specs to cover WebP accept + oversized-WebP reject.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13165,7 +13557,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T02:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T02:00:00Z",
@@ -13180,6 +13572,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Accept WebP in the rank/medal icon controls (allowlist, accept attrs, copy, specs). Couples with backend T-0130."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13187,7 +13586,7 @@
       "id": "T-0216",
       "title": "Ranks & Medals editor: fix uneven gap on right/bottom of the custom icon placeholder",
       "summary": "In the /app/admin/ranks editor, the boxed live-preview placeholder (.icon-preview wrapping hf-rank-icon / hf-medal) shows a small extra gap on the right and bottom edges \u2014 the icon is not centred within the 96px square box, so padding is asymmetric. Centre the icon component inside .icon-preview (flex centring / consistent inset) so the gap is even on all four sides.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -13220,7 +13619,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T03:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T03:00:00Z",
@@ -13235,6 +13634,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Flex-centred the editor .icon-preview via a wrapper div \u2014 even 8px gap on all four sides (verified via DOM measurement)."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13242,7 +13648,7 @@
       "id": "T-0217",
       "title": "Brighten active section-nav text on admin Settings",
       "summary": "On /app/admin/settings the secondary (in-page) sidebar nav (Profile & visibility, Discord & Adjutant, Roles & permissions) marks the active item with a dim brass text colour. Switch the active item's text to a brighter yellow/brass so the current section is clearly legible.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -13274,7 +13680,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:48:43Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:48:43Z",
@@ -13289,6 +13695,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Brightened the active Settings section-nav text to --brass-300 (verified rgb(213,177,103))."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13296,7 +13709,7 @@
       "id": "T-0218",
       "title": "Left-align save buttons & recent-ops rows on Settings \u203a Discord & Adjutant",
       "summary": "On /app/admin/settings \u203a Discord & Adjutant the \"Save invite link\" and \"Save bot settings\" button rows, plus the \"Recent operations\" list items, sit flush to a different left edge than the field-rows and toggle-rows above them. Give the .invite-save / .bot-save button rows and the .op-line rows a left margin (or padding) equal to or greater than the section's other items so every control lines up on the same left edge.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -13333,7 +13746,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:05:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T01:05:00Z",
@@ -13348,6 +13761,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Zeroed the Bootstrap .row negative left margin on the save-button + recent-ops rows so they align on the section left edge (verified all at x=533)."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13355,7 +13775,7 @@
       "id": "T-0219",
       "title": "Detect & pretty-print JSON in audit Before/After values",
       "summary": "In the audit detail dialog, when a Before or After value parses as JSON, render it indented and syntax-tidied in a monospace block instead of a single unreadable line. Values that are not valid JSON keep rendering as-is. Add a small pure helper that safely tries to parse and format, so malformed input never throws.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13402,7 +13822,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:52:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:52:00Z",
@@ -13417,6 +13837,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "JSON-prettify Before/After in a mono block; non-JSON verbatim. Pure helper in audit-diff.util.ts with specs."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13424,7 +13851,7 @@
       "id": "T-0220",
       "title": "Git-style green/red line diff between Before and After",
       "summary": "When both Before and After are present (and ideally JSON-prettified), compute a line-level diff and render added lines in green and removed lines in red, git-style, so reviewers see exactly what changed. Compute the diff in a pure helper; fall back to the side-by-side Before/After view when a diff is not meaningful (e.g. only one side present or non-textual).",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -13464,7 +13891,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:52:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:52:00Z",
@@ -13479,6 +13906,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Git-style LCS line diff (red -/green +) between Before/After; pure diffLines helper + specs. Verified 3 add/3 remove/15 context on a real entry."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13486,7 +13920,7 @@
       "id": "T-0221",
       "title": "Polish diff/JSON view UI \u2014 theming, scroll containment, view toggle",
       "summary": "Style the prettified-JSON and diff blocks to match the dark military design system: monospace, contained scroll, accessible green/red that reads in the modal. Add a lightweight toggle to switch between the diff view and the raw Before/After view so users can always see the original values.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13526,7 +13960,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T00:52:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:52:00Z",
@@ -13541,6 +13975,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Diff/raw toggle (defaults to diff), theme-matched, contained scroll, +/- gutters + visually-hidden add/remove labels for AT (a11y review fix). Verified at 440px width."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13548,7 +13989,7 @@
       "id": "T-0222",
       "title": "Applications: carry live applicant identity in view-model + API mapping",
       "summary": "Extend the Application view-model and mapApplication() to carry the applicant's live identity from the reshaped admin projection \u2014 currentAvatarUrl and currentDisplayName (reflecting post-approval renames and avatar changes) \u2014 alongside the already-mapped promotedMemberId used for the profile deep-link. Shared plumbing consumed by the detail header and queue list.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13593,7 +14034,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13608,6 +14049,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "View-model + mapApplication carry currentDisplayName/currentAvatarUrl/promotedMemberId with null passthrough + specs."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13615,7 +14063,7 @@
       "id": "T-0223",
       "title": "Applications detail: live avatar + clickable name link to member profile",
       "summary": "In the application detail header, render the applicant's current avatar image (fallback to initials tile) and current display name instead of the submit-time snapshot, so the review always reflects the applicant's current profile. Make the name a link to /app/profile/:promotedMemberId when the applicant has a member record. Add left margin on the username so it aligns with the discord-tag line below it.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13655,7 +14103,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13670,6 +14118,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Detail header live avatar + display name; name links to /app/profile/:promotedMemberId when promoted; aligned name with the meta line. Verified live name \"Test\" + href."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13677,7 +14132,7 @@
       "id": "T-0224",
       "title": "Applications queue: live avatar + aligned username/discord margins",
       "summary": "In the queue applicant list, show each applicant's current avatar image and current display name / discord tag (fallback to initials), and add left margin to the username and discord username so the two text lines align consistently beside the avatar.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13712,7 +14167,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "da5e75b79fdf0da912a22a96db000219c95354cc",
       "createdAt": "2026-07-19T01:00:00Z",
-      "updatedAt": "2026-07-19T03:32:11Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T01:00:00Z",
@@ -13727,6 +14182,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Queue live avatar + display name; aligned username/discord margins beside the avatar (verified both at x=330)."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13734,7 +14196,7 @@
       "id": "T-0225",
       "title": "Fix invalid testPlan status values breaking Blueframe state validation",
       "summary": "The T-0212..T-0224 test plans recorded verified items with status \"done\", which is not a member of the testPlan status enum (pending|passed|failed). state.json therefore failed schema validation and the Blueframe server at 127.0.0.1:7317 reported the repo with taskCount: 0, surfacing no tasks at all. Remapped the 43 affected entries to \"passed\" (all were verified acceptance criteria on deploy_ready tasks); no other fields changed.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -13766,7 +14228,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "e9247891416f828350d3321db5086fda2d07b224",
       "createdAt": "2026-07-19T04:10:00Z",
-      "updatedAt": "2026-07-19T04:10:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T04:10:00Z",
@@ -13781,6 +14243,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "Remapped 43 testPlan \"done\" -> \"passed\"; server now loads the repo (taskCount restored)."
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13788,7 +14257,7 @@
       "id": "T-0226",
       "title": "Reword Member/Mercenary applicant-type cards on /onboarding/apply",
       "summary": "Replace the descriptive copy under the Member and Mercenary selector cards on the apply form with the new approved wording. Member emphasises enlistment, rankings and medals; Mercenary emphasises playing alongside the regiment, shared experiences and select events. Copy-only change \u2014 no control, form or validation behaviour changes.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -13829,7 +14298,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-19T00:00:00Z",
-      "updatedAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:00:00Z",
@@ -13844,6 +14313,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "approved copy applied; cards verified level at 1440px and stacked at 390px"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13851,7 +14327,7 @@
       "id": "T-0227",
       "title": "Show applicant type (Member vs Mercenary) on the admin application detail",
       "summary": "The admin application detail pane never surfaces which enlistment track the applicant chose, so moderators approve without knowing whether the person becomes a Member or a Mercenary. Add an 'Applying as' row to the detail info grid, driven by the existing applicantType field already returned by the API and already mapped in api.model.ts.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -13904,7 +14380,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-19T00:00:00Z",
-      "updatedAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:00:00Z",
@@ -13919,6 +14395,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "applicant-type pill rendered beside the status badge in the detail header"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13926,7 +14409,7 @@
       "id": "T-0228",
       "title": "Add a Mercenary pill to the admin application queue rows",
       "summary": "Follow-on to T-0227: distinguish the two enlistment tracks in the queue list itself so moderators can triage without opening each application. Render a badge on queue items using the existing global .badge modifiers, alongside the status and Re-apply badges.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -13971,7 +14454,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-19T00:00:00Z",
-      "updatedAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-19T00:00:00Z",
@@ -13986,6 +14469,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "parch pill on Mercenary queue rows only; verified alongside a Re-apply badge"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -13993,7 +14483,7 @@
       "id": "T-0229",
       "title": "Stop offering the Mercenary card when the track is closed",
       "summary": "The API now refuses a Mercenary application with 403 when RegimentSettings.allowMercenaries is false (backend T-0133). A form that keeps offering the card walks applicants into a wall, so the card is withdrawn instead. The flag is read from the public GET /api/regiment profile because an Applicant cannot read GET /settings. Permissive by design: the field is optional, a failed profile fetch keeps both cards, and a pre-filled Mercenary application keeps its card so hiding it can never silently rewrite a submission to Member. The cards are gated on the profile having settled so a closed track cannot remove the card after first paint and shift the form beneath it.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -14038,14 +14528,20 @@
       "regressionRisk": [
         {
           "desc": "CROSS-REPO DEPLOY COUPLING: reads allowMercenaries from GET /api/regiment, which only exists after backend T-0137. The field is declared OPTIONAL and absent is treated as permissive, so a frontend-first deploy degrades safely (both cards shown, and the API refuses a Mercenary submit anyway) - but the gate is inert until the backend lands. Ship the two PRs together.",
-          "status": "open",
-          "notedAt": "2026-07-20T05:00:00Z"
+          "status": "resolved",
+          "notedAt": "2026-07-20T05:00:00Z",
+          "resolvedAt": "2026-07-22T17:57:15Z",
+          "resolvedBy": "T-0229",
+          "note": "Backend counterpart lords-dashboard-backend:T-0137 (expose allowMercenaries on GET /api/regiment) is deployed, and both images are now live in production, so the gate reads a real field instead of degrading to permissive."
         }
+      ],
+      "resolvesRisk": [
+        "T-0229#0"
       ],
       "skippedByClaude": [],
       "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-20T05:00:00Z",
-      "updatedAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-20T05:00:00Z",
@@ -14053,6 +14549,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "created to keep T-0133 enforcement coherent end to end"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -14060,7 +14563,7 @@
       "id": "T-0230",
       "title": "Surface server refusals on admin application decisions",
       "summary": "approve/decline/hold (and the block/unblock applicant actions) swallowed server errors into console.error, so a moderator refused by the new closed-mercenary-track 403 saw the detail pane sit unchanged with the application still Pending and nothing explaining why - the likely next action being repeated clicking. The server message now reaches the pane via the established hf-notice pattern, cleared when a new decision starts, when one succeeds, and when a different application is selected so a refusal never bleeds across applications.",
-      "status": "deploy_ready",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -14111,7 +14614,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "367f2c43a8b481e35d6349b1ee825bf12cffc5c2",
       "createdAt": "2026-07-20T05:00:00Z",
-      "updatedAt": "2026-07-20T05:00:00Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
       "history": [
         {
           "at": "2026-07-20T05:00:00Z",
@@ -14119,6 +14622,13 @@
           "to": "deploy_ready",
           "by": "claude",
           "note": "found by adversarial review of the T-0227/T-0228 diff"
+        },
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": "deploy_ready",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main and rolled to production via the backend deploy workflow (api_tag + web_tag); user confirmed at sync"
         }
       ]
     },
@@ -14195,6 +14705,1784 @@
           "to": "deployed",
           "by": "claude",
           "note": "merged as PR #20 (9bc5f07) and rolled to production via the backend deploy workflow (run 29782828905, web_tag pinned to 9bc5f07). Verified live: index.html now serves a plain <link rel=\"stylesheet\"> with no onload and no media=\"print\"."
+        }
+      ]
+    },
+    {
+      "id": "T-0232",
+      "title": "Decide the Cloudflare Web Analytics beacon vs the production CSP",
+      "summary": "Production serves script-src 'self' (Caddyfile in lords-dashboard-backend), so Cloudflare's auto-injected Web Analytics beacon from static.cloudflareinsights.com is blocked and logs a console error on every page. It is cosmetic - it was NOT the cause of T-0231 - but it means analytics collect nothing. Two mutually exclusive options: turn Web Analytics off in the Cloudflare dashboard (recommended, keeps script-src tight and needs no code change), or allow static.cloudflareinsights.com in script-src plus cloudflareinsights.com in connect-src in the backend Caddyfile. No PR is raised in either repo pending that call.",
+      "status": "questionnaire",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "observability",
+      "subfeature": "web-analytics",
+      "repo": "",
+      "paths": [],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Cloudflare Web Analytics is CSP-blocked in production: disable Web Analytics in the Cloudflare dashboard (recommended - keeps script-src 'self', no code change, no analytics), or widen the backend Caddyfile CSP to allow static.cloudflareinsights.com in script-src and cloudflareinsights.com in connect-src?",
+          "answer": null,
+          "askedAt": "2026-07-22T17:57:15Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "After the chosen fix, lordsofholdfast.com loads with no CSP violation in the console",
+          "status": "pending"
+        },
+        {
+          "desc": "If the CSP was widened: the Cloudflare Web Analytics dashboard records pageviews for the live site",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [
+        "Did not raise a backend Caddyfile PR - the CSP-widening option is a security trade-off that is the user's call, and the alternative needs no code at all."
+      ],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-22T17:57:15Z",
+      "updatedAt": "2026-07-22T17:57:15Z",
+      "history": [
+        {
+          "at": "2026-07-22T17:57:15Z",
+          "from": null,
+          "to": "questionnaire",
+          "by": "claude",
+          "note": "created during /bf-sync from the T-0231 post-deploy findings; blocked on a product/security decision"
+        }
+      ]
+    },
+    {
+      "id": "T-0233",
+      "title": "CONTRIBUTING: point the Blueframe section at the public repo",
+      "summary": "The CONTRIBUTING.md Blueframe section explains the state protocol without saying where the tool lives. Rewrite it to name and link https://github.com/Amitoj02/blueframe, matching the sibling change in the API repo.",
+      "status": "review",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "tooling",
+      "subfeature": "blueframe-refs",
+      "repo": "",
+      "paths": [
+        "CONTRIBUTING.md"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Every Blueframe mention in CONTRIBUTING.md links to or clearly names https://github.com/Amitoj02/blueframe",
+          "status": "passed"
+        },
+        {
+          "desc": "No stale wording implying Blueframe is unpublished/internal-only remains",
+          "status": "passed"
+        },
+        {
+          "desc": "Wording is consistent with the API repo CONTRIBUTING.md so the two do not describe the tool differently",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0234",
+      "title": "Wire the Discord invite CTAs to the configured invite URL",
+      "summary": "The three Discord entry points are dead: the landing \"Join the Lord Regiment Server\" button, the footer \"Discord Server\" link (href=\"#discord\") and the toolbar \"Join Discord\" button. Point all three at regimentProfile.discordInviteUrl (already on the public profile payload), open in a new tab with rel=\"noopener\", and hide the CTA entirely when no invite URL is configured.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "discord-invite",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.html",
+        "src/app/features/public/landing/landing.component.ts",
+        "src/app/features/public/public-footer/public-footer.component.html",
+        "src/app/features/public/public-footer/public-footer.component.ts",
+        "src/app/features/public/public-nav/public-nav.component.html",
+        "src/app/features/public/public-nav/public-nav.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Landing \"Join the Lord Regiment Server\" opens the configured invite in a new tab",
+          "status": "passed"
+        },
+        {
+          "desc": "Footer \"Discord Server\" and toolbar \"Join Discord\" do the same (no href=\"#discord\" left anywhere)",
+          "status": "passed"
+        },
+        {
+          "desc": "With discordInviteUrl=null all three CTAs are hidden rather than rendering a dead link",
+          "status": "passed"
+        },
+        {
+          "desc": "Every external invite anchor carries target=\"_blank\" rel=\"noopener noreferrer\"",
+          "status": "passed"
+        },
+        {
+          "desc": "Existing public-nav specs (anonymous shows Join Discord + Sign in) stay green",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0235",
+      "title": "Public events: auth-aware CTAs instead of a blanket sign-in link",
+      "summary": "On /events the ongoing panel always shows \"Sign in to view password\" and every Details link goes to /login, even for a signed-in member. Make the CTAs session-aware: signed in goes to the dashboard event detail; signed out reads \"Login to RSVP\" and goes to /login.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "public-cta",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/events-page/events-page.component.html",
+        "src/app/features/public/events-page/events-page.component.ts",
+        "src/app/features/public/events-page/events-page.component.spec.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Signed-in visitor on /events: CTAs read as a dashboard action and route to /app/dashboard/events/:id",
+          "status": "passed"
+        },
+        {
+          "desc": "Signed-out visitor: every CTA reads \"Login to RSVP\" and routes to /login",
+          "status": "passed"
+        },
+        {
+          "desc": "The password CTA never appears for a signed-in member (they follow through to the detail page to reveal)",
+          "status": "passed"
+        },
+        {
+          "desc": "Applicant / non-member sessions land somewhere sane rather than a 403 page",
+          "status": "passed"
+        },
+        {
+          "desc": "Unit spec covers both session states via the mocked AuthService, matching the pattern used by the public-nav specs",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Introduces session-awareness on a page that was previously purely anonymous - a mis-set guard could route anonymous users into /app and bounce them",
+          "status": "resolved",
+          "notedAt": "2026-07-22T18:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "The page stays anonymous-first: signed-out is the default branch and the only session read is AuthService.isAuthenticated for CTA text/route. No guard was added, and a spec pins that a signed-in NON-member gets the same dashboard link (the route has authGuard only and the API serves a redacted 200)."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0236",
+      "title": "Public events: hide server + password blocks when the event has neither",
+      "summary": "Events with no server name or no password still render a \"Server\" field and a password CTA, so an event with nothing to reveal invites the visitor to sign in for a password that does not exist. Branch on the API hasServerPassword flag and a non-empty serverName and omit the blocks entirely.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "server-details",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/events-page/events-page.component.html",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/events.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0151"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Event with no password: no password CTA anywhere on the ongoing panel or the list row",
+          "status": "passed"
+        },
+        {
+          "desc": "Event with no server name: the Server field is omitted, not rendered blank or as an em dash",
+          "status": "passed"
+        },
+        {
+          "desc": "Event with both: both render as they do today",
+          "status": "passed"
+        },
+        {
+          "desc": "The API mapper stops coercing serverName to \"\" so templates can branch on it",
+          "status": "passed"
+        },
+        {
+          "desc": "The same branching is applied on the landing page upcoming-orders rows",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0237",
+      "title": "Render event times in the viewer local timezone",
+      "summary": "Event times are printed in the event author timezone (\"2026-07-22 - 20:18 to 02:00 UTC\"), so a member in EDT has to convert by hand. Convert the absolute startsAt/endsAt instants into the browser timezone for display (with the source timezone available on hover or as a secondary line) across the public events page, the landing upcoming rows, the dashboard and the event detail pages.",
+      "status": "review",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "local-time",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/api.model.ts",
+        "src/app/features/public/events-page/events-page.component.html",
+        "src/app/features/public/landing/landing.component.html",
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/admin/event-detail/event-detail.component.html",
+        "src/app/features/member/profile/profile.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Should the original authored timezone still be shown as secondary context (e.g. \"16:18 - 22:00 (20:18 UTC)\"), or is the local time alone enough?",
+          "answer": "Show the VIEWER's zone label (e.g. 'EDT'), not the authored one. Once the time is converted, printing the authored IANA zone beside it is actively misleading - that combination was the original bug. `viewerZoneLabel(iso)` resolves the abbreviation per instant, so a summer and a winter event each label correctly.",
+          "askedAt": "2026-07-22T18:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "An event stored as 20:18-02:00 UTC renders as 16:18-22:00 for a browser in America/New_York",
+          "status": "passed"
+        },
+        {
+          "desc": "A cross-midnight event shows the correct local end date, not the start date",
+          "status": "passed"
+        },
+        {
+          "desc": "The date shown next to the time is the LOCAL date (an event can shift a day across timezones)",
+          "status": "passed"
+        },
+        {
+          "desc": "A DST-boundary event renders with the offset in force on that date, not today's offset",
+          "status": "passed"
+        },
+        {
+          "desc": "The event-create admin form still authors in the explicitly chosen timezone (authoring is unchanged; only display converts)",
+          "status": "passed"
+        },
+        {
+          "desc": "Landing, /events, dashboard, profile and event detail all agree on the same rendered time for the same event",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Rewrites the shared ISO -> wall-clock mapper in api.model.ts that deliberately avoided timezone conversion - every events surface in the app consumes it, including the Ongoing/Upcoming/Previous bucketing logic",
+          "status": "resolved",
+          "notedAt": "2026-07-22T18:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "The mapper rewrite is covered by event-time.ts's 32 specs including a full instant->wall-clock->instant round-trip across five zones and both DST sides. deriveEventStatus was left untouched, so Ongoing/Upcoming/Previous bucketing is unchanged. Verified in the browser: a 23:30Z instant renders 19:30 EDT for an America/Toronto viewer."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0238",
+      "title": "Admin: landing-page presentation controls (banner, charter quote, overlay)",
+      "summary": "Extend Profile & Visibility with landing-hero controls gated by the new manage_regiment_details capability: hero background upload (showing the recommended dimensions and the enforced max file size), an overlay/shadow-mask density slider with a live preview, and editable charter quote body + attribution. The landing page then renders these instead of the hard-coded copy.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "regiment-details",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/settings.service.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/features/public/landing/landing.component.html",
+        "src/app/features/public/landing/landing.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0147",
+        "lords-dashboard-backend:T-0148",
+        "lords-dashboard-backend:T-0145"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "A user holding manage_regiment_details (but not manage_settings) sees and can save the new controls; a user with neither sees them read-only or hidden",
+          "status": "passed"
+        },
+        {
+          "desc": "Uploading a hero banner presigns, PUTs to R2, and the new image appears on /home after save",
+          "status": "pending"
+        },
+        {
+          "desc": "The recommended size and the max file size shown in the UI match what the API enforces; an oversized file is rejected client-side with a clear message",
+          "status": "passed"
+        },
+        {
+          "desc": "The overlay-density slider updates the hero mask live and persists across a reload",
+          "status": "passed"
+        },
+        {
+          "desc": "Charter quote body and attribution round-trip, including apostrophes and long text at the length cap",
+          "status": "passed"
+        },
+        {
+          "desc": "With every field unset the landing page falls back to the current shipped copy and background - no blank hero",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Turns the landing hero, the most-seen public surface, into admin-authored data - an empty or oversized value now degrades the public page rather than a private screen",
+          "status": "resolved",
+          "notedAt": "2026-07-22T18:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "With every field null the hero computes to the shipped gradient (--hero-scrim 0.65 -> rgba(8,6,4,0.65)/0.4/0.85) over the shipped bg-1.jpg - confirmed in Chrome, so an unconfigured or failed-fetch install is pixel-identical to what is live today."
+        }
+      ],
+      "skippedByClaude": [
+        "The banner UPLOAD round-trip (presign -> PUT -> key -> PATCH -> URL on the public page) is unverified end to end: the local API has DISCORD_MOCK=false with real credentials, so no agent could obtain a session without signing into the owner's live Discord account. Client-side pre-flight and payload shape are spec'd against a mocked StorageService."
+      ],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0239",
+      "title": "Admin: login-page presentation controls (banner, quote, overlay)",
+      "summary": "Same Profile & Visibility section, login-page half: background banner upload with stated recommended dimensions and max size, overlay/shadow-mask density slider, and editable quote body + attributed name (currently the hard-coded \"Your identity on the field is your word.\" / \"Major Diego Vasquez\"). The login split-panel renders these with a fallback to the shipped copy.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "login-presentation",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/settings.service.ts",
+        "src/app/features/public/login/login.component.html",
+        "src/app/features/public/login/login.component.ts",
+        "src/app/features/public/login/login.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0147",
+        "lords-dashboard-backend:T-0148",
+        "T-0238"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Login banner uploads and appears on /login after save",
+          "status": "pending"
+        },
+        {
+          "desc": "Overlay-density slider changes the login mask and persists",
+          "status": "passed"
+        },
+        {
+          "desc": "Quote and attribution are editable and render on /login; an empty attribution hides the dash rather than printing a bare \"-\"",
+          "status": "passed"
+        },
+        {
+          "desc": "The login page is anonymous, so it must read these from the PUBLIC profile endpoint - verify in a logged-out incognito session",
+          "status": "passed"
+        },
+        {
+          "desc": "All fields unset falls back to the shipped quote and background",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0240",
+      "title": "Admin: edit the Terms, Privacy and Community Guidelines documents",
+      "summary": "Add an editor under Profile & Visibility (gated by manage_regiment_details) for the three legal documents, with a preview of what the public page will render and a clear warning that the privacy policy is a live legal surface.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "legal-content",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/settings.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0149",
+        "T-0238"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Each of the three documents loads its current content into the editor and saves back",
+          "status": "passed"
+        },
+        {
+          "desc": "A user without manage_regiment_details cannot open or submit the editor",
+          "status": "passed"
+        },
+        {
+          "desc": "The preview renders the same markup the public page will render (no divergence between preview and /privacy)",
+          "status": "passed"
+        },
+        {
+          "desc": "Saving an empty document is either blocked or falls back to shipped copy - the public legal pages must never go blank",
+          "status": "passed"
+        },
+        {
+          "desc": "Unsaved-changes navigation away warns rather than silently dropping edits",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [
+        "The two admin editors were not verified visually for the same sign-in reason; they are covered by specs only.",
+        "The beforeunload prompt is spec'd at the handler level (preventDefault only when dirty) but was not observed as a real browser dialog."
+      ],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0241",
+      "title": "Public legal pages render admin-authored content",
+      "summary": "LegalComponent currently renders three hard-coded documents. Fetch the stored documents from the public API and render them, falling back to the shipped copy whenever the API is unreachable or a document is unset, so /terms, /privacy and /guidelines always show something valid.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "legal",
+      "subfeature": "authored-content",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/legal/legal.component.ts",
+        "src/app/features/public/legal/legal.component.html",
+        "src/app/features/public/public.module.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0149"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/terms, /privacy and /guidelines each render the stored document for their route",
+          "status": "passed"
+        },
+        {
+          "desc": "API failure or unset document falls back to the shipped copy (verify by blocking the request)",
+          "status": "passed"
+        },
+        {
+          "desc": "Rendered content cannot execute injected script/markup",
+          "status": "passed"
+        },
+        {
+          "desc": "Deep-linking straight to /privacy in a fresh anonymous session works (no auth or app-shell dependency)",
+          "status": "passed"
+        },
+        {
+          "desc": "Typography matches the existing legal page styling rather than dumping unstyled markup",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Makes the privacy policy - a legal obligation under the Discord Developer ToS - dependent on an API fetch; the fallback path is what keeps the site compliant when the API is down",
+          "status": "resolved",
+          "notedAt": "2026-07-22T18:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "The shipped <article> copy is retained as the fallback and renders whenever the document is unset OR the fetch fails; verified in the browser with the document NULL. Rendering goes through MarkdownService with plain [innerHTML] (no bypassSecurityTrustHtml), verified live: a seeded document containing <script>alert(1)</script> produced zero script elements, fired no alert, and its javascript: link produced no anchor at all."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0242",
+      "title": "Gallery grid: no thumbnail for directly-uploaded videos on mobile",
+      "summary": "Directly-uploaded videos have thumbnailUrl=null and the card falls back to an inline <video preload=\"metadata\">, which mobile Safari renders as an empty tile (no first frame). Give video cards a real preview: a media-fragment hint so the first frame paints, and use the persisted poster from the API when one exists.",
+      "status": "review",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "video-poster",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/shared/components/gallery-card/gallery-card.component.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.scss",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "iOS Safari (real device, matching the reported screenshot): every video tile in the public gallery grid shows a frame, not an empty box",
+          "status": "pending"
+        },
+        {
+          "desc": "Android Chrome and desktop Chrome/Firefox/Safari unchanged or improved",
+          "status": "passed"
+        },
+        {
+          "desc": "A video with a persisted poster uses the poster image and skips the video element entirely",
+          "status": "passed"
+        },
+        {
+          "desc": "A video whose first frame cannot be decoded shows the placeholder tile plus the play badge, never a blank card",
+          "status": "passed"
+        },
+        {
+          "desc": "The same fix applies on every grid that uses hf-gallery-card (public gallery, /app/gallery, moderation, dashboard)",
+          "status": "passed"
+        },
+        {
+          "desc": "No autoplay or data-heavy preload regression on mobile networks",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-gallery-card is shared by the public gallery, the member gallery, the moderation queue and the dashboard - a preview change lands on all four at once",
+          "status": "resolved",
+          "notedAt": "2026-07-22T18:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "hf-gallery-card's preview resolution was fixed at the source (mediaUrl no longer unconditionally wins for a video) so all four consuming grids get the same behaviour from one change."
+        }
+      ],
+      "skippedByClaude": [
+        "iOS Safari on a real device was not tested (no device available); the fix removes the <video>-element dependency entirely for a poster-bearing item, which is the documented cause."
+      ],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0243",
+      "title": "Integrate the generated favicon set",
+      "summary": "Add the generated favicon assets (favicon.svg, favicon-96x96.png, apple-touch-icon, web manifest) and wire the head links, replacing the single legacy favicon.ico reference.",
+      "status": "blocked",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "platform",
+      "feature": "metadata",
+      "subfeature": "favicon",
+      "repo": "",
+      "paths": [
+        "src/index.html",
+        "src/assets/",
+        "angular.json",
+        "public/"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "favicon renders in Chrome, Safari and Firefox tabs at 1x and 2x",
+          "status": "pending"
+        },
+        {
+          "desc": "Apple touch icon shows when the site is added to an iOS home screen",
+          "status": "pending"
+        },
+        {
+          "desc": "The web manifest (if added) parses with no console warnings and names the site \"Lords Regiment\"",
+          "status": "pending"
+        },
+        {
+          "desc": "All icon assets are included by the production build (present in dist and served) - check angular.json assets globs",
+          "status": "pending"
+        },
+        {
+          "desc": "No 404 for the old favicon.ico path after the swap, and the CSP does not block any icon request",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [
+        "BLOCKED ON ASSETS, NOT CODE. public/ contains only favicon.ico and src/assets/images/ has no icon set - no favicon.svg, no apple-touch-icon, no PNG size set. Icons were NOT fabricated.",
+        "DONE anyway: public/manifest.json naming the site 'Lords Regiment' with theme/background #0b0e14 matching the existing theme-color meta, head links wired, and confirmed angular.json already copies public/**/* to the dist root (no config change needed). Every referenced file exists, so the build 404s nothing today; the not-yet-present files sit in a labelled commented block with their exact target paths.",
+        "Named manifest.json rather than site.webmanifest: nginx's stock mime.types has no 'webmanifest' entry, so that filename would be served as application/octet-stream in production.",
+        "testPlan item 'the CSP does not block any icon request' is vacuous - nginx.conf sets no CSP for the SPA; the only helmet() call guards the API.",
+        "TO UNBLOCK: drop the generated set into public/ (favicon.svg, apple-touch-icon.png 180x180, favicon-96x96.png, web-app-manifest-192x192.png, web-app-manifest-512x512.png) and uncomment the block in src/index.html."
+      ],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "blocked",
+          "by": "claude",
+          "note": "the generated icon set is not in the repo; everything that does not need it is done"
+        }
+      ]
+    },
+    {
+      "id": "T-0244",
+      "title": "Page titles: \"Lords Regiment\" plus per-route titles",
+      "summary": "The document title is the static \"Lords Regiment Dashboard\" on every route. Rename the base title to \"Lords Regiment\" and set per-route titles through an Angular TitleStrategy - \"Login | Lords Regiment\", \"Privacy | Lords Regiment\", public gallery item titles, and so on for the other public and app routes.",
+      "status": "review",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "platform",
+      "feature": "metadata",
+      "subfeature": "page-titles",
+      "repo": "",
+      "paths": [
+        "src/index.html",
+        "src/app/app-routing.module.ts",
+        "src/app/app.module.ts",
+        "src/app/features/public/public.module.ts",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "What separator and suffix should the pattern use - \"Login | Lords Regiment\" (matching the new site name) or \"Login | Lords Dashboard\" as written in the request?",
+          "answer": "'<Page> | Lords Regiment', with the landing page at exactly 'Lords Regiment'. Settled by the task's own testPlan item 1.",
+          "askedAt": "2026-07-22T18:30:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "Base title on the landing page is exactly \"Lords Regiment\"",
+          "status": "passed"
+        },
+        {
+          "desc": "Login, Terms, Privacy, Guidelines, Events and Gallery routes each set their own title",
+          "status": "passed"
+        },
+        {
+          "desc": "A public gallery item sets the title from the item title once it loads, and reverts on navigating away",
+          "status": "pending"
+        },
+        {
+          "desc": "A route with no explicit title falls back to the base title rather than showing a blank or stale one",
+          "status": "passed"
+        },
+        {
+          "desc": "Titles update on in-app navigation (not just a hard reload) - this is the usual TitleStrategy failure mode",
+          "status": "passed"
+        },
+        {
+          "desc": "Browser history entries and bookmarks pick up the per-page titles",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Registers a global TitleStrategy in the root module - a throw inside it breaks navigation for every route in the app",
+          "status": "resolved",
+          "notedAt": "2026-07-22T18:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "updateTitle is total: the whole body is wrapped in try/catch falling back to the base title, because the router calls it inside the navigation pipeline BEFORE resolving - a throw there would break navigation app-wide. A spec asserts navigation still resolves true when buildTitle throws."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0245",
+      "title": "Application form: fix the age-confirmation links",
+      "summary": "The application age-confirmation checkbox links \"Code of Conduct\" and \"Charter\" both point at href=\"#\". Replace them with a single \"community guidelines\" link to /guidelines opening in a new tab, so the applicant can read the document without losing their in-progress form.",
+      "status": "review",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "onboarding",
+      "feature": "application",
+      "subfeature": "age-confirmation",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-form/application-form.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "The checkbox label reads as one sentence referencing the community guidelines with no dead href=\"#\" left",
+          "status": "passed"
+        },
+        {
+          "desc": "The link opens /guidelines in a new tab with rel=\"noopener noreferrer\"",
+          "status": "passed"
+        },
+        {
+          "desc": "Clicking the link does not toggle the checkbox or submit the form",
+          "status": "passed"
+        },
+        {
+          "desc": "In-progress form state survives the click (nothing navigates away)",
+          "status": "passed"
+        },
+        {
+          "desc": "The checkbox is still required for submission",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0246",
+      "title": "Admin UI: do not offer self-suspend or self-ban",
+      "summary": "Pair the API guard with the UI: on the admin member detail, hide or disable Suspend and Ban when the target member is the signed-in user, with a tooltip explaining why, so the action is never offered rather than failing on submit.",
+      "status": "review",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "member-actions",
+      "subfeature": "self-moderation",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/",
+        "src/app/core/services/members.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0150"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Viewing your own member record as an admin: Suspend and Ban are unavailable and the reason is discoverable",
+          "status": "passed"
+        },
+        {
+          "desc": "Viewing any other member: both actions behave exactly as before",
+          "status": "passed"
+        },
+        {
+          "desc": "If the API rejects a self-targeted action anyway (stale UI), the error surfaces as a readable toast, not a silent no-op",
+          "status": "passed"
+        },
+        {
+          "desc": "Identity matching is by member id, so an admin with a similar display name is not wrongly blocked",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T18:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T18:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0247",
+      "title": "Rename \"Discord DM message\" to \"User message\" and keep both fields after a decision",
+      "summary": "The decision pane clears moderatorNote and discordDmMessage on every reload, so once an officer approves/declines/holds, whatever they wrote vanishes and no other staffer can see what was sent. Re-hydrate both boxes from the persisted application (backend T-0153) instead of blanking them, and rename the \"Discord DM message\" section to \"User message\" with copy making clear the moderator note is staff-only.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "decision-notes",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.spec.ts",
+        "src/app/core/models/application.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0153"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "after declining with both boxes filled, re-selecting the application shows both values still populated",
+          "status": "passed"
+        },
+        {
+          "desc": "the section header reads \"User message\" and the helper text explains it is what the applicant receives",
+          "status": "passed"
+        },
+        {
+          "desc": "the moderator-note field is labelled staff-only and never rendered on a non-staff surface",
+          "status": "passed"
+        },
+        {
+          "desc": "selecting a different application swaps to that application's stored values (no bleed between rows)",
+          "status": "passed"
+        },
+        {
+          "desc": "a pending application with no prior decision still shows empty boxes with their placeholders",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the shared decision pane state reset used by approve/decline/hold/block/unblock - a partial reset can carry one application's message onto another",
+          "status": "resolved",
+          "notedAt": "2026-07-22T19:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "selectApplication() remains the single reset point and now hydrates BOTH boxes from the stored values; specs cover swapping between applications with no bleed, and a pending application showing empty boxes."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0248",
+      "title": "Stop sending the moderator note as the applicant-visible decline reason",
+      "summary": "applications.component.ts calls decline(id, this.moderatorNote, this.discordDmMessage), so the internal note becomes the application's declineReason and is rendered back to the applicant as \"Reason:\" on the status page. Send the internal note only as an internal note, and let the user message be the only applicant-facing text on a decision.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "decision-notes",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/core/services/applications.service.ts",
+        "src/app/features/admin/applications/applications.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0154"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "declining sends the moderator note in the internal-note field, not as `reason`",
+          "status": "passed"
+        },
+        {
+          "desc": "the user message is what the applicant receives (DM + status page)",
+          "status": "passed"
+        },
+        {
+          "desc": "hold keeps writing the moderator note to the staff-only note field",
+          "status": "passed"
+        },
+        {
+          "desc": "block/unblock still pass the moderator note where the endpoint expects it",
+          "status": "passed"
+        },
+        {
+          "desc": "an httpMock spec asserts the exact decline request body",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0249",
+      "title": "Applicant status page: show only the message written for the applicant",
+      "summary": "application-status.component.html renders \"Officer note: {{ moderatorNote }}\" and \"Reason: {{ declineReason }}\" to the applicant on declined/held applications - both internal. Render only the user message from the applicant-safe projection (backend T-0154), and show nothing when no message was written rather than falling back to internal text.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "onboarding",
+      "feature": "application",
+      "subfeature": "status-visibility",
+      "repo": "",
+      "paths": [
+        "src/app/features/onboarding/application-status/application-status.component.html",
+        "src/app/features/onboarding/application-status/application-status.component.ts",
+        "src/app/core/models/application.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0154"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a declined application with a moderator note and no user message shows no internal text at all",
+          "status": "passed"
+        },
+        {
+          "desc": "a declined application with a user message shows exactly that message",
+          "status": "passed"
+        },
+        {
+          "desc": "a held application shows the user message and no officer note",
+          "status": "passed"
+        },
+        {
+          "desc": "an approved application still routes/renders as before",
+          "status": "passed"
+        },
+        {
+          "desc": "the applicant model no longer declares moderatorNote, so a future template cannot bind it",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "This is the applicant-facing leak surface - any future field added to the applicant projection is rendered here by default",
+          "status": "resolved",
+          "notedAt": "2026-07-22T19:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "moderatorNote and declineReason were removed from the applicant TYPE, not just the template, so a future template cannot bind them. The API no longer sends them on any of the three applicant routes."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0250",
+      "title": "Show who took the action on an application in the admin queue",
+      "summary": "A decided application shows its status but not who decided it, so tracing an approval means digging through the audit ledger. Render the decider's name (and avatar) with the decision timestamp on the queue row and in the detail pane, using the attribution fields from backend T-0155, including who placed a hold.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "decision-attribution",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/core/models/application.model.ts",
+        "src/app/features/admin/applications/applications.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0155"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a declined application shows \"Declined by <name> - <date>\" in the detail pane",
+          "status": "passed"
+        },
+        {
+          "desc": "a held application shows who held it even with no decision timestamp",
+          "status": "passed"
+        },
+        {
+          "desc": "a pending application shows no attribution block",
+          "status": "passed"
+        },
+        {
+          "desc": "a decider with no avatar falls back to the initial-letter treatment used elsewhere",
+          "status": "passed"
+        },
+        {
+          "desc": "the attribution is visible on the narrow/mobile layout without overflowing the row",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0251",
+      "title": "Submit event start/end as instants resolved in the selected event timezone",
+      "summary": "The event form posts `${date}T${time}:00` with no offset alongside a separate timezone field, so the backend stores the wall clock as UTC and a New York evening event concludes four hours early. Send an offset-qualified instant computed for the chosen IANA zone (or align exactly with whatever contract backend T-0156 settles on) from both create and edit, and prefill the form by converting the stored instant back into that zone.",
+      "status": "review",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "feature": "events",
+      "subfeature": "timezone",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/events.service.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/features/admin/event-create/event-create.component.ts",
+        "src/app/core/services/events.service.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0156"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "creating a 21:57 America/New_York event posts the instant the backend stores as 01:57Z the next day",
+          "status": "passed"
+        },
+        {
+          "desc": "opening that event for edit prefills 21:57 with America/New_York selected (round-trip is lossless)",
+          "status": "passed"
+        },
+        {
+          "desc": "a January (EST) event and a July (EDT) event both round-trip correctly across the DST change",
+          "status": "passed"
+        },
+        {
+          "desc": "changing only the timezone dropdown re-resolves the same wall clock to a new instant",
+          "status": "passed"
+        },
+        {
+          "desc": "the detail banner then reads Ongoing (not Concluded) between the event's local start and end",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Shares the ISO/wall-clock mapping in api.model.ts with T-0237 (viewer-local display) - the read and write conversions must agree or events will drift by an offset on every edit save",
+          "status": "resolved",
+          "notedAt": "2026-07-22T19:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "Read and write share one module (event-time.ts) whose round-trip invariant is spec'd, and a further spec maps an API event for display and saves it back untouched, asserting the wire instants come back bit-for-bit identical."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0252",
+      "title": "Rebuild the mobile layout of the dashboard honours strip",
+      "summary": "On a phone the Current Rank / Decorations panel collapses into a centred, cramped stack with an orphaned divider and label-above-value spacing that reads as broken rather than deliberate. Re-lay the honours strip for narrow viewports (left-aligned, consistent label treatment, the medal row wrapping or scrolling cleanly) while leaving the desktop two-column presentation as it is.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "dashboard",
+      "subfeature": "honors-strip",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/dashboard/dashboard.component.html",
+        "src/app/features/member/dashboard/dashboard.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "at 390px the rank icon, rank name and Decorations block align to a single left edge with no stray divider",
+          "status": "passed"
+        },
+        {
+          "desc": "a member with 0 medals shows the empty hint without leaving a large blank block",
+          "status": "passed"
+        },
+        {
+          "desc": "a member with 8+ medals wraps or scrolls without pushing the panel wider than the viewport",
+          "status": "passed"
+        },
+        {
+          "desc": "the desktop (>=992px) layout is pixel-unchanged",
+          "status": "passed"
+        },
+        {
+          "desc": "verified in the browser at 390px and 768px, not only in the spec",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The honours strip styles are shared with the profile page honours block - a change to .honors-row/.honor-block can move both surfaces",
+          "status": "resolved",
+          "notedAt": "2026-07-22T19:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "Confirmed by repo-wide grep that .honors-row/.honor-block/.honors-divider appear ONLY in dashboard.component.{html,scss} - the stated sharing with the profile page does not exist, so the change cannot move the profile layout. Risk retired as inapplicable."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0253",
+      "title": "Render demotions distinctly in the profile service record",
+      "summary": "The service-record timeline maps every rank change to the PROMOTION tag and its gold dot, so a demotion reads as a promotion. Add the 'demotion' case (backend T-0157) with its own label and colour, and make the unknown-type fallback render the raw type neutrally instead of inheriting the promotion styling.",
+      "status": "review",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "service-record",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/profile/profile.component.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0157"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "an entry of type 'demotion' shows a DEMOTION tag with its own colour",
+          "status": "passed"
+        },
+        {
+          "desc": "an entry of type 'promotion' is unchanged",
+          "status": "passed"
+        },
+        {
+          "desc": "an unrecognised type renders neutrally rather than as a promotion",
+          "status": "passed"
+        },
+        {
+          "desc": "the tag colours meet contrast on the dark timeline background",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0254",
+      "title": "Warn and show progress when re-linking a rank or medal to a different Discord role",
+      "summary": "Re-pointing a linked rank/medal at another Discord role now triggers a bulk re-role of every holder, which the admin should understand before confirming and be able to watch afterwards. Add a confirmation naming the affected member count and both roles, then surface the bulk job's live progress (and cancel) from backend T-0160 on the Ranks & Medals screen.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "ranks-medals",
+      "subfeature": "role-relink",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.scss",
+        "src/app/core/services/discord.service.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0158",
+        "lords-dashboard-backend:T-0160"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "re-linking a rank held by N members prompts with N and both role names before submitting",
+          "status": "passed"
+        },
+        {
+          "desc": "after confirming, a progress row shows applied/remaining and finishes at 100%",
+          "status": "passed"
+        },
+        {
+          "desc": "cancel stops the run and the UI reports the partial outcome honestly",
+          "status": "passed"
+        },
+        {
+          "desc": "a failed batch surfaces the server's reason (e.g. bot role hierarchy) via the existing hf-notice pattern",
+          "status": "passed"
+        },
+        {
+          "desc": "polling stops when the panel is closed or the job reaches a terminal state (no leaked interval)",
+          "status": "passed"
+        },
+        {
+          "desc": "linking a previously-unlinked rank (no old role) skips the re-role warning",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds a polling loop to an admin screen - an unbounded interval left running after navigation would hammer the progress endpoint",
+          "status": "resolved",
+          "notedAt": "2026-07-22T19:30:00Z",
+          "resolvedAt": "2026-07-22T19:55:00Z",
+          "resolvedBy": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+          "note": "Polling stops on BOTH terminal state and panel close - takeUntilDestroyed alone was insufficient because it fires on component destroy, not on closeEditor(). A spec proves no interval leaks."
+        }
+      ],
+      "skippedByClaude": [
+        "The progress/cancel UI was not exercised against a real draining batch - that needs an authenticated admin session plus a live Discord guild."
+      ],
+      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "createdAt": "2026-07-22T19:30:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:30:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        }
+      ]
+    },
+    {
+      "id": "T-0255",
+      "title": "Verify the presentation + legal admin editors and the banner upload round-trip",
+      "summary": "T-0238/T-0239/T-0240 shipped spec-covered but were never exercised in a browser: the local API runs with DISCORD_MOCK=false against real Discord credentials, so no session could be obtained without signing into the owner's live account. Needs one pass with mocks enabled (or a staging session) covering: both editors render and save, the overlay slider persists, a banner upload round-trips presign -> PUT -> key -> PATCH -> public page, and the unsaved-changes prompt actually appears.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "verification",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [],
+      "regressionRisk": [
+        {
+          "desc": "The banner upload path crosses R2 CORS, which the project notes flag as never having been exercised end to end for ANY upload target - a failure here is more likely to be infra than app code.",
+          "status": "open",
+          "notedAt": "2026-07-22T19:55:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "discovered while implementing T-0233..T-0254"
+        }
+      ]
+    },
+    {
+      "id": "T-0256",
+      "title": "Re-test the gallery video poster on a real iOS device",
+      "summary": "T-0242's fix removes the <video>-element dependency for a poster-bearing item, which is the documented cause of the blank tile, but the original report came from iOS Safari and no iOS device was available. Confirm on a real device once the backend poster capture is live, and check the no-poster fallback tile too.",
+      "status": "planned",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "verification",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-22T19:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "discovered while implementing T-0233..T-0254"
+        }
+      ]
+    },
+    {
+      "id": "T-0257",
+      "title": "Capture a poster frame client-side when submitting a gallery video",
+      "summary": "The API now accepts and validates a `posterKey` on gallery submit (lords-dashboard-backend:T-0152) and hf-gallery-card renders a poster when present, but nothing PRODUCES one yet: the submit flow must decode frame 0 to a canvas, toBlob() it, upload it to the `gallery-poster` target and pass the returned key. Until this ships every new video still submits with thumbnailUrl null and falls back to the placeholder tile.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "submissions",
+      "subfeature": "poster-capture",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/gallery-submit/",
+        "src/app/core/services/gallery.service.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a non-video file is ignored without creating a video element",
+          "status": "passed"
+        },
+        {
+          "desc": "an undecodable video resolves null rather than rejecting, so the submission still goes through",
+          "status": "passed"
+        },
+        {
+          "desc": "a video reporting no dimensions resolves null",
+          "status": "passed"
+        },
+        {
+          "desc": "the object URL is released even on the failure path",
+          "status": "passed"
+        },
+        {
+          "desc": "a real video upload produces a poster that renders as the grid thumbnail (needs an authenticated session)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Frame extraction fails for a cross-origin or codec-unsupported video; the flow must submit successfully WITHOUT a poster rather than blocking the upload.",
+          "status": "resolved",
+          "notedAt": "2026-07-22T19:55:00Z",
+          "resolvedAt": "2026-07-22T20:05:00Z",
+          "note": "Every failure path resolves null instead of rejecting, the capture runs AFTER the media upload completes (so `uploading` is already false and the submit button is never held), and a bounded timeout stops a stubborn decode. Four specs pin this."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-22T20:05:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T19:55:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "discovered while implementing T-0233..T-0254"
+        },
+        {
+          "at": "2026-07-22T20:05:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "VideoPosterService + submit wiring; capture is fire-and-forget and can never block an upload"
         }
       ]
     }

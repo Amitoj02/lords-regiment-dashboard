@@ -3,7 +3,16 @@
     background: var(--ink-900);
 }
 
-/* Hero */
+/* Hero.
+ *
+ * Both darkening layers are parameterised on `--hero-scrim`, an alpha in 0–1 the
+ * component sets from the admin's overlay density (T-0238). The default 0.65 is
+ * the shipped gradient's own leading alpha and every other stop is expressed as
+ * a ratio of it, so an UNSET density renders the shipped hero pixel-for-pixel
+ * while `--hero-scrim: 0` really does leave the photograph bare.
+ *
+ * `background-image` is likewise overridden inline when a custom banner is set;
+ * the URL here is the image the site ships with. */
 .hero {
     position: relative;
     min-height: 580px;
@@ -26,17 +35,22 @@
             rgba(10, 8, 6, 0.9) 100%
         );
         filter: brightness(0.42) saturate(0.7);
+        // Scaled rather than re-stopped: opacity clamps at 1, which is the right
+        // behaviour for this secondary layer once the primary scrim takes over
+        // above the default density.
+        opacity: calc(var(--hero-scrim, 0.65) / 0.65);
     }
 }
 
 .hero-overlay {
     position: absolute;
     inset: 0;
+    // 1 / 0.615 / 1.308 × 0.65 = 0.65 / 0.40 / 0.85 — the shipped stops exactly.
     background: linear-gradient(
         to bottom,
-        rgba(8, 6, 4, 0.65) 0%,
-        rgba(8, 6, 4, 0.4) 40%,
-        rgba(8, 6, 4, 0.85) 100%
+        rgba(8, 6, 4, var(--hero-scrim, 0.65)) 0%,
+        rgba(8, 6, 4, calc(var(--hero-scrim, 0.65) * 0.615)) 40%,
+        rgba(8, 6, 4, calc(var(--hero-scrim, 0.65) * 1.308)) 100%
     );
 }
 

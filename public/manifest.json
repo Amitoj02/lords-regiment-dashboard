@@ -1,0 +1,23 @@
+{
+  "name": "Lords Regiment",
+  "short_name": "Lords Regiment",
+  "description": "Roster, events, gallery and command tools for a Holdfast: Nations at War regiment.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0b0e14",
+  "background_color": "#0b0e14",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/assets/images/regiment-logo.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

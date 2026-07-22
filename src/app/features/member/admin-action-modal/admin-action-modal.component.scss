@@ -103,6 +103,15 @@
     align-self: flex-start;
 }
 
+// Reason a destructive control is disabled on your own record (T-0246). It is the
+// only thing explaining the dead button, so it outranks the global .field-hint
+// colour: --t-400 is 3.90:1 on the modal's --ink-800 (under AA), --t-300 is
+// 7.20:1. margin-top is dropped because .aam-stack's gap already spaces it.
+.aam-self-hint {
+    color: var(--t-300);
+    margin-top: 0;
+}
+
 // — Medal chips —
 .aam-chips {
     display: flex;

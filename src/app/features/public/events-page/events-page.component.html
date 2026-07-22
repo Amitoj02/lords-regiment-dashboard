@@ -34,15 +34,25 @@
                 <div class="row ongoing-meta-row">
                     <div>
                         <div class="field-label">Date &amp; Time</div>
+                        <!-- Times are converted to the VIEWER's zone (T-0237), so the
+                             label has to name that zone, not the authored one. -->
                         <div class="ongoing-datetime">
                             {{ ongoingEvent.date | date:'MMMM d, yyyy' }} · {{
                             ongoingEvent.startTime }} – {{ ongoingEvent.endTime }}
+                            <span class="event-zone">{{ ongoingEvent.zoneLabel }}</span>
                         </div>
                     </div>
+                    <!-- Omitted entirely — not blank, not an em dash — when the event
+                         has no server bound (T-0236). The public projection carries the
+                         presence flag but never the name itself. -->
+                    @if (ongoingEvent.hasServerName) {
                     <div>
                         <div class="field-label">Server</div>
-                        <div class="mono ongoing-server">{{ ongoingEvent.serverName }}</div>
+                        <div class="mono ongoing-server">
+                            {{ ongoingEvent.serverName || 'Members only' }}
+                        </div>
                     </div>
+                    }
                     <div>
                         <div class="field-label">Platforms</div>
                         <hf-platform-badges
@@ -50,8 +60,14 @@
                         ></hf-platform-badges>
                     </div>
                     <span class="sp"></span>
-                    <a routerLink="/login" class="btn btn-secondary btn-sm"
-                        >Sign in to view password</a
+                    <!-- A password hint only where there IS a password, and never for a
+                         signed-in visitor — they follow the CTA through and reveal it on
+                         the event page (T-0235/T-0236). -->
+                    @if (!signedIn && ongoingEvent.hasServerPassword) {
+                    <span class="badge parch ongoing-password-note">Password protected</span>
+                    }
+                    <a [routerLink]="detailLink(ongoingEvent)" class="btn btn-secondary btn-sm"
+                        >{{ ctaLabel }}</a
                     >
                 </div>
             </div>
@@ -73,8 +89,15 @@
                         <div class="row event-time-row">
                             <span class="mono event-time">
                                 {{ event.startTime }} – {{ event.endTime }}
+                                <span class="event-zone">{{ event.zoneLabel }}</span>
                             </span>
-                            <span class="mono event-server"> {{ event.serverName }} </span>
+                            @if (event.hasServerName) {
+                            <span class="mono event-server">
+                                {{ event.serverName || 'Members only' }}
+                            </span>
+                            } @if (!signedIn && event.hasServerPassword) {
+                            <span class="badge parch">Password protected</span>
+                            }
                         </div>
                         <hf-platform-badges
                             [platforms]="event.platforms"
@@ -83,7 +106,9 @@
                     </div>
                     <div class="event-list-meta event-list-meta-align">
                         <div class="event-rsvps">{{ totalRsvps(event) }} RSVPs</div>
-                        <a routerLink="/login" class="btn btn-secondary btn-sm">Details</a>
+                        <a [routerLink]="detailLink(event)" class="btn btn-secondary btn-sm"
+                            >{{ ctaLabel }}</a
+                        >
                     </div>
                 </div>
                 } @if (upcomingEvents.length === 0) {
@@ -102,7 +127,9 @@
                     <div class="panel-body">
                         <div class="previous-title">{{ event.title }}</div>
                         <div class="mono previous-date">{{ event.date | date:'MMMM d, yyyy' }}</div>
-                        <div class="previous-server">{{ event.serverName }}</div>
+                        @if (event.hasServerName) {
+                        <div class="previous-server">{{ event.serverName || 'Members only' }}</div>
+                        }
                         <div class="row previous-tags">
                             @for (tag of event.tags; track tag) {
                             <span class="badge parch">{{ tag }}</span>

@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Application, MyApplication } from '../models/application.model';
+import { ApplicantApplication, MyApplication } from '../models/application.model';
 import { RegimentProfile } from '../models/api.model';
 import { ApplicationsService } from './applications.service';
 import { AuthService, CurrentUser } from './auth.service';
@@ -62,7 +62,7 @@ describe('AuthService post-login routing', () => {
 
     const profile = (setupComplete: boolean): RegimentProfile =>
         ({ setupComplete }) as unknown as RegimentProfile;
-    const mine = (application: Application | null): MyApplication => ({
+    const mine = (application: ApplicantApplication | null): MyApplication => ({
         application,
         blocked: false,
     });
@@ -84,7 +84,9 @@ describe('AuthService post-login routing', () => {
     });
 
     it('routes a returning applicant (has an application) to /onboarding/status', () => {
-        applications.getMine.and.returnValue(of(mine({ id: 'a' } as unknown as Application)));
+        applications.getMine.and.returnValue(
+            of(mine({ id: 'a' } as unknown as ApplicantApplication)),
+        );
         service.completeLogin('t', false);
         flushMe({ isMember: false, role: 'Applicant' });
         expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/status');
@@ -104,7 +106,9 @@ describe('AuthService post-login routing', () => {
     });
 
     it('applyToJoin routes a signed-in non-member through their onboarding status', () => {
-        applications.getMine.and.returnValue(of(mine({ id: 'a' } as unknown as Application)));
+        applications.getMine.and.returnValue(
+            of(mine({ id: 'a' } as unknown as ApplicantApplication)),
+        );
         service.currentUser.set({ isMember: false, role: 'Applicant' } as CurrentUser);
         service.applyToJoin();
         expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/status');

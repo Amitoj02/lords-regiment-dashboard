@@ -3,12 +3,19 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+    ApiApplicantApplication,
     ApiApplication,
     ApiMyApplication,
     PaginatedResponse,
+    mapApplicantApplication,
     mapApplication,
 } from '../models/api.model';
-import { ApplicantType, Application, MyApplication } from '../models/application.model';
+import {
+    ApplicantApplication,
+    ApplicantType,
+    Application,
+    MyApplication,
+} from '../models/application.model';
 
 /** Payload for the public recruitment intake (POST /applications). */
 export interface CreateApplicationPayload {
@@ -44,28 +51,38 @@ export class ApplicationsService {
         return this.http.get<ApiApplication>(`${this.base}/${id}`).pipe(map(mapApplication));
     }
 
-    /** Public intake — the apply form. The submitter must be signed in (identity). */
-    submit(payload: CreateApplicationPayload): Observable<Application> {
-        return this.http.post<ApiApplication>(this.base, payload).pipe(map(mapApplication));
+    /**
+     * Public intake — the apply form. The submitter must be signed in (identity).
+     * Returns the APPLICANT projection, not the staff one (T-0154).
+     */
+    submit(payload: CreateApplicationPayload): Observable<ApplicantApplication> {
+        return this.http
+            .post<ApiApplicantApplication>(this.base, payload)
+            .pipe(map(mapApplicantApplication));
     }
 
     // ── Applicant self-service (the caller's own application) ────────────────────
 
-    /** The caller's current application (or null) + whether they are blocked. */
+    /**
+     * The caller's current application (or null) + whether they are blocked.
+     * These three self-service endpoints return the applicant projection: no
+     * moderator note, no decline reason, no decision attribution — only the
+     * officer's `userMessage` (T-0249).
+     */
     getMine(): Observable<MyApplication> {
         return this.http.get<ApiMyApplication>(`${this.base}/mine`).pipe(
             map((res) => ({
-                application: res.application ? mapApplication(res.application) : null,
+                application: res.application ? mapApplicantApplication(res.application) : null,
                 blocked: res.blocked,
             })),
         );
     }
 
     /** Edit the caller's own PENDING application. */
-    updateMine(payload: UpdateApplicationPayload): Observable<Application> {
+    updateMine(payload: UpdateApplicationPayload): Observable<ApplicantApplication> {
         return this.http
-            .patch<ApiApplication>(`${this.base}/mine`, payload)
-            .pipe(map(mapApplication));
+            .patch<ApiApplicantApplication>(`${this.base}/mine`, payload)
+            .pipe(map(mapApplicantApplication));
     }
 
     // ── Officer moderation of applicants ─────────────────────────────────────────
@@ -85,32 +102,44 @@ export class ApplicationsService {
     }
 
     /**
-     * Approve → promotes the applicant to a member. A Discord DM is sent to the
-     * applicant (empty `discordDmMessage` falls back to the backend default).
+     * Approve → promotes the applicant to a member. `userMessage` is the body
+     * DM'd to the applicant; blank falls back to the backend default template.
      */
-    approve(id: string, discordDmMessage?: string): Observable<Application> {
+    approve(id: string, userMessage?: string): Observable<Application> {
         return this.http
-            .post<ApiApplication>(`${this.base}/${id}/approve`, { discordDmMessage })
+            .post<ApiApplication>(`${this.base}/${id}/approve`, { discordDmMessage: userMessage })
             .pipe(map(mapApplication));
     }
 
     /**
-     * Decline → `reason` is the internal/applicant-facing decline reason;
-     * `discordDmMessage` is the (optional) personalised DM body sent to the applicant.
+     * Decline → `note` is the STAFF-ONLY moderator note and `userMessage` is
+     * what the applicant actually receives (DM + status page).
+     *
+     * The note used to be posted as `reason`, which the applicant's status page
+     * then rendered verbatim (T-0248). It now goes to the dedicated `note` field
+     * the backend added for exactly this; `reason` is left unsent because the
+     * console has no separate box for it, and the API treats an absent field as
+     * "unchanged" rather than blanking what is stored.
      */
-    decline(id: string, reason?: string, discordDmMessage?: string): Observable<Application> {
+    decline(id: string, note?: string, userMessage?: string): Observable<Application> {
         return this.http
-            .post<ApiApplication>(`${this.base}/${id}/decline`, { reason, discordDmMessage })
+            .post<ApiApplication>(`${this.base}/${id}/decline`, {
+                note,
+                discordDmMessage: userMessage,
+            })
             .pipe(map(mapApplication));
     }
 
     /**
-     * Hold → `note` is the officer note; `discordDmMessage` is the (optional)
-     * personalised DM body sent to the applicant.
+     * Hold → `note` is the STAFF-ONLY officer note; `userMessage` is the
+     * (optional) personalised body sent to the applicant.
      */
-    hold(id: string, note?: string, discordDmMessage?: string): Observable<Application> {
+    hold(id: string, note?: string, userMessage?: string): Observable<Application> {
         return this.http
-            .post<ApiApplication>(`${this.base}/${id}/hold`, { note, discordDmMessage })
+            .post<ApiApplication>(`${this.base}/${id}/hold`, {
+                note,
+                discordDmMessage: userMessage,
+            })
             .pipe(map(mapApplication));
     }
 }
