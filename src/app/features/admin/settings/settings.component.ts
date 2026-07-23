@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MemberRole } from '../../../core/models/member.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -17,6 +17,9 @@ import {
     DiscordRole,
     DiscordService,
 } from '../../../core/services/discord.service';
+import { LegalEditorComponent } from './legal-editor/legal-editor.component';
+import { RegimentPresentationComponent } from './regiment-presentation/regiment-presentation.component';
+import { HasUnsavedChanges, UNSAVED_CHANGES_PROMPT } from './unsaved-changes.guard';
 
 interface NavItem {
     id: string;
@@ -30,15 +33,37 @@ interface NavItem {
     styleUrls: ['./settings.component.scss'],
     standalone: false,
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, HasUnsavedChanges {
     activeSection = 'profile';
 
     navItems: NavItem[] = [
         { id: 'profile', label: 'Profile & visibility', group: 'Regiment' },
         { id: 'discord', label: 'Discord & Adjutant', group: 'Regiment' },
         { id: 'roles', label: 'Roles & permissions', group: 'Regiment' },
+        // Public-facing copy (T-0238..T-0240). Its own group because it is gated
+        // on a different capability (manage_regiment_details) from everything
+        // above, and because it is the only place in the app that edits pages
+        // anonymous visitors read.
+        { id: 'presentation', label: 'Landing & sign-in', group: 'Public pages' },
+        { id: 'legal', label: 'Legal documents', group: 'Public pages' },
     ];
-    navGroups = ['Regiment'];
+    navGroups = ['Regiment', 'Public pages'];
+
+    /**
+     * The two child editors, so this routed component can answer the
+     * CanDeactivate guard on their behalf — they are rendered inside it, not
+     * routed to, so the guard cannot see them directly.
+     */
+    @ViewChild(RegimentPresentationComponent)
+    presentationEditor?: RegimentPresentationComponent;
+    @ViewChild(LegalEditorComponent) legalEditor?: LegalEditorComponent;
+
+    hasUnsavedChanges(): boolean {
+        return (
+            !!this.presentationEditor?.hasUnsavedChanges() ||
+            !!this.legalEditor?.hasUnsavedChanges()
+        );
+    }
 
     // ── Regiment profile + visibility ────────────────────────────────────────
     settings: SettingsDto | null = null;
@@ -103,6 +128,24 @@ export class SettingsComponent implements OnInit {
 
     getNavByGroup(group: string): NavItem[] {
         return this.navItems.filter((n) => n.group === group);
+    }
+
+    /**
+     * Switch sections, warning first if that would destroy unsaved edits.
+     *
+     * The sidebar is an in-component switch, not a router outlet, so leaving the
+     * "Legal documents" section DESTROYS the editor and its drafts without the
+     * CanDeactivate guard ever running. Same prompt, same wording — the user
+     * cannot tell (or care) which mechanism caught them.
+     */
+    setSection(id: string): void {
+        if (id === this.activeSection) {
+            return;
+        }
+        if (this.hasUnsavedChanges() && !confirm(UNSAVED_CHANGES_PROMPT)) {
+            return;
+        }
+        this.activeSection = id;
     }
 
     // ── Profile + visibility ─────────────────────────────────────────────────

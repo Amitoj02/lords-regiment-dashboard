@@ -187,7 +187,9 @@
                             </div>
                             <div class="event-main">
                                 <div class="event-title">{{ event.title }}</div>
+                                @if (event.hasServerName && event.serverName) {
                                 <div class="mono event-server">{{ event.serverName }}</div>
+                                }
                             </div>
                             <span
                                 class="badge"
@@ -214,7 +216,9 @@
                             </div>
                             <div class="event-main">
                                 <div class="event-title">{{ event.title }}</div>
+                                @if (event.hasServerName && event.serverName) {
                                 <div class="mono event-server">{{ event.serverName }}</div>
+                                }
                             </div>
                             <span class="badge brass">
                                 {{ event.status === 'previous' ? 'Past' : event.status }}
@@ -248,7 +252,13 @@
                                     <div class="row timeline-head">
                                         <div class="timeline-event">{{ entry.event }}</div>
                                         @if (entry.type) {
-                                        <span class="timeline-type">{{ entry.type }}</span>
+                                        <!-- One type class drives the dot AND the tag, so a
+                                             demotion is labelled as well as colour-coded. -->
+                                        <span
+                                            class="timeline-type"
+                                            [ngClass]="serviceEntryClass(entry.type)"
+                                            >{{ entry.type }}</span
+                                        >
                                         }
                                     </div>
                                     <div class="mono timeline-date">

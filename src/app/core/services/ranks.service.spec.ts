@@ -102,4 +102,37 @@ describe('RanksService', () => {
         expect(req.request.body).toEqual({});
         req.flush(apiRank({ linked: false, discordRoleId: null }));
     });
+
+    // ── Bulk re-link handle (lords-dashboard-backend:T-0158) ─────────────────
+    it('linkDiscord() returns the mapped rank AND the batch handle', () => {
+        let result: { entity: { name: string }; relinkBatchId: string | null } | undefined;
+        service.linkDiscord('r1', 'd9', '@Captain').subscribe((r) => (result = r));
+        httpMock
+            .expectOne('/api/ranks/r1/link-discord')
+            .flush(apiRank({ relinkBatchId: 'batch-1' }));
+
+        // Both halves matter: the caller refreshes from the entity and polls with
+        // the handle, off ONE request instead of re-fetching to find out what
+        // just happened.
+        expect(result?.entity.name).toBeTruthy();
+        expect(result?.relinkBatchId).toBe('batch-1');
+    });
+
+    it('reports a null handle when the change queued no run', () => {
+        // `relinkBatchId` is OMITTED, not nulled, when nothing was enqueued (no
+        // old role to strip, or no holders with a linked Discord identity).
+        let batchId: string | null | undefined = 'unset';
+        service.linkDiscord('r1', 'd9').subscribe((r) => (batchId = r.relinkBatchId));
+        httpMock.expectOne('/api/ranks/r1/link-discord').flush(apiRank());
+        expect(batchId).toBeNull();
+    });
+
+    it('unlinkDiscord() queues too — an unlink strips the role from every holder', () => {
+        let batchId: string | null | undefined;
+        service.unlinkDiscord('r1').subscribe((r) => (batchId = r.relinkBatchId));
+        httpMock
+            .expectOne('/api/ranks/r1/unlink-discord')
+            .flush(apiRank({ linked: false, discordRoleId: null, relinkBatchId: 'batch-2' }));
+        expect(batchId).toBe('batch-2');
+    });
 });

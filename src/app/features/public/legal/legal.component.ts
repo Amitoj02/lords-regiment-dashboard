@@ -1,13 +1,36 @@
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { catchError, of } from 'rxjs';
+import { ApiRegimentDocument } from '../../../core/models/api.model';
+import { SettingsService } from '../../../core/services/settings.service';
+import { MarkdownService } from '../../../shared/services/markdown.service';
 
 export type LegalDoc = 'terms' | 'privacy' | 'guidelines';
 
+/** Page headings, rendered by the component so a page is never untitled. */
+const DOC_TITLES: Record<LegalDoc, string> = {
+    terms: 'Terms & Conditions',
+    privacy: 'Privacy Policy',
+    guidelines: 'Community Guidelines',
+};
+
 /**
- * Public legal pages (T-0124): Terms, Privacy, and Community Guidelines. Content
- * is deliberately obligation-free — it makes no data-collection promises and no
- * warranties, so operating the dashboard creates no privacy/T&C obligations. One
- * component renders all three, selected by the route's `data.doc`.
+ * Public legal pages: Terms, Privacy, and Community Guidelines. One component
+ * renders all three, selected by the route's `data.doc`.
+ *
+ * ## Admin-authored content over a shipped fallback (T-0241)
+ * The body comes from the ANONYMOUS `GET /regiment/documents` and is rendered
+ * through {@link MarkdownService} — the same instance the admin editor previews
+ * with, so preview and published page cannot drift.
+ *
+ * The shipped `<article>` copy stays in the template as the fallback and is used
+ * whenever the stored document is unset OR the request fails. That is not
+ * politeness: serving a privacy policy is a Discord Developer ToS obligation, so
+ * "the API is down" must still produce a real, compliant page. The fetch is
+ * therefore fire-and-forget with `catchError` — nothing about this page waits on
+ * it, and there is no auth or app-shell dependency, so a cold deep link to
+ * `/privacy` in a fresh anonymous session renders immediately.
  */
 @Component({
     selector: 'hf-legal',
@@ -15,10 +38,39 @@ export type LegalDoc = 'terms' | 'privacy' | 'guidelines';
     styleUrls: ['./legal.component.scss'],
     standalone: false,
 })
-export class LegalComponent {
+export class LegalComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
+    private readonly settings = inject(SettingsService);
+    private readonly markdown = inject(MarkdownService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    /** Rendered HTML of the admin-authored body; '' means "use the shipped copy". */
+    documentHtml = '';
+    /** ISO timestamp of the last edit, when the document is admin-authored. */
+    updatedAt: string | null = null;
 
     get doc(): LegalDoc {
         return (this.route.snapshot.data['doc'] as LegalDoc) ?? 'terms';
+    }
+
+    get title(): string {
+        return DOC_TITLES[this.doc];
+    }
+
+    ngOnInit(): void {
+        this.settings
+            .getPublicDocuments()
+            .pipe(
+                catchError(() => of([] as ApiRegimentDocument[])),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((documents) => {
+                const document = documents.find((d) => d.slug === this.doc);
+                // `render` returns '' for a null/blank body, so this single
+                // assignment covers "never edited", "cleared" and "request failed"
+                // — all three land on the shipped fallback.
+                this.documentHtml = this.markdown.render(document?.body);
+                this.updatedAt = this.documentHtml ? (document?.updatedAt ?? null) : null;
+            });
     }
 }

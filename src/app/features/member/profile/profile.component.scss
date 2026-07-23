@@ -170,7 +170,10 @@
     width: 15px;
     height: 15px;
     border-radius: 999px;
-    background: var(--brass-400);
+    // Neutral base, NOT brass: an entry whose type carries no modifier must never
+    // fall through to promotion gold (T-0253). --t-400 is 3.90:1 on the panel's
+    // --ink-800, clearing the 3:1 floor for a non-text indicator.
+    background: var(--t-400);
     border: 2px solid var(--ink-850);
     flex-shrink: 0;
     margin-top: 3px;
@@ -370,15 +373,29 @@
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--t-500);
-    border: 1px solid var(--rule-3);
+    // 9px is well under the WCAG large-text threshold, so this label needs the
+    // full 4.5:1 against the panel's --ink-800. --t-500 gave 2.35:1 and the
+    // --rule-3 border 1.69:1 — both failing. --t-300 is 7.20:1 and --t-400 is
+    // 3.90:1, clearing 4.5:1 for the text and 3:1 for the boundary (T-0253).
+    color: var(--t-300);
+    border: 1px solid var(--t-400);
     border-radius: 4px;
     padding: 1px 5px;
+
+    // A demotion is its own event, not a quiet promotion. --oxblood-300 is
+    // 4.93:1 here; --oxblood-400 (3.09:1) would fail AA at this size.
+    &.is-demotion {
+        color: var(--oxblood-300);
+        border-color: var(--oxblood-300);
+    }
 }
 
 .timeline-dot {
     &.is-rank {
         background: var(--brass-400);
+    }
+    &.is-demotion {
+        background: var(--oxblood-300);
     }
     &.is-role {
         background: var(--regblue-500);
@@ -388,6 +405,10 @@
     }
     &.is-suspension {
         background: var(--oxblood-400);
+    }
+    // Enlistment + any type the backend adds later: readable, but claims nothing.
+    &.is-neutral {
+        background: var(--t-400);
     }
 }
 

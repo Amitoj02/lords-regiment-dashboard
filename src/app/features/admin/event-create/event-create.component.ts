@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { instantToWallClock } from '../../../core/models/event-time';
 import { RecurrenceCadence, RegimentEvent } from '../../../core/models/event.model';
 import { EventsService } from '../../../core/services/events.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -122,18 +123,37 @@ export class EventCreateComponent implements OnInit {
         return this.editId !== null;
     }
 
-    /** Populate the form + chip state from an existing event when editing (T-0097). */
+    /**
+     * Populate the form + chip state from an existing event when editing (T-0097).
+     *
+     * The date/time fields are re-derived from the RAW instants in the EVENT's own
+     * zone (T-0251) — deliberately not from `event.date`/`event.startTime`, which
+     * `mapEvent` has already converted to the VIEWER's zone for display. An admin
+     * in Berlin editing an Eastern event must see (and re-save) the Eastern wall
+     * clock; prefilling the viewer's would shift the event by the offset between
+     * the two on every save. Falls back to the display parts only when the API
+     * omitted the instants.
+     */
     private prefill(event: RegimentEvent): void {
+        const start = (event.startsAt && instantToWallClock(event.startsAt, event.timezone)) || {
+            date: event.date,
+            time: event.startTime,
+        };
+        const end = event.endsAt
+            ? instantToWallClock(event.endsAt, event.timezone)
+            : event.endTime
+              ? { date: event.endDate ?? event.date, time: event.endTime }
+              : null;
         this.form.patchValue({
             title: event.title,
             description: event.description,
-            date: event.date,
-            endDate: event.endDate ?? event.date,
-            startTime: event.startTime,
-            endTime: event.endTime,
+            date: start.date,
+            endDate: end?.date ?? start.date,
+            startTime: start.time,
+            endTime: end?.time ?? '',
             timezone: event.timezone,
             recurrenceCadence: event.recurrenceCadence ?? '',
-            serverName: event.serverName,
+            serverName: event.serverName ?? '',
             serverRegion: event.serverRegion ?? '',
         });
         this.tags = [...event.tags];

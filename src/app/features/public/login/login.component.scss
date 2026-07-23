@@ -3,7 +3,13 @@
     min-height: 100vh;
 }
 
-/* Left Branding Panel */
+/* Left Branding Panel.
+ *
+ * `background-image` and `--login-scrim` are overridden inline from the admin
+ * presentation (T-0239); the values here are the shipped fallback. The scrim
+ * default 0.82 is the gradient's own leading alpha and the second stop is a
+ * ratio of it (0.82 × 0.732 = 0.6), so an unset density is pixel-identical to
+ * what shipped and 0 leaves the photograph untouched. */
 .login-left {
     flex: 1;
     position: relative;
@@ -15,7 +21,11 @@
 .login-left-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(8, 6, 4, 0.82) 0%, rgba(8, 6, 4, 0.6) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(8, 6, 4, var(--login-scrim, 0.82)) 0%,
+        rgba(8, 6, 4, calc(var(--login-scrim, 0.82) * 0.732)) 100%
+    );
 }
 
 .login-left-inner {

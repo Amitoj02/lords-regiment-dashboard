@@ -5,6 +5,24 @@ import { ApplicationsService } from '../../../core/services/applications.service
 
 type QueueTab = 'pending' | 'held' | 'approved' | 'declined' | 'reapply';
 
+/** Who-did-what line shown for a decided (or held) application. */
+export interface DecisionAttribution {
+    /** 'Approved' / 'Declined' / 'Held' — the action actually taken. */
+    verb: string;
+    /** Null when the decider's member row was removed (the FK is ON DELETE SET NULL). */
+    name: string | null;
+    avatarUrl: string | null;
+    /** Null for a HELD application — a hold is not a final decision, so it has no timestamp. */
+    at: string | null;
+}
+
+/** Past-tense label per decided status (pending is never attributed). */
+const DECISION_VERB: Record<string, string> = {
+    approved: 'Approved',
+    declined: 'Declined',
+    held: 'Held',
+};
+
 @Component({
     selector: 'app-applications',
     templateUrl: './applications.component.html',
@@ -15,8 +33,10 @@ export class ApplicationsComponent implements OnInit {
     activeTab: QueueTab = 'pending';
     selectedId: string | null = null;
 
+    /** Staff-only note. Never leaves the console except as the `note` field. */
     moderatorNote = '';
-    discordDmMessage = '';
+    /** What the applicant receives — DM'd on decision and shown on their status page. */
+    userMessage = '';
 
     /**
      * Server-side refusal of the last decision (approve / decline / hold), shown
@@ -95,13 +115,48 @@ export class ApplicationsComponent implements OnInit {
         this.selectApplication(this.queue[0]?.id ?? null);
     }
 
+    /**
+     * The single reset point for the decision pane — prev/next/setTab and
+     * afterDecision all funnel through here. Both boxes are re-filled from the
+     * newly selected row (empty for a pending application, so the placeholders
+     * show), which is what stops one application's text being carried onto the
+     * next one the moderator opens (T-0247). Resetting only some of this state
+     * elsewhere reintroduces exactly that bug.
+     */
     selectApplication(id: string | null): void {
         this.selectedId = id;
-        this.moderatorNote = '';
-        this.discordDmMessage = '';
+        const app = this.selectedApplication;
+        this.moderatorNote = app?.moderatorNote ?? '';
+        this.userMessage = app?.userMessage ?? '';
         // A refusal belongs to the application it was raised on — never let it
         // bleed onto the next one the moderator opens.
         this.moderationError = null;
+    }
+
+    /**
+     * Who took the last action on the selected application (T-0250), or null
+     * when there is nothing to attribute. Driven by status rather than by
+     * `decidedAt`, because a HELD application has a decider while its
+     * `decidedAt` is still null. Both the name and the date are individually
+     * optional — the decider's member row may have been deleted since — so a
+     * decision with neither left to show renders no block at all.
+     */
+    get decisionAttribution(): DecisionAttribution | null {
+        const app = this.selectedApplication;
+        if (!app || app.status === 'pending') {
+            return null;
+        }
+        const name = app.decidedByName ?? null;
+        const at = app.decidedAt ?? null;
+        if (!name && !at) {
+            return null;
+        }
+        return {
+            verb: DECISION_VERB[app.status] ?? 'Decided',
+            name,
+            avatarUrl: app.decidedByAvatarUrl ?? null,
+            at,
+        };
     }
 
     isSelected(id: string): boolean {
@@ -132,9 +187,11 @@ export class ApplicationsComponent implements OnInit {
     }
 
     private afterDecision(): void {
-        // Re-pull the queue so the decided application moves to its new bucket.
-        this.selectedId = null;
-        this.moderationError = null;
+        // Clear through the single reset point rather than nulling fields here —
+        // a partial reset is how one application's text ends up on another
+        // (T-0247). Then re-pull so the decided application moves to its new
+        // bucket, which re-selects and re-fills from the stored values.
+        this.selectApplication(null);
         this.loadApplications();
     }
 
@@ -156,9 +213,9 @@ export class ApplicationsComponent implements OnInit {
         }
         this.moderationError = null;
         // Approve takes no moderator note server-side (it promotes to a member),
-        // but the Discord DM message is sent to the applicant on approval too.
+        // but the user message is sent to the applicant on approval too.
         this.applicationsService
-            .approve(id, this.discordDmMessage)
+            .approve(id, this.userMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
@@ -177,7 +234,8 @@ export class ApplicationsComponent implements OnInit {
         }
         this.moderationError = null;
         this.applicationsService
-            .decline(id, this.moderatorNote, this.discordDmMessage)
+            // The note stays internal; only the user message reaches the applicant.
+            .decline(id, this.moderatorNote, this.userMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
@@ -196,7 +254,7 @@ export class ApplicationsComponent implements OnInit {
         }
         this.moderationError = null;
         this.applicationsService
-            .hold(id, this.moderatorNote, this.discordDmMessage)
+            .hold(id, this.moderatorNote, this.userMessage)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => this.afterDecision(),
@@ -211,7 +269,15 @@ export class ApplicationsComponent implements OnInit {
     // ── Applicant blocklist (T-0033) ─────────────────────────────────────────────
     moderating = false;
 
-    /** Permanently block the selected applicant from submitting further applications. */
+    /**
+     * Permanently block the selected applicant from submitting further
+     * applications. The block endpoint takes a `reason`, and the moderator note
+     * is what it is given — including the note already stored on the
+     * application, which the pane now prefills. Block/unblock deliberately do
+     * NOT go through {@link selectApplication}: the selection is unchanged, so
+     * there is nothing to reset and re-filling here would discard whatever the
+     * moderator has just typed.
+     */
     blockApplicant(): void {
         const id = this.selectedId;
         if (!id) {

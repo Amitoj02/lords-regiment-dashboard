@@ -24,7 +24,16 @@
                 <div class="footer-col-title">Join</div>
                 <a routerLink="/login" class="footer-link">Apply Now</a>
                 <a routerLink="/login" class="footer-link">Sign In</a>
-                <a href="#discord" class="footer-link">Discord Server</a>
+                <!-- Dropped entirely when no invite is configured (T-0234). -->
+                @if (discordInviteUrl) {
+                <a
+                    [href]="discordInviteUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="footer-link footer-link-discord"
+                    >Discord Server</a
+                >
+                }
             </div>
             <div class="footer-col">
                 <div class="footer-col-title">Legal</div>

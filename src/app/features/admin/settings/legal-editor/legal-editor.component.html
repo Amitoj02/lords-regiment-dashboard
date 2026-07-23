@@ -1,0 +1,125 @@
+@if (!canEdit) {
+<div class="panel">
+    <div class="panel-header">
+        <span class="panel-title">Legal documents</span>
+    </div>
+    <div class="panel-body">
+        <hf-notice variant="info">
+            Editing the Terms, Privacy Policy and Community Guidelines needs the "Manage regiment
+            details" permission. Ask an Owner or Admin to make the change.
+        </hf-notice>
+    </div>
+</div>
+} @else if (loadError) {
+<div class="panel">
+    <div class="panel-body">
+        <hf-notice variant="err">{{ loadError }}</hf-notice>
+    </div>
+</div>
+} @else {
+<div class="panel">
+    <div class="panel-header between">
+        <span class="panel-title">Legal documents</span>
+        <a
+            class="btn btn-ghost btn-sm"
+            [routerLink]="activeTab.route"
+            target="_blank"
+            rel="noopener"
+            >View live page →</a
+        >
+    </div>
+    <div class="panel-body">
+        <div class="doc-tabs">
+            @for (tab of tabs; track tab.slug) {
+            <button
+                type="button"
+                class="doc-tab"
+                [ngClass]="{ 'doc-tab--active': activeSlug === tab.slug }"
+                (click)="selectTab(tab.slug)"
+            >
+                {{ tab.label }} @if ((drafts[tab.slug] ?? '') !== (documents[tab.slug]?.body ?? ''))
+                {
+                <span class="doc-tab-dot" aria-label="unsaved changes">•</span>
+                }
+            </button>
+            }
+        </div>
+
+        <p class="field-hint doc-meta">
+            @if (activeDocument?.updatedAt) { Last edited {{ activeDocument?.updatedAt |
+            date:'medium' }} @if (activeDocument?.updatedByName) { by {{
+            activeDocument?.updatedByName }} } } @else { Never edited — visitors currently see the
+            copy that ships with the site. }
+        </p>
+
+        <hf-notice variant="info">
+            Markdown: <span class="mono">## Heading</span>, <span class="mono">**bold**</span>,
+            <span class="mono">- bullet</span>, <span class="mono">&gt; quote</span> and
+            <span class="mono">[text](https://…)</span>. Anything else is printed as plain text.
+        </hf-notice>
+
+        <div class="doc-editor" [class.doc-editor--split]="showPreview">
+            <div class="doc-pane">
+                <div class="doc-pane-head">
+                    <label class="field-label" for="doc-body">Markdown source</label>
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="showPreview = !showPreview"
+                    >
+                        {{ showPreview ? 'Hide preview' : 'Show preview' }}
+                    </button>
+                </div>
+                <textarea
+                    id="doc-body"
+                    class="hf-textarea doc-textarea"
+                    rows="20"
+                    spellcheck="true"
+                    [maxlength]="maxLength"
+                    [placeholder]="'Leave empty to publish the copy that ships with the site.'"
+                    [(ngModel)]="body"
+                ></textarea>
+                <span class="field-hint">{{ body.length }} / {{ maxLength }}</span>
+            </div>
+
+            @if (showPreview) {
+            <div class="doc-pane">
+                <div class="doc-pane-head">
+                    <span class="field-label">Preview</span>
+                </div>
+                <!-- Rendered by the SAME MarkdownService the public page uses, and
+                     bound with plain [innerHTML] so Angular's sanitiser is a second
+                     independent layer over the escape-first renderer. -->
+                <div class="doc-preview">
+                    @if (previewHtml) {
+                    <div [innerHTML]="previewHtml"></div>
+                    } @else {
+                    <p class="field-hint">
+                        Empty — saving now restores the shipped {{ activeTab.label }} copy.
+                    </p>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="settings-footer">
+    @if (flash) {
+    <span class="field-hint flash">{{ flash }}</span>
+    } @if (activeDirty) {
+    <button type="button" class="btn btn-ghost" (click)="revert()">Discard changes</button>
+    }
+    <button
+        type="button"
+        class="btn"
+        [ngClass]="clearsDocument ? 'btn-secondary' : 'btn-primary'"
+        [disabled]="saving"
+        (click)="save()"
+    >
+        @if (saving) { Saving… } @else if (clearsDocument) { Clear document } @else { Save {{
+        activeTab.label }} }
+    </button>
+</div>
+}

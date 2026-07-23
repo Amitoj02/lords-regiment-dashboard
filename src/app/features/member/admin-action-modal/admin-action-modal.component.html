@@ -153,22 +153,33 @@
                         type="datetime-local"
                         class="hf-input"
                         [min]="minDateTime"
+                        [disabled]="isSelf"
                         [(ngModel)]="suspendUntil"
                     />
                     <input
                         type="text"
                         class="hf-input"
                         placeholder="Reason (optional)"
+                        [disabled]="isSelf"
                         [(ngModel)]="suspendReason"
                     />
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm aam-self-start"
-                        [disabled]="suspendBusy"
+                        [disabled]="suspendBusy || isSelf"
+                        [attr.aria-describedby]="isSelf ? 'aam-self-suspend-hint' : null"
                         (click)="suspend()"
                     >
                         {{ suspendBusy ? 'Suspending…' : 'Suspend member' }}
                     </button>
+                    <!-- Disabled + explained, not hidden: a missing button reads as a
+                         bug, a stated reason reads as a rule (T-0246). -->
+                    @if (isSelf) {
+                    <div id="aam-self-suspend-hint" class="field-hint aam-self-hint">
+                        This is your own record — you can’t suspend yourself. Ask another
+                        administrator.
+                    </div>
+                    }
                 </div>
             </section>
             }
@@ -197,12 +208,14 @@
                         class="hf-input"
                         placeholder="Reason (optional)"
                         [(ngModel)]="banReason"
-                        [disabled]="banConfirming"
+                        [disabled]="banConfirming || isSelf"
                     />
                     @if (!banConfirming) {
                     <button
                         type="button"
                         class="btn btn-destructive btn-sm aam-self-start"
+                        [disabled]="isSelf"
+                        [attr.aria-describedby]="isSelf ? 'aam-self-ban-hint' : null"
                         (click)="startBan()"
                     >
                         Ban member
@@ -230,6 +243,14 @@
                         >
                             Cancel
                         </button>
+                    </div>
+                    }
+                    <!-- Sits outside the confirm branch: on your own record the flow
+                         never reaches confirmation, so the hint is the only thing
+                         explaining the dead button (T-0246). -->
+                    @if (isSelf) {
+                    <div id="aam-self-ban-hint" class="field-hint aam-self-hint">
+                        This is your own record — you can’t ban yourself. Ask another administrator.
                     </div>
                     }
                 </div>

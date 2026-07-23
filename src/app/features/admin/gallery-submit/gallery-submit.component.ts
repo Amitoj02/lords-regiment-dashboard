@@ -6,6 +6,7 @@ import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/s
 import { SettingsService } from '../../../core/services/settings.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
+import { VideoPosterService } from '../../../core/services/video-poster.service';
 
 interface UploadedFile {
     id: string;
@@ -14,6 +15,12 @@ interface UploadedFile {
     caption: string;
     mediaType: 'image' | 'video';
     previewUrl: string;
+    /**
+     * Poster key for a VIDEO entry (lords-dashboard-backend:T-0152). Null for an
+     * image, and null for a video whose frame could not be decoded - in which
+     * case the item simply falls back to the placeholder tile.
+     */
+    posterKey?: string | null;
     /** Storage key once the presigned PUT completes; null while uploading. */
     key: string | null;
     uploading: boolean;
@@ -66,6 +73,7 @@ export class GallerySubmitComponent implements OnInit {
         private auth: AuthService,
         private router: Router,
         private media: MediaEmbedService,
+        private videoPoster: VideoPosterService,
     ) {}
 
     ngOnInit(): void {
@@ -135,6 +143,9 @@ export class GallerySubmitComponent implements OnInit {
                 next: (key) => {
                     entry.key = key;
                     entry.uploading = false;
+                    if (mediaType === 'video') {
+                        this.attachPoster(entry, file);
+                    }
                 },
                 error: (err) => {
                     entry.uploading = false;
@@ -142,6 +153,32 @@ export class GallerySubmitComponent implements OnInit {
                     // Surface the backend's user-facing reason (e.g. the size limit) — T-0160.
                     entry.errorMessage = StorageService.uploadErrorMessage(err);
                 },
+            });
+    }
+
+    /**
+     * Best-effort poster capture for an uploaded video. Deliberately fire-and-
+     * forget and never surfaced as an error: a missing poster costs a thumbnail,
+     * while blocking or failing the submission would cost the upload the member
+     * actually asked for. `uploading` is already false by this point, so the
+     * submit button is not held hostage to a decode.
+     */
+    private attachPoster(entry: UploadedFile, file: File): void {
+        void this.videoPoster
+            .capture(file)
+            .then((blob) => {
+                if (!blob) return;
+                const poster = new File([blob], `${file.name}.poster.jpg`, { type: 'image/jpeg' });
+                this.storage
+                    .upload('gallery-poster', poster)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: (posterKey) => (entry.posterKey = posterKey),
+                        error: () => (entry.posterKey = null),
+                    });
+            })
+            .catch(() => {
+                entry.posterKey = null;
             });
     }
 
@@ -209,6 +246,10 @@ export class GallerySubmitComponent implements OnInit {
                 type,
                 linkUrl: isLink ? this.linkUrl.trim() || undefined : undefined,
                 files: files.length ? files : undefined,
+                // One poster per ITEM, so the first video that produced one wins.
+                posterKey: isLink
+                    ? undefined
+                    : (this.uploadedFiles.find((f) => f.posterKey)?.posterKey ?? undefined),
                 tags: this.tags.length ? [...this.tags] : undefined,
             })
             .pipe(takeUntilDestroyed(this.destroyRef))

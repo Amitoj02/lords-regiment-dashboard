@@ -377,12 +377,25 @@ export class ProfileComponent implements OnInit {
         }
     }
 
-    /** Colour-code a service-record dot by entry type (backend: promotion/role/award/suspension/ban). */
+    /**
+     * Colour-code a service-record entry (dot + type tag) by its type. The
+     * backend writes promotion/demotion/role/award/suspension/ban from
+     * MembersService.addServiceRecord, plus 'enlistment' when an application is
+     * approved.
+     *
+     * Every branch MUST return a class. The old `default: return ''` left the dot
+     * on `.timeline-dot`'s inherited brass, pixel-identical to `.is-rank` — which
+     * is why 'enlistment' (absent from this switch, and the first entry on every
+     * member's timeline) has been rendering as a promotion. Unrecognised types
+     * now read neutrally instead of claiming a rank change happened (T-0253).
+     */
     serviceEntryClass(type: string): string {
         switch (type) {
             case 'promotion':
             case 'rank':
                 return 'is-rank';
+            case 'demotion':
+                return 'is-demotion';
             case 'role':
                 return 'is-role';
             case 'award':
@@ -391,8 +404,11 @@ export class ProfileComponent implements OnInit {
             case 'suspension':
             case 'ban':
                 return 'is-suspension';
+            // 'enlistment' is a known type deliberately rendered neutrally — it
+            // shares the fallback so a new backend type is never mis-coloured.
+            case 'enlistment':
             default:
-                return '';
+                return 'is-neutral';
         }
     }
 }

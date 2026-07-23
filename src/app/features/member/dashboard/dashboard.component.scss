@@ -5,12 +5,25 @@
 .honors-strip .honors-row {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    /* The strip itself must never wrap: a wrapped row strands the divider at the
+       end of the first line with nothing after it. Overflow is absorbed by the
+       decorations block instead, which wraps internally (T-0252). */
+    flex-wrap: nowrap;
     gap: 0;
 }
 
 .honor-block {
     padding: 4px 0;
+    /* The rank block keeps its intrinsic width so the rank name never clips. */
+    flex-shrink: 0;
+}
+
+/* Only the decorations block gives way when the strip runs out of room: it may
+   shrink below its content width so its medal rows wrap instead of pushing the
+   panel past the viewport (T-0252). */
+.honor-block--medals {
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 /* Honors strip — field labels, dividers, inline text */
@@ -29,6 +42,15 @@
 
 .honor-row-medals {
     gap: 8px;
+    /* Beats the global `.row { flex-wrap: nowrap }`: a well-decorated member's
+       medals run onto further lines rather than overflowing the panel. */
+    flex-wrap: wrap;
+
+    /* The hint is a flex item here, not a field's trailing hint — its form-layer
+       top margin would just push the empty block taller. */
+    .field-hint {
+        margin-top: 0;
+    }
 }
 
 .honors-divider {
@@ -307,22 +329,36 @@
 
 /* ── Dashboard rework additions (T-0074/75/76/79/80/81) ─────────────────── */
 
-/* T-0075: the Honors Strip (rank + medals) must wrap gracefully on mobile
-   instead of overflowing / clipping. */
-@media (max-width: 640px) {
-    .honors-row {
+/* T-0075/T-0252: the Honors Strip (rank + medals) stacks for the whole mobile
+   band, not just narrow phones — 820px is the app's mobile breakpoint (see
+   styles/_responsive.scss), and between 641px and 820px the strip was still
+   laying out horizontally around a divider it had no room for.
+
+   The selector must be `.honors-strip .honors-row`, matching the unscoped rule
+   above: a bare `.honors-row` here loses on specificity, which is what left the
+   stack centred and gapless on phones despite this block. */
+@media (max-width: 820px) {
+    .honors-strip .honors-row {
         flex-direction: column;
         align-items: flex-start;
         gap: 14px;
     }
 
+    /* A vertical rule between stacked blocks divides nothing. */
     .honors-divider {
         display: none;
     }
 
+    /* Both honour rows carry the global `.row` flex utility, which still inherits
+       Bootstrap's negative grid gutters — so the rank icon and the medal tiles
+       hang 12px to the left of their own labels. Once the strip is stacked that
+       ragged edge is the most visible thing in it, so pin the rows back to the
+       block edge. (Left alone on desktop, where the rule is app-wide and the
+       strip's own spacing hides it.) */
+    .honor-row-tight,
     .honor-row-medals {
-        flex-wrap: wrap;
-        gap: 8px;
+        margin-left: 0;
+        margin-right: 0;
     }
 }
 

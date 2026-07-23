@@ -1,13 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
+import { Observable, Subscription, switchMap, timer } from 'rxjs';
 import { Medal, Rank } from '../../../core/models/member.model';
 import {
     DiscordConnection,
     DiscordRole,
     DiscordService,
+    RoleRelinkProgress,
+    RoleRelinkSubject,
 } from '../../../core/services/discord.service';
+import { LinkDiscordResult } from '../../../core/services/link-discord-result';
 import { MedalPayload, MedalsService } from '../../../core/services/medals.service';
 import { RankPayload, RanksService } from '../../../core/services/ranks.service';
 import {
@@ -20,6 +23,34 @@ type EditorMode = 'rank' | 'medal';
 
 /** Accepted icon MIME types (PNG + SVG + WebP), mirroring the backend icon policy. */
 const ICON_MIME_TYPES = ['image/png', 'image/svg+xml', 'image/webp'];
+
+/**
+ * Poll cadence for an in-flight bulk re-link (T-0254).
+ *
+ * 2s is the cheapest interval that still reads as live: a run over a few hundred
+ * members drains in well under a minute, so a slower poll would show a bar that
+ * jumps rather than moves. It stays honest about cost because the poll is
+ * short-lived and narrow — it only runs while a batch is non-terminal, it stops
+ * the moment the panel closes, and the endpoint is one indexed aggregate over
+ * the job rows of a single batch. The realistic worst case is a couple of admins
+ * with the editor open, i.e. ~30 requests/minute each for under a minute.
+ */
+const RELINK_POLL_MS = 2000;
+
+/**
+ * A role change that will re-role existing holders, held back until the admin
+ * confirms it. `nextRoleId` is null when the change is an unlink.
+ */
+interface RelinkPrompt {
+    subject: RoleRelinkSubject;
+    entityId: string;
+    entityLabel: string;
+    previousRoleId: string;
+    nextRoleId: string | null;
+    fromRoleName: string;
+    toRoleName: string;
+    holders: number;
+}
 
 @Component({
     selector: 'app-ranks-medals',
@@ -91,6 +122,22 @@ export class RanksMedalsComponent implements OnInit {
     editDiscordRoleId = '';
     editDiscordRoleName = '';
     editDiscordLinked = false;
+
+    // ── Bulk Discord role re-link (T-0254) ───────────────────────────────────
+    /** Set while a re-role is waiting on the admin's confirmation. */
+    relinkPrompt: RelinkPrompt | null = null;
+    /** Live (or terminal) progress of the run the last confirmed change queued. */
+    relink: RoleRelinkProgress | null = null;
+    /** A link/unlink or cancel request that failed outright (not a job failure). */
+    relinkError = '';
+    /** A link/unlink request is in flight — keeps the confirm button single-fire. */
+    relinkBusy = false;
+    cancellingRelink = false;
+    /**
+     * The progress poll. Held explicitly (not just `takeUntilDestroyed`) because
+     * the panel closes long before the component is destroyed — see stopRelinkPoll().
+     */
+    private relinkPoll: Subscription | null = null;
 
     private readonly iconMaxPx = ICON_MAX_DIMENSION_PX;
 
@@ -220,6 +267,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editRankPrecedence = this.ranks.length + 1;
         this.resetRankIcon();
         this.resetEditorRole();
+        this.resetRelinkView();
         this.clearRowFlash();
     }
 
@@ -233,6 +281,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editDiscordRoleId = rank.discordRoleId ?? '';
         this.editDiscordRoleName = rank.discordRole;
         this.editDiscordLinked = rank.discordLinked;
+        this.resetRelinkView();
         this.clearRowFlash();
     }
 
@@ -330,6 +379,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editPrecedence = this.medals.length + 1;
         this.resetMedalIcon();
         this.resetEditorRole();
+        this.resetRelinkView();
         this.clearRowFlash();
     }
 
@@ -348,6 +398,7 @@ export class RanksMedalsComponent implements OnInit {
             medal.discordRole ||
             '';
         this.editDiscordLinked = medal.discordLinked ?? false;
+        this.resetRelinkView();
         this.clearRowFlash();
     }
 
@@ -448,14 +499,25 @@ export class RanksMedalsComponent implements OnInit {
 
     // ── Discord role linking (editor) ────────────────────────────────────────
     onRoleSelect(roleId: string): void {
-        this.editDiscordRoleId = roleId;
         const id = this.editorMode === 'rank' ? this.editingRankId : this.editingMedalId;
         if (!id) {
             // Unsaved entity — the role is carried in the create payload on Save.
+            this.editDiscordRoleId = roleId;
             this.editDiscordRoleName = roleId ? this.roleName(roleId) : '';
             this.editDiscordLinked = false;
             return;
         }
+        // Only a role that is actually linked has holders wearing it. Landing on a
+        // FIRST role has nothing to strip, so it goes straight through.
+        const previousRoleId = this.editDiscordLinked ? this.editDiscordRoleId : '';
+        if (previousRoleId && previousRoleId !== roleId && this.editingHolders > 0) {
+            // Leave the <select> showing the pick so the question reads naturally;
+            // cancelRelinkPrompt() snaps the model back if the admin backs out.
+            this.editDiscordRoleId = roleId;
+            this.askToRelink(id, previousRoleId, roleId || null);
+            return;
+        }
+        this.editDiscordRoleId = roleId;
         if (roleId) {
             this.linkRole(id, roleId);
         } else {
@@ -469,37 +531,105 @@ export class RanksMedalsComponent implements OnInit {
             this.resetEditorRole();
             return;
         }
+        // An unlink is a re-link to nothing: every holder LOSES the role, so it
+        // gets the same warning (there is an outgoing role by definition here).
+        if (this.editDiscordLinked && this.editDiscordRoleId && this.editingHolders > 0) {
+            this.askToRelink(id, this.editDiscordRoleId, null);
+            return;
+        }
         this.unlinkRole(id);
+    }
+
+    /** Holder count of the entity being edited — the blast radius of a re-link. */
+    get editingHolders(): number {
+        if (this.editorMode === 'rank') {
+            return this.ranks.find((r) => r.id === this.editingRankId)?.holders ?? 0;
+        }
+        return this.medals.find((m) => m.id === this.editingMedalId)?.holders ?? 0;
+    }
+
+    private askToRelink(id: string, previousRoleId: string, nextRoleId: string | null): void {
+        const subject: RoleRelinkSubject = this.editorMode === 'rank' ? 'rank' : 'medal';
+        this.relinkPrompt = {
+            subject,
+            entityId: id,
+            entityLabel: subject === 'rank' ? this.editRankName : this.editTitle,
+            previousRoleId,
+            nextRoleId,
+            // Fall back to the stored name (and then the raw snowflake) so the
+            // warning still names both roles when the bot is offline and the
+            // roles list never loaded.
+            fromRoleName:
+                this.roleName(previousRoleId) || this.editDiscordRoleName || previousRoleId,
+            toRoleName: nextRoleId ? this.roleName(nextRoleId) || nextRoleId : 'no role',
+            holders: this.editingHolders,
+        };
+    }
+
+    confirmRelink(): void {
+        const prompt = this.relinkPrompt;
+        if (!prompt || this.relinkBusy) return;
+        this.relinkPrompt = null;
+        if (prompt.nextRoleId) {
+            this.linkRole(prompt.entityId, prompt.nextRoleId);
+        } else {
+            this.unlinkRole(prompt.entityId);
+        }
+    }
+
+    cancelRelinkPrompt(): void {
+        const prompt = this.relinkPrompt;
+        if (!prompt) return;
+        this.relinkPrompt = null;
+        // The <select> was left on the rejected pick; move the model back so
+        // ngModel writes the still-linked role into the control.
+        this.editDiscordRoleId = prompt.previousRoleId;
     }
 
     private linkRole(id: string, roleId: string): void {
         const name = this.roleName(roleId);
-        const request: Observable<Rank | Medal> =
-            this.editorMode === 'rank'
+        const subject: RoleRelinkSubject = this.editorMode === 'rank' ? 'rank' : 'medal';
+        this.relinkBusy = true;
+        // Explicitly typed: a bare ternary yields a UNION of two Observables whose
+        // `subscribe` overloads do not unify, and only the batch id is read here.
+        const link$: Observable<LinkDiscordResult<Rank | Medal>> =
+            subject === 'rank'
                 ? this.ranksService.linkDiscord(id, roleId, name)
                 : this.medalsService.linkDiscord(id, roleId, name);
-        request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: () => {
+        link$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: ({ relinkBatchId }) => {
+                this.relinkBusy = false;
                 this.editDiscordRoleId = roleId;
                 this.editDiscordRoleName = name;
                 this.editDiscordLinked = true;
                 this.refreshAfterLink();
+                this.watchRelink(relinkBatchId);
             },
-            error: (err) => this.setRowError(err, 'Could not link the Discord role — try again.'),
+            error: (err) => {
+                this.relinkBusy = false;
+                this.setRowError(err, 'Could not link the Discord role — try again.');
+            },
         });
     }
 
     private unlinkRole(id: string): void {
-        const request: Observable<Rank | Medal> =
-            this.editorMode === 'rank'
+        const subject: RoleRelinkSubject = this.editorMode === 'rank' ? 'rank' : 'medal';
+        this.relinkBusy = true;
+        const unlink$: Observable<LinkDiscordResult<Rank | Medal>> =
+            subject === 'rank'
                 ? this.ranksService.unlinkDiscord(id)
                 : this.medalsService.unlinkDiscord(id);
-        request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: () => {
+        unlink$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: ({ relinkBatchId }) => {
+                this.relinkBusy = false;
                 this.resetEditorRole();
                 this.refreshAfterLink();
+                this.watchRelink(relinkBatchId);
             },
-            error: (err) => this.setRowError(err, 'Could not unlink the Discord role — try again.'),
+            error: (err) => {
+                this.relinkBusy = false;
+                this.setRowError(err, 'Could not unlink the Discord role — try again.');
+            },
         });
     }
 
@@ -509,6 +639,159 @@ export class RanksMedalsComponent implements OnInit {
         } else {
             this.loadMedals();
         }
+    }
+
+    // ── Bulk re-link progress ────────────────────────────────────────────────
+    /**
+     * Follow a queued run to its terminal state. A null handle means the backend
+     * queued nothing (bot off, role syncing off, or no linked holders) — there is
+     * simply nothing to watch, so no poll is started.
+     */
+    private watchRelink(batchId: string | null): void {
+        this.resetRelinkProgress();
+        if (!batchId) return;
+        this.relinkPoll = timer(0, RELINK_POLL_MS)
+            .pipe(
+                switchMap(() => this.discord.getRelinkProgress(batchId)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                next: (progress) => {
+                    this.relink = progress;
+                    // Terminal: the row will never change again, so stop paying for it.
+                    if (progress.state !== 'running') this.stopRelinkPoll();
+                },
+                error: (err) => {
+                    this.stopRelinkPoll();
+                    this.relinkError =
+                        (err as HttpErrorResponse)?.error?.message ??
+                        'Lost track of the Discord role update — it is still running on the server.';
+                },
+            });
+    }
+
+    /**
+     * Tear the poll down. `takeUntilDestroyed` only fires when the COMPONENT is
+     * destroyed, and this editor closes long before that — so EVERY exit path
+     * (terminal state, poll error, panel close, starting a new run) must come
+     * through here, or the timer keeps hitting the API for the rest of the session.
+     */
+    private stopRelinkPoll(): void {
+        this.relinkPoll?.unsubscribe();
+        this.relinkPoll = null;
+    }
+
+    /** True while a poll is live — the invariant the teardown spec pins. */
+    get relinkPolling(): boolean {
+        return this.relinkPoll !== null;
+    }
+
+    /** Stop the run. Members already updated stay updated; there is no rollback. */
+    cancelRelinkRun(): void {
+        const batchId = this.relink?.batchId;
+        if (!batchId || this.cancellingRelink) return;
+        this.cancellingRelink = true;
+        this.discord
+            .cancelRelink(batchId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (progress) => {
+                    this.cancellingRelink = false;
+                    this.relink = progress;
+                    // A cancel may still leave in-flight jobs draining; only a
+                    // terminal answer retires the poll.
+                    if (progress.state !== 'running') this.stopRelinkPoll();
+                },
+                error: (err) => {
+                    this.cancellingRelink = false;
+                    this.relinkError =
+                        (err as HttpErrorResponse)?.error?.message ??
+                        'Could not stop the update — it may already have finished.';
+                },
+            });
+    }
+
+    /** Dismiss a finished run's row (the "OK, got it" on a terminal summary). */
+    dismissRelink(): void {
+        this.resetRelinkProgress();
+    }
+
+    private resetRelinkProgress(): void {
+        this.stopRelinkPoll();
+        this.relink = null;
+        this.relinkError = '';
+        this.cancellingRelink = false;
+    }
+
+    /** Clear the whole re-link view when the editor switches to another entity. */
+    private resetRelinkView(): void {
+        this.relinkPrompt = null;
+        // A request abandoned by closing the panel must not leave the next
+        // editor session with a permanently disabled role picker.
+        this.relinkBusy = false;
+        this.resetRelinkProgress();
+    }
+
+    /** Jobs that have settled one way or another — the numerator of the bar. */
+    get relinkSettled(): number {
+        const p = this.relink;
+        return p ? p.applied + p.failed + p.cancelled : 0;
+    }
+
+    /**
+     * Bar fill. A terminal run is 100% by definition, however the counts landed —
+     * a cancelled run IS finished, and its label carries the honest outcome.
+     */
+    get relinkPercent(): number {
+        const p = this.relink;
+        if (!p) return 0;
+        if (p.state !== 'running') return 100;
+        if (!p.total) return 0;
+        return Math.min(100, Math.round((this.relinkSettled / p.total) * 100));
+    }
+
+    get relinkVariant(): 'ok' | 'warn' | 'err' | 'info' {
+        const p = this.relink;
+        if (!p) return 'info';
+        if (p.state === 'running') return 'info';
+        if (p.failed > 0) return 'err';
+        return p.state === 'completed' ? 'ok' : 'warn';
+    }
+
+    /** One honest sentence about the run — including "no rollback" after a stop. */
+    get relinkSummary(): string {
+        const p = this.relink;
+        if (!p) return '';
+        const label = p.subjectLabel || (p.subject === 'rank' ? 'this rank' : 'this medal');
+        switch (p.state) {
+            case 'running':
+                return p.expanding
+                    ? `Updating Discord roles for ${label} — still counting members…`
+                    : `Updating Discord roles for ${label} — ${p.applied} of ${p.total} applied, ${p.pending} remaining.`;
+            case 'completed':
+                return p.failed > 0
+                    ? `Finished ${label}: ${p.applied} of ${p.total} members updated, ${p.failed} failed.`
+                    : `Finished ${label}: all ${p.applied} members updated.`;
+            case 'partial':
+                return `Stopped ${label} after ${p.applied} of ${p.total} members. Those ${p.applied} keep the new role — there is no rollback.`;
+            case 'cancelled':
+                return `Stopped ${label} before any member was changed.`;
+        }
+    }
+
+    /**
+     * The server's own reason for the failures, so a bot role-hierarchy problem is
+     * diagnosable without leaving the page. Empty when nothing failed.
+     */
+    get relinkFailureReason(): string {
+        const p = this.relink;
+        if (!p || p.failed === 0) return '';
+        const cause = p.failures.samples[0] || 'Discord rejected the role change.';
+        const stuck = p.failures.permanent + p.failures.exhausted;
+        const retrying = p.failures.retrying ? ` ${p.failures.retrying} still retrying.` : '';
+        return stuck > 0
+            ? `${stuck} member${stuck === 1 ? '' : 's'} could not be updated: ${cause}${retrying}`
+            : `${p.failed} member${p.failed === 1 ? '' : 's'} hit an error: ${cause}${retrying}`;
     }
 
     // ── Drag-to-reorder (native HTML5 DnD) ───────────────────────────────────
@@ -618,6 +901,9 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = null;
         this.editingRankId = null;
         this.editingMedalId = null;
+        // The progress row lives in this panel, so closing it must retire the
+        // poll — the component itself may stay alive for the rest of the session.
+        this.resetRelinkView();
     }
 
     roleLoaded(id: string | null): boolean {

@@ -19,7 +19,10 @@ export type StorageTarget =
     | 'event-banner'
     | 'medal-image'
     | 'rank-image'
-    | 'gallery';
+    | 'gallery'
+    | 'regiment-hero-banner'
+    | 'regiment-login-banner'
+    | 'gallery-poster';
 
 /** One target's upload policy (mirrors the backend StorageTargetPolicyDto). */
 export interface StorageTargetPolicy {
@@ -119,6 +122,37 @@ export const DEFAULT_STORAGE_POLICY: StoragePolicy = {
             maxVideoMb: 80,
             acceptedMimeTypes: [...IMAGE_TYPES.mimeTypes, ...VIDEO_TYPES.mimeTypes],
             acceptedExtensions: [...IMAGE_TYPES.extensions, ...VIDEO_TYPES.extensions],
+        },
+        // Public page backgrounds (lords-dashboard-backend:T-0148). Full-bleed
+        // photographs behind a scrim, so they take the banner cap — and the
+        // default raster set only, deliberately NOT the icon set: an SVG here
+        // would be rendered as a CSS `url()`, not through the <img> secure-static
+        // path that makes SVG safe for rank/medal icons.
+        {
+            target: 'regiment-hero-banner',
+            kinds: ['image'],
+            maxImageMb: 12,
+            maxVideoMb: null,
+            acceptedMimeTypes: IMAGE_TYPES.mimeTypes,
+            acceptedExtensions: IMAGE_TYPES.extensions,
+        },
+        {
+            target: 'regiment-login-banner',
+            kinds: ['image'],
+            maxImageMb: 12,
+            maxVideoMb: null,
+            acceptedMimeTypes: IMAGE_TYPES.mimeTypes,
+            acceptedExtensions: IMAGE_TYPES.extensions,
+        },
+        // A single decoded video frame captured client-side
+        // (lords-dashboard-backend:T-0152) — one still image, so a small cap.
+        {
+            target: 'gallery-poster',
+            kinds: ['image'],
+            maxImageMb: 4,
+            maxVideoMb: null,
+            acceptedMimeTypes: IMAGE_TYPES.mimeTypes,
+            acceptedExtensions: IMAGE_TYPES.extensions,
         },
     ],
 };

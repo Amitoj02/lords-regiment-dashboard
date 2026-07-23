@@ -6,10 +6,15 @@ import { ApplicationsService } from '../../../core/services/applications.service
 
 /**
  * The canonical landing for a non-member who has already applied (T-0029): shows
- * their application status — pending (review within 48h), held (with the officer
- * note), or declined (with the reason + a Reapply action unless an officer has
- * blocked them). An approved applicant is now a member and is sent on to the
- * dashboard; someone with no application is sent to the blank apply form.
+ * their application status — pending (review within 48h), held, or declined
+ * (plus a Reapply action unless an officer has blocked them). An approved
+ * applicant is now a member and is sent on to the dashboard; someone with no
+ * application is sent to the blank apply form.
+ *
+ * The only decision text this page renders is the officer's `userMessage`
+ * (T-0249). It used to render `moderatorNote` and `declineReason`, which are
+ * staff-only — they are not on {@link MyApplication} at all any more, so the
+ * template cannot bind them back by accident.
  */
 @Component({
     selector: 'hf-application-status',

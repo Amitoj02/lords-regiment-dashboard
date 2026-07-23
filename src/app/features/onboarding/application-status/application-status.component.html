@@ -79,11 +79,7 @@
                         </p>
                     </div>
                 </div>
-                @if (application.moderatorNote) {
-                <hf-notice variant="info">
-                    <strong>Officer note:</strong> {{ application.moderatorNote }}
-                </hf-notice>
-                } } @case ('declined') {
+                } @case ('declined') {
                 <div class="status-summary">
                     <div
                         class="status-summary-icon status-summary-icon--declined"
@@ -96,15 +92,27 @@
                         <p class="status-text">Your application was not accepted at this time.</p>
                     </div>
                 </div>
-                @if (application.declineReason) {
-                <hf-notice variant="warn">
-                    <strong>Reason:</strong> {{ application.declineReason }}
+                } }
+
+                <!-- The officer's message to the applicant (T-0249). This is the
+                     ONLY decision text an applicant is ever shown: the moderator
+                     note and the decline reason are staff-only and are not even
+                     present on the applicant projection, so a decline carrying an
+                     internal note but no message renders nothing here. -->
+                @if (application.userMessage) {
+                <hf-notice variant="info">
+                    <strong>Message from the officers:</strong> {{ application.userMessage }}
                 </hf-notice>
-                } @if (blocked) {
+                }
+
+                <!-- Lifted out of the `declined` case so the officer's message
+                     reads before the dead end. The panel above already covers the
+                     other statuses, hence the `declined` guard here. -->
+                @if (blocked && application.status === 'declined') {
                 <hf-notice variant="err">
                     You are no longer able to submit further applications.
                 </hf-notice>
-                } } }
+                }
 
                 <!-- Submitted details -->
                 <dl class="status-details">

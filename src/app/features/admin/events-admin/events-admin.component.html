@@ -54,10 +54,15 @@
                             <tr>
                                 <td>
                                     <div class="event-name">{{ event.title }}</div>
+                                    <!-- Dropped entirely when no server is bound (T-0236). -->
+                                    @if (event.hasServerName) {
                                     <div class="event-server mono">{{ event.serverName }}</div>
+                                    }
                                 </td>
+                                <!-- Viewer-local time (T-0237), labelled as such. -->
                                 <td class="mono date-cell">
                                     {{ event.date | date: 'MMM d, yyyy' }} · {{ event.startTime }}
+                                    <span class="date-zone">{{ event.zoneLabel }}</span>
                                 </td>
                                 <td>
                                     <hf-event-status [status]="event.status"></hf-event-status>

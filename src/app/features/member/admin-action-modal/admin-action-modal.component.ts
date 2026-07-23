@@ -15,10 +15,14 @@ import { MembersService } from '../../../core/services/members.service';
 import { RanksService } from '../../../core/services/ranks.service';
 import { MedalsService } from '../../../core/services/medals.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 /**
  * Single admin-action modal for a member. Each section is gated by capability
  * and hidden when the caller lacks it. Shown while [member] is non-null.
+ *
+ * Mounted twice — the roster row's `···` button and the profile header's "Admin
+ * Actions" button — so every gate here has to hold for both entry points.
  */
 @Component({
     selector: 'hf-admin-action-modal',
@@ -89,6 +93,7 @@ export class AdminActionModalComponent {
         private ranksService: RanksService,
         private medalsService: MedalsService,
         private auth: AuthService,
+        private toast: ToastService,
     ) {}
 
     // ── Capability gates ─────────────────────────────────────────────────────
@@ -100,6 +105,18 @@ export class AdminActionModalComponent {
     }
     get hasAnyCapability(): boolean {
         return this.canRanksMedals || this.canRoles;
+    }
+
+    /**
+     * True when the open member record IS the signed-in admin's own (T-0246).
+     * Matched on member id, never on the display name — two members can share a
+     * name, and blocking on a name collision would lock an admin out of a real
+     * moderation action. `isMember` guards the identity-only case, where
+     * CurrentUser.id is a Discord identity id from a different id space.
+     */
+    get isSelf(): boolean {
+        const me = this.auth.currentUser();
+        return !!me?.isMember && !!this._member && me.id === this._member.id;
     }
 
     /**
@@ -215,6 +232,12 @@ export class AdminActionModalComponent {
     suspend(): void {
         const m = this._member;
         if (!m) return;
+        // Belt and braces: the button is disabled, but a stale `member` binding
+        // could still let a click through. The backend rejects it with 403 too.
+        if (this.isSelf) {
+            this.fail('You cannot suspend your own account.');
+            return;
+        }
         if (!this.suspendUntil) {
             this.error = 'Choose a date and time for the suspension to end.';
             return;
@@ -232,6 +255,10 @@ export class AdminActionModalComponent {
     }
 
     startBan(): void {
+        if (this.isSelf) {
+            this.fail('You cannot ban your own account.');
+            return;
+        }
         this.error = null;
         this.banConfirming = true;
     }
@@ -241,6 +268,11 @@ export class AdminActionModalComponent {
     confirmBan(): void {
         const m = this._member;
         if (!m) return;
+        if (this.isSelf) {
+            this.banConfirming = false;
+            this.fail('You cannot ban your own account.');
+            return;
+        }
         this.banBusy = true;
         this.run(this.members.ban(m.id, this.banReason || undefined), () => {
             this.banBusy = false;
@@ -272,9 +304,19 @@ export class AdminActionModalComponent {
             },
             error: (e) => {
                 stop();
-                this.error = this.extractError(e);
+                this.fail(this.extractError(e));
             },
         });
+    }
+
+    /**
+     * Surface a failure. The inline notice lives inside a scrollable body and can
+     * sit off-screen on a phone, so every failure ALSO raises a toast — a
+     * rejected action must never look like nothing happened (T-0246).
+     */
+    private fail(message: string): void {
+        this.error = message;
+        this.toast.error(message);
     }
 
     private applyUpdate(updated: Member): void {

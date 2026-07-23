@@ -125,6 +125,18 @@
     color: var(--t-200);
 }
 
+// Times render in the VIEWER's zone (T-0237); the label says which zone that is
+// without competing with the time itself.
+.event-zone {
+    color: var(--t-500);
+    font-size: 0.85em;
+    margin-left: 4px;
+}
+
+.ongoing-password-note {
+    align-self: center;
+}
+
 .upcoming-heading {
     font-size: 17px;
     color: var(--brass-300);
@@ -228,4 +240,36 @@
     gap: 6px;
     margin-top: 10px;
     flex-wrap: wrap;
+}
+
+/* The row CTA is now a sentence ("Login to RSVP" / "Open in dashboard") rather
+   than "Details", and a password note can sit beside the time (T-0235/T-0236).
+   On a phone the single un-wrapping flex row squeezed the title down to two
+   words a line and pushed the badge under the button, so stack the meta column
+   onto its own line instead. */
+@media (max-width: 560px) {
+    .event-list-row {
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+
+    /* Fill the row beside the date block (36px + the 16px flex gap). */
+    .event-list-body {
+        flex-basis: calc(100% - 52px);
+    }
+
+    .event-list-meta {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .event-list-meta-align {
+        text-align: left;
+    }
+
+    .event-rsvps {
+        margin-bottom: 0;
+    }
 }

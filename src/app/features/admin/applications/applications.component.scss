@@ -138,6 +138,48 @@
 .mod-tools {
     margin-top: 20px;
     row-gap: 0;
+
+    // Each hint carries the audience of the box directly above it, so it stays
+    // glued to that textarea instead of inheriting the paragraph bottom margin.
+    .field-hint {
+        margin-bottom: 0;
+    }
+}
+
+// "Staff only" tag inside the moderator-note label. Sized down from the badge
+// base so it reads as an annotation on the label, not a status pill.
+.note-audience {
+    margin-left: 6px;
+    font-size: 0.625rem;
+    vertical-align: middle;
+}
+
+// Decision attribution (T-0250): avatar + "Declined by <name> — <date>". Sits at
+// the end of the detail header and wraps onto its own line once the identity
+// block claims the full width (see the phone reflow below); `min-width: 0` +
+// `overflow-wrap` keep a long officer name from widening the detail panel.
+.decision-by {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--t-400);
+
+    &__text {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    strong {
+        color: var(--t-200);
+        font-weight: 600;
+    }
+
+    &__when {
+        white-space: nowrap;
+    }
 }
 
 .decisions-row {

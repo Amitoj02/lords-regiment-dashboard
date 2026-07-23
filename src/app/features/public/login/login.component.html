@@ -1,6 +1,11 @@
 <div class="login-layout">
-    <!-- Left panel: branding -->
-    <div class="login-left">
+    <!-- Left panel: branding. Image, scrim and quote come from the ANONYMOUS
+         regiment profile (T-0239) and fall back to the shipped panel. -->
+    <div
+        class="login-left"
+        [style.background-image]="'url(' + loginBannerUrl + ')'"
+        [style.--login-scrim]="loginScrim"
+    >
         <div class="login-left-overlay"></div>
         <div class="login-left-inner">
             <div class="login-left-main">
@@ -9,12 +14,13 @@
                     class="login-crest"
                     alt="Regiment Crest"
                 />
-                <h1 class="serif-display login-title">Lord Regiment</h1>
+                <h1 class="serif-display login-title">{{ regimentName }}</h1>
                 <div class="admin-label login-subtitle">Holdfast: Nations at War</div>
-                <blockquote class="serif login-quote">
-                    "Your identity on the field is your word. Discord is your word made manifest."
-                </blockquote>
-                <div class="login-attribution">— Major Diego Vasquez</div>
+                <blockquote class="serif login-quote">"{{ loginQuote }}"</blockquote>
+                <!-- No attribution → no dash. -->
+                @if (loginQuoteAttribution) {
+                <div class="login-attribution">— {{ loginQuoteAttribution }}</div>
+                }
             </div>
 
             <div class="login-left-footer">

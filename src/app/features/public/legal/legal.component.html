@@ -4,7 +4,23 @@
     <div class="page legal-wrap">
         <a routerLink="/" class="btn btn-ghost btn-sm back-link">&larr; Home</a>
 
-        @if (doc === 'terms') {
+        <!-- Admin-authored body, when there is one. Bound with plain [innerHTML]
+             — never bypassSecurityTrustHtml — so Angular's sanitiser runs as a
+             second layer over MarkdownService's escape-first rendering. -->
+        @if (documentHtml) {
+        <article class="legal-doc legal-doc--authored">
+            <h1 class="serif-display legal-title">{{ title }}</h1>
+            @if (updatedAt) {
+            <p class="legal-updated">Last updated {{ updatedAt | date:'longDate' }}</p>
+            }
+            <div class="legal-body" [innerHTML]="documentHtml"></div>
+        </article>
+        } @else if (doc === 'terms') {
+        <!-- Shipped fallback: used when the document has never been edited, has
+             been cleared, or the request failed. A blank legal page must never
+             ship — the privacy policy in particular is a Discord Developer ToS
+             obligation, so this copy is what keeps the site compliant when the
+             API is unreachable. -->
         <article class="legal-doc">
             <h1 class="serif-display legal-title">Terms &amp; Conditions</h1>
             <p class="legal-updated">A community project — provided as-is.</p>

@@ -1,5 +1,5 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
@@ -10,6 +10,7 @@ import {
     DiscordConnection,
     DiscordRole,
     DiscordService,
+    RoleRelinkProgress,
 } from '../../../core/services/discord.service';
 import { Medal, Rank } from '../../../core/models/member.model';
 import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/storage.service';
@@ -48,6 +49,28 @@ const roles: DiscordRole[] = [
     { id: 'd1', name: 'Sergeant', position: 1 },
     { id: 'd2', name: 'Captain', position: 2 },
 ];
+
+/** One poll answer for the bulk re-link progress endpoint. */
+function progress(overrides: Partial<RoleRelinkProgress> = {}): RoleRelinkProgress {
+    return {
+        batchId: 'b1',
+        state: 'running',
+        subject: 'rank',
+        subjectLabel: 'Sergeant',
+        outgoingRoleId: 'd1',
+        incomingRoleId: 'd2',
+        expanding: false,
+        total: 8,
+        applied: 4,
+        pending: 4,
+        failed: 0,
+        cancelled: 0,
+        failures: { permanent: 0, exhausted: 0, retrying: 0, samples: [] },
+        startedAt: '2026-07-22T10:00:00Z',
+        finishedAt: null,
+        ...overrides,
+    };
+}
 
 const connection: DiscordConnection = {
     connected: true,
@@ -91,6 +114,8 @@ describe('RanksMedalsComponent', () => {
             'getRoles',
             'getConnection',
             'resync',
+            'getRelinkProgress',
+            'cancelRelink',
         ]);
 
         ranksService.getAll.and.returnValue(of(ranks));
@@ -98,9 +123,13 @@ describe('RanksMedalsComponent', () => {
         ranksService.update.and.returnValue(of(rank()));
         ranksService.delete.and.returnValue(of(undefined));
         ranksService.reorder.and.returnValue(of(ranks));
-        ranksService.linkDiscord.and.returnValue(of(rank()));
+        // Default: the change queued nothing (no holders / bot off), so no poll.
+        ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: null }));
         ranksService.unlinkDiscord.and.returnValue(
-            of(rank({ discordLinked: false, discordRoleId: null })),
+            of({
+                entity: rank({ discordLinked: false, discordRoleId: null }),
+                relinkBatchId: null,
+            }),
         );
 
         medalsService.getAll.and.returnValue(of(medals));
@@ -108,14 +137,19 @@ describe('RanksMedalsComponent', () => {
         medalsService.update.and.returnValue(of(medal()));
         medalsService.delete.and.returnValue(of(undefined));
         medalsService.reorder.and.returnValue(of(medals));
-        medalsService.linkDiscord.and.returnValue(of(medal()));
+        medalsService.linkDiscord.and.returnValue(of({ entity: medal(), relinkBatchId: null }));
         medalsService.unlinkDiscord.and.returnValue(
-            of(medal({ discordLinked: false, discordRoleId: null })),
+            of({
+                entity: medal({ discordLinked: false, discordRoleId: null }),
+                relinkBatchId: null,
+            }),
         );
 
         discord.getRoles.and.returnValue(of(roles));
         discord.getConnection.and.returnValue(of(connection));
         discord.resync.and.returnValue(of(3));
+        discord.getRelinkProgress.and.returnValue(of(progress()));
+        discord.cancelRelink.and.returnValue(of(progress({ state: 'partial', pending: 0 })));
 
         storage = jasmine.createSpyObj<StorageService>('StorageService', ['getPolicy', 'upload']);
         storage.getPolicy.and.returnValue(of(DEFAULT_STORAGE_POLICY));
@@ -211,10 +245,12 @@ describe('RanksMedalsComponent', () => {
     });
 
     it('onRoleSelect links the Discord role for the edited rank; unlink calls unlinkDiscord', () => {
-        setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false })]);
+        // Zero holders: neither direction has anyone to re-role, so no confirmation.
+        setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false, holders: 0 })]);
         component.selectRankEdit(component.ranks[0]);
         component.onRoleSelect('d2');
         expect(ranksService.linkDiscord).toHaveBeenCalledWith('r1', 'd2', 'Captain');
+        expect(component.relinkPrompt).toBeNull();
 
         component.unlinkCurrentRole();
         expect(ranksService.unlinkDiscord).toHaveBeenCalledWith('r1');
@@ -276,6 +312,180 @@ describe('RanksMedalsComponent', () => {
     it('shows a per-panel empty state when there are no ranks or medals', () => {
         setup([], []);
         expect(fixture.nativeElement.querySelectorAll('.empty').length).toBe(2);
+    });
+
+    // ── Bulk Discord role re-link (T-0254) ───────────────────────────────────────
+    describe('bulk role re-link', () => {
+        /** Open the rank editor on a rank that is already linked to @Sergeant (d1). */
+        function editLinkedRank(holders = 8): void {
+            setup([rank({ id: 'r1', discordRoleId: 'd1', discordLinked: true, holders })]);
+            component.selectRankEdit(component.ranks[0]);
+        }
+
+        it('warns with the holder count and BOTH role names before re-linking', () => {
+            editLinkedRank(8);
+            component.onRoleSelect('d2');
+
+            // Nothing is submitted until the admin answers.
+            expect(ranksService.linkDiscord).not.toHaveBeenCalled();
+            expect(component.relinkPrompt).toEqual(
+                jasmine.objectContaining({
+                    holders: 8,
+                    fromRoleName: 'Sergeant',
+                    toRoleName: 'Captain',
+                    nextRoleId: 'd2',
+                }),
+            );
+        });
+
+        it('skips the warning when there is no old role to strip', () => {
+            setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false, holders: 8 })]);
+            component.selectRankEdit(component.ranks[0]);
+            component.onRoleSelect('d2');
+            expect(component.relinkPrompt).toBeNull();
+            expect(ranksService.linkDiscord).toHaveBeenCalled();
+        });
+
+        it('warns before an unlink too — every holder loses the role', () => {
+            editLinkedRank(8);
+            component.unlinkCurrentRole();
+            expect(ranksService.unlinkDiscord).not.toHaveBeenCalled();
+            expect(component.relinkPrompt?.nextRoleId).toBeNull();
+            expect(component.relinkPrompt?.fromRoleName).toBe('Sergeant');
+        });
+
+        it('backing out of the warning restores the still-linked role', () => {
+            editLinkedRank();
+            component.onRoleSelect('d2');
+            component.cancelRelinkPrompt();
+            expect(component.relinkPrompt).toBeNull();
+            expect(component.editDiscordRoleId).toBe('d1');
+            expect(ranksService.linkDiscord).not.toHaveBeenCalled();
+        });
+
+        it('confirming submits the change and follows the batch to 100%', fakeAsync(() => {
+            editLinkedRank();
+            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            discord.getRelinkProgress.and.returnValues(
+                of(progress({ applied: 4, pending: 4 })),
+                of(progress({ state: 'completed', applied: 8, pending: 0, finishedAt: 'now' })),
+            );
+
+            component.onRoleSelect('d2');
+            component.confirmRelink();
+
+            expect(ranksService.linkDiscord).toHaveBeenCalledWith('r1', 'd2', 'Captain');
+            tick(0); // timer(0, …) still needs a turn of the clock to emit
+            expect(component.relink?.applied).toBe(4);
+            expect(component.relinkPercent).toBe(50);
+            expect(component.relinkPolling).toBeTrue();
+
+            tick(2000);
+            expect(component.relink?.state).toBe('completed');
+            expect(component.relinkPercent).toBe(100);
+            // Terminal — the poll must have retired itself.
+            expect(component.relinkPolling).toBeFalse();
+            tick(10000);
+            expect(discord.getRelinkProgress.calls.count()).toBe(2);
+        }));
+
+        it('does not poll at all when the change queued nothing', fakeAsync(() => {
+            editLinkedRank();
+            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: null }));
+            component.onRoleSelect('d2');
+            component.confirmRelink();
+            tick(10000);
+            expect(discord.getRelinkProgress).not.toHaveBeenCalled();
+            expect(component.relinkPolling).toBeFalse();
+        }));
+
+        it('stops polling when the editor panel closes — not only on destroy', fakeAsync(() => {
+            editLinkedRank();
+            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            discord.getRelinkProgress.and.returnValue(of(progress()));
+
+            component.onRoleSelect('d2');
+            component.confirmRelink();
+            tick(0);
+            expect(component.relinkPolling).toBeTrue();
+            const pollsWhileOpen = discord.getRelinkProgress.calls.count();
+
+            component.closeEditor();
+            expect(component.relinkPolling).toBeFalse();
+            expect(component.relink).toBeNull();
+
+            // The interval must be gone, not merely hidden.
+            tick(20000);
+            expect(discord.getRelinkProgress.calls.count()).toBe(pollsWhileOpen);
+        }));
+
+        it('reports a cancelled run as partial and honestly refuses to claim a rollback', fakeAsync(() => {
+            editLinkedRank();
+            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            discord.getRelinkProgress.and.returnValue(of(progress()));
+            discord.cancelRelink.and.returnValue(
+                of(progress({ state: 'partial', applied: 4, pending: 0, cancelled: 4 })),
+            );
+
+            component.onRoleSelect('d2');
+            component.confirmRelink();
+            tick(0);
+            component.cancelRelinkRun();
+
+            expect(discord.cancelRelink).toHaveBeenCalledWith('b1');
+            expect(component.relink?.state).toBe('partial');
+            expect(component.relinkSummary).toContain('no rollback');
+            expect(component.relinkVariant).toBe('warn');
+            // A stop is terminal for the poll as much as a completion is.
+            expect(component.relinkPolling).toBeFalse();
+            tick(20000);
+        }));
+
+        it("surfaces the server's failure reason (e.g. bot role hierarchy)", fakeAsync(() => {
+            editLinkedRank();
+            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            discord.getRelinkProgress.and.returnValue(
+                of(
+                    progress({
+                        state: 'completed',
+                        applied: 5,
+                        pending: 0,
+                        failed: 3,
+                        failures: {
+                            permanent: 3,
+                            exhausted: 0,
+                            retrying: 0,
+                            samples: ['Missing Permissions: bot role is below @Captain'],
+                        },
+                    }),
+                ),
+            );
+
+            component.onRoleSelect('d2');
+            component.confirmRelink();
+            tick(0);
+
+            expect(component.relinkFailureReason).toContain('bot role is below @Captain');
+            expect(component.relinkVariant).toBe('err');
+            tick(20000);
+        }));
+
+        it('stops polling and explains when the progress endpoint itself fails', fakeAsync(() => {
+            editLinkedRank();
+            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            discord.getRelinkProgress.and.returnValue(
+                throwError(() => new HttpErrorResponse({ status: 500 })),
+            );
+
+            component.onRoleSelect('d2');
+            component.confirmRelink();
+            tick(0);
+
+            expect(component.relinkError).toContain('still running on the server');
+            expect(component.relinkPolling).toBeFalse();
+            tick(20000);
+            expect(discord.getRelinkProgress.calls.count()).toBe(1);
+        }));
     });
 
     // ── Icon validation (T-0194/T-0195; WebP accept added T-0215) ────────────────

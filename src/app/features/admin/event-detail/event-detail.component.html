@@ -15,12 +15,15 @@
                     }
                 </div>
                 <h1 class="event-banner__title serif-display">{{ event.title }}</h1>
+                <!-- The times are converted to the VIEWER's zone (T-0237), so this
+                     labels the viewer's zone — printing event.timezone here is what
+                     made a UTC instant look like an Eastern one. -->
                 <div class="event-banner__meta">
                     <span
                         >{{ event.date }} &middot; {{ event.startTime }} &ndash; {{ event.endTime }}
-                        {{ event.timezone }}</span
+                        {{ event.zoneLabel }}</span
                     >
-                    @if (event.serverName) {
+                    @if (event.hasServerName && event.serverName) {
                     <span>&middot; {{ event.serverName }}</span>
                     }
                 </div>
@@ -51,11 +54,14 @@
                         <span class="panel-title">Server Details</span>
                     </div>
                     <div class="panel-body server-details">
+                        <!-- Dropped entirely when no server is bound (T-0236) — an em
+                             dash reads as "we lost it", not "there isn't one". -->
+                        @if (event.hasServerName) {
                         <div class="field-group">
                             <div class="field-label">Server name</div>
-                            <div class="mono">{{ event.serverName || '—' }}</div>
+                            <div class="mono">{{ event.serverName }}</div>
                         </div>
-                        @if (event.hasServerPassword && can('reveal_event_passwords')) {
+                        } @if (event.hasServerPassword && can('reveal_event_passwords')) {
                         <div class="field-group">
                             <div class="field-label">Password</div>
                             <div class="detail-inline gap-8">
@@ -91,6 +97,8 @@
                                 }
                             </div>
                         </div>
+                        } @if (!hasServerDetails) {
+                        <span class="field-hint">No server, reminders or tags set.</span>
                         }
                     </div>
                 </div>

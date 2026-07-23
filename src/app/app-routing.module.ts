@@ -3,6 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 
+// Per-route document titles live on the leaf routes inside each lazy module's
+// own table (T-0244). Nothing here declares one on purpose: TitleStrategy takes
+// the deepest title it finds, so a title on a shell route would silently become
+// the fallback for every child that forgot its own, instead of the base title.
 const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
     {

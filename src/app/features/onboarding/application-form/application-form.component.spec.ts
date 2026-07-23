@@ -5,7 +5,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { RegimentProfile } from '../../../core/models/api.model';
-import { Application, MyApplication } from '../../../core/models/application.model';
+import { ApplicantApplication, MyApplication } from '../../../core/models/application.model';
 import { ApplicationsService } from '../../../core/services/applications.service';
 import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 import { RegimentService } from '../../../core/services/regiment.service';
@@ -36,7 +36,13 @@ function profile(overrides: Partial<RegimentProfile> = {}): RegimentProfile {
     };
 }
 
-function application(overrides: Partial<Application> = {}): Application {
+/**
+ * Builds the APPLICANT projection, which is what every self-service route
+ * actually returns (lords-dashboard-backend:T-0154). Building a staff
+ * `Application` here would let a staff-only field into a test fixture and
+ * quietly assert a shape the applicant can never receive.
+ */
+function application(overrides: Partial<ApplicantApplication> = {}): ApplicantApplication {
     return {
         id: 'a1',
         applicantName: 'Test User',
@@ -50,6 +56,7 @@ function application(overrides: Partial<Application> = {}): Application {
         interestConfirmed: true,
         submittedAt: '2026-07-01T12:00:00.000Z',
         status: 'pending',
+        userMessage: null,
         ...overrides,
     };
 }
@@ -58,48 +65,50 @@ class MockAuthService {
     readonly currentUser = signal<CurrentUser | null>(null);
 }
 
+// Shared across both describes below — the age-confirmation specs need the same
+// fully-mocked form as the applicant-type ones.
+let fixture: ComponentFixture<ApplicationFormComponent>;
+let component: ApplicationFormComponent;
+
+/**
+ * Defaults to a blank form for someone who has never applied. `edit` flips
+ * the ?edit=1 query param on, which pre-fills from `mine`.
+ */
+function setup(
+    options: {
+        profile$?: Observable<RegimentProfile>;
+        mine?: MyApplication;
+        edit?: boolean;
+    } = {},
+): void {
+    const mine: MyApplication = options.mine ?? { application: null, blocked: false };
+    const applications = {
+        getMine: () => of(mine),
+        submit: () => of(application()),
+        updateMine: () => of(application()),
+    };
+    const regiment = { getProfile: () => options.profile$ ?? of(profile()) };
+    const route = {
+        snapshot: { queryParamMap: { get: () => (options.edit ? '1' : null) } },
+    };
+
+    TestBed.configureTestingModule({
+        imports: [CommonModule, ReactiveFormsModule, RouterModule.forRoot([])],
+        declarations: [ApplicationFormComponent],
+        providers: [
+            { provide: ApplicationsService, useValue: applications },
+            { provide: AuthService, useValue: new MockAuthService() },
+            { provide: RegimentService, useValue: regiment },
+            { provide: ActivatedRoute, useValue: route },
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+    });
+    fixture = TestBed.createComponent(ApplicationFormComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+}
+
 describe('ApplicationFormComponent (applicant-type cards)', () => {
-    let fixture: ComponentFixture<ApplicationFormComponent>;
-    let component: ApplicationFormComponent;
-
-    /**
-     * Defaults to a blank form for someone who has never applied. `edit` flips
-     * the ?edit=1 query param on, which pre-fills from `mine`.
-     */
-    function setup(
-        options: {
-            profile$?: Observable<RegimentProfile>;
-            mine?: MyApplication;
-            edit?: boolean;
-        } = {},
-    ): void {
-        const mine: MyApplication = options.mine ?? { application: null, blocked: false };
-        const applications = {
-            getMine: () => of(mine),
-            submit: () => of(application()),
-            updateMine: () => of(application()),
-        };
-        const regiment = { getProfile: () => options.profile$ ?? of(profile()) };
-        const route = {
-            snapshot: { queryParamMap: { get: () => (options.edit ? '1' : null) } },
-        };
-
-        TestBed.configureTestingModule({
-            imports: [CommonModule, ReactiveFormsModule, RouterModule.forRoot([])],
-            declarations: [ApplicationFormComponent],
-            providers: [
-                { provide: ApplicationsService, useValue: applications },
-                { provide: AuthService, useValue: new MockAuthService() },
-                { provide: RegimentService, useValue: regiment },
-                { provide: ActivatedRoute, useValue: route },
-            ],
-            schemas: [NO_ERRORS_SCHEMA],
-        });
-        fixture = TestBed.createComponent(ApplicationFormComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    }
-
     function cardTitles(): string[] {
         const nodes: NodeListOf<HTMLElement> =
             fixture.nativeElement.querySelectorAll('.type-card-title');
@@ -270,5 +279,131 @@ describe('ApplicationFormComponent (applicant-type cards)', () => {
         // A failed gate lookup must never deadlock the form behind a spinner.
         setup({ profile$: throwError(() => new Error('network')) });
         expect(cardTitles()).toEqual(['Member', 'Mercenary']);
+    });
+});
+
+/**
+ * The age-confirmation gate (T-0245). Its label used to carry two `href="#"`
+ * placeholders sitting INSIDE the <label>, so clicking either one both toggled
+ * the checkbox and pushed `#` onto the URL. It now carries a single real link
+ * to the public guidelines page, opened in a new tab so a half-filled form is
+ * never navigated away from.
+ */
+describe('ApplicationFormComponent (age confirmation)', () => {
+    // The Confirmation panel holds TWO .age-confirm-row blocks (interest + age),
+    // so anchor every lookup on the ageConfirm label itself.
+    function labelEl(): HTMLLabelElement {
+        return fixture.nativeElement.querySelector('label[for="ageConfirm"]') as HTMLLabelElement;
+    }
+
+    function ageConfirmRow(): HTMLElement {
+        return labelEl().parentElement as HTMLElement;
+    }
+
+    function labelText(): string {
+        return (labelEl().textContent ?? '').replace(/\s+/g, ' ').trim();
+    }
+
+    function guidelinesLink(): HTMLAnchorElement {
+        return ageConfirmRow().querySelector('a') as HTMLAnchorElement;
+    }
+
+    function ageConfirm(): boolean {
+        return component.form.get('ageConfirm')?.value;
+    }
+
+    it('reads as one sentence pointing at the community guidelines', () => {
+        setup();
+        expect(labelText()).toBe(
+            "I confirm that I am 18 years of age or older and agree to abide by the regiment's community guidelines.",
+        );
+    });
+
+    it('leaves no dead href in the label', () => {
+        setup();
+        const hrefs = Array.from(ageConfirmRow().querySelectorAll('a')).map((a) =>
+            a.getAttribute('href'),
+        );
+        // Exactly one link, and it resolves somewhere real.
+        expect(hrefs).toEqual(['/guidelines']);
+    });
+
+    it('opens the guidelines in a new tab, safely', () => {
+        setup();
+        const link = guidelinesLink();
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    });
+
+    it('does not toggle the checkbox when the link is clicked', () => {
+        setup();
+        expect(ageConfirm()).toBeFalse();
+
+        // target="_blank" keeps the karma page put, so this is a real click,
+        // not a simulated one.
+        guidelinesLink().click();
+        fixture.detectChanges();
+        expect(ageConfirm()).toBeFalse();
+
+        // …and the same holds in the other direction: a confirmed applicant
+        // reading the guidelines must not silently un-confirm.
+        component.form.get('ageConfirm')?.setValue(true);
+        guidelinesLink().click();
+        fixture.detectChanges();
+        expect(ageConfirm()).toBeTrue();
+    });
+
+    it('never lets the link click reach the label at all', () => {
+        // The stronger form of the rule above, and the one that does not depend
+        // on the browser's own "don't forward clicks from interactive content"
+        // rule: the label — the element whose activation flips the box, and
+        // which a future refactor could easily bind something else to — must
+        // simply never see this click.
+        setup();
+        const seen = jasmine.createSpy('label click');
+        labelEl().addEventListener('click', seen);
+
+        guidelinesLink().click();
+        expect(seen).not.toHaveBeenCalled();
+    });
+
+    it('keeps click-to-toggle working for the rest of the label', () => {
+        setup();
+        labelEl().click();
+        fixture.detectChanges();
+        expect(ageConfirm()).toBeTrue();
+
+        labelEl().click();
+        fixture.detectChanges();
+        expect(ageConfirm()).toBeFalse();
+    });
+
+    it('preserves in-progress answers across the link click', () => {
+        setup();
+        component.form.patchValue({
+            inGameName: 'Rhett_Asher',
+            currentRegiment: 'None',
+            skillsToImprove: 'Melee',
+        });
+
+        guidelinesLink().click();
+        fixture.detectChanges();
+
+        expect(component.form.get('inGameName')?.value).toBe('Rhett_Asher');
+        expect(component.form.get('currentRegiment')?.value).toBe('None');
+        expect(component.form.get('skillsToImprove')?.value).toBe('Melee');
+        // Nothing submitted the form on the way past.
+        expect(component.submitted).toBeFalse();
+        expect(component.submitting).toBeFalse();
+    });
+
+    it('still gates submission on the confirmation', () => {
+        setup();
+        const control = component.form.get('ageConfirm');
+        expect(control?.hasError('required')).toBeTrue();
+        expect(component.form.valid).toBeFalse();
+
+        control?.setValue(true);
+        expect(control?.hasError('required')).toBeFalse();
     });
 });

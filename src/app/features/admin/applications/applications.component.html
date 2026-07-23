@@ -166,6 +166,31 @@
                             >
                         </div>
                     </div>
+
+                    <!-- Who took the action (T-0250). Absent while pending; a HELD
+                         application still shows its decider even though it has no
+                         decision timestamp. Both the name and the date are rendered
+                         only when present — the decider's member row may be gone. -->
+                    @if (decisionAttribution; as decision) {
+                    <div class="decision-by">
+                        @if (decision.name) {
+                        <hf-avatar
+                            [name]="decision.name"
+                            [avatarUrl]="decision.avatarUrl"
+                            [size]="24"
+                        ></hf-avatar>
+                        }
+                        <span class="decision-by__text">
+                            {{ decision.verb }} @if (decision.name) { by
+                            <strong>{{ decision.name }}</strong>
+                            } @if (decision.at) {
+                            <span class="decision-by__when"
+                                >&mdash; {{ decision.at | date: 'MMM d, y' }}</span
+                            >
+                            }
+                        </span>
+                    </div>
+                    }
                 </div>
                 <div class="panel-body">
                     <!-- Info Grid -->
@@ -217,36 +242,46 @@
                     </div>
                     }
 
-                    <!-- Moderator tools -->
+                    <!-- Decision text (T-0247). Two boxes with opposite audiences,
+                         so each one says whose eyes it reaches: the applicant sees
+                         the user message and nothing else. -->
+                    <hf-crest-divider label="Decision"></hf-crest-divider>
+
                     <div class="grid-2 mod-tools">
                         <div>
-                            <label class="field-label" for="moderator-note">Moderator note</label>
+                            <label class="field-label" for="user-message">User message</label>
+                            <textarea
+                                id="user-message"
+                                class="hf-textarea"
+                                rows="3"
+                                [(ngModel)]="userMessage"
+                                placeholder="Message the applicant will receive..."
+                            ></textarea>
+                            <p class="field-hint">
+                                The applicant receives this on Discord and sees it on their status
+                                page. Leave blank to use the default template.
+                            </p>
+                        </div>
+                        <div>
+                            <label class="field-label" for="moderator-note"
+                                >Moderator note
+                                <span class="badge parch note-audience">Staff only</span></label
+                            >
                             <textarea
                                 id="moderator-note"
                                 class="hf-textarea"
                                 rows="3"
                                 [(ngModel)]="moderatorNote"
-                                placeholder="Internal note visible to admins only..."
+                                placeholder="Internal note visible to staff only..."
                             ></textarea>
-                        </div>
-                        <div>
-                            <label class="field-label" for="discord-dm-message"
-                                >Discord DM message</label
-                            >
-                            <textarea
-                                id="discord-dm-message"
-                                class="hf-textarea"
-                                rows="3"
-                                [(ngModel)]="discordDmMessage"
-                                placeholder="Personalised message to send on decision..."
-                            ></textarea>
+                            <p class="field-hint">The applicant is never shown this note.</p>
                         </div>
                     </div>
 
                     <hf-notice variant="info" class="decision-notice">
                         A Discord DM is sent automatically to the applicant on every decision —
-                        approve, decline, or hold. Add a personal message above, or leave it blank
-                        to use the default template.
+                        approve, decline, or hold. Both boxes are kept after a decision, so
+                        re-opening this application shows what was written.
                     </hf-notice>
 
                     <!-- A decision the server refused (e.g. approving a Mercenary
