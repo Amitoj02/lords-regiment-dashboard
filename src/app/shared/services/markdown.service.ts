@@ -175,6 +175,12 @@ export class MarkdownService {
      */
     private safeHref(href: string): string | null {
         const value = href.trim();
+        // Reject protocol-relative URLs (`//host/...`): they resolve to an
+        // off-site origin under the current scheme, which the single-'/'
+        // absolute-path allow just below would otherwise wave through (LDA-L6).
+        if (value.startsWith('//')) {
+            return null;
+        }
         if (value.startsWith('/') || value.startsWith('#')) {
             return value;
         }

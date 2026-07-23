@@ -2,7 +2,6 @@
   "name": "lords-regiment-dashboard",
   "version": "0.1.0",
   "license": "MIT",
-  "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

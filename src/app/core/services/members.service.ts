@@ -15,18 +15,6 @@ export interface ServiceRecordEntry {
     note: string | null;
 }
 
-/** Sensitive command info (GET /members/:id/command-info; view_audit_log only). */
-export interface CommandInfo {
-    memberId: string;
-    lastSignInAt: string | null;
-    lastSignInIp: string | null;
-    email: string | null;
-    discordUsername: string | null;
-    guildMember: boolean;
-    suspendedUntil: string | null;
-    bannedAt: string | null;
-}
-
 @Injectable({ providedIn: 'root' })
 export class MembersService {
     private readonly http = inject(HttpClient);
@@ -116,9 +104,5 @@ export class MembersService {
 
     getServiceRecord(id: string): Observable<ServiceRecordEntry[]> {
         return this.http.get<ServiceRecordEntry[]>(`${this.base}/${id}/service-record`);
-    }
-
-    getCommandInfo(id: string): Observable<CommandInfo> {
-        return this.http.get<CommandInfo>(`${this.base}/${id}/command-info`);
     }
 }
