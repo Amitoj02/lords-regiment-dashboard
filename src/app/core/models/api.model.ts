@@ -385,6 +385,10 @@ export function mapApplication(a: ApiApplication): Application {
         userMessage: a.userMessage ?? null,
         decidedByName: a.decidedByName ?? null,
         decidedByAvatarUrl: a.decidedByAvatarUrl ?? null,
+        // The officer's member id is what makes the attribution clickable rather
+        // than inert text (T-0274); dropping it here is how the chip loses its
+        // profile link even though the API sends the id on every decision.
+        decidedByMemberId: a.decidedByMemberId ?? null,
         blocked: a.blocked ?? false,
         // Live applicant identity + profile deep-link target (T-0222).
         promotedMemberId: a.promotedMemberId,

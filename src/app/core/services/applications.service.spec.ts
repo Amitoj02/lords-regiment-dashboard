@@ -132,6 +132,7 @@ describe('ApplicationsService', () => {
                 userMessage: 'Not this time — do reapply in a month.',
                 decidedByName: 'Colonel Hale',
                 decidedByAvatarUrl: 'https://cdn/hale.png',
+                decidedByMemberId: 'mem-hale',
                 decidedAt: '2026-07-19T12:00:00.000Z',
             }),
         );
@@ -142,6 +143,8 @@ describe('ApplicationsService', () => {
                 userMessage: 'Not this time — do reapply in a month.',
                 decidedByName: 'Colonel Hale',
                 decidedByAvatarUrl: 'https://cdn/hale.png',
+                // The id the officer chip deep-links with (T-0274).
+                decidedByMemberId: 'mem-hale',
             }),
         );
     });
