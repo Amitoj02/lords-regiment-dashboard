@@ -1,5 +1,53 @@
+/* The parent's `.field-row` / `.settings-footer` / `.flash` rules live in
+   settings.component.scss and are view-encapsulated, so they never reach this
+   component's template — everything here would otherwise render with no
+   spacing at all. Restate them locally (T-0258). */
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.field-row {
+    /* Flex column so `.field-hint` spans blockify (margin-top applies to them)
+       and `.pres-reset`'s align-self actually resolves. */
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 22px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    .field-label {
+        margin-bottom: 7px;
+    }
+
+    .field-hint {
+        margin-top: 7px;
+    }
+
+    hf-notice {
+        margin-top: 8px;
+    }
+}
+
+.settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+}
+
+.flash {
+    margin-right: auto;
+    color: var(--brass-700);
+}
+
 .pres-blurb {
-    margin: 0 0 14px;
+    margin: 0 0 16px;
 }
 
 /* Live preview — the public composition in miniature: image, scrim, quote. */
@@ -60,12 +108,18 @@
 
 .pres-reset {
     align-self: flex-start;
-    margin-top: 6px;
+    margin-top: 10px;
 }
 
 .pres-density-row {
     align-items: center;
     flex-wrap: wrap;
+    row-gap: 8px;
+    /* `.row` inherits Bootstrap grid's negative side margins, which pulls the
+       slider 12px left of every other field in the panel — same reset the
+       settings save/op rows use (T-0218). */
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .pres-density {

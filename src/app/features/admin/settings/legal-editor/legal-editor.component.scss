@@ -1,9 +1,33 @@
+/* The parent's `.settings-footer` / `.flash` rules live in
+   settings.component.scss and are view-encapsulated, so the save row below the
+   panel would otherwise render as bare, left-adrift buttons flush against the
+   panel edge (T-0258). */
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+}
+
+.flash {
+    margin-right: auto;
+    color: var(--brass-700);
+}
+
 .doc-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
     border-bottom: 1px solid var(--rule);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .doc-tab {
@@ -33,14 +57,15 @@
 }
 
 .doc-meta {
-    margin: 0 0 12px;
+    display: block;
+    margin: 0 0 14px;
 }
 
 .doc-editor {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
-    margin-top: 12px;
+    margin-top: 18px;
 }
 
 .doc-editor--split {
@@ -54,7 +79,7 @@
 .doc-pane {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -63,6 +88,13 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    /* Both panes' heads are the same height whether or not they carry a button,
+       so "Markdown source" and "Preview" sit on one baseline. */
+    min-height: 30px;
+
+    .field-label {
+        margin-bottom: 0;
+    }
 }
 
 .doc-textarea {

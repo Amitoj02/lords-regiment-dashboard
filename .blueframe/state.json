@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
-  "lastSyncedAt": "2026-07-22T20:05:00Z",
-  "notesForNextSession": "*** THIS SESSION: implemented all 22 planned SPA tasks T-0233..T-0254 on branch feat/planned-tasks-t0233-t0254 (status 'review' pending PR merge; flip to 'deployed' once merged). 438 specs green (from 186), ng lint + prettier + build clean. PAIRED WITH lords-dashboard-backend branch feat/planned-tasks-t0144-t0160 - THE TWO MUST DEPLOY TOGETHER: the applicant projection split is breaking for the current SPA main (it still renders moderatorNote/declineReason on the applicant status page), and the SPA's new surfaces need the new API routes. One deploy workflow rolls both images, so merge and roll both. NEW SHARED MODULES worth knowing: src/app/core/models/event-time.ts (Intl-only, DST-correct instant<->wall-clock, 32 specs incl. a five-zone round-trip invariant) and src/app/shared/services/markdown.service.ts (escape-first, dependency-free, protocol allow-listed; bind with plain [innerHTML] - NEVER bypassSecurityTrustHtml, Angular's sanitiser is the deliberate second layer). T-0243 IS BLOCKED ON ASSETS, NOT CODE - the generated icon set is not in the repo; the manifest and head links are wired and the exact filenames to drop into public/ are in a commented block in src/index.html. VERIFIED IN CHROME (anonymous surfaces only): /events renders 19:30-22:30 EDT for a 23:30Z instant with an America/Toronto viewer, no server block on an event with none, 'Login to RSVP' when signed out; /privacy renders the shipped fallback when unset AND a seeded hostile document safely (zero script elements, no alert, javascript: link produced no anchor); the hero computes to the shipped gradient when unconfigured. COULD NOT VERIFY AUTHENTICATED SURFACES: the local api container runs DISCORD_MOCK=false with real credentials from .env, so ?as=owner redirects to real Discord. Flip DISCORD_MOCK=true (and DISCORD_BOT_MOCK=true) and restart the api container before the next UI pass - see T-0255. The local dev DB needed the backend's new migration run against it; that has been done.",
-  "nextIdCounter": 258,
+  "lastSyncedCommit": "131a8346bc5a285117544dda364c2e205746123d",
+  "lastSyncedAt": "2026-07-22T20:45:00Z",
+  "notesForNextSession": "THIS SESSION (spacing fix, on branch feat/planned-tasks-t0233-t0254): T-0258 \u2014 the Landing & sign-in and Legal documents settings sections had NO spacing because `.field-row`, `.settings-footer` and `.flash` live only in settings.component.scss and Angular view encapsulation keeps them out of the hf-regiment-presentation / hf-legal-editor children. Restated locally in both child stylesheets + a `:host` flex-column gap:16px; the overlay slider row also needed `margin-left/right: 0` to undo Bootstrap grid's negative `.row` margins (same defect as T-0218). WATCH FOR THIS PATTERN: any new child component pulled out of a settings//feature template loses its parent's scoped layout rules silently \u2014 it compiles and it looks broken. Also fixed an UNRELATED pre-existing time-bomb spec: member.model.spec.ts pinned NOW to 2026-07-18 but statusTooltip re-derives status off the real Date.now(), so the \"Suspended until\" case started failing once real time passed NOW+5d; both statusTooltip date cases are now anchored to Date.now(). 442 specs green, ng lint + prettier + prod build clean. BROWSER-SESSION RECIPE (unblocks T-0255 and every future authenticated UI pass \u2014 the DISCORD_MOCK=false blocker in the last handoff was avoidable): mint an Owner JWT with node -e jwt.sign({sub:'00000000-0000-4000-8000-000000000020', did:'400958439544848384'}) using JWT_SECRET from ../lords-dashboard-backend/.env, set it as localStorage lords_access_token on http://localhost:4200, then navigate to /app/admin/*. The dockerized web container on :4200 runs ng serve with THIS repo bind-mounted, so local edits hot-reload there directly (HMR can lag a beat \u2014 reload before concluding a rule did not apply). STILL OPEN on T-0255: presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt. T-0233..T-0254 remain `review` pending the coupled PR merge with lords-dashboard-backend feat/planned-tasks-t0144-t0160 \u2014 THE TWO MUST DEPLOY TOGETHER.",
+  "nextIdCounter": 259,
   "connections": [],
   "tasks": [
     {
@@ -16345,7 +16345,7 @@
       "id": "T-0255",
       "title": "Verify the presentation + legal admin editors and the banner upload round-trip",
       "summary": "T-0238/T-0239/T-0240 shipped spec-covered but were never exercised in a browser: the local API runs with DISCORD_MOCK=false against real Discord credentials, so no session could be obtained without signing into the owner's live account. Needs one pass with mocks enabled (or a staging session) covering: both editors render and save, the overlay slider persists, a banner upload round-trips presign -> PUT -> key -> PATCH -> public page, and the unsaved-changes prompt actually appears.",
-      "status": "planned",
+      "status": "in_progress",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -16359,7 +16359,28 @@
       "dependsOn": [],
       "blocks": [],
       "questions": [],
-      "testPlan": [],
+      "testPlan": [
+        {
+          "desc": "both editors render for an Owner session",
+          "status": "passed"
+        },
+        {
+          "desc": "the legal editor preview renders a dirty draft and Discard restores it",
+          "status": "passed"
+        },
+        {
+          "desc": "a presentation save round-trips and the overlay slider value persists",
+          "status": "pending"
+        },
+        {
+          "desc": "a banner upload round-trips presign -> PUT -> key -> PATCH -> public page",
+          "status": "pending"
+        },
+        {
+          "desc": "the unsaved-changes prompt appears when navigating away mid-edit",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [
         {
           "desc": "The banner upload path crosses R2 CORS, which the project notes flag as never having been exercised end to end for ANY upload target - a failure here is more likely to be infra than app code.",
@@ -16370,7 +16391,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-22T19:55:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-22T20:45:00Z",
       "history": [
         {
           "at": "2026-07-22T19:55:00Z",
@@ -16378,6 +16399,13 @@
           "to": "planned",
           "by": "claude",
           "note": "discovered while implementing T-0233..T-0254"
+        },
+        {
+          "at": "2026-07-22T20:45:00Z",
+          "from": "planned",
+          "to": "in_progress",
+          "by": "claude",
+          "note": "DISCORD_MOCK is NOT the only way in: a JWT signed with the backend .env JWT_SECRET for sub 00000000-0000-4000-8000-000000000020 / did 400958439544848384, dropped into localStorage lords_access_token, yields a full-capability Owner session on :4200. Render + dirty-state paths verified; save/upload round-trips still unexercised."
         }
       ]
     },
@@ -16483,6 +16511,74 @@
           "to": "review",
           "by": "claude",
           "note": "VideoPosterService + submit wiring; capture is fire-and-forget and can never block an upload"
+        }
+      ]
+    },
+    {
+      "id": "T-0258",
+      "title": "Restore field/footer spacing in the presentation + legal settings editors",
+      "summary": "The Landing & sign-in and Legal documents sections rendered with no spacing: `.field-row`, `.settings-footer` and `.flash` are defined only in settings.component.scss, and Angular view encapsulation keeps them out of the hf-regiment-presentation / hf-legal-editor child templates. Labels, controls and hints ran together, the two presentation panels sat flush, the overlay slider was pulled 12px left of every other field by Bootstrap grid's negative `.row` margins (the same defect T-0218 fixed on the settings save/op rows), and the Save presentation / Save <page> / Clear document / Discard changes buttons rendered as bare left-aligned controls flush against the panel. Restated the rules locally in both component stylesheets plus a `:host` flex-column gap, and aligned the legal editor pane heads.",
+      "status": "review",
+      "type": "fix",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "public-pages-editors",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/regiment-presentation/regiment-presentation.component.scss",
+        "src/app/features/admin/settings/legal-editor/legal-editor.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "every field-row in a presentation panel (including the overlay-density slider row) shares one left edge",
+          "status": "passed"
+        },
+        {
+          "desc": "Save presentation sits right-aligned under a rule with 16px of top padding, matching the other settings sections",
+          "status": "passed"
+        },
+        {
+          "desc": "Discard changes + Save Terms & Conditions render right-aligned and gapped once the legal draft is dirty",
+          "status": "passed"
+        },
+        {
+          "desc": "Clear document (the empty-draft state) renders in the same footer position",
+          "status": "passed"
+        },
+        {
+          "desc": "the two presentation panels are separated by the 16px :host gap instead of sitting flush",
+          "status": "passed"
+        },
+        {
+          "desc": "the layout still reflows without horizontal scroll at mobile widths (the density row wraps on its new row-gap)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The `.field-row` / `.settings-footer` rules are now duplicated in three stylesheets (settings + both children). A future change to the settings section spacing must be applied to all three, or promoted to a global partial.",
+          "status": "open",
+          "notedAt": "2026-07-22T20:45:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not promote .field-row / .settings-footer to a global SCSS partial: eight other components define their own local .field-row with differing margins, so a global rule would change spacing well outside the reported bug."
+      ],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-22T20:45:00Z",
+      "updatedAt": "2026-07-22T20:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-22T20:45:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "reported by the user against the running app; fixed and verified in Chrome against the live local stack with an owner JWT"
         }
       ]
     }

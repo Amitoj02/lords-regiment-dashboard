@@ -93,12 +93,15 @@ describe('statusTooltip (T-0184)', () => {
     });
 
     it('explains a suspension with the until date', () => {
-        const m = member({ suspendedUntil: new Date(NOW + 5 * DAY).toISOString() });
+        // Anchored to the REAL clock, not the fixed NOW: statusTooltip re-derives
+        // the status via deriveMemberStatus()'s `now = Date.now()` default, so a
+        // NOW-relative date silently expires and the member reads back as Active.
+        const m = member({ suspendedUntil: new Date(Date.now() + 5 * DAY).toISOString() });
         expect(statusTooltip(m)).toContain('Suspended until');
     });
 
     it('explains inactivity with the threshold', () => {
-        const m = member({ lastSeen: new Date(NOW - 40 * DAY).toISOString() });
+        const m = member({ lastSeen: new Date(Date.now() - 40 * DAY).toISOString() });
         expect(statusTooltip(m)).toContain('21 days');
     });
 
