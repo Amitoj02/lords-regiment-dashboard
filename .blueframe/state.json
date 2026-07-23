@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
-  "lastSyncedAt": "2026-07-23T03:57:17Z",
-  "notesForNextSession": "SESSION: implemented every remaining planned task (T-0259, T-0261..T-0266) on branch feat/planned-tasks-t0256-t0266, plus 3 discovered items (T-0267..T-0269). Status `review` pending PR merge. COUPLED BACKEND BRANCH: lords-dashboard-backend feat/planned-tasks-t0163-t0178 - THE TWO MUST MERGE AND DEPLOY TOGETHER; this app now reads guildMember / discordInviteUrl / guildGateEnabled / guildGateExempt off /auth/me and permittedActions off the member projection, none of which exist on today's production API. *** THE GUILD GATE SHIPS OFF. *** Enforcement is gated on guildGateEnabled from /auth/me, which the backend defaults to false; the single predicate is AuthService.isGuildGated() (guildGateEnabled && !guildMember && !guildGateExempt) and guard, gate screen and routeAfterLogin all defer to it. With the flag off the guard is a pass-through - verified live both ways. The switch itself is T-0267, in the Lord Adjutant settings panel. The four CurrentUser gate fields are now REQUIRED on the interface but the runtime helpers still treat absent as gate-off, so a client running ahead of the backend deploy gates nobody. T-0256 IS BLOCKED, NOT DONE: it needs a real iOS device and none is available. An emulated 390x844 iPhone viewport with an iOS UA shows both the poster tile and the no-poster fallback rendering with zero console errors, but Chrome does not reproduce Safari's video-poster behaviour, so that proves the markup path and not the reported symptom. Do not close it on the emulated pass. T-0259 RESOLUTION: favicon.svg was DELETED, not replaced. Its payload was byte-identical to regiment-logo-sm.png (a 75px raster in an <image> wrapper), and the repo's only real vector is the crest-divider fleur-de-lis, which is a different heraldic device. Chrome now falls back to the 96px PNG. If a genuine vector crest is ever commissioned, re-add the link and the file together. VERIFIED THIS SESSION: prettier --check, ng lint, production build and 553 karma specs all clean. Browser checks at 1440px AND a true 390x844 viewport against the running dev stack: as an Admin the roster row action shows only on the Member and Moderator rows (not the Owner, not a peer Admin, not self); a Moderator with neither settings capability is redirected off /app/admin/settings and has no sidebar entry; with the gate ON a non-guild-member is sent to /guild-required from dashboard/roster/settings while /app/profile, /app/account-deletion and /privacy stay reachable; with the gate OFF nothing is gated. TOOLING NOTE worth keeping: resize_window does NOT shrink the Chrome extension's headless viewport (stuck at 1920px), so mobile cannot be screenshotted that way. Launch `google-chrome --headless=new --remote-debugging-port=9222` and drive CDP directly - Emulation.setDeviceMetricsOverride gives a true device viewport, and Node 22's global WebSocket is enough to speak CDP with no dependencies. KNOWN PRE-EXISTING, NOT INTRODUCED: profile.component.scss is 176 bytes over its 6kB budget (a build WARNING, not a failure - the file is byte-identical to main), and TopbarComponent's breadcrumb loop throws a dev-mode-only NG0100 ExpressionChangedAfterItHasBeenCheckedError (the topbar is untouched by this branch and NG0100 does not occur in production builds). --- PREVIOUS:SYNC of af1309e (PR #22 merge). Two things happened here. FIRST, Blueframe was showing this repo as EMPTY (taskCount 0 at http://127.0.0.1:7317/api/repos) because T-0258 was written with type \"fix\" - not in the type enum (feature|bug|chore|infra|question|spike) - and ONE invalid value fails validation for the WHOLE repo with no visible error. Corrected to \"bug\". Always verify after editing state.json: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == broken), then curl -s 'http://127.0.0.1:7317/api/state?repo=lords-regiment-dashboard' for the exact zod path. SECOND, PR #22 (131a834 + b510ab0 + efa68cd) merged to main together with its coupled backend PR #21 (abc55a3, lords-dashboard-backend), so all 24 tasks parked at `review` - T-0233..T-0254, T-0257, T-0258 - are now `deployed`. The pair deployed together as required. STILL OPEN: T-0255 (in_progress) - presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt were never exercised; use the minted-Owner-JWT browser recipe from the previous handoff. T-0256 (planned) needs a real iOS device for the gallery video poster. T-0232 (questionnaire) still waits on the Cloudflare Web Analytics vs CSP call. NEW: T-0259 (favicon.svg is a raster in vector clothing) and T-0260 (is the product \"Lords Regiment\" or \"Lords of Holdfast\"? - an app-wide rename either way). Two testPlan items on T-0243 stay pending for want of hardware (Safari/Firefox tabs, iOS home screen) and one regressionRisk stays open there (nginx 30d-immutable caching may hold the old favicon after deploy). This sync was NOT committed - the user asked for the reconciliation only.",
-  "nextIdCounter": 270,
+  "lastSyncedCommit": "466c2d544533976d96baada4b224fc5ecfdf3a41",
+  "lastSyncedAt": "2026-07-23T05:25:13Z",
+  "notesForNextSession": "LATEST (T-0274, commit 466c2d5 on feat/planned-tasks-t0256-t0266): the 'Approved by / Declined by' officer is now an avatar + name chip linking to /app/profile/:id. The id was already on the wire (decidedByMemberId) and was simply being dropped in mapApplication. Two degradations are pinned by tests: no member id renders the same chip UNLINKED (the FK is ON DELETE SET NULL, so a removed officer must not link to a profile that is gone), and an id without a name renders no chip at all. The label and the chip are separate elements now, so 'Approved by' carries an explicit &ngsp; - without it Angular drops the whitespace-only node between them and the line reads 'Approved byColonel Hale'. The AVATAR ITSELF needs lords-dashboard-backend:T-0186 (the Discord-avatar fallback); until that ships the chip is a link with initials. --- SESSION: implemented every remaining planned task (T-0259, T-0261..T-0266) on branch feat/planned-tasks-t0256-t0266, plus 3 discovered items (T-0267..T-0269). Status `review` pending PR merge. COUPLED BACKEND BRANCH: lords-dashboard-backend feat/planned-tasks-t0163-t0178 - THE TWO MUST MERGE AND DEPLOY TOGETHER; this app now reads guildMember / discordInviteUrl / guildGateEnabled / guildGateExempt off /auth/me and permittedActions off the member projection, none of which exist on today's production API. *** THE GUILD GATE SHIPS OFF. *** Enforcement is gated on guildGateEnabled from /auth/me, which the backend defaults to false; the single predicate is AuthService.isGuildGated() (guildGateEnabled && !guildMember && !guildGateExempt) and guard, gate screen and routeAfterLogin all defer to it. With the flag off the guard is a pass-through - verified live both ways. The switch itself is T-0267, in the Lord Adjutant settings panel. The four CurrentUser gate fields are now REQUIRED on the interface but the runtime helpers still treat absent as gate-off, so a client running ahead of the backend deploy gates nobody. T-0256 IS BLOCKED, NOT DONE: it needs a real iOS device and none is available. An emulated 390x844 iPhone viewport with an iOS UA shows both the poster tile and the no-poster fallback rendering with zero console errors, but Chrome does not reproduce Safari's video-poster behaviour, so that proves the markup path and not the reported symptom. Do not close it on the emulated pass. T-0259 RESOLUTION: favicon.svg was DELETED, not replaced. Its payload was byte-identical to regiment-logo-sm.png (a 75px raster in an <image> wrapper), and the repo's only real vector is the crest-divider fleur-de-lis, which is a different heraldic device. Chrome now falls back to the 96px PNG. If a genuine vector crest is ever commissioned, re-add the link and the file together. VERIFIED THIS SESSION: prettier --check, ng lint, production build and 553 karma specs all clean. Browser checks at 1440px AND a true 390x844 viewport against the running dev stack: as an Admin the roster row action shows only on the Member and Moderator rows (not the Owner, not a peer Admin, not self); a Moderator with neither settings capability is redirected off /app/admin/settings and has no sidebar entry; with the gate ON a non-guild-member is sent to /guild-required from dashboard/roster/settings while /app/profile, /app/account-deletion and /privacy stay reachable; with the gate OFF nothing is gated. TOOLING NOTE worth keeping: resize_window does NOT shrink the Chrome extension's headless viewport (stuck at 1920px), so mobile cannot be screenshotted that way. Launch `google-chrome --headless=new --remote-debugging-port=9222` and drive CDP directly - Emulation.setDeviceMetricsOverride gives a true device viewport, and Node 22's global WebSocket is enough to speak CDP with no dependencies. KNOWN PRE-EXISTING, NOT INTRODUCED: profile.component.scss is 176 bytes over its 6kB budget (a build WARNING, not a failure - the file is byte-identical to main), and TopbarComponent's breadcrumb loop throws a dev-mode-only NG0100 ExpressionChangedAfterItHasBeenCheckedError (the topbar is untouched by this branch and NG0100 does not occur in production builds). --- PREVIOUS:SYNC of af1309e (PR #22 merge). Two things happened here. FIRST, Blueframe was showing this repo as EMPTY (taskCount 0 at http://127.0.0.1:7317/api/repos) because T-0258 was written with type \"fix\" - not in the type enum (feature|bug|chore|infra|question|spike) - and ONE invalid value fails validation for the WHOLE repo with no visible error. Corrected to \"bug\". Always verify after editing state.json: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == broken), then curl -s 'http://127.0.0.1:7317/api/state?repo=lords-regiment-dashboard' for the exact zod path. SECOND, PR #22 (131a834 + b510ab0 + efa68cd) merged to main together with its coupled backend PR #21 (abc55a3, lords-dashboard-backend), so all 24 tasks parked at `review` - T-0233..T-0254, T-0257, T-0258 - are now `deployed`. The pair deployed together as required. STILL OPEN: T-0255 (in_progress) - presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt were never exercised; use the minted-Owner-JWT browser recipe from the previous handoff. T-0256 (planned) needs a real iOS device for the gallery video poster. T-0232 (questionnaire) still waits on the Cloudflare Web Analytics vs CSP call. NEW: T-0259 (favicon.svg is a raster in vector clothing) and T-0260 (is the product \"Lords Regiment\" or \"Lords of Holdfast\"? - an app-wide rename either way). Two testPlan items on T-0243 stay pending for want of hardware (Safari/Firefox tabs, iOS home screen) and one regressionRisk stays open there (nginx 30d-immutable caching may hold the old favicon after deploy). This sync was NOT committed - the user asked for the reconciliation only.",
+  "nextIdCounter": 275,
   "connections": [],
   "tasks": [
     {
@@ -17521,6 +17521,354 @@
           "to": "review",
           "by": "claude",
           "note": "fixed in the same branch"
+        }
+      ]
+    },
+    {
+      "id": "T-0270",
+      "title": "Dark-theme the toast stack (light-on-light text is unreadable)",
+      "summary": "The toast card pairs a parchment background (--parch-100) with light body text (--t-200), so every toast renders near-white text on a near-white card and the message is invisible. Re-skin the toast to the app's dark ink surface with --t-100 text, keeping the per-variant accent borders that already distinguish error/success/info.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "platform",
+      "feature": "shared",
+      "subfeature": "toast",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/toast/toast.component.scss",
+        "src/app/shared/components/toast/toast.component.html",
+        "src/app/shared/components/toast/toast.component.spec.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "T-0271"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "error, success and info toasts each render legible text on a dark ink surface (visual check at 1440px and 375px)",
+          "status": "pending"
+        },
+        {
+          "desc": "body text vs card background clears WCAG AA 4.5:1 for all three variants",
+          "status": "pending"
+        },
+        {
+          "desc": "the coloured left accent still identifies the variant at a glance and the dismiss glyph stays visible on hover",
+          "status": "pending"
+        },
+        {
+          "desc": "the toast reads correctly over both dark page chrome and any parchment panel it may overlap",
+          "status": "pending"
+        },
+        {
+          "desc": "existing toast component spec still passes (queue, auto-dismiss, manual dismiss)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The toast is the app-wide notification surface rendered from app.component.html; a restyle affects every screen that calls ToastService",
+          "status": "open",
+          "notedAt": "2026-07-23T04:20:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-23T04:20:00Z",
+      "updatedAt": "2026-07-23T04:20:00Z",
+      "history": [
+        {
+          "at": "2026-07-23T04:20:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0271",
+      "title": "Sweep the remaining parchment surfaces for light-on-light text",
+      "summary": "The toast is not the only parchment-backed element that never sets a dark text colour \u2014 the event-create toolbar strip and a few settings/event-detail panels use --parch-50/--parch-100 without an accompanying --t-on-parch. Audit every parchment background and either give it readable dark text or move it to the dark palette.",
+      "status": "planned",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "platform",
+      "feature": "design-system",
+      "subfeature": "parchment-surfaces",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/event-create/event-create.component.scss",
+        "src/app/features/admin/event-detail/event-detail.component.scss",
+        "src/app/features/admin/settings/settings.component.scss",
+        "src/app/features/member/account-deletion/account-deletion.component.scss",
+        "src/styles/_base.scss"
+      ],
+      "dependsOn": [
+        "T-0270"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "grep for parch-50/parch-100/parch-200 backgrounds yields no rule lacking an explicit readable text colour",
+          "status": "pending"
+        },
+        {
+          "desc": "the event-create editor toolbar strip renders legible labels",
+          "status": "pending"
+        },
+        {
+          "desc": "admin settings and event-detail parchment panels render legible text",
+          "status": "pending"
+        },
+        {
+          "desc": "account-deletion quote block is unchanged (already pairs --t-on-parch)",
+          "status": "pending"
+        },
+        {
+          "desc": "no dark-on-dark regression introduced by any colour that moves to the ink palette",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches shared style partials (_base.scss) used across public and member surfaces",
+          "status": "open",
+          "notedAt": "2026-07-23T04:20:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-23T04:20:00Z",
+      "updatedAt": "2026-07-23T04:20:00Z",
+      "history": [
+        {
+          "at": "2026-07-23T04:20:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0272",
+      "title": "Edit the Discord welcome message from Settings > Discord & Adjutant",
+      "summary": "The bot settings payload already carries welcomeMessage and the page tracks it for dirty-checking, but only the welcome CHANNEL picker is rendered \u2014 there is no control to author the greeting the adjutant posts when a member joins the guild. Add a textarea (with character counter, blank = use the house default, and the supported placeholder hint) beside the welcome channel picker.",
+      "status": "planned",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "discord-adjutant",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.spec.ts",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0184",
+        "lords-dashboard-backend:T-0185"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Should the editor offer a 'Send test welcome to me' button so an admin can see the rendered embed before saving, or is a static preview/hint enough for this pass?",
+          "answer": null,
+          "askedAt": "2026-07-23T04:20:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "the welcome-message textarea renders under Settings > Discord & Adjutant next to the channel picker and loads the stored value",
+          "status": "pending"
+        },
+        {
+          "desc": "editing it marks the section dirty and Save PATCHes welcomeMessage; a reload shows the saved text",
+          "status": "pending"
+        },
+        {
+          "desc": "clearing the box saves and the UI states that the house default will be used",
+          "status": "pending"
+        },
+        {
+          "desc": "the field enforces the backend 512-char limit with a visible counter and blocks save past it",
+          "status": "pending"
+        },
+        {
+          "desc": "the placeholder hint lists exactly the tokens the backend expands",
+          "status": "pending"
+        },
+        {
+          "desc": "the control is hidden/disabled for users without the settings capability (consistent with T-0265)",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds a field to the shared bot-settings save payload and dirty-check snapshot; a mismatched key silently drops the value or marks the section permanently dirty",
+          "status": "open",
+          "notedAt": "2026-07-23T04:20:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-23T04:20:00Z",
+      "updatedAt": "2026-07-23T04:20:00Z",
+      "history": [
+        {
+          "at": "2026-07-23T04:20:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0273",
+      "title": "Verify the applicant only ever receives the User message after a decision",
+      "summary": "T-0248 stopped the console sending the moderator note as the decline reason, but the leak persisted server-side and applicants still saw the staff note in their DM. Once the backend fix lands, re-verify the console end-to-end and tighten the decision-pane copy so the 'Staff only' promise on the note box is demonstrably true.",
+      "status": "planned",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "applications-review",
+      "subfeature": "decision-notes",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.spec.ts",
+        "src/app/core/services/applications.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0182"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "spec asserts approve/decline/hold request bodies carry the moderator note only as `note`, never as `reason` or `discordDmMessage`",
+          "status": "pending"
+        },
+        {
+          "desc": "manual: decline with a distinctive staff note and a distinct user message; the applicant's DM shows only the user message",
+          "status": "pending"
+        },
+        {
+          "desc": "manual: decline with a staff note and NO user message; the applicant's DM shows only the house default",
+          "status": "pending"
+        },
+        {
+          "desc": "the 'Staff only' badge and 'The applicant is never shown this note' hint remain accurate after the change",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches the shared decision-pane submit path used by approve/decline/hold/block/unblock",
+          "status": "open",
+          "notedAt": "2026-07-23T04:20:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-23T04:20:00Z",
+      "updatedAt": "2026-07-23T04:20:00Z",
+      "history": [
+        {
+          "at": "2026-07-23T04:20:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        }
+      ]
+    },
+    {
+      "id": "T-0274",
+      "title": "Make the deciding officer on an application a clickable avatar + name chip",
+      "summary": "Reported: the 'Approved by / Declined by' line named the officer but rendered them as inert text. decidedByMemberId - which the API has always sent - was dropped in mapApplication, so there was no id to link with. Carry it into the view model and render the officer as one chip (avatar + name inside a single anchor to /app/profile/:id), matching the treatment the applicant's own name already gets in the header above it.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "applications-console",
+      "subfeature": "decision-attribution",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/api.model.ts",
+        "src/app/core/models/application.model.ts",
+        "src/app/features/admin/applications/applications.component.ts",
+        "src/app/features/admin/applications/applications.component.html",
+        "src/app/features/admin/applications/applications.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0186"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the officer renders as an anchor to /app/profile/:id with the avatar INSIDE the link",
+          "status": "passed"
+        },
+        {
+          "desc": "an officer whose member row is gone renders the identical chip unlinked, never a dead link",
+          "status": "passed"
+        },
+        {
+          "desc": "an id that survives without a name renders no chip at all (no empty clickable target)",
+          "status": "passed"
+        },
+        {
+          "desc": "'Approved by' and the officer name stay separated in the rendered text now that they are separate elements",
+          "status": "passed"
+        },
+        {
+          "desc": "clicking the chip in the running console opens the officer's profile",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The attribution line is now built from several sibling elements instead of one text run, so its spacing depends on an explicit &ngsp; (Angular drops whitespace-only nodes between elements). A future edit that removes it reads as 'Approved byColonel Hale' when copied or read by a screen reader; a test pins the spacing.",
+          "status": "open",
+          "notedAt": "2026-07-23T05:25:13Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Left the queue list rows unattributed - only the detail pane names the decider, which is what was reported.",
+        "The applicant-facing status page still carries no decision attribution; that is the deliberate projection split (T-0249), not an oversight."
+      ],
+      "lastTouchedCommit": "466c2d544533976d96baada4b224fc5ecfdf3a41",
+      "createdAt": "2026-07-23T05:25:13Z",
+      "updatedAt": "2026-07-23T05:25:13Z",
+      "history": [
+        {
+          "at": "2026-07-23T05:25:13Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "reported by the owner: the officer should show as username + avatar and open their profile"
+        },
+        {
+          "at": "2026-07-23T05:25:13Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266, commit 466c2d5"
         }
       ]
     }
