@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "131a8346bc5a285117544dda364c2e205746123d",
-  "lastSyncedAt": "2026-07-22T20:45:00Z",
-  "notesForNextSession": "THIS SESSION (spacing fix, on branch feat/planned-tasks-t0233-t0254): T-0258 \u2014 the Landing & sign-in and Legal documents settings sections had NO spacing because `.field-row`, `.settings-footer` and `.flash` live only in settings.component.scss and Angular view encapsulation keeps them out of the hf-regiment-presentation / hf-legal-editor children. Restated locally in both child stylesheets + a `:host` flex-column gap:16px; the overlay slider row also needed `margin-left/right: 0` to undo Bootstrap grid's negative `.row` margins (same defect as T-0218). WATCH FOR THIS PATTERN: any new child component pulled out of a settings//feature template loses its parent's scoped layout rules silently \u2014 it compiles and it looks broken. Also fixed an UNRELATED pre-existing time-bomb spec: member.model.spec.ts pinned NOW to 2026-07-18 but statusTooltip re-derives status off the real Date.now(), so the \"Suspended until\" case started failing once real time passed NOW+5d; both statusTooltip date cases are now anchored to Date.now(). 442 specs green, ng lint + prettier + prod build clean. BROWSER-SESSION RECIPE (unblocks T-0255 and every future authenticated UI pass \u2014 the DISCORD_MOCK=false blocker in the last handoff was avoidable): mint an Owner JWT with node -e jwt.sign({sub:'00000000-0000-4000-8000-000000000020', did:'400958439544848384'}) using JWT_SECRET from ../lords-dashboard-backend/.env, set it as localStorage lords_access_token on http://localhost:4200, then navigate to /app/admin/*. The dockerized web container on :4200 runs ng serve with THIS repo bind-mounted, so local edits hot-reload there directly (HMR can lag a beat \u2014 reload before concluding a rule did not apply). STILL OPEN on T-0255: presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt. T-0233..T-0254 remain `review` pending the coupled PR merge with lords-dashboard-backend feat/planned-tasks-t0144-t0160 \u2014 THE TWO MUST DEPLOY TOGETHER.",
+  "lastSyncedCommit": "b510ab0e3afb98db578d85b47fa1081efbdd9f4f",
+  "lastSyncedAt": "2026-07-23T01:20:00Z",
+  "notesForNextSession": "THIS SESSION (favicon, on branch feat/planned-tasks-t0233-t0254): T-0243 is UNBLOCKED and at `review`. The user supplied the RealFaviconGenerator set; it is in public/ and the head links in src/index.html are live. The favicon.ico it replaced was the stock Angular default - the tab had been showing Angular's pink 'A' since scaffolding. Three deliberate deviations from the generator's output, all argued in T-0243.skippedByClaude: kept manifest.json over site.webmanifest (nginx mime.types), kept 'Lords Regiment' + #0b0e14 over the generator's 'Lords of Holdfast' + #000000 (the app names itself Lords Regiment everywhere), and downgraded the 192/512 icons from purpose:'maskable' to 'any' because the crest is edge-to-edge with 0% safe-zone padding and would be cropped. Two testPlan items stay pending for want of hardware: Safari/Firefox tabs and the iOS home-screen icon. One open regressionRisk: nginx 30d-immutable caching on unfingerprinted icons may hold the old favicon after deploy. OPEN QUESTION for the user: the generator was fed the name 'Lords of Holdfast' but the app calls itself 'Lords Regiment' throughout - if 'Lords of Holdfast' is the real regiment name, that is an app-wide rename, not a favicon task. PREVIOUS SESSION: THIS SESSION (spacing fix, on branch feat/planned-tasks-t0233-t0254): T-0258 \u2014 the Landing & sign-in and Legal documents settings sections had NO spacing because `.field-row`, `.settings-footer` and `.flash` live only in settings.component.scss and Angular view encapsulation keeps them out of the hf-regiment-presentation / hf-legal-editor children. Restated locally in both child stylesheets + a `:host` flex-column gap:16px; the overlay slider row also needed `margin-left/right: 0` to undo Bootstrap grid's negative `.row` margins (same defect as T-0218). WATCH FOR THIS PATTERN: any new child component pulled out of a settings//feature template loses its parent's scoped layout rules silently \u2014 it compiles and it looks broken. Also fixed an UNRELATED pre-existing time-bomb spec: member.model.spec.ts pinned NOW to 2026-07-18 but statusTooltip re-derives status off the real Date.now(), so the \"Suspended until\" case started failing once real time passed NOW+5d; both statusTooltip date cases are now anchored to Date.now(). 442 specs green, ng lint + prettier + prod build clean. BROWSER-SESSION RECIPE (unblocks T-0255 and every future authenticated UI pass \u2014 the DISCORD_MOCK=false blocker in the last handoff was avoidable): mint an Owner JWT with node -e jwt.sign({sub:'00000000-0000-4000-8000-000000000020', did:'400958439544848384'}) using JWT_SECRET from ../lords-dashboard-backend/.env, set it as localStorage lords_access_token on http://localhost:4200, then navigate to /app/admin/*. The dockerized web container on :4200 runs ng serve with THIS repo bind-mounted, so local edits hot-reload there directly (HMR can lag a beat \u2014 reload before concluding a rule did not apply). STILL OPEN on T-0255: presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt. T-0233..T-0254 remain `review` pending the coupled PR merge with lords-dashboard-backend feat/planned-tasks-t0144-t0160 \u2014 THE TWO MUST DEPLOY TOGETHER.",
   "nextIdCounter": 259,
   "connections": [],
   "tasks": [
@@ -15488,7 +15488,7 @@
       "id": "T-0243",
       "title": "Integrate the generated favicon set",
       "summary": "Add the generated favicon assets (favicon.svg, favicon-96x96.png, apple-touch-icon, web manifest) and wire the head links, replacing the single legacy favicon.ico reference.",
-      "status": "blocked",
+      "status": "review",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -15516,28 +15516,37 @@
         },
         {
           "desc": "The web manifest (if added) parses with no console warnings and names the site \"Lords Regiment\"",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "All icon assets are included by the production build (present in dist and served) - check angular.json assets globs",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "desc": "No 404 for the old favicon.ico path after the swap, and the CSP does not block any icon request",
-          "status": "pending"
+          "status": "passed"
         }
       ],
-      "regressionRisk": [],
+      "regressionRisk": [
+        {
+          "desc": "nginx.conf long-caches unfingerprinted icons (`expires 30d; Cache-Control public, immutable` on .ico/.png/.svg), so a returning visitor can keep the old Angular favicon for up to 30 days after deploy. Browsers refetch favicons more eagerly than that rule implies, but it is not guaranteed.",
+          "status": "open",
+          "notedAt": "2026-07-23T01:20:00Z"
+        }
+      ],
       "skippedByClaude": [
-        "BLOCKED ON ASSETS, NOT CODE. public/ contains only favicon.ico and src/assets/images/ has no icon set - no favicon.svg, no apple-touch-icon, no PNG size set. Icons were NOT fabricated.",
-        "DONE anyway: public/manifest.json naming the site 'Lords Regiment' with theme/background #0b0e14 matching the existing theme-color meta, head links wired, and confirmed angular.json already copies public/**/* to the dist root (no config change needed). Every referenced file exists, so the build 404s nothing today; the not-yet-present files sit in a labelled commented block with their exact target paths.",
-        "Named manifest.json rather than site.webmanifest: nginx's stock mime.types has no 'webmanifest' entry, so that filename would be served as application/octet-stream in production.",
-        "testPlan item 'the CSP does not block any icon request' is vacuous - nginx.conf sets no CSP for the SPA; the only helmet() call guards the API.",
-        "TO UNBLOCK: drop the generated set into public/ (favicon.svg, apple-touch-icon.png 180x180, favicon-96x96.png, web-app-manifest-192x192.png, web-app-manifest-512x512.png) and uncomment the block in src/index.html."
+        "UNBLOCKED: the generated set landed in public/ - favicon.ico (48/32/16 frames), favicon.svg, favicon-96x96.png, apple-touch-icon.png 180x180, web-app-manifest-192x192.png, web-app-manifest-512x512.png. The interim apple-touch-icon -> assets/images/regiment-logo.png stand-in is removed.",
+        "The favicon.ico this REPLACES was the stock Angular default (the pink 'A' from `ng new`) - the tab has been serving Angular's logo, not the regiment crest, since the project was scaffolded. Same path, new bytes, so no 404 and no head change for that link.",
+        "DID NOT adopt the generator's site.webmanifest. Kept public/manifest.json: nginx's stock mime.types has no `webmanifest` entry, so that filename serves as application/octet-stream. Confirmed over HTTP that manifest.json serves as application/json.",
+        "DID NOT keep the generator's manifest values. It emitted name 'Lords of Holdfast' / short_name 'Lords' and theme+background #000000; this app's <title>, meta description and AppTitleStrategy base all say 'Lords Regiment' and the theme-color meta is #0b0e14, so those were kept. Took short_name 'Lords' only - 'Lords Regiment' truncates on an Android home screen. The name divergence is the user's call, not a favicon change.",
+        "DID NOT keep purpose:'maskable' on the 192/512 icons. The art is a circular crest inscribed edge-to-edge with transparent corners (measured: 0% padding on all four sides). Maskable only guarantees the inner 80% circle, so the outer brass ring would be cropped on circle-mask launchers. Declared purpose:'any' instead, which letterboxes rather than crops.",
+        "favicon.svg is a 75x75 raster wrapped in an <image> tag by RealFaviconGenerator, not true vector - so it is LOWER resolution than favicon-96x96.png, and Chrome prefers the SVG. Harmless at tab sizes (16-32 CSS px, 64 device px at 2x) and kept for the browsers that ask for SVG, but if a real vector source exists it should replace this file.",
+        "CORRECTION to the previous note on this task: the CSP testPlan item was NOT vacuous. nginx.conf sets no CSP, but production serves the SPA behind Caddy (Caddyfile in lords-dashboard-backend), which does set one. It permits these requests - img-src includes 'self' and data: (favicon.svg embeds a data: PNG), and manifest-src is undeclared so it falls back to default-src 'self'. Verified by reading the header, not assumed.",
+        "NOT verified: Safari and Firefox tab rendering, and the iOS home-screen apple-touch-icon. No Safari on Fedora and no iOS device available; those two testPlan items stay pending. Chrome was verified - all five icons decode at their declared sizes and the 16px .ico frame is legible."
       ],
       "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:20:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15552,6 +15561,13 @@
           "to": "blocked",
           "by": "claude",
           "note": "the generated icon set is not in the repo; everything that does not need it is done"
+        },
+        {
+          "at": "2026-07-23T01:20:00Z",
+          "from": "blocked",
+          "to": "review",
+          "by": "claude",
+          "note": "user supplied the generated set; icons installed, manifest + head links finalised, build/lint/prettier/442 specs green, served and decoded in Chrome"
         }
       ]
     },

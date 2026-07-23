@@ -13,31 +13,18 @@
         <base href="/" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0b0e14" />
-        <!-- Icons (T-0243). Everything referenced here exists today, so the build
-             produces no 404s. `public/` is copied to the dist root by angular.json,
-             which is why favicon.ico and manifest.json are unprefixed while the
-             crest comes from src/assets (copied to /assets).
-
-             INTERIM: the generated favicon set is not in the repo yet. Until it
-             lands, apple-touch-icon points at the 256x256 crest — iOS downscales it
-             and composites its transparency on black, which the near-black theme
-             happens to survive. Drop these three files into public/ and swap the
-             block below for the commented one:
-               public/favicon.svg
-               public/favicon-96x96.png
-               public/apple-touch-icon.png   (180x180, opaque background) -->
+        <!-- Icons (T-0243). All files live in `public/`, which angular.json copies
+             to the dist root — that is why these hrefs are unprefixed. The .ico
+             carries 48/32/16 frames, so the `sizes` list is not a guess. -->
         <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="48x48 32x32 16x16" />
-        <link rel="apple-touch-icon" href="assets/images/regiment-logo.png" />
+        <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+        <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
         <!-- manifest.json, not site.webmanifest: nginx's stock mime.types has no
              `webmanifest` entry, so that name would be served as
              application/octet-stream. `.json` is mapped, and nginx.conf lives in
              this repo but the SPA should not need a server change to be correct. -->
         <link rel="manifest" href="manifest.json" />
-        <!--
-        <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-        <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
-        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-        -->
 
         <!-- Web fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
