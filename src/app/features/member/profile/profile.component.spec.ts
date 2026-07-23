@@ -46,6 +46,12 @@ function currentUser(): CurrentUser {
         avatarUrl: null,
         isMember: true,
         capabilities: [],
+        // The gate is off in these specs, so the session behaves exactly as it
+        // did before T-0261 (CONTRACT §1 — the API never omits these four).
+        guildMember: true,
+        discordInviteUrl: null,
+        guildGateEnabled: false,
+        guildGateExempt: false,
     };
 }
 

@@ -45,7 +45,8 @@
                 <div class="mono profile-discord">{{ member.discordTag }}</div>
             </div>
             <div class="profile-actions row">
-                @if (isAdmin) {
+                <!-- Same gate as the roster row's `···` — see canAdminAct (T-0266). -->
+                @if (canAdminAct) {
                 <button type="button" class="btn btn-secondary btn-sm" (click)="openAdminActions()">
                     Admin Actions ▾
                 </button>

@@ -8,8 +8,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
-    "lint": "ng lint",
+    "lint": "ng lint && npm run lint:contrast",
     "lint:fix": "ng lint --fix",
+    "lint:contrast": "node scripts/check-contrast.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

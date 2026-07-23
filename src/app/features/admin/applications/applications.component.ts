@@ -12,6 +12,12 @@ export interface DecisionAttribution {
     /** Null when the decider's member row was removed (the FK is ON DELETE SET NULL). */
     name: string | null;
     avatarUrl: string | null;
+    /**
+     * Profile deep-link target for the officer (T-0274). Null alongside
+     * {@link name} when their member row is gone — the chip then renders as
+     * plain text rather than as a link to a profile that no longer exists.
+     */
+    memberId: string | null;
     /** Null for a HELD application — a hold is not a final decision, so it has no timestamp. */
     at: string | null;
 }
@@ -155,6 +161,9 @@ export class ApplicationsComponent implements OnInit {
             verb: DECISION_VERB[app.status] ?? 'Decided',
             name,
             avatarUrl: app.decidedByAvatarUrl ?? null,
+            // Only offer the profile link when we still have a name to hang it
+            // on — an id without a name would render an empty clickable chip.
+            memberId: name ? (app.decidedByMemberId ?? null) : null,
             at,
         };
     }

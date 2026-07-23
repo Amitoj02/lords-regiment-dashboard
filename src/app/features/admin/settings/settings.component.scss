@@ -3,6 +3,12 @@
     grid-template-columns: 220px 1fr;
     gap: 24px;
     align-items: start;
+
+    // No nav rendered (the caller holds neither settings capability, T-0265) —
+    // reclaim the empty rail rather than leaving a 220px gutter.
+    &--solo {
+        grid-template-columns: 1fr;
+    }
 }
 
 .settings-nav {
@@ -92,7 +98,12 @@
     border-radius: 8px;
     padding: 20px;
     text-align: center;
-    color: var(--t-400);
+    // --t-400 is a MUTED colour from the dark palette: on parchment it measures
+    // 3.75:1, under the 4.5:1 AA floor for this 0.8rem text. --t-on-parch-2 is
+    // the palette's muted-on-parchment tone and clears it at ~8.8:1 (T-0271).
+    // (No template references `.upload-target` today; fixed so it cannot ship
+    // under-contrast if it is wired up.)
+    color: var(--t-on-parch-2);
     cursor: pointer;
     font-size: 0.8rem;
     background: var(--parch-50);
@@ -238,6 +249,64 @@
     margin-top: 14px;
 }
 
+// Welcome-message editor (T-0272): the placeholder hint and the character
+// counter share one baseline, and the counter is pushed to the trailing edge so
+// it reads as metadata rather than as part of the sentence.
+.welcome-message-meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+
+    // The hint is a <p> here (the other field hints are <span>s), so it carries
+    // Bootstrap's paragraph bottom margin and would otherwise open a ~16px hole
+    // between it and the counter.
+    .field-hint {
+        margin-top: 6px;
+        margin-bottom: 0;
+    }
+}
+
+.welcome-message-count {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &.over-limit {
+        color: var(--brass-300);
+    }
+}
+
+.token-chip {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--brass-300);
+    background: rgba(99, 73, 20, 0.18);
+    border: 1px solid var(--brass-700);
+    border-radius: var(--r-2);
+    padding: 1px 4px;
+    margin-right: 4px;
+}
+
+.token-desc {
+    color: var(--t-300);
+}
+
+// The hint wraps to two lines on a phone; the counter belongs under it rather
+// than squeezed beside it. Both children carry the shared `.field-hint`
+// margin-top, so the second one is zeroed or the two read as separate blocks.
+@media (max-width: 680px) {
+    .welcome-message-meta {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .welcome-message-count {
+        align-self: flex-end;
+        margin-top: 2px;
+    }
+}
+
 .op-line {
     align-items: center;
     padding: 8px 0;
@@ -261,4 +330,27 @@
     align-items: center;
     gap: 6px;
     margin: 0;
+}
+
+// ── Mobile ───────────────────────────────────────────────────────────────────
+// The two-column rail costs more than it earns below 820px, and with the nav
+// now filtered per capability (T-0265) it can be as short as a single entry —
+// so stack it above the panels as a wrapping row instead of a sticky sidebar.
+@media (max-width: 820px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .settings-nav {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+    }
+
+    .nav-group {
+        flex: 1 1 auto;
+        min-width: 150px;
+    }
 }

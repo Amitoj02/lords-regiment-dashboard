@@ -192,6 +192,8 @@ body {
     }
 
     .pip {
+        // contrast-guard-ignore: a 6px decorative diamond that renders no text —
+        // it only inherits the divider's colour, so a text ratio is meaningless.
         width: 6px;
         height: 6px;
         transform: rotate(45deg);

@@ -18,10 +18,12 @@ import {
     Medal,
     Member,
     MemberMedalAward,
+    MemberPermittedActions,
     MemberRole,
     MemberStatus,
     Platform,
     Rank,
+    parsePermittedActions,
 } from './member.model';
 
 /** Standard paginated envelope (matches PaginatedResponseDto). */
@@ -68,6 +70,17 @@ export interface ApiMember {
     suspendedUntil: string | null;
     bannedAt: string | null;
     medals: ApiMemberMedal[];
+    /**
+     * Which admin actions the CALLER may perform on THIS member, derived from
+     * the same guard the endpoints enforce (CONTRACT §3, backend T-0176). The
+     * API sends it on every member projection — list, detail and each admin
+     * action's response — but it is declared OPTIONAL here on purpose: an older
+     * API, a cached payload or a hand-built fixture must read as "nothing
+     * permitted", which is exactly what {@link parsePermittedActions} returns
+     * for an absent block. Never read this field directly; go through
+     * {@link mapMember}, which normalises it and fails closed.
+     */
+    permittedActions?: MemberPermittedActions;
 }
 
 export interface ApiRank {
@@ -291,6 +304,10 @@ export function mapMedalAward(m: ApiMemberMedal): MemberMedalAward {
 }
 
 export function mapMember(m: ApiMember): Member {
+    // Normalised at the wire boundary so every reader fails closed the same way:
+    // a missing or malformed block leaves `permittedActions` OFF the member
+    // entirely, which the UI reads as "nothing permitted" (T-0266).
+    const permittedActions = parsePermittedActions(m.permittedActions);
     return {
         id: m.id,
         discordTag: m.discordTag ?? '',
@@ -309,6 +326,7 @@ export function mapMember(m: ApiMember): Member {
         bannedAt: m.bannedAt,
         avatarUrl: m.avatarUrl,
         bannerUrl: m.bannerUrl,
+        ...(permittedActions ? { permittedActions } : {}),
     };
 }
 
@@ -367,6 +385,10 @@ export function mapApplication(a: ApiApplication): Application {
         userMessage: a.userMessage ?? null,
         decidedByName: a.decidedByName ?? null,
         decidedByAvatarUrl: a.decidedByAvatarUrl ?? null,
+        // The officer's member id is what makes the attribution clickable rather
+        // than inert text (T-0274); dropping it here is how the chip loses its
+        // profile link even though the API sends the id on every decision.
+        decidedByMemberId: a.decidedByMemberId ?? null,
         blocked: a.blocked ?? false,
         // Live applicant identity + profile deep-link target (T-0222).
         promotedMemberId: a.promotedMemberId,

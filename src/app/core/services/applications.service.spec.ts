@@ -119,6 +119,61 @@ describe('ApplicationsService', () => {
         req.flush(apiApplication({ blocked: true }));
     });
 
+    it('sends only the applicant-visible message on approve', () => {
+        // Approve had no request-body coverage at all, and it is the branch where
+        // the shared note field is deliberately dropped — so it is the branch
+        // most likely to grow an extra key unnoticed.
+        service.approve('a1', 'Welcome aboard!').subscribe();
+
+        const req = httpMock.expectOne('/api/applications/a1/approve');
+        expect(req.request.body).toEqual({ discordDmMessage: 'Welcome aboard!' });
+        req.flush(apiApplication({ status: 'approved' }));
+    });
+
+    /**
+     * T-0273 — the standing guard on the console's half of the promise.
+     *
+     * The moderator note is badged "Staff only" in the decision pane. The API now
+     * keeps that promise (lords-dashboard-backend T-0182 deleted the embed field
+     * that used to DM the note to the applicant), and this pins the console's
+     * side: the note may travel as `note` and nowhere else. Asserting the exact
+     * KEY SET rather than one key is what makes it a guard — a stray `reason`, or
+     * a note copied into `discordDmMessage`, fails here rather than in a DM to a
+     * real applicant.
+     *
+     * Scoped to approve/decline/hold on purpose: `blockApplicant` legitimately
+     * sends `reason`, because the block endpoint's reason is staff-side.
+     */
+    it('never lets the staff note reach an applicant-visible key on any decision', () => {
+        const STAFF_NOTE = 'Suspected sock puppet — do not tell them';
+
+        service.approve('a1', 'Welcome aboard!').subscribe();
+        service.decline('a2', STAFF_NOTE, 'Not this time.').subscribe();
+        service.hold('a3', STAFF_NOTE, 'Sit tight.').subscribe();
+
+        const approve = httpMock.expectOne('/api/applications/a1/approve');
+        const decline = httpMock.expectOne('/api/applications/a2/decline');
+        const hold = httpMock.expectOne('/api/applications/a3/hold');
+        const bodies = {
+            approve: approve.request.body as Record<string, unknown>,
+            decline: decline.request.body as Record<string, unknown>,
+            hold: hold.request.body as Record<string, unknown>,
+        };
+
+        expect(Object.keys(bodies.approve).sort()).toEqual(['discordDmMessage']);
+        expect(Object.keys(bodies.decline).sort()).toEqual(['discordDmMessage', 'note']);
+        expect(Object.keys(bodies.hold).sort()).toEqual(['discordDmMessage', 'note']);
+
+        for (const body of Object.values(bodies)) {
+            expect(body['reason']).toBeUndefined();
+            expect(body['discordDmMessage']).not.toBe(STAFF_NOTE);
+        }
+
+        approve.flush(apiApplication({ status: 'approved' }));
+        decline.flush(apiApplication({ status: 'declined' }));
+        hold.flush(apiApplication({ status: 'held' }));
+    });
+
     // ── Staff projection (T-0247 / T-0250) ──────────────────────────────────────
 
     it('carries the user message and the decision attribution into the staff model', () => {
@@ -132,6 +187,7 @@ describe('ApplicationsService', () => {
                 userMessage: 'Not this time — do reapply in a month.',
                 decidedByName: 'Colonel Hale',
                 decidedByAvatarUrl: 'https://cdn/hale.png',
+                decidedByMemberId: 'mem-hale',
                 decidedAt: '2026-07-19T12:00:00.000Z',
             }),
         );
@@ -142,6 +198,8 @@ describe('ApplicationsService', () => {
                 userMessage: 'Not this time — do reapply in a month.',
                 decidedByName: 'Colonel Hale',
                 decidedByAvatarUrl: 'https://cdn/hale.png',
+                // The id the officer chip deep-links with (T-0274).
+                decidedByMemberId: 'mem-hale',
             }),
         );
     });

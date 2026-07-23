@@ -31,12 +31,17 @@
     }
 }
 
+// No template references `.orders-toolbar` today. It is kept, but given the text
+// colour it should always have had (T-0271): a parchment surface inherits the
+// page's LIGHT body text unless a rule says otherwise, so wiring this toolbar up
+// as it stood would have shipped invisible labels.
 .orders-toolbar {
     display: flex;
     gap: 4px;
     margin-bottom: 6px;
     padding: 6px 8px;
     background: var(--parch-100);
+    color: var(--t-on-parch);
     border: 1px solid var(--rule-2);
     border-bottom: none;
     border-radius: 6px 6px 0 0;

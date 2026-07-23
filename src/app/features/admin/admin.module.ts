@@ -9,6 +9,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { LegalEditorComponent } from './settings/legal-editor/legal-editor.component';
 import { RegimentPresentationComponent } from './settings/regiment-presentation/regiment-presentation.component';
 import { unsavedChangesGuard } from './settings/unsaved-changes.guard';
+import { settingsAccessGuard } from '../../core/guards/settings-access.guard';
 import { BotStatusComponent } from './bot-status/bot-status.component';
 
 // Post-MVP: every admin surface is now wired to its API service (T-0017/T-0024/
@@ -22,12 +23,17 @@ const routes: Routes = [
     // Events relocated to /app/dashboard/events* and Gallery to /app/gallery*
     // (member-readable, role-gated authoring) in MemberModule (T-0085/T-0108).
     { path: 'audit', component: AuditComponent, title: 'Audit Ledger' },
+    // canActivate: the module-level `adminGuard` is role-based, but every settings
+    // section is capability-gated server-side — so this route needs its own
+    // capability check or a Moderator holding neither capability reaches a panel
+    // the API 403s in full (T-0265).
     // canDeactivate: the settings page hosts the legal-document editor, which can
     // be holding an unsaved privacy policy (T-0240).
     {
         path: 'settings',
         component: SettingsComponent,
         title: 'Settings',
+        canActivate: [settingsAccessGuard],
         canDeactivate: [unsavedChangesGuard],
     },
     { path: 'bot', component: BotStatusComponent, title: 'Discord Bot' },

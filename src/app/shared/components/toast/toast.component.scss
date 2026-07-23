@@ -1,3 +1,20 @@
+// =========================================================
+// HOLDFAST · Toast stack
+//
+// T-0270 — this card used to be parchment (--parch-100, #ebe2c8) carrying
+// --t-200 (#d8d2c2), the palette's LIGHT body text. That is roughly 1.1:1:
+// every toast the app has ever raised was near-invisible, on every screen.
+//
+// It is now an ELEVATED INK surface, matching `.panel.raised`, which is the
+// right home for it on two counts: it is the app's established tone for a
+// surface floating above the page, and it puts the toast on the same palette as
+// the light text it was always styled with (--t-100 on --ink-750 is ~13:1).
+//
+// NOTE FOR THE PARCHMENT SWEEP (T-0271): the toast is deliberately EXEMPT from
+// the "a parchment background must pair a dark text colour" rule, because it is
+// no longer a parchment surface at all. Do not move it back.
+// =========================================================
+
 .toast-stack {
     position: fixed;
     right: 20px;
@@ -19,26 +36,36 @@
     max-width: 360px;
     padding: 10px 12px 10px 14px;
     border-radius: 8px;
-    border: 1px solid transparent;
+    border: 1px solid var(--rule-3);
     border-left-width: 3px;
-    background: var(--parch-100);
+    border-left-color: var(--rule-3);
+    background: var(--ink-750);
     box-shadow: var(--shadow-2);
     font-size: 0.85rem;
-    color: var(--t-200);
+    color: var(--t-100);
 
+    // The left rule carries the variant, and a very low-alpha wash of the same
+    // hue backs it up — so the variant survives a glance and stays legible where
+    // the 3px rule is the only differentiator on a narrow phone.
     &--error {
-        border-color: var(--oxblood-500);
+        border-color: var(--oxblood-600);
         border-left-color: var(--oxblood-400);
+        background:
+            linear-gradient(90deg, rgba(166, 77, 68, 0.16), transparent 62%), var(--ink-750);
     }
 
     &--success {
-        border-color: var(--laurel-500);
+        border-color: var(--laurel-600);
         border-left-color: var(--laurel-400);
+        background:
+            linear-gradient(90deg, rgba(108, 126, 84, 0.16), transparent 62%), var(--ink-750);
     }
 
     &--info {
-        border-color: var(--regblue-500);
+        border-color: var(--regblue-700);
         border-left-color: var(--regblue-300);
+        background:
+            linear-gradient(90deg, rgba(125, 151, 180, 0.14), transparent 62%), var(--ink-750);
     }
 }
 
@@ -52,14 +79,26 @@
     flex: none;
     background: none;
     border: none;
+    border-radius: 4px;
     padding: 0 2px;
     cursor: pointer;
     font-size: 1.1rem;
     line-height: 1;
     color: inherit;
-    opacity: 0.6;
+    // 0.75 rather than 0.6: the glyph is the only control on the card, and a
+    // dimmed glyph loses contrast faster on this dark surface than it did on the
+    // parchment these rules were originally written against.
+    opacity: 0.75;
 
     &:hover {
+        opacity: 1;
+    }
+
+    // The dismiss button is keyboard-reachable and had no focus affordance at
+    // all. Same ring the button system uses, so it reads as part of the app.
+    &:focus-visible {
+        outline: 1.5px solid var(--brass-400);
+        outline-offset: 1px;
         opacity: 1;
     }
 }

@@ -45,6 +45,13 @@ export interface Application {
      */
     decidedByName?: string | null;
     decidedByAvatarUrl?: string | null;
+    /**
+     * The deciding officer's member id — the profile deep-link target for the
+     * attribution chip (T-0274). Null exactly when {@link decidedByName} is:
+     * the FK is ON DELETE SET NULL, so a removed officer leaves the decision
+     * attributed to nobody rather than pointing at a profile that is gone.
+     */
+    decidedByMemberId?: string | null;
     /** Whether the applicant's Discord identity is blocked from applying (T-0128). */
     blocked?: boolean;
     /** Member id created on approval — drives the profile deep-link (T-0222/T-0223). */

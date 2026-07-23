@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { SETTINGS_CAPABILITIES } from '../../../core/guards/settings-access.guard';
 
 export interface NavUser {
     /** Signed-in member uid — used to link the footer/profile at their own record (T-0139). */
@@ -21,6 +22,14 @@ interface NavItem {
     /** Which labeled group the item is rendered under (T-0131). */
     group: NavGroup;
     adminOnly: boolean;
+    /**
+     * Capability keys that make this entry reachable — holding ANY one is
+     * enough. When present it REPLACES the coarse `adminOnly` + `isAdmin` role
+     * check, because the route behind such an entry is itself capability-guarded
+     * and the role flag would otherwise show a link into a 403 (T-0265). Entries
+     * without it keep the role gate exactly as before.
+     */
+    anyCapability?: readonly string[];
     /** MVP feature flag — deferred surfaces are hidden until wired (T-0026). */
     enabled?: boolean;
 }
@@ -42,6 +51,12 @@ export class SidebarComponent {
     @Input() active = '';
     @Input() user: NavUser = { id: '', name: '', rank: '' };
     @Input() isAdmin = false;
+    /**
+     * Effective capability keys for the signed-in user (`CurrentUser.capabilities`).
+     * Only entries carrying `anyCapability` consult it — everything else still
+     * rides on `isAdmin` (T-0265).
+     */
+    @Input() capabilities: readonly string[] = [];
 
     @Output() navigate = new EventEmitter<string>();
     /** Emitted when the footer Logout button is pressed (handled by the shell). */
@@ -129,6 +144,10 @@ export class SidebarComponent {
             adminOnly: true,
             enabled: true,
         },
+        // Settings is capability-gated, not role-gated: `settingsAccessGuard`
+        // owns the route, and a Moderator holding neither settings capability
+        // would otherwise be linked into a panel of empty chrome (T-0265). The
+        // list is imported from the guard so link and route cannot drift.
         {
             label: 'Settings',
             key: 'settings',
@@ -136,6 +155,7 @@ export class SidebarComponent {
             icon: 'settings',
             group: 'administrative',
             adminOnly: true,
+            anyCapability: SETTINGS_CAPABILITIES,
             enabled: true,
         },
     ];
@@ -148,9 +168,20 @@ export class SidebarComponent {
     ];
 
     /**
-     * Nav items bucketed into their labeled groups, with admin/MVP-flag filtering
-     * applied. The Administrative group falls away entirely for non-admins because
-     * all of its items are `adminOnly` (T-0131).
+     * Whether the signed-in caller may see an entry: a capability check when the
+     * entry declares one, the coarse role flag otherwise (T-0265).
+     */
+    private isPermitted(item: NavItem): boolean {
+        if (item.anyCapability) {
+            return item.anyCapability.some((c) => this.capabilities.includes(c));
+        }
+        return !item.adminOnly || this.isAdmin;
+    }
+
+    /**
+     * Nav items bucketed into their labeled groups, with admin/capability/MVP-flag
+     * filtering applied. The Administrative group falls away entirely for non-admins
+     * because all of its items are `adminOnly` (T-0131).
      */
     get visibleSections(): NavSection[] {
         return this.groupOrder
@@ -158,7 +189,7 @@ export class SidebarComponent {
                 id,
                 label,
                 items: this.navItems.filter(
-                    (i) => i.group === id && i.enabled !== false && (!i.adminOnly || this.isAdmin),
+                    (i) => i.group === id && i.enabled !== false && this.isPermitted(i),
                 ),
             }))
             .filter((section) => section.items.length > 0);

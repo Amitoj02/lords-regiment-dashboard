@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
     Member,
+    canOpenAdminActions,
     deriveMemberStatus,
     statusTooltip,
     statusVariant,
@@ -55,11 +56,15 @@ export class RosterComponent implements OnInit {
         private router: Router,
     ) {}
 
-    /** Whether the caller may open the admin-action modal on a row. */
-    get canManage(): boolean {
-        return (
-            this.auth.hasCapability('edit_ranks_medals') || this.auth.hasCapability('manage_roles')
-        );
+    /**
+     * Whether the caller may open the admin-action modal on THIS row (T-0266).
+     * Was a global `canManage` getter, which put a `···` on every row — including
+     * the Owner's and the caller's own — for actions the API would refuse. Shares
+     * `canOpenAdminActions` with the profile header's trigger so the two entry
+     * points to the same modal can never disagree.
+     */
+    canActOn(member: Member): boolean {
+        return canOpenAdminActions(member, (capability) => this.auth.hasCapability(capability));
     }
 
     /** Only Owners/Admins may pull a roster ledger export. */
@@ -68,6 +73,11 @@ export class RosterComponent implements OnInit {
     }
 
     openActions(member: Member): void {
+        // Re-check rather than trust the click: the row's button is already
+        // hidden, but a keyboard/stale-list path must not open a dead modal.
+        if (!this.canActOn(member)) {
+            return;
+        }
         this.selectedMember = member;
     }
 
@@ -165,8 +175,17 @@ export class RosterComponent implements OnInit {
         this.filteredMembers = this.allMembers;
     }
 
+    /**
+     * `lastSeen` is `''` whenever the API sent a null `lastSeenAt` — which is
+     * every member who has not made an authenticated request yet, i.e. everyone
+     * between approval and their first sign-in. `new Date('')` is an Invalid
+     * Date, and the old code rendered the literal string "Invalid Date" in the
+     * roster's Last Seen column. Say "Never" instead, and guard the parse rather
+     * than the input so an unparseable value from anywhere degrades the same way.
+     */
     formatLastSeen(dateStr: string): string {
         const date = new Date(dateStr);
+        if (!dateStr || Number.isNaN(date.getTime())) return 'Never';
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));

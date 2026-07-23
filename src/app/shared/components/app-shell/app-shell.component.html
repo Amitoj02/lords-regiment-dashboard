@@ -7,6 +7,7 @@
         [active]="activeRoute"
         [user]="navUser"
         [isAdmin]="isAdmin()"
+        [capabilities]="capabilities()"
         (navigate)="onNavigate($event)"
         (logout)="onLogout()"
     ></hf-sidebar>

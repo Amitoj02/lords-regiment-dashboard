@@ -25,6 +25,13 @@ interface NavItem {
     id: string;
     label: string;
     group: string;
+    /**
+     * The capability the API enforces behind this section. It drives three
+     * things at once (T-0265): whether the nav entry renders, whether the
+     * section may become `activeSection`, and whether its data is fetched at
+     * all — so a caller who cannot see a section never fires a request for it.
+     */
+    capability: string;
 }
 
 @Component({
@@ -34,18 +41,49 @@ interface NavItem {
     standalone: false,
 })
 export class SettingsComponent implements OnInit, HasUnsavedChanges {
-    activeSection = 'profile';
+    /**
+     * Empty until `ngOnInit` picks the first section the caller may actually
+     * see. It used to default to the hardcoded `'profile'`, which handed a
+     * `manage_regiment_details`-only caller a blank pane they had no way to
+     * leave except by guessing at the nav (T-0265).
+     */
+    activeSection = '';
 
     navItems: NavItem[] = [
-        { id: 'profile', label: 'Profile & visibility', group: 'Regiment' },
-        { id: 'discord', label: 'Discord & Adjutant', group: 'Regiment' },
-        { id: 'roles', label: 'Roles & permissions', group: 'Regiment' },
+        {
+            id: 'profile',
+            label: 'Profile & visibility',
+            group: 'Regiment',
+            capability: 'manage_settings',
+        },
+        {
+            id: 'discord',
+            label: 'Discord & Adjutant',
+            group: 'Regiment',
+            capability: 'manage_settings',
+        },
+        {
+            id: 'roles',
+            label: 'Roles & permissions',
+            group: 'Regiment',
+            capability: 'manage_settings',
+        },
         // Public-facing copy (T-0238..T-0240). Its own group because it is gated
         // on a different capability (manage_regiment_details) from everything
         // above, and because it is the only place in the app that edits pages
         // anonymous visitors read.
-        { id: 'presentation', label: 'Landing & sign-in', group: 'Public pages' },
-        { id: 'legal', label: 'Legal documents', group: 'Public pages' },
+        {
+            id: 'presentation',
+            label: 'Landing & sign-in',
+            group: 'Public pages',
+            capability: 'manage_regiment_details',
+        },
+        {
+            id: 'legal',
+            label: 'Legal documents',
+            group: 'Public pages',
+            capability: 'manage_regiment_details',
+        },
     ];
     navGroups = ['Regiment', 'Public pages'];
 
@@ -61,8 +99,15 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
     hasUnsavedChanges(): boolean {
         return (
             !!this.presentationEditor?.hasUnsavedChanges() ||
-            !!this.legalEditor?.hasUnsavedChanges()
+            !!this.legalEditor?.hasUnsavedChanges() ||
+            this.botSettingsDirty
         );
+    }
+
+    /** True once the Lord Adjutant form differs from what the server last sent. */
+    get botSettingsDirty(): boolean {
+        if (!this.botSettings || this.botSettingsSnapshot === null) return false;
+        return JSON.stringify(this.botSettings) !== this.botSettingsSnapshot;
     }
 
     // ── Regiment profile + visibility ────────────────────────────────────────
@@ -93,6 +138,31 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
     savingBot = false;
     botFlash = '';
 
+    /**
+     * The backend's `@MaxLength(512)` on `welcomeMessage`. Mirrored so the box
+     * stops at the limit instead of letting the admin type a paragraph that comes
+     * back as a 400 (lords-dashboard-backend T-0184).
+     */
+    readonly welcomeMessageMaxLength = 512;
+
+    /**
+     * The placeholder contract, verbatim from the API's own documentation of it
+     * (lords-dashboard-backend `WELCOME_TOKENS`). Anything not on this list is
+     * left as literal text by the composer, so the hint must not promise more.
+     */
+    readonly welcomeTokens: readonly { token: string; renders: string }[] = [
+        { token: '{user}', renders: 'the joining member' },
+        { token: '{regiment}', renders: 'the regiment name' },
+    ];
+
+    /**
+     * The bot settings exactly as the server last gave them, so a section switch
+     * or a route change can tell "typed and not saved" from "untouched". The
+     * welcome message is the first free-text control on this page — every other
+     * field is a picker or a toggle, which is why nothing needed this before.
+     */
+    private botSettingsSnapshot: string | null = null;
+
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(
@@ -106,28 +176,61 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         return this.auth.hasCapability(capability);
     }
 
+    /** Whether the caller holds the capability a given section is gated on. */
+    canSection(id: string): boolean {
+        const item = this.navItems.find((n) => n.id === id);
+        return !!item && this.can(item.capability);
+    }
+
+    /** Every section the caller may open, in the declared order. */
+    get permittedNavItems(): NavItem[] {
+        return this.navItems.filter((n) => this.can(n.capability));
+    }
+
+    /** Group headings that still have at least one visible item under them. */
+    get visibleGroups(): string[] {
+        return this.navGroups.filter((group) => this.getNavByGroup(group).length > 0);
+    }
+
+    /**
+     * Every load is conditional on the capability its section needs (T-0265).
+     * This used to fire five GETs unconditionally, so a caller who could see
+     * only the Public pages group filled the console with 403s on arrival —
+     * `RegimentPresentationComponent` already does the right thing and is the
+     * precedent this follows.
+     */
     ngOnInit(): void {
-        this.settingsService
-            .getSettings()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (settings) => (this.settings = settings),
-                error: (err) => console.error('Failed to load settings', err),
-            });
+        this.activeSection = this.permittedNavItems[0]?.id ?? '';
 
-        this.settingsService
-            .getPermissions()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (matrix) => (this.matrix = this.normalizeMatrix(matrix)),
-                error: (err) => console.error('Failed to load permissions', err),
-            });
+        // GET /settings backs both the Profile section and the Discord section's
+        // invite-link panel, so either one is reason enough to fetch it.
+        if (this.canSection('profile') || this.canSection('discord')) {
+            this.settingsService
+                .getSettings()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (settings) => (this.settings = settings),
+                    error: (err) => console.error('Failed to load settings', err),
+                });
+        }
 
-        this.loadDiscord();
+        if (this.canSection('roles')) {
+            this.settingsService
+                .getPermissions()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (matrix) => (this.matrix = this.normalizeMatrix(matrix)),
+                    error: (err) => console.error('Failed to load permissions', err),
+                });
+        }
+
+        if (this.canSection('discord')) {
+            this.loadDiscord();
+        }
     }
 
     getNavByGroup(group: string): NavItem[] {
-        return this.navItems.filter((n) => n.group === group);
+        return this.permittedNavItems.filter((n) => n.group === group);
     }
 
     /**
@@ -137,9 +240,12 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
      * "Legal documents" section DESTROYS the editor and its drafts without the
      * CanDeactivate guard ever running. Same prompt, same wording — the user
      * cannot tell (or care) which mechanism caught them.
+     *
+     * Sections the caller lacks the capability for are refused outright, so a
+     * stale id can never open a pane whose nav entry is hidden (T-0265).
      */
     setSection(id: string): void {
-        if (id === this.activeSection) {
+        if (id === this.activeSection || !this.canSection(id)) {
             return;
         }
         if (this.hasUnsavedChanges() && !confirm(UNSAVED_CHANGES_PROMPT)) {
@@ -310,7 +416,7 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
             .getSettings()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (settings) => (this.botSettings = settings),
+                next: (settings) => this.adoptBotSettings(settings),
                 error: (err) => console.error('Failed to load bot settings', err),
             });
         this.discord
@@ -404,6 +510,21 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         return !!this.botSettings?.applyBanRoleOnBan && !this.botSettings?.banRoleId;
     }
 
+    /**
+     * True when the guild gate is switched on while the bot cannot actually
+     * answer "is this identity in the guild?". Nothing blocks saving it — the
+     * gate fails open server-side — but turning it on before the bot is
+     * connected and verified is the one way this switch causes real harm, so it
+     * is called out loudly rather than left to be discovered by locked-out
+     * members.
+     */
+    get guildGateBotUnverified(): boolean {
+        return (
+            !!this.botSettings?.guildGateEnabled &&
+            !(this.botSettings.botEnabled && this.connection?.connected)
+        );
+    }
+
     resync(): void {
         if (this.resyncing || !this.can('manage_settings')) {
             return;
@@ -449,6 +570,31 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
             });
     }
 
+    /**
+     * Take the server's copy as the new baseline. Every assignment to
+     * `botSettings` goes through here so the dirty-check can never be left
+     * comparing against a stale snapshot.
+     */
+    private adoptBotSettings(settings: DiscordBotSettings): void {
+        this.botSettings = settings;
+        this.botSettingsSnapshot = JSON.stringify(settings);
+    }
+
+    /** Characters typed into the welcome box, for the counter. */
+    get welcomeMessageLength(): number {
+        return this.botSettings?.welcomeMessage?.length ?? 0;
+    }
+
+    /**
+     * A cleared box is NULL, not `''`. The API stores blank as NULL and returns
+     * NULL, so keeping `''` in the model would leave the form permanently dirty
+     * against the response the very first time an admin clears the greeting.
+     */
+    setWelcomeMessage(value: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.welcomeMessage = value.trim() === '' ? null : value;
+    }
+
     saveBotSettings(): void {
         if (!this.botSettings || this.savingBot || !this.can('manage_settings')) {
             return;
@@ -456,6 +602,12 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         // Mirror the backend guard: applyBanRoleOnBan needs a configured Ban role.
         if (this.banRoleMissing) {
             this.botFlash = 'Pick a Ban role before enabling "Apply Ban role on ban".';
+            return;
+        }
+        // The textarea's maxlength stops typing at the limit, but not a paste
+        // into a stale model or a value that arrived over the wire.
+        if (this.welcomeMessageLength > this.welcomeMessageMaxLength) {
+            this.botFlash = `The welcome message must be ${this.welcomeMessageMaxLength} characters or fewer.`;
             return;
         }
         const b = this.botSettings;
@@ -478,11 +630,12 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
                 banRoleName: b.banRoleName,
                 syncRolesOnChange: b.syncRolesOnChange,
                 applyBanRoleOnBan: b.applyBanRoleOnBan,
+                guildGateEnabled: b.guildGateEnabled,
             })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (settings) => {
-                    this.botSettings = settings;
+                    this.adoptBotSettings(settings);
                     this.savingBot = false;
                     this.botFlash = 'Lord Adjutant settings saved.';
                 },

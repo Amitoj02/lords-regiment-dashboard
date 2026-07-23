@@ -51,6 +51,111 @@ export interface MemberMedalAward {
     awardedAt: string;
 }
 
+/**
+ * Which admin actions the CALLER may perform on THIS member, computed by the
+ * server from the same guard the endpoints enforce (backend T-0176). The API
+ * never reports a permitted flag where the endpoint would 403, so the UI gates
+ * on these instead of re-deriving a role hierarchy client-side — a re-derived
+ * rule is a rule that can drift.
+ */
+export interface MemberPermittedActions {
+    changeRole: boolean;
+    changeRank: boolean;
+    awardMedal: boolean;
+    removeMedal: boolean;
+    suspend: boolean;
+    unsuspend: boolean;
+    ban: boolean;
+    unban: boolean;
+}
+
+/** The permitted-action flags, in one place so every read fails closed the same way. */
+const PERMITTED_ACTION_KEYS: readonly (keyof MemberPermittedActions)[] = [
+    'changeRole',
+    'changeRank',
+    'awardMedal',
+    'removeMedal',
+    'suspend',
+    'unsuspend',
+    'ban',
+    'unban',
+];
+
+/**
+ * Normalise the raw `permittedActions` block off the wire. Returns `undefined`
+ * when the member arrived without one — callers must read that as "nothing
+ * permitted", never as "everything permitted" (an older projection, a cached
+ * response or a hand-built fixture must not re-open actions the API rejects).
+ * Within a present block anything that is not literally `true` is a denial.
+ */
+export function parsePermittedActions(raw: unknown): MemberPermittedActions | undefined {
+    if (!raw || typeof raw !== 'object') {
+        return undefined;
+    }
+    const src = raw as Record<string, unknown>;
+    const parsed = {} as MemberPermittedActions;
+    for (const key of PERMITTED_ACTION_KEYS) {
+        parsed[key] = src[key] === true;
+    }
+    return parsed;
+}
+
+/** True when the server permits at least one admin action on this member. */
+export function hasAnyPermittedAction(m: Member | null | undefined): boolean {
+    const actions = m?.permittedActions;
+    return !!actions && PERMITTED_ACTION_KEYS.some((key) => actions[key]);
+}
+
+/**
+ * The single gate for the admin-action modal's trigger. Both mount points — the
+ * roster row's `···` and the profile header's "Admin Actions" — call this, so
+ * they cannot drift apart (they used to disagree: capabilities vs `isAdmin()`).
+ * `hasCapability` is `AuthService.hasCapability`; pass it as an arrow so `this`
+ * stays bound.
+ */
+export function canOpenAdminActions(
+    m: Member | null | undefined,
+    hasCapability: (capability: string) => boolean,
+): boolean {
+    if (!hasAnyPermittedAction(m)) {
+        return false;
+    }
+    return hasCapability('edit_ranks_medals') || hasCapability('manage_roles');
+}
+
+/**
+ * Roles the role dropdown can offer, most senior first. `Owner` is absent on
+ * purpose — ownership moves through its own flow, never this control.
+ *
+ * This is display order plus the caller's own-rank cut (see
+ * {@link assignableRolesFor}); it is NOT a client-side copy of the server's
+ * hierarchy rule. Whether the caller may touch a given member's role at all
+ * comes from `permittedActions.changeRole`.
+ */
+export const ASSIGNABLE_ROLES: readonly MemberRole[] = [
+    'Admin',
+    'Moderator',
+    'Member',
+    'Mercenary',
+    'Applicant',
+];
+
+/**
+ * The roles `callerRole` may hand out: strictly below their own, so an Admin can
+ * never mint a peer Admin and a Moderator can never mint an Admin. An unknown or
+ * absent role offers nothing (fail closed); the Owner may assign the whole list.
+ */
+export function assignableRolesFor(callerRole: MemberRole | null | undefined): MemberRole[] {
+    if (callerRole === 'Owner') {
+        return [...ASSIGNABLE_ROLES];
+    }
+    const own = ASSIGNABLE_ROLES.indexOf(callerRole as MemberRole);
+    if (own === -1) {
+        return [];
+    }
+    return ASSIGNABLE_ROLES.slice(own + 1);
+}
+
 export interface Member {
     id: string;
     discordTag: string;
@@ -79,6 +184,13 @@ export interface Member {
     avatarKey?: string;
     /** Write-only: storage key of a freshly-uploaded banner (sent on self-edit). */
     bannerKey?: string;
+    /**
+     * Server-computed admin actions the caller may perform on this member.
+     * Optional so existing fixtures still type — but absent means NOTHING is
+     * permitted, so always read it through {@link hasAnyPermittedAction} or an
+     * explicit flag check, never with an "assume allowed" fallback.
+     */
+    permittedActions?: MemberPermittedActions;
 }
 
 // ── Roster status derivation (client-side, T-0184) ───────────────────────────

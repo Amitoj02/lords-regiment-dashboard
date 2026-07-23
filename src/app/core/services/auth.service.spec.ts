@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 import { ApplicantApplication, MyApplication } from '../models/application.model';
 import { RegimentProfile } from '../models/api.model';
 import { ApplicationsService } from './applications.service';
-import { AuthService, CurrentUser } from './auth.service';
+import { AuthService, CurrentUser, GuildStatus } from './auth.service';
 import { RegimentService } from './regiment.service';
 
 /**
@@ -44,6 +44,8 @@ describe('AuthService post-login routing', () => {
 
     afterEach(() => httpMock.verify());
 
+    // Guild-gate defaults mirror how the feature ships: flag OFF, so every
+    // pre-existing routing expectation below is unaffected by its arrival.
     const flushMe = (over: Partial<CurrentUser>): void => {
         const user: CurrentUser = {
             id: 'u',
@@ -55,6 +57,10 @@ describe('AuthService post-login routing', () => {
             avatarUrl: null,
             isMember: true,
             capabilities: [],
+            guildMember: true,
+            discordInviteUrl: null,
+            guildGateEnabled: false,
+            guildGateExempt: false,
             ...over,
         };
         httpMock.expectOne(meUrl).flush(user);
@@ -112,5 +118,319 @@ describe('AuthService post-login routing', () => {
         service.currentUser.set({ isMember: false, role: 'Applicant' } as CurrentUser);
         service.applyToJoin();
         expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/status');
+    });
+
+    // ── T-0263: the gate diverts post-login routing for BOTH projections ───────
+
+    it('routes a gated member to /guild-required instead of the dashboard (T-0263)', () => {
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, guildGateEnabled: true, guildMember: false });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/guild-required');
+        expect(router.navigateByUrl).not.toHaveBeenCalledWith('/app/dashboard');
+    });
+
+    it('routes a gated applicant to /guild-required without looking up their application', () => {
+        service.completeLogin('t', false);
+        flushMe({
+            isMember: false,
+            role: 'Applicant',
+            guildGateEnabled: true,
+            guildMember: false,
+        });
+        expect(applications.getMine).not.toHaveBeenCalled();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/guild-required');
+    });
+
+    it('never gates a caller whose /auth/me failed — a null projection is no verdict', () => {
+        applications.getMine.and.returnValue(of(mine(null)));
+        service.completeLogin('t', false);
+        httpMock.expectOne(meUrl).flush('nope', { status: 500, statusText: 'Server Error' });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/apply');
+    });
+
+    it('does not gate a manage_settings holder (exempt, CONTRACT decision #2)', () => {
+        service.completeLogin('t', true);
+        flushMe({
+            isMember: true,
+            guildGateEnabled: true,
+            guildMember: false,
+            guildGateExempt: true,
+        });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+    });
+
+    it('does not gate anyone while the feature flag is off, even outside the guild', () => {
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, guildGateEnabled: false, guildMember: false });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+    });
+
+    it('applyToJoin sends a gated non-member to the gate rather than the form', () => {
+        service.currentUser.set({
+            isMember: false,
+            role: 'Applicant',
+            guildGateEnabled: true,
+            guildMember: false,
+        } as CurrentUser);
+        service.applyToJoin();
+        expect(applications.getMine).not.toHaveBeenCalled();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/guild-required');
+    });
+
+    // ── T-0263: resuming the destination the gate interrupted ─────────────────
+
+    it('resumeAfterGate replays the dashboard a gated member was headed for', () => {
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, guildGateEnabled: true, guildMember: false });
+        // The user joins the server and the re-check flips the verdict.
+        service.currentUser.update((u) => ({ ...u!, guildMember: true }));
+        service.resumeAfterGate();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+    });
+
+    it('resumeAfterGate replays the applicant branch, status page and all', () => {
+        applications.getMine.and.returnValue(
+            of(mine({ id: 'a' } as unknown as ApplicantApplication)),
+        );
+        service.completeLogin('t', false);
+        flushMe({
+            isMember: false,
+            role: 'Applicant',
+            guildGateEnabled: true,
+            guildMember: false,
+        });
+        service.currentUser.update((u) => ({ ...u!, guildMember: true }));
+        service.resumeAfterGate();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/status');
+    });
+
+    it('resumeAfterGate prefers the deep link the guard stashed over the login default', () => {
+        service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
+        service.stashGateReturnUrl('/app/dashboard/events/42');
+        service.resumeAfterGate();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard/events/42');
+    });
+
+    it('resumeAfterGate consumes the stash, so a second call does not replay it', () => {
+        service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
+        service.stashGateReturnUrl('/app/roster');
+        service.resumeAfterGate();
+        service.resumeAfterGate();
+        expect(router.navigateByUrl.calls.allArgs()).toEqual([['/app/roster'], ['/app/dashboard']]);
+    });
+});
+
+/**
+ * The guild verdict and its client-side throttle (T-0262). The point of the
+ * throttle is that entering the authenticated app costs at most one Discord
+ * lookup per window, however many times the guard runs.
+ */
+describe('AuthService guild-membership gate (T-0261/T-0262)', () => {
+    let service: AuthService;
+    let httpMock: HttpTestingController;
+    let router: jasmine.SpyObj<Router>;
+
+    const statusUrl = `${environment.apiBaseUrl}/auth/guild-status`;
+    const WINDOW_MS = 5 * 60 * 1000;
+
+    beforeEach(() => {
+        jasmine.clock().install();
+        jasmine.clock().mockDate(new Date('2026-07-22T10:00:00Z'));
+        router = jasmine.createSpyObj('Router', ['navigateByUrl']);
+        TestBed.configureTestingModule({
+            providers: [
+                AuthService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useValue: router },
+                {
+                    provide: ApplicationsService,
+                    useValue: jasmine.createSpyObj('ApplicationsService', ['getMine']),
+                },
+                {
+                    provide: RegimentService,
+                    useValue: jasmine.createSpyObj('RegimentService', ['getProfile']),
+                },
+            ],
+        });
+        service = TestBed.inject(AuthService);
+        httpMock = TestBed.inject(HttpTestingController);
+        localStorage.removeItem('lords_access_token');
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        jasmine.clock().uninstall();
+    });
+
+    const signIn = (over: Partial<CurrentUser> = {}): void => {
+        service.currentUser.set({
+            id: 'u',
+            inGameName: 'U',
+            rank: null,
+            role: 'Member',
+            discordTag: null,
+            discordLinked: true,
+            avatarUrl: null,
+            isMember: true,
+            capabilities: [],
+            guildMember: true,
+            discordInviteUrl: null,
+            guildGateEnabled: true,
+            guildGateExempt: false,
+            ...over,
+        });
+    };
+
+    const status = (over: Partial<GuildStatus> = {}): GuildStatus => ({
+        guildMember: true,
+        gateEnabled: true,
+        exempt: false,
+        checkedAt: '2026-07-22T09:59:00Z',
+        degraded: false,
+        ...over,
+    });
+
+    // ── The verdict itself ────────────────────────────────────────────────────
+
+    it('gates only when the flag is on, the user is outside the guild and not exempt', () => {
+        signIn({ guildGateEnabled: true, guildMember: false, guildGateExempt: false });
+        expect(service.isGuildGated()).toBe(true);
+    });
+
+    it('gates nobody while the flag is off — how the feature ships', () => {
+        signIn({ guildGateEnabled: false, guildMember: false });
+        expect(service.isGuildGated()).toBe(false);
+    });
+
+    it('never gates an exempt (manage_settings) caller', () => {
+        signIn({ guildGateEnabled: true, guildMember: false, guildGateExempt: true });
+        expect(service.isGuildGated()).toBe(false);
+    });
+
+    it('never gates a signed-out visitor', () => {
+        service.currentUser.set(null);
+        expect(service.isGuildGated()).toBe(false);
+    });
+
+    // An API predating the gate omits the fields entirely; that must read as "off".
+    it('treats a projection without the gate fields as ungated', () => {
+        service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
+        expect(service.isGuildGated()).toBe(false);
+    });
+
+    it('exposes a blank invite URL as null so the CTA can be hidden', () => {
+        signIn({ discordInviteUrl: '   ' });
+        expect(service.guildInviteUrl()).toBeNull();
+        signIn({ discordInviteUrl: ' https://discord.gg/lords ' });
+        expect(service.guildInviteUrl()).toBe('https://discord.gg/lords');
+    });
+
+    // ── The throttle ──────────────────────────────────────────────────────────
+
+    it('issues one request for five navigations inside the throttle window', () => {
+        signIn();
+        for (let i = 0; i < 5; i++) service.refreshGuildStatus().subscribe();
+        const inFlight = httpMock.match(statusUrl);
+        expect(inFlight.length).toBe(1);
+        inFlight[0].flush(status());
+
+        // Still inside the window once it has landed.
+        jasmine.clock().tick(WINDOW_MS - 1);
+        service.refreshGuildStatus().subscribe();
+        expect(httpMock.match(statusUrl).length).toBe(0);
+    });
+
+    it('asks again once the throttle window has elapsed', () => {
+        signIn();
+        service.refreshGuildStatus().subscribe();
+        httpMock.expectOne(statusUrl).flush(status());
+        jasmine.clock().tick(WINDOW_MS + 1);
+        service.refreshGuildStatus().subscribe();
+        const second = httpMock.match(statusUrl);
+        expect(second.length).toBe(1);
+        second[0].flush(status());
+    });
+
+    it('makes no request at all for an unauthenticated visitor', () => {
+        service.currentUser.set(null);
+        service.refreshGuildStatus().subscribe();
+        expect(httpMock.match(statusUrl).length).toBe(0);
+    });
+
+    // /auth/me carries the same verdict, so hydration opens the window.
+    it('does not re-ask straight after /auth/me has just answered', () => {
+        service.loadCurrentUser().subscribe();
+        httpMock.expectOne(`${environment.apiBaseUrl}/auth/me`).flush({
+            id: 'u',
+            isMember: true,
+            role: 'Member',
+            capabilities: [],
+            guildMember: true,
+            guildGateEnabled: true,
+            guildGateExempt: false,
+            discordInviteUrl: null,
+        });
+        service.refreshGuildStatus().subscribe();
+        expect(httpMock.match(statusUrl).length).toBe(0);
+    });
+
+    it('the gate screen re-check bypasses the throttle', () => {
+        signIn();
+        service.refreshGuildStatus().subscribe();
+        httpMock.expectOne(statusUrl).flush(status());
+        // No clock movement: the user has just told us the situation changed.
+        service.recheckGuildStatus().subscribe();
+        const forced = httpMock.match(statusUrl);
+        expect(forced.length).toBe(1);
+        forced[0].flush(status());
+    });
+
+    // ── Applying (and refusing to apply) a verdict ────────────────────────────
+
+    it('folds a fresh verdict into the session, flipping the gate on', () => {
+        signIn({ guildMember: true });
+        service.refreshGuildStatus().subscribe();
+        httpMock.expectOne(statusUrl).flush(status({ guildMember: false }));
+        expect(service.isGuildGated()).toBe(true);
+    });
+
+    it('lets a user straight through the moment the verdict flips back', () => {
+        signIn({ guildMember: false });
+        expect(service.isGuildGated()).toBe(true);
+        service.recheckGuildStatus().subscribe();
+        httpMock.expectOne(statusUrl).flush(status({ guildMember: true }));
+        expect(service.isGuildGated()).toBe(false);
+    });
+
+    it('ignores a degraded verdict — it is "we could not ask", not "you are out"', () => {
+        signIn({ guildMember: true });
+        service.refreshGuildStatus().subscribe();
+        httpMock.expectOne(statusUrl).flush(status({ guildMember: false, degraded: true }));
+        expect(service.isGuildGated()).toBe(false);
+    });
+
+    it('leaves the user in place when the check fails outright', () => {
+        signIn({ guildMember: true });
+        let emitted: GuildStatus | null | undefined;
+        service.refreshGuildStatus().subscribe((value) => (emitted = value));
+        httpMock.expectOne(statusUrl).flush('bot down', { status: 502, statusText: 'Bad Gateway' });
+        expect(emitted).toBeNull();
+        expect(service.isGuildGated()).toBe(false);
+        expect(service.currentUser()).not.toBeNull();
+    });
+
+    it('drops the verdict and its throttle on logout, so a new session re-checks', () => {
+        signIn();
+        service.refreshGuildStatus().subscribe();
+        httpMock.expectOne(statusUrl).flush(status());
+        service.logout();
+        httpMock.expectOne(`${environment.apiBaseUrl}/auth/logout`).flush({});
+
+        signIn();
+        service.refreshGuildStatus().subscribe();
+        const afterLogout = httpMock.match(statusUrl);
+        expect(afterLogout.length).toBe(1);
+        afterLogout[0].flush(status());
     });
 });

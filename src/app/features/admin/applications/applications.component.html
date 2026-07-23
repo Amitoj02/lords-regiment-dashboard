@@ -170,25 +170,48 @@
                     <!-- Who took the action (T-0250). Absent while pending; a HELD
                          application still shows its decider even though it has no
                          decision timestamp. Both the name and the date are rendered
-                         only when present — the decider's member row may be gone. -->
+                         only when present — the decider's member row may be gone.
+                         The officer reads as a chip — avatar + name deep-linking to
+                         their profile (T-0274), the same treatment the applicant's
+                         own name gets above. Without a member id (their row was
+                         removed) the identical chip renders unlinked rather than
+                         pointing at a profile that no longer exists. -->
                     @if (decisionAttribution; as decision) {
                     <div class="decision-by">
-                        @if (decision.name) {
-                        <hf-avatar
-                            [name]="decision.name"
-                            [avatarUrl]="decision.avatarUrl"
-                            [size]="24"
-                        ></hf-avatar>
-                        }
-                        <span class="decision-by__text">
-                            {{ decision.verb }} @if (decision.name) { by
+                        <!-- The trailing &ngsp; keeps "Approved by" separated from
+                             the officer's name in the rendered TEXT, not just by the
+                             flex gap: Angular drops the whitespace-only node between
+                             the two elements, which would otherwise read as
+                             "Approved byColonel Hale" when copied or read aloud. -->
+                        <span class="decision-by__text"
+                            >{{ decision.verb }}@if (decision.name) { by&ngsp;}</span
+                        >
+                        @if (decision.name) { @if (decision.memberId) {
+                        <a
+                            class="decision-by__officer"
+                            [routerLink]="['/app/profile', decision.memberId]"
+                        >
+                            <hf-avatar
+                                [name]="decision.name"
+                                [avatarUrl]="decision.avatarUrl"
+                                [size]="24"
+                            ></hf-avatar>
                             <strong>{{ decision.name }}</strong>
-                            } @if (decision.at) {
-                            <span class="decision-by__when"
-                                >&mdash; {{ decision.at | date: 'MMM d, y' }}</span
-                            >
-                            }
+                        </a>
+                        } @else {
+                        <span class="decision-by__officer">
+                            <hf-avatar
+                                [name]="decision.name"
+                                [avatarUrl]="decision.avatarUrl"
+                                [size]="24"
+                            ></hf-avatar>
+                            <strong>{{ decision.name }}</strong>
                         </span>
+                        } } @if (decision.at) {
+                        <span class="decision-by__when"
+                            >&ngsp;&mdash; {{ decision.at | date: 'MMM d, y' }}</span
+                        >
+                        }
                     </div>
                     }
                 </div>
@@ -244,7 +267,14 @@
 
                     <!-- Decision text (T-0247). Two boxes with opposite audiences,
                          so each one says whose eyes it reaches: the applicant sees
-                         the user message and nothing else. -->
+                         the user message and nothing else.
+
+                         That promise is now true end to end (T-0273). The console
+                         had always posted the note as `note` rather than `reason`,
+                         but the API still forwarded it into the applicant's
+                         decision DM as "Note from the reviewing officer" — so the
+                         badge below was a claim the system did not keep until
+                         lords-dashboard-backend T-0182 removed that embed field. -->
                     <hf-crest-divider label="Decision"></hf-crest-divider>
 
                     <div class="grid-2 mod-tools">
@@ -274,14 +304,20 @@
                                 [(ngModel)]="moderatorNote"
                                 placeholder="Internal note visible to staff only..."
                             ></textarea>
-                            <p class="field-hint">The applicant is never shown this note.</p>
+                            <p class="field-hint">
+                                Filed with the application for staff. It is never sent to the
+                                applicant and never appears on their status page.
+                            </p>
                         </div>
                     </div>
 
                     <hf-notice variant="info" class="decision-notice">
                         A Discord DM is sent automatically to the applicant on every decision —
-                        approve, decline, or hold. Both boxes are kept after a decision, so
-                        re-opening this application shows what was written.
+                        approve, decline, or hold. It carries your user message and nothing else;
+                        leave that box blank and the applicant receives the standard wording for
+                        this outcome. Declining or holding files the moderator note against the
+                        application, so re-opening it shows what was written; approving does not
+                        keep a note.
                     </hf-notice>
 
                     <!-- A decision the server refused (e.g. approving a Mercenary

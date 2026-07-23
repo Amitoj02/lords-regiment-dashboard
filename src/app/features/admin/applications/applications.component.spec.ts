@@ -338,6 +338,11 @@ describe('ApplicationsComponent', () => {
         return fixture.nativeElement.querySelector('.decision-by');
     }
 
+    /** The officer chip — avatar + name — inside the attribution line. */
+    function officerChip(): HTMLElement | null {
+        return fixture.nativeElement.querySelector('.decision-by__officer');
+    }
+
     it('shows who declined an application and when', () => {
         setup([
             application({
@@ -397,5 +402,100 @@ describe('ApplicationsComponent', () => {
 
         expect(attribution()).toBeFalsy();
         expect(component.decisionAttribution).toBeNull();
+    });
+
+    // ── Officer chip (T-0274) ───────────────────────────────────────────────────
+
+    it('renders the officer as an avatar + name chip linking to their profile', () => {
+        setup([
+            application({
+                status: 'approved',
+                decidedByName: 'Colonel Hale',
+                decidedByAvatarUrl: 'https://cdn/hale.png',
+                decidedByMemberId: 'mem-hale',
+                decidedAt: '2026-07-19T12:00:00.000Z',
+            }),
+        ]);
+        component.setTab('approved');
+        fixture.detectChanges();
+
+        const chip = officerChip();
+        expect(chip).withContext('the officer renders as a chip').toBeTruthy();
+        expect(chip!.tagName).toBe('A');
+        expect(chip!.getAttribute('href')).toBe('/app/profile/mem-hale');
+        // The avatar belongs INSIDE the link: clicking the officer's face opens
+        // their profile too, not only their name.
+        expect(chip!.querySelector('hf-avatar'))
+            .withContext('the avatar sits inside the link')
+            .toBeTruthy();
+        expect(chip!.textContent?.trim()).toBe('Colonel Hale');
+        expect(component.decisionAttribution).toEqual(
+            jasmine.objectContaining({
+                verb: 'Approved',
+                name: 'Colonel Hale',
+                avatarUrl: 'https://cdn/hale.png',
+                memberId: 'mem-hale',
+            }),
+        );
+    });
+
+    it('keeps "Approved by" and the officer name separated in the rendered text', () => {
+        setup([
+            application({
+                status: 'approved',
+                decidedByName: 'Colonel Hale',
+                decidedByMemberId: 'mem-hale',
+                decidedAt: '2026-07-19T12:00:00.000Z',
+            }),
+        ]);
+        component.setTab('approved');
+        fixture.detectChanges();
+
+        // The label and the chip are now separate elements; without an explicit
+        // space this reads "Approved byColonel Hale" once Angular drops the
+        // whitespace-only node between them.
+        expect(attribution()!.textContent?.replace(/\s+/g, ' ')).toContain(
+            'Approved by Colonel Hale',
+        );
+    });
+
+    it('keeps the chip unlinked when the officer’s member row is gone', () => {
+        setup([
+            application({
+                status: 'declined',
+                decidedByName: 'Colonel Hale',
+                decidedByAvatarUrl: 'https://cdn/hale.png',
+                decidedByMemberId: null,
+                decidedAt: '2026-07-19T12:00:00.000Z',
+            }),
+        ]);
+        component.setTab('declined');
+        fixture.detectChanges();
+
+        // The FK is ON DELETE SET NULL, so a removed officer keeps their name on
+        // the record but has no profile left — name them, never link them.
+        const chip = officerChip();
+        expect(chip).toBeTruthy();
+        expect(chip!.tagName).not.toBe('A');
+        expect(chip!.querySelector('hf-avatar')).toBeTruthy();
+        expect(attribution()!.querySelector('a')).toBeFalsy();
+    });
+
+    it('withholds the link when an id survives but the name does not', () => {
+        setup([
+            application({
+                status: 'declined',
+                decidedByName: null,
+                decidedByMemberId: 'mem-hale',
+                decidedAt: '2026-07-19T12:00:00.000Z',
+            }),
+        ]);
+        component.setTab('declined');
+        fixture.detectChanges();
+
+        // Nothing to label the chip with, so linking it would ship an empty
+        // clickable target.
+        expect(component.decisionAttribution!.memberId).toBeNull();
+        expect(officerChip()).toBeFalsy();
     });
 });

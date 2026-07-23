@@ -58,4 +58,24 @@ describe('mapApplication', () => {
         expect(mapped.currentDisplayName).toBeNull();
         expect(mapped.currentAvatarUrl).toBeNull();
     });
+
+    it('carries the deciding officer’s member id so the chip can link (T-0274)', () => {
+        const mapped = mapApplication(
+            apiApplication({
+                status: 'approved',
+                decidedByMemberId: 'mem-hale',
+                decidedByName: 'Colonel Hale',
+                decidedByAvatarUrl: 'https://cdn/hale.png',
+            }),
+        );
+        expect(mapped.decidedByMemberId).toBe('mem-hale');
+        expect(mapped.decidedByName).toBe('Colonel Hale');
+        expect(mapped.decidedByAvatarUrl).toBe('https://cdn/hale.png');
+    });
+
+    it('nulls the officer id rather than dropping it when there is no decider (T-0274)', () => {
+        // Explicit null, not undefined: the attribution chip tests `memberId`
+        // directly to decide whether to render a link.
+        expect(mapApplication(apiApplication()).decidedByMemberId).toBeNull();
+    });
 });

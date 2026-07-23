@@ -1,0 +1,156 @@
+// The guild gate. The page frame (.apply-page/.apply-inner/.apply-header) is
+// global (styles/_onboarding.scss) and shared with the onboarding pages; only the
+// gate-specific pieces live here. Small-screen rules that have to cross the
+// view-encapsulation boundary are in the media queries at the foot of the file.
+
+.gate-centre {
+    text-align: center;
+    padding: 34px 24px 28px;
+}
+
+// Circular accent tile, matching the application-status "closed" treatment.
+.gate-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    font-size: 26px;
+    line-height: 1;
+    border-radius: 999px;
+    color: var(--brass-300);
+    background: rgba(176, 132, 54, 0.12);
+    border: 1px solid var(--brass-700);
+}
+
+.gate-title {
+    font-size: 22px;
+    color: var(--t-100);
+    margin: 0 0 10px;
+}
+
+// Capped and centred: a full 640px measure of body copy is a wall of text.
+.gate-text {
+    margin: 0 auto;
+    max-width: 46ch;
+    color: var(--t-300);
+    line-height: 1.55;
+}
+
+// …but only inside the centred hero. In the "Still open to you" panel the copy
+// sits directly above a full-width, left-aligned link list, and `margin: 0 auto`
+// pulled it inwards so the paragraph and the links no longer shared a left edge —
+// it read as a stray indent. Left-align it there and let it use the full measure.
+.panel-body:not(.gate-centre) > .gate-text {
+    margin: 0;
+    max-width: none;
+}
+
+hf-notice {
+    display: block;
+    margin-top: 16px;
+    text-align: left;
+}
+
+// ── Actions ─────────────────────────────────────────────────────────────────
+.gate-actions {
+    margin-top: 22px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+// The spinner sits inside the button, so it is sized to the label, not the page.
+.gate-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    vertical-align: -2px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: currentcolor;
+    border-radius: 50%;
+    animation: guild-required-spin 0.8s linear infinite;
+}
+
+// Reserves its line whether or not it has content, so announcing the check does
+// not shove the buttons around.
+.gate-status {
+    min-height: 1.2em;
+    margin: 12px 0 0;
+    font-size: 12.5px;
+    color: var(--t-400);
+}
+
+// ── Secondary panel: what a gated user may still reach ──────────────────────
+.gate-links {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+
+    li {
+        border-top: 1px solid var(--rule);
+    }
+
+    a {
+        display: block;
+        padding: 11px 2px;
+        color: var(--t-200);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--brass-300);
+        }
+
+        // The global focus ring is on .btn only; these are bare links.
+        &:focus-visible {
+            outline: 1.5px solid var(--brass-400);
+            outline-offset: 2px;
+            border-radius: var(--r-1);
+        }
+    }
+}
+
+@keyframes guild-required-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ── Small screens ───────────────────────────────────────────────────────────
+// The encapsulated .row (0,2,0 here vs 0,1,0 globally) can only be re-stacked
+// from inside this file; page gutters are handled globally in _responsive.scss.
+@media (max-width: 820px) {
+    .gate-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    // Full-width targets read better than a cramped centred row on a phone.
+    .gate-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .gate-centre {
+        padding: 26px 14px 22px;
+    }
+
+    .gate-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+    }
+
+    .gate-title {
+        font-size: 19px;
+    }
+}
+
+// Respect a reduced-motion preference: the label already says what is happening.
+@media (prefers-reduced-motion: reduce) {
+    .gate-spinner {
+        animation: none;
+    }
+}

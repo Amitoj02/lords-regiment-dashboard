@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, of, tap } from 'rxjs';
+import { Observable, catchError, finalize, of, shareReplay, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Member } from '../models/member.model';
 import { ApplicationsService } from './applications.service';
@@ -23,9 +23,53 @@ export interface CurrentUser {
     isMember: boolean;
     /** Effective capability keys from the role_permissions matrix (gate UI on these). */
     capabilities: string[];
+
+    // ── Guild-membership gate (T-0261/T-0262) ────────────────────────────────
+    // REQUIRED, per CONTRACT §1: the API sends all four on the member AND the
+    // identity-only (Applicant) projection, and never omits them.
+    //
+    // The runtime helpers below still treat an absent value as "gate off" — they
+    // compare against `true` explicitly rather than testing truthiness — because
+    // the gate must fail OPEN for a payload that predates the feature (an older
+    // API, a cached response). That defensiveness is deliberate and must stay:
+    // this type states the contract, it does not enforce it at runtime.
+
+    /** Last known verdict for "is this Discord identity in the regiment guild?". */
+    guildMember: boolean;
+    /** The regiment's Discord invite, or null when unconfigured. Never omitted. */
+    discordInviteUrl: string | null;
+    /** Whether guild-membership gating is switched on for this regiment. */
+    guildGateEnabled: boolean;
+    /** Whether this caller bypasses the gate (holds manage_settings). */
+    guildGateExempt: boolean;
+}
+
+/** The `GET /api/auth/guild-status` payload (T-0262). */
+export interface GuildStatus {
+    guildMember: boolean;
+    gateEnabled: boolean;
+    exempt: boolean;
+    /** ISO-8601 of the last successful bot lookup, or null if never checked. */
+    checkedAt: string | null;
+    /** True when the verdict could not be refreshed (bot down / breaker open). */
+    degraded: boolean;
 }
 
 const TOKEN_KEY = 'lords_access_token';
+
+/**
+ * How long a guild verdict is trusted client-side before {@link
+ * AuthService.refreshGuildStatus} will ask the API again (T-0262). The server
+ * keeps its own 15-minute TTL and its own in-flight collapsing; this window
+ * exists purely so the route guard does not fire a request per navigation.
+ */
+const GUILD_RECHECK_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * Ceiling on a single guild-status request. Past it we keep the last known
+ * verdict — a slow Discord lookup must never strand a signed-in user.
+ */
+const GUILD_STATUS_TIMEOUT_MS = 8000;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -35,6 +79,15 @@ export class AuthService {
 
     /** Null until hydrated from `/auth/me` (see hydrate()). */
     readonly currentUser = signal<CurrentUser | null>(null);
+
+    /** Epoch ms of the last guild-status request we started. 0 = never. */
+    private guildCheckedAt = 0;
+    /** The single in-flight guild-status call, shared by every concurrent caller. */
+    private guildStatusInFlight: Observable<GuildStatus | null> | null = null;
+    /** URL the gate interrupted, replayed by {@link resumeAfterGate} (T-0263). */
+    private gateReturnUrl: string | null = null;
+    /** Post-login `isMember` hint the gate interrupted, replayed the same way. */
+    private gateReturnIsMemberHint: boolean | null = null;
 
     // ── Token storage (the JWT handed off by the OAuth callback) ─────────────
     getToken(): string | null {
@@ -86,6 +139,7 @@ export class AuthService {
 
     /**
      * Decide where a freshly-authenticated caller lands:
+     *  - a gated caller → the guild gate, whichever projection they carry (T-0263);
      *  - every enrolled member → the dashboard (T-0129) — Owners no longer detour
      *    to first-run setup;
      *  - non-member who already has an application → their status page (T-0030);
@@ -93,6 +147,18 @@ export class AuthService {
      */
     private routeAfterLogin(user: CurrentUser | null, isMemberHint: boolean): void {
         const enrolled = user?.isMember ?? isMemberHint;
+        // `user` is null when /auth/me failed — we have no verdict to gate on, and
+        // gating on a missing projection would be a dead end. Only a projection we
+        // actually received can send someone to the gate.
+        if (user && this.isGuildGated()) {
+            // Stash the branch we were about to take so a successful re-check
+            // resumes it (including the applicant's status-vs-apply lookup, which
+            // is deliberately not run while the caller is gated).
+            this.gateReturnIsMemberHint = isMemberHint;
+            this.gateReturnUrl = null;
+            this.router.navigateByUrl('/guild-required');
+            return;
+        }
         if (enrolled) {
             this.router.navigateByUrl('/app/dashboard');
             return;
@@ -110,10 +176,17 @@ export class AuthService {
     /** GET /auth/me → set the currentUser signal. Clears the session on failure. */
     loadCurrentUser(): Observable<CurrentUser | null> {
         return this.http.get<CurrentUser>(`${environment.apiBaseUrl}/auth/me`).pipe(
-            tap((user) => this.currentUser.set(user)),
+            tap((user) => {
+                this.currentUser.set(user);
+                // /auth/me carries a fresh guild verdict, so it opens a new
+                // throttle window: the guard must not immediately re-ask for
+                // something we were just told.
+                this.guildCheckedAt = Date.now();
+            }),
             catchError(() => {
                 this.clearToken();
                 this.currentUser.set(null);
+                this.resetGuildState();
                 return of(null);
             }),
         );
@@ -137,6 +210,7 @@ export class AuthService {
             .subscribe(() => {
                 this.clearToken();
                 this.currentUser.set(null);
+                this.resetGuildState();
                 this.router.navigateByUrl('/login');
             });
     }
@@ -145,6 +219,124 @@ export class AuthService {
     handleUnauthorized(): void {
         this.clearToken();
         this.currentUser.set(null);
+        this.resetGuildState();
+    }
+
+    // ── Guild-membership gate (T-0261/T-0262/T-0263) ────────────────────────────
+
+    /**
+     * The one place the gate is decided. All three conditions must hold, so with
+     * the feature flag off — how this ships to production — it is always false
+     * and nothing about the app changes. An absent flag reads as "off".
+     */
+    isGuildGated(): boolean {
+        const user = this.currentUser();
+        if (!user) return false;
+        return user.guildGateEnabled === true && !user.guildMember && !user.guildGateExempt;
+    }
+
+    /** The regiment's Discord invite, or null when unconfigured/blank. */
+    guildInviteUrl(): string | null {
+        return this.currentUser()?.discordInviteUrl?.trim() || null;
+    }
+
+    /**
+     * Throttled re-check for the route guard (T-0262). Inside the 5-minute window
+     * this resolves synchronously with `null` and issues no request, so the guard
+     * costs nothing on the navigations between checks. Concurrent callers share
+     * one in-flight request.
+     */
+    refreshGuildStatus(): Observable<GuildStatus | null> {
+        // Never probe on behalf of an anonymous visitor — the public site must
+        // make no guild-status call at all.
+        if (!this.isAuthenticated()) return of(null);
+        if (this.guildStatusInFlight) return this.guildStatusInFlight;
+        if (Date.now() - this.guildCheckedAt < GUILD_RECHECK_WINDOW_MS) return of(null);
+        return this.requestGuildStatus();
+    }
+
+    /**
+     * Forced re-check behind the gate screen's "I have joined" button (T-0261):
+     * the whole point is to bypass the throttle the moment the user says the
+     * situation changed. Still collapses onto an in-flight request.
+     */
+    recheckGuildStatus(): Observable<GuildStatus | null> {
+        if (!this.isAuthenticated()) return of(null);
+        if (this.guildStatusInFlight) return this.guildStatusInFlight;
+        return this.requestGuildStatus();
+    }
+
+    /**
+     * Replay whatever the gate interrupted (T-0263). An explicitly attempted URL
+     * wins; otherwise we re-run the post-login decision, so an applicant still
+     * gets the status-vs-apply branch they would originally have had.
+     */
+    resumeAfterGate(): void {
+        const url = this.gateReturnUrl;
+        const hint = this.gateReturnIsMemberHint;
+        this.gateReturnUrl = null;
+        this.gateReturnIsMemberHint = null;
+        if (url) {
+            this.router.navigateByUrl(url);
+            return;
+        }
+        this.routeAfterLogin(this.currentUser(), hint ?? this.isMember());
+    }
+
+    /** Called by guildGuard before it diverts a navigation, so we can replay it. */
+    stashGateReturnUrl(url: string): void {
+        this.gateReturnUrl = url;
+        // An explicit deep link supersedes the generic post-login destination.
+        this.gateReturnIsMemberHint = null;
+    }
+
+    /**
+     * Issue the request. The timestamp is stamped up front, not on success: a bot
+     * outage must not turn every navigation into a doomed retry.
+     */
+    private requestGuildStatus(): Observable<GuildStatus | null> {
+        this.guildCheckedAt = Date.now();
+        this.guildStatusInFlight = this.http
+            .get<GuildStatus>(`${environment.apiBaseUrl}/auth/guild-status`)
+            .pipe(
+                timeout(GUILD_STATUS_TIMEOUT_MS),
+                tap((status) => this.applyGuildStatus(status)),
+                catchError((err: unknown) => {
+                    // Fail open, log once: the caller stays exactly where it is.
+                    console.warn('Guild status check failed; keeping the last verdict', err);
+                    return of(null);
+                }),
+                finalize(() => (this.guildStatusInFlight = null)),
+                shareReplay({ bufferSize: 1, refCount: false }),
+            );
+        return this.guildStatusInFlight;
+    }
+
+    /**
+     * Fold a fresh verdict into the session. A `degraded` response means the bot
+     * could not be reached, so it carries no news — keep the last known verdict
+     * rather than acting on a placeholder.
+     */
+    private applyGuildStatus(status: GuildStatus): void {
+        if (status.degraded) return;
+        this.currentUser.update((user) =>
+            user
+                ? {
+                      ...user,
+                      guildMember: status.guildMember,
+                      guildGateEnabled: status.gateEnabled,
+                      guildGateExempt: status.exempt,
+                  }
+                : user,
+        );
+    }
+
+    /** Drop every guild-gate remnant when the session ends. */
+    private resetGuildState(): void {
+        this.guildCheckedAt = 0;
+        this.guildStatusInFlight = null;
+        this.gateReturnUrl = null;
+        this.gateReturnIsMemberHint = null;
     }
 
     // ── Guards / capability checks ──────────────────────────────────────────────

@@ -80,6 +80,14 @@ export interface DiscordBotSettings {
     syncRolesOnChange: boolean;
     /** SENSITIVE: when true, an app ban strips managed roles and applies the Ban role. */
     applyBanRoleOnBan: boolean;
+    /**
+     * SENSITIVE — master switch for guild-membership gating (CONTRACT §6,
+     * default false). With it true, a member whose Discord account is not in the
+     * regiment's guild is held on the join screen and loses the dashboard;
+     * holders of `manage_settings` are always exempt, so flipping this can never
+     * lock the regiment out of its own settings.
+     */
+    guildGateEnabled: boolean;
 }
 
 /** Partial update of the bot configuration (PATCH /discord/settings). */
