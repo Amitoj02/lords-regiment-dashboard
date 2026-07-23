@@ -80,6 +80,12 @@ describe('MarkdownService', () => {
             expect(html).not.toContain('target="_blank"');
         });
 
+        it('drops a protocol-relative //host link (LDA-L6)', () => {
+            const html = service.render('[x](//evil.example.com/phish)');
+            expect(html).not.toContain('<a ');
+            expect(html).not.toContain('href');
+        });
+
         it('opens external links in a new tab with rel=noopener noreferrer', () => {
             const html = service.render('[a](https://example.com)');
             expect(html).toContain('target="_blank"');
