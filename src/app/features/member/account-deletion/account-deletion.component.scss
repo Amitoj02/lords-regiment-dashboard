@@ -101,8 +101,12 @@
     }
 }
 
+// Unreferenced by the template today; kept with the on-parchment text colour it
+// needs so that re-introducing it cannot ship light-on-light copy (T-0271).
+// `.acct-del-quote` above is the same surface done correctly.
 .discord-reauth {
     background: var(--parch-100);
+    color: var(--t-on-parch);
     border: 1px solid var(--rule-2);
     border-radius: 8px;
     padding: 14px 16px;

@@ -267,7 +267,14 @@
 
                     <!-- Decision text (T-0247). Two boxes with opposite audiences,
                          so each one says whose eyes it reaches: the applicant sees
-                         the user message and nothing else. -->
+                         the user message and nothing else.
+
+                         That promise is now true end to end (T-0273). The console
+                         had always posted the note as `note` rather than `reason`,
+                         but the API still forwarded it into the applicant's
+                         decision DM as "Note from the reviewing officer" — so the
+                         badge below was a claim the system did not keep until
+                         lords-dashboard-backend T-0182 removed that embed field. -->
                     <hf-crest-divider label="Decision"></hf-crest-divider>
 
                     <div class="grid-2 mod-tools">
@@ -297,14 +304,20 @@
                                 [(ngModel)]="moderatorNote"
                                 placeholder="Internal note visible to staff only..."
                             ></textarea>
-                            <p class="field-hint">The applicant is never shown this note.</p>
+                            <p class="field-hint">
+                                Filed with the application for staff. It is never sent to the
+                                applicant and never appears on their status page.
+                            </p>
                         </div>
                     </div>
 
                     <hf-notice variant="info" class="decision-notice">
                         A Discord DM is sent automatically to the applicant on every decision —
-                        approve, decline, or hold. Both boxes are kept after a decision, so
-                        re-opening this application shows what was written.
+                        approve, decline, or hold. It carries your user message and nothing else;
+                        leave that box blank and the applicant receives the standard wording for
+                        this outcome. Declining or holding files the moderator note against the
+                        application, so re-opening it shows what was written; approving does not
+                        keep a note.
                     </hf-notice>
 
                     <!-- A decision the server refused (e.g. approving a Mercenary

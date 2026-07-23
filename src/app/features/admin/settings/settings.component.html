@@ -347,6 +347,41 @@
                             <option [value]="channel.id">#{{ channel.name }}</option>
                             }
                         </select>
+                        <p class="field-hint">
+                            Where the greeting is posted. With no channel set, the adjutant sends it
+                            as a direct message instead.
+                        </p>
+                    </div>
+                    <!-- The greeting itself (T-0272). Sits with the channel that
+                         carries it; blank means the house default, which is what
+                         the backend stores a cleared box as. -->
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="welcome-message">Welcome message</label>
+                        <textarea
+                            id="welcome-message"
+                            class="hf-textarea"
+                            rows="3"
+                            [attr.maxlength]="welcomeMessageMaxLength"
+                            [ngModel]="botSettings.welcomeMessage ?? ''"
+                            (ngModelChange)="setWelcomeMessage($event)"
+                            [disabled]="!can('manage_settings')"
+                            placeholder="Leave blank to use the default greeting."
+                        ></textarea>
+                        <div class="welcome-message-meta">
+                            <p class="field-hint">
+                                @if (botSettings.welcomeMessage) { Placeholders: @for (token of
+                                welcomeTokens; track token.token) {
+                                <code class="token-chip">{{ token.token }}</code>
+                                <span class="token-desc">{{ token.renders }}</span>
+                                @if (!$last) {<span aria-hidden="true"> · </span>} } } @else { No
+                                greeting set — the adjutant will send the default welcome. }
+                            </p>
+                            <span
+                                class="field-hint welcome-message-count"
+                                [class.over-limit]="welcomeMessageLength >= welcomeMessageMaxLength"
+                                >{{ welcomeMessageLength }} / {{ welcomeMessageMaxLength }}</span
+                            >
+                        </div>
                     </div>
                     <div class="field-row bot-field">
                         <label class="field-label" for="enlistment-channel"

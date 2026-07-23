@@ -99,8 +99,15 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
     hasUnsavedChanges(): boolean {
         return (
             !!this.presentationEditor?.hasUnsavedChanges() ||
-            !!this.legalEditor?.hasUnsavedChanges()
+            !!this.legalEditor?.hasUnsavedChanges() ||
+            this.botSettingsDirty
         );
+    }
+
+    /** True once the Lord Adjutant form differs from what the server last sent. */
+    get botSettingsDirty(): boolean {
+        if (!this.botSettings || this.botSettingsSnapshot === null) return false;
+        return JSON.stringify(this.botSettings) !== this.botSettingsSnapshot;
     }
 
     // ── Regiment profile + visibility ────────────────────────────────────────
@@ -130,6 +137,31 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
     resyncing = false;
     savingBot = false;
     botFlash = '';
+
+    /**
+     * The backend's `@MaxLength(512)` on `welcomeMessage`. Mirrored so the box
+     * stops at the limit instead of letting the admin type a paragraph that comes
+     * back as a 400 (lords-dashboard-backend T-0184).
+     */
+    readonly welcomeMessageMaxLength = 512;
+
+    /**
+     * The placeholder contract, verbatim from the API's own documentation of it
+     * (lords-dashboard-backend `WELCOME_TOKENS`). Anything not on this list is
+     * left as literal text by the composer, so the hint must not promise more.
+     */
+    readonly welcomeTokens: readonly { token: string; renders: string }[] = [
+        { token: '{user}', renders: 'the joining member' },
+        { token: '{regiment}', renders: 'the regiment name' },
+    ];
+
+    /**
+     * The bot settings exactly as the server last gave them, so a section switch
+     * or a route change can tell "typed and not saved" from "untouched". The
+     * welcome message is the first free-text control on this page — every other
+     * field is a picker or a toggle, which is why nothing needed this before.
+     */
+    private botSettingsSnapshot: string | null = null;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -384,7 +416,7 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
             .getSettings()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (settings) => (this.botSettings = settings),
+                next: (settings) => this.adoptBotSettings(settings),
                 error: (err) => console.error('Failed to load bot settings', err),
             });
         this.discord
@@ -538,6 +570,31 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
             });
     }
 
+    /**
+     * Take the server's copy as the new baseline. Every assignment to
+     * `botSettings` goes through here so the dirty-check can never be left
+     * comparing against a stale snapshot.
+     */
+    private adoptBotSettings(settings: DiscordBotSettings): void {
+        this.botSettings = settings;
+        this.botSettingsSnapshot = JSON.stringify(settings);
+    }
+
+    /** Characters typed into the welcome box, for the counter. */
+    get welcomeMessageLength(): number {
+        return this.botSettings?.welcomeMessage?.length ?? 0;
+    }
+
+    /**
+     * A cleared box is NULL, not `''`. The API stores blank as NULL and returns
+     * NULL, so keeping `''` in the model would leave the form permanently dirty
+     * against the response the very first time an admin clears the greeting.
+     */
+    setWelcomeMessage(value: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.welcomeMessage = value.trim() === '' ? null : value;
+    }
+
     saveBotSettings(): void {
         if (!this.botSettings || this.savingBot || !this.can('manage_settings')) {
             return;
@@ -545,6 +602,12 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         // Mirror the backend guard: applyBanRoleOnBan needs a configured Ban role.
         if (this.banRoleMissing) {
             this.botFlash = 'Pick a Ban role before enabling "Apply Ban role on ban".';
+            return;
+        }
+        // The textarea's maxlength stops typing at the limit, but not a paste
+        // into a stale model or a value that arrived over the wire.
+        if (this.welcomeMessageLength > this.welcomeMessageMaxLength) {
+            this.botFlash = `The welcome message must be ${this.welcomeMessageMaxLength} characters or fewer.`;
             return;
         }
         const b = this.botSettings;
@@ -572,7 +635,7 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (settings) => {
-                    this.botSettings = settings;
+                    this.adoptBotSettings(settings);
                     this.savingBot = false;
                     this.botFlash = 'Lord Adjutant settings saved.';
                 },

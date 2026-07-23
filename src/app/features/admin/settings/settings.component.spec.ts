@@ -436,4 +436,126 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
 
         expect(discord.updateSettings).not.toHaveBeenCalled();
     });
+
+    // ── T-0272: the welcome-message editor ──────────────────────────────────────
+    //
+    // Reuses the harness above: same section, same capability gate, same save
+    // path — which is the point, since the risk on this task is that a new field
+    // rides the SHARED bot-settings payload and dirty-check incorrectly.
+    describe('welcome-message editor (T-0272)', () => {
+        const box = (el: HTMLElement) => el.querySelector<HTMLTextAreaElement>('#welcome-message');
+
+        it('renders a textarea beside the welcome channel picker, holding the stored value', () => {
+            const { el } = render(['manage_settings'], bot({ welcomeMessage: 'Fall in!' }));
+
+            const textarea = box(el);
+            expect(textarea).not.toBeNull();
+            expect(el.querySelector('#welcome-channel')).not.toBeNull();
+            expect(el.querySelector('label[for="welcome-message"]')?.textContent).toContain(
+                'Welcome message',
+            );
+        });
+
+        it('enforces the backend’s 512-character limit on the control', () => {
+            const { component, el } = render(['manage_settings'], bot());
+            expect(component.welcomeMessageMaxLength).toBe(512);
+            expect(box(el)?.getAttribute('maxlength')).toBe('512');
+        });
+
+        it('counts the stored message against that limit', () => {
+            const { el } = render(['manage_settings'], bot({ welcomeMessage: 'Fall in!' }));
+            expect(el.textContent).toContain('8 / 512');
+        });
+
+        it('blocks a save that would exceed the limit instead of taking a 400', () => {
+            const { component, discord } = render(['manage_settings'], bot());
+            component.botSettings!.welcomeMessage = 'x'.repeat(513);
+
+            component.saveBotSettings();
+
+            expect(discord.updateSettings).not.toHaveBeenCalled();
+            expect(component.botFlash).toContain('512');
+        });
+
+        it('states that a blank message falls back to the house default', () => {
+            const { el } = render(['manage_settings'], bot({ welcomeMessage: null }));
+            expect(el.textContent).toContain('the adjutant will send the default welcome');
+        });
+
+        it('lists exactly the placeholders the API expands, and no others', () => {
+            const { component, el } = render(
+                ['manage_settings'],
+                bot({ welcomeMessage: 'Hello {user}' }),
+            );
+
+            expect(component.welcomeTokens.map((t) => t.token)).toEqual(['{user}', '{regiment}']);
+            expect(el.textContent).toContain('{user}');
+            expect(el.textContent).toContain('{regiment}');
+        });
+
+        it('normalises a cleared box to null, so it round-trips against the API', () => {
+            // The API stores blank as NULL and returns NULL. Keeping '' in the
+            // model would leave the section permanently dirty the first time an
+            // admin clears the greeting.
+            const { component } = render(['manage_settings'], bot({ welcomeMessage: 'Fall in!' }));
+
+            component.setWelcomeMessage('   ');
+
+            expect(component.botSettings!.welcomeMessage).toBeNull();
+        });
+
+        it('carries welcomeMessage on the shared save payload without disturbing the rest', () => {
+            const settings = bot({ welcomeChannelId: '123', joinRoleName: 'Guest' });
+            const { component, discord } = render(['manage_settings'], settings);
+            component.setWelcomeMessage('Welcome {user}!');
+
+            component.saveBotSettings();
+
+            const payload = discord.updateSettings.calls.mostRecent().args[0] as Record<
+                string,
+                unknown
+            >;
+            expect(payload['welcomeMessage']).toBe('Welcome {user}!');
+            // Pin the whole key set: a renamed or dropped key silently loses a
+            // setting, which is exactly the recorded risk on this task.
+            expect(Object.keys(payload).sort()).toEqual([
+                'applyBanRoleOnBan',
+                'auditLogChannelId',
+                'auditLogChannelName',
+                'banRoleId',
+                'banRoleName',
+                'botEnabled',
+                'enlistmentChannelId',
+                'enlistmentChannelName',
+                'eventAnnouncementChannelId',
+                'eventAnnouncementChannelName',
+                'guildGateEnabled',
+                'joinRoleId',
+                'joinRoleName',
+                'syncRolesOnChange',
+                'welcomeChannelId',
+                'welcomeMessage',
+            ]);
+        });
+
+        it('disables the control for a caller without manage_settings', () => {
+            const { el } = render([], bot());
+            expect(box(el)?.disabled).toBeTrue();
+        });
+
+        it('marks the section dirty once the greeting is edited, and clean again after save', () => {
+            // Before this the page had no free-text bot control, so nothing on it
+            // could be lost — a typed greeting would have been discarded silently
+            // by the section-switch confirm and the CanDeactivate guard.
+            const { component } = render(['manage_settings'], bot({ welcomeMessage: 'Fall in!' }));
+            expect(component.hasUnsavedChanges()).toBeFalse();
+
+            component.setWelcomeMessage('Fall in, lads!');
+            expect(component.botSettingsDirty).toBeTrue();
+            expect(component.hasUnsavedChanges()).toBeTrue();
+
+            component.saveBotSettings();
+            expect(component.hasUnsavedChanges()).toBeFalse();
+        });
+    });
 });

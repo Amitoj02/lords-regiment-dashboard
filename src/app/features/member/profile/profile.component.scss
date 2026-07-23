@@ -293,7 +293,9 @@
     border-radius: 999px;
     border: 1px solid var(--rule-3);
     background: var(--ink-800);
-    color: var(--t-400);
+    // 9px glyph in a 14px badge — the smallest text in the app, and --t-400 put
+    // it at 3.90:1. One muted step brighter clears AA (T-0271).
+    color: var(--t-300);
     font-size: 9px;
     font-weight: 700;
     line-height: 1;
