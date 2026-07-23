@@ -158,12 +158,14 @@
                             </span>
                         </td>
                         <td class="col-actions">
-                            @if (canManage) {
+                            <!-- Per-row, not per-caller: the button only appears where
+                                 the API would actually accept an action (T-0266). -->
+                            @if (canActOn(member)) {
                             <button
                                 type="button"
                                 class="btn btn-icon btn-ghost btn-sm"
                                 title="Actions"
-                                aria-label="Member actions"
+                                [attr.aria-label]="'Member actions for ' + member.inGameName"
                                 (click)="$event.stopPropagation(); openActions(member)"
                             >
                                 ···

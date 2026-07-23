@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { Member } from '../../../core/models/member.model';
+import { Member, canOpenAdminActions } from '../../../core/models/member.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { MembersService, ServiceRecordEntry } from '../../../core/services/members.service';
@@ -356,7 +356,23 @@ export class ProfileComponent implements OnInit {
         this.activeTab = tab;
     }
 
+    /**
+     * Whether the "Admin Actions" trigger shows (T-0266). This used to be the
+     * coarse `isAdmin` role check while the roster row used capabilities — two
+     * entry points to the same modal, disagreeing. Both now call
+     * `canOpenAdminActions`, so the header offers the modal only when the server
+     * says at least one action on THIS member would be accepted.
+     */
+    get canAdminAct(): boolean {
+        return canOpenAdminActions(this.member, (capability) =>
+            this.auth.hasCapability(capability),
+        );
+    }
+
     openAdminActions(): void {
+        if (!this.canAdminAct) {
+            return;
+        }
         this.adminTarget = this.member;
     }
 

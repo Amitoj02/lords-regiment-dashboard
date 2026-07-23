@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "b510ab0e3afb98db578d85b47fa1081efbdd9f4f",
-  "lastSyncedAt": "2026-07-23T01:20:00Z",
-  "notesForNextSession": "THIS SESSION (favicon, on branch feat/planned-tasks-t0233-t0254): T-0243 is UNBLOCKED and at `review`. The user supplied the RealFaviconGenerator set; it is in public/ and the head links in src/index.html are live. The favicon.ico it replaced was the stock Angular default - the tab had been showing Angular's pink 'A' since scaffolding. Three deliberate deviations from the generator's output, all argued in T-0243.skippedByClaude: kept manifest.json over site.webmanifest (nginx mime.types), kept 'Lords Regiment' + #0b0e14 over the generator's 'Lords of Holdfast' + #000000 (the app names itself Lords Regiment everywhere), and downgraded the 192/512 icons from purpose:'maskable' to 'any' because the crest is edge-to-edge with 0% safe-zone padding and would be cropped. Two testPlan items stay pending for want of hardware: Safari/Firefox tabs and the iOS home-screen icon. One open regressionRisk: nginx 30d-immutable caching on unfingerprinted icons may hold the old favicon after deploy. OPEN QUESTION for the user: the generator was fed the name 'Lords of Holdfast' but the app calls itself 'Lords Regiment' throughout - if 'Lords of Holdfast' is the real regiment name, that is an app-wide rename, not a favicon task. PREVIOUS SESSION: THIS SESSION (spacing fix, on branch feat/planned-tasks-t0233-t0254): T-0258 \u2014 the Landing & sign-in and Legal documents settings sections had NO spacing because `.field-row`, `.settings-footer` and `.flash` live only in settings.component.scss and Angular view encapsulation keeps them out of the hf-regiment-presentation / hf-legal-editor children. Restated locally in both child stylesheets + a `:host` flex-column gap:16px; the overlay slider row also needed `margin-left/right: 0` to undo Bootstrap grid's negative `.row` margins (same defect as T-0218). WATCH FOR THIS PATTERN: any new child component pulled out of a settings//feature template loses its parent's scoped layout rules silently \u2014 it compiles and it looks broken. Also fixed an UNRELATED pre-existing time-bomb spec: member.model.spec.ts pinned NOW to 2026-07-18 but statusTooltip re-derives status off the real Date.now(), so the \"Suspended until\" case started failing once real time passed NOW+5d; both statusTooltip date cases are now anchored to Date.now(). 442 specs green, ng lint + prettier + prod build clean. BROWSER-SESSION RECIPE (unblocks T-0255 and every future authenticated UI pass \u2014 the DISCORD_MOCK=false blocker in the last handoff was avoidable): mint an Owner JWT with node -e jwt.sign({sub:'00000000-0000-4000-8000-000000000020', did:'400958439544848384'}) using JWT_SECRET from ../lords-dashboard-backend/.env, set it as localStorage lords_access_token on http://localhost:4200, then navigate to /app/admin/*. The dockerized web container on :4200 runs ng serve with THIS repo bind-mounted, so local edits hot-reload there directly (HMR can lag a beat \u2014 reload before concluding a rule did not apply). STILL OPEN on T-0255: presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt. T-0233..T-0254 remain `review` pending the coupled PR merge with lords-dashboard-backend feat/planned-tasks-t0144-t0160 \u2014 THE TWO MUST DEPLOY TOGETHER.",
-  "nextIdCounter": 259,
+  "lastSyncedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+  "lastSyncedAt": "2026-07-23T03:57:17Z",
+  "notesForNextSession": "SESSION: implemented every remaining planned task (T-0259, T-0261..T-0266) on branch feat/planned-tasks-t0256-t0266, plus 3 discovered items (T-0267..T-0269). Status `review` pending PR merge. COUPLED BACKEND BRANCH: lords-dashboard-backend feat/planned-tasks-t0163-t0178 - THE TWO MUST MERGE AND DEPLOY TOGETHER; this app now reads guildMember / discordInviteUrl / guildGateEnabled / guildGateExempt off /auth/me and permittedActions off the member projection, none of which exist on today's production API. *** THE GUILD GATE SHIPS OFF. *** Enforcement is gated on guildGateEnabled from /auth/me, which the backend defaults to false; the single predicate is AuthService.isGuildGated() (guildGateEnabled && !guildMember && !guildGateExempt) and guard, gate screen and routeAfterLogin all defer to it. With the flag off the guard is a pass-through - verified live both ways. The switch itself is T-0267, in the Lord Adjutant settings panel. The four CurrentUser gate fields are now REQUIRED on the interface but the runtime helpers still treat absent as gate-off, so a client running ahead of the backend deploy gates nobody. T-0256 IS BLOCKED, NOT DONE: it needs a real iOS device and none is available. An emulated 390x844 iPhone viewport with an iOS UA shows both the poster tile and the no-poster fallback rendering with zero console errors, but Chrome does not reproduce Safari's video-poster behaviour, so that proves the markup path and not the reported symptom. Do not close it on the emulated pass. T-0259 RESOLUTION: favicon.svg was DELETED, not replaced. Its payload was byte-identical to regiment-logo-sm.png (a 75px raster in an <image> wrapper), and the repo's only real vector is the crest-divider fleur-de-lis, which is a different heraldic device. Chrome now falls back to the 96px PNG. If a genuine vector crest is ever commissioned, re-add the link and the file together. VERIFIED THIS SESSION: prettier --check, ng lint, production build and 553 karma specs all clean. Browser checks at 1440px AND a true 390x844 viewport against the running dev stack: as an Admin the roster row action shows only on the Member and Moderator rows (not the Owner, not a peer Admin, not self); a Moderator with neither settings capability is redirected off /app/admin/settings and has no sidebar entry; with the gate ON a non-guild-member is sent to /guild-required from dashboard/roster/settings while /app/profile, /app/account-deletion and /privacy stay reachable; with the gate OFF nothing is gated. TOOLING NOTE worth keeping: resize_window does NOT shrink the Chrome extension's headless viewport (stuck at 1920px), so mobile cannot be screenshotted that way. Launch `google-chrome --headless=new --remote-debugging-port=9222` and drive CDP directly - Emulation.setDeviceMetricsOverride gives a true device viewport, and Node 22's global WebSocket is enough to speak CDP with no dependencies. KNOWN PRE-EXISTING, NOT INTRODUCED: profile.component.scss is 176 bytes over its 6kB budget (a build WARNING, not a failure - the file is byte-identical to main), and TopbarComponent's breadcrumb loop throws a dev-mode-only NG0100 ExpressionChangedAfterItHasBeenCheckedError (the topbar is untouched by this branch and NG0100 does not occur in production builds). --- PREVIOUS:SYNC of af1309e (PR #22 merge). Two things happened here. FIRST, Blueframe was showing this repo as EMPTY (taskCount 0 at http://127.0.0.1:7317/api/repos) because T-0258 was written with type \"fix\" - not in the type enum (feature|bug|chore|infra|question|spike) - and ONE invalid value fails validation for the WHOLE repo with no visible error. Corrected to \"bug\". Always verify after editing state.json: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == broken), then curl -s 'http://127.0.0.1:7317/api/state?repo=lords-regiment-dashboard' for the exact zod path. SECOND, PR #22 (131a834 + b510ab0 + efa68cd) merged to main together with its coupled backend PR #21 (abc55a3, lords-dashboard-backend), so all 24 tasks parked at `review` - T-0233..T-0254, T-0257, T-0258 - are now `deployed`. The pair deployed together as required. STILL OPEN: T-0255 (in_progress) - presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt were never exercised; use the minted-Owner-JWT browser recipe from the previous handoff. T-0256 (planned) needs a real iOS device for the gallery video poster. T-0232 (questionnaire) still waits on the Cloudflare Web Analytics vs CSP call. NEW: T-0259 (favicon.svg is a raster in vector clothing) and T-0260 (is the product \"Lords Regiment\" or \"Lords of Holdfast\"? - an app-wide rename either way). Two testPlan items on T-0243 stay pending for want of hardware (Safari/Firefox tabs, iOS home screen) and one regressionRisk stays open there (nginx 30d-immutable caching may hold the old favicon after deploy). This sync was NOT committed - the user asked for the reconciliation only.",
+  "nextIdCounter": 270,
   "connections": [],
   "tasks": [
     {
@@ -14761,7 +14761,7 @@
       "id": "T-0233",
       "title": "CONTRIBUTING: point the Blueframe section at the public repo",
       "summary": "The CONTRIBUTING.md Blueframe section explains the state protocol without saying where the tool lives. Rewrite it to name and link https://github.com/Amitoj02/blueframe, matching the sibling change in the API repo.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -14791,9 +14791,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -14808,6 +14808,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -14815,7 +14822,7 @@
       "id": "T-0234",
       "title": "Wire the Discord invite CTAs to the configured invite URL",
       "summary": "The three Discord entry points are dead: the landing \"Join the Lord Regiment Server\" button, the footer \"Discord Server\" link (href=\"#discord\") and the toolbar \"Join Discord\" button. Point all three at regimentProfile.discordInviteUrl (already on the public profile payload), open in a new tab with rel=\"noopener\", and hide the CTA entirely when no invite URL is configured.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -14857,9 +14864,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -14874,6 +14881,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -14881,7 +14895,7 @@
       "id": "T-0235",
       "title": "Public events: auth-aware CTAs instead of a blanket sign-in link",
       "summary": "On /events the ongoing panel always shows \"Sign in to view password\" and every Details link goes to /login, even for a signed-in member. Make the CTAs session-aware: signed in goes to the dashboard event detail; signed out reads \"Login to RSVP\" and goes to /login.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -14930,9 +14944,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -14947,6 +14961,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -14954,7 +14975,7 @@
       "id": "T-0236",
       "title": "Public events: hide server + password blocks when the event has neither",
       "summary": "Events with no server name or no password still render a \"Server\" field and a password CTA, so an event with nothing to reveal invites the visitor to sign in for a password that does not exist. Branch on the API hasServerPassword flag and a non-empty serverName and omit the blocks entirely.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -14996,9 +15017,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15013,6 +15034,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15020,7 +15048,7 @@
       "id": "T-0237",
       "title": "Render event times in the viewer local timezone",
       "summary": "Event times are printed in the event author timezone (\"2026-07-22 - 20:18 to 02:00 UTC\"), so a member in EDT has to convert by hand. Convert the absolute startsAt/endsAt instants into the browser timezone for display (with the source timezone available on hover or as a secondary line) across the public events page, the landing upcoming rows, the dashboard and the event detail pages.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -15082,9 +15110,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15099,6 +15127,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15106,7 +15141,7 @@
       "id": "T-0238",
       "title": "Admin: landing-page presentation controls (banner, charter quote, overlay)",
       "summary": "Extend Profile & Visibility with landing-hero controls gated by the new manage_regiment_details capability: hero background upload (showing the recommended dimensions and the enforced max file size), an overlay/shadow-mask density slider with a live preview, and editable charter quote body + attribution. The landing page then renders these instead of the hard-coded copy.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -15168,9 +15203,9 @@
       "skippedByClaude": [
         "The banner UPLOAD round-trip (presign -> PUT -> key -> PATCH -> URL on the public page) is unverified end to end: the local API has DISCORD_MOCK=false with real credentials, so no agent could obtain a session without signing into the owner's live Discord account. Client-side pre-flight and payload shape are spec'd against a mocked StorageService."
       ],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15185,6 +15220,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15192,7 +15234,7 @@
       "id": "T-0239",
       "title": "Admin: login-page presentation controls (banner, quote, overlay)",
       "summary": "Same Profile & Visibility section, login-page half: background banner upload with stated recommended dimensions and max size, overlay/shadow-mask density slider, and editable quote body + attributed name (currently the hard-coded \"Your identity on the field is your word.\" / \"Major Diego Vasquez\"). The login split-panel renders these with a fallback to the shipped copy.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -15239,9 +15281,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15256,6 +15298,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15263,7 +15312,7 @@
       "id": "T-0240",
       "title": "Admin: edit the Terms, Privacy and Community Guidelines documents",
       "summary": "Add an editor under Profile & Visibility (gated by manage_regiment_details) for the three legal documents, with a preview of what the public page will render and a clear warning that the privacy policy is a live legal surface.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -15309,9 +15358,9 @@
         "The two admin editors were not verified visually for the same sign-in reason; they are covered by specs only.",
         "The beforeunload prompt is spec'd at the handler level (preventDefault only when dirty) but was not observed as a real browser dialog."
       ],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15326,6 +15375,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15333,7 +15389,7 @@
       "id": "T-0241",
       "title": "Public legal pages render admin-authored content",
       "summary": "LegalComponent currently renders three hard-coded documents. Fetch the stored documents from the public API and render them, falling back to the shipped copy whenever the API is unreachable or a document is unset, so /terms, /privacy and /guidelines always show something valid.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -15384,9 +15440,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15401,6 +15457,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15408,7 +15471,7 @@
       "id": "T-0242",
       "title": "Gallery grid: no thumbnail for directly-uploaded videos on mobile",
       "summary": "Directly-uploaded videos have thumbnailUrl=null and the card falls back to an inline <video preload=\"metadata\">, which mobile Safari renders as an empty tile (no first frame). Give video cards a real preview: a media-fragment hint so the first frame paints, and use the persisted poster from the API when one exists.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -15464,9 +15527,9 @@
       "skippedByClaude": [
         "iOS Safari on a real device was not tested (no device available); the fix removes the <video>-element dependency entirely for a poster-bearing item, which is the documented cause."
       ],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15481,6 +15544,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15488,7 +15558,7 @@
       "id": "T-0243",
       "title": "Integrate the generated favicon set",
       "summary": "Add the generated favicon assets (favicon.svg, favicon-96x96.png, apple-touch-icon, web manifest) and wire the head links, replacing the single legacy favicon.ico reference.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -15544,9 +15614,9 @@
         "CORRECTION to the previous note on this task: the CSP testPlan item was NOT vacuous. nginx.conf sets no CSP, but production serves the SPA behind Caddy (Caddyfile in lords-dashboard-backend), which does set one. It permits these requests - img-src includes 'self' and data: (favicon.svg embeds a data: PNG), and manifest-src is undeclared so it falls back to default-src 'self'. Verified by reading the header, not assumed.",
         "NOT verified: Safari and Firefox tab rendering, and the iOS home-screen apple-touch-icon. No Safari on Fedora and no iOS device available; those two testPlan items stay pending. Chrome was verified - all five icons decode at their declared sizes and the 16px .ico frame is legible."
       ],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-23T01:20:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15568,6 +15638,13 @@
           "to": "review",
           "by": "claude",
           "note": "user supplied the generated set; icons installed, manifest + head links finalised, build/lint/prettier/442 specs green, served and decoded in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15575,7 +15652,7 @@
       "id": "T-0244",
       "title": "Page titles: \"Lords Regiment\" plus per-route titles",
       "summary": "The document title is the static \"Lords Regiment Dashboard\" on every route. Rename the base title to \"Lords Regiment\" and set per-route titles through an Angular TitleStrategy - \"Login | Lords Regiment\", \"Privacy | Lords Regiment\", public gallery item titles, and so on for the other public and app routes.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "M",
       "sizeWeight": 3,
@@ -15636,9 +15713,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15653,6 +15730,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15660,7 +15744,7 @@
       "id": "T-0245",
       "title": "Application form: fix the age-confirmation links",
       "summary": "The application age-confirmation checkbox links \"Code of Conduct\" and \"Charter\" both point at href=\"#\". Replace them with a single \"community guidelines\" link to /guidelines opening in a new tab, so the applicant can read the document without losing their in-progress form.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -15698,9 +15782,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15715,6 +15799,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15722,7 +15813,7 @@
       "id": "T-0246",
       "title": "Admin UI: do not offer self-suspend or self-ban",
       "summary": "Pair the API guard with the UI: on the admin member detail, hide or disable Suspend and Ban when the target member is the signed-in user, with a tooltip explaining why, so the action is never offered rather than failing on submit.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -15759,9 +15850,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T18:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T18:30:00Z",
@@ -15776,6 +15867,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15783,7 +15881,7 @@
       "id": "T-0247",
       "title": "Rename \"Discord DM message\" to \"User message\" and keep both fields after a decision",
       "summary": "The decision pane clears moderatorNote and discordDmMessage on every reload, so once an officer approves/declines/holds, whatever they wrote vanishes and no other staffer can see what was sent. Re-hydrate both boxes from the persisted application (backend T-0153) instead of blanking them, and rename the \"Discord DM message\" section to \"User message\" with copy making clear the moderator note is staff-only.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -15835,9 +15933,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -15852,6 +15950,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15859,7 +15964,7 @@
       "id": "T-0248",
       "title": "Stop sending the moderator note as the applicant-visible decline reason",
       "summary": "applications.component.ts calls decline(id, this.moderatorNote, this.discordDmMessage), so the internal note becomes the application's declineReason and is rendered back to the applicant as \"Reason:\" on the status page. Send the internal note only as an internal note, and let the user message be the only applicant-facing text on a decision.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -15901,9 +16006,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -15918,6 +16023,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -15925,7 +16037,7 @@
       "id": "T-0249",
       "title": "Applicant status page: show only the message written for the applicant",
       "summary": "application-status.component.html renders \"Officer note: {{ moderatorNote }}\" and \"Reason: {{ declineReason }}\" to the applicant on declined/held applications - both internal. Render only the user message from the applicant-safe projection (backend T-0154), and show nothing when no message was written rather than falling back to internal text.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -15976,9 +16088,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -15993,6 +16105,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16000,7 +16119,7 @@
       "id": "T-0250",
       "title": "Show who took the action on an application in the admin queue",
       "summary": "A decided application shows its status but not who decided it, so tracing an approval means digging through the audit ledger. Render the decider's name (and avatar) with the decision timestamp on the queue row and in the detail pane, using the attribution fields from backend T-0155, including who placed a hold.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -16043,9 +16162,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -16060,6 +16179,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16067,7 +16193,7 @@
       "id": "T-0251",
       "title": "Submit event start/end as instants resolved in the selected event timezone",
       "summary": "The event form posts `${date}T${time}:00` with no offset alongside a separate timezone field, so the backend stores the wall clock as UTC and a New York evening event concludes four hours early. Send an offset-qualified instant computed for the chosen IANA zone (or align exactly with whatever contract backend T-0156 settles on) from both create and edit, and prefill the form by converting the stored instant back into that zone.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -16119,9 +16245,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -16136,6 +16262,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16143,7 +16276,7 @@
       "id": "T-0252",
       "title": "Rebuild the mobile layout of the dashboard honours strip",
       "summary": "On a phone the Current Rank / Decorations panel collapses into a centred, cramped stack with an orphaned divider and label-above-value spacing that reads as broken rather than deliberate. Re-lay the honours strip for narrow viewports (left-aligned, consistent label treatment, the medal row wrapping or scrolling cleanly) while leaving the desktop two-column presentation as it is.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -16191,9 +16324,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -16208,6 +16341,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16215,7 +16355,7 @@
       "id": "T-0253",
       "title": "Render demotions distinctly in the profile service record",
       "summary": "The service-record timeline maps every rank change to the PROMOTION tag and its gold dot, so a demotion reads as a promotion. Add the 'demotion' case (backend T-0157) with its own label and colour, and make the unknown-type fallback render the raw type neutrally instead of inheriting the promotion styling.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -16253,9 +16393,9 @@
       ],
       "regressionRisk": [],
       "skippedByClaude": [],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -16270,6 +16410,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16277,7 +16424,7 @@
       "id": "T-0254",
       "title": "Warn and show progress when re-linking a rank or medal to a different Discord role",
       "summary": "Re-pointing a linked rank/medal at another Discord role now triggers a bulk re-role of every holder, which the admin should understand before confirming and be able to watch afterwards. Add a confirmation naming the affected member count and both roles, then surface the bulk job's live progress (and cancel) from backend T-0160 on the Ranks & Medals screen.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -16337,9 +16484,9 @@
       "skippedByClaude": [
         "The progress/cancel UI was not exercised against a real draining batch - that needs an authenticated admin session plus a live Discord guild."
       ],
-      "lastTouchedCommit": "489aa46828d4051faf0448d0d6a2cfbe871bbb6a",
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:30:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:30:00Z",
@@ -16354,6 +16501,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented; 438 specs green, lint/build clean, public surfaces verified in Chrome"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16429,7 +16583,7 @@
       "id": "T-0256",
       "title": "Re-test the gallery video poster on a real iOS device",
       "summary": "T-0242's fix removes the <video>-element dependency for a poster-bearing item, which is the documented cause of the blank tile, but the original report came from iOS Safari and no iOS device was available. Confirm on a real device once the backend poster capture is live, and check the no-poster fallback tile too.",
-      "status": "planned",
+      "status": "blocked",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -16443,12 +16597,23 @@
       "dependsOn": [],
       "blocks": [],
       "questions": [],
-      "testPlan": [],
+      "testPlan": [
+        {
+          "desc": "a poster-bearing video tile paints its still image on real iOS Safari",
+          "status": "pending"
+        },
+        {
+          "desc": "the no-poster fallback tile renders on real iOS Safari",
+          "status": "pending"
+        }
+      ],
       "regressionRisk": [],
-      "skippedByClaude": [],
+      "skippedByClaude": [
+        "NOT DONE - no iOS device available, and this task cannot be closed without one. What WAS verified: at a true 390x844 viewport with an iOS user agent, the poster-bearing tile paints its still <img> (the T-0242 fix) and the no-poster tile falls back without a blank tile, with zero console errors. Desktop Chrome's iOS UA emulation does NOT reproduce Safari's video-poster behaviour, so this proves the markup path, not the reported symptom."
+      ],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-22T19:55:00Z",
-      "updatedAt": "2026-07-22T19:55:00Z",
+      "updatedAt": "2026-07-23T03:57:17Z",
       "history": [
         {
           "at": "2026-07-22T19:55:00Z",
@@ -16456,6 +16621,13 @@
           "to": "planned",
           "by": "claude",
           "note": "discovered while implementing T-0233..T-0254"
+        },
+        {
+          "at": "2026-07-23T03:57:17Z",
+          "from": "planned",
+          "to": "blocked",
+          "by": "claude",
+          "note": "blocked on hardware: needs a real iOS device. Emulated iPhone viewport + iOS UA pass recorded, but that does not reproduce Safari video-poster behaviour."
         }
       ]
     },
@@ -16463,7 +16635,7 @@
       "id": "T-0257",
       "title": "Capture a poster frame client-side when submitting a gallery video",
       "summary": "The API now accepts and validates a `posterKey` on gallery submit (lords-dashboard-backend:T-0152) and hf-gallery-card renders a poster when present, but nothing PRODUCES one yet: the submit flow must decode frame 0 to a canvas, toBlob() it, upload it to the `gallery-poster` target and pass the returned key. Until this ships every new video still submits with thumbnailUrl null and falls back to the placeholder tile.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -16510,9 +16682,9 @@
         }
       ],
       "skippedByClaude": [],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T19:55:00Z",
-      "updatedAt": "2026-07-22T20:05:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T19:55:00Z",
@@ -16527,6 +16699,13 @@
           "to": "review",
           "by": "claude",
           "note": "VideoPosterService + submit wiring; capture is fire-and-forget and can never block an upload"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3)"
         }
       ]
     },
@@ -16534,8 +16713,8 @@
       "id": "T-0258",
       "title": "Restore field/footer spacing in the presentation + legal settings editors",
       "summary": "The Landing & sign-in and Legal documents sections rendered with no spacing: `.field-row`, `.settings-footer` and `.flash` are defined only in settings.component.scss, and Angular view encapsulation keeps them out of the hf-regiment-presentation / hf-legal-editor child templates. Labels, controls and hints ran together, the two presentation panels sat flush, the overlay slider was pulled 12px left of every other field by Bootstrap grid's negative `.row` margins (the same defect T-0218 fixed on the settings save/op rows), and the Save presentation / Save <page> / Clear document / Discard changes buttons rendered as bare left-aligned controls flush against the panel. Restated the rules locally in both component stylesheets plus a `:host` flex-column gap, and aligned the legal editor pane heads.",
-      "status": "review",
-      "type": "fix",
+      "status": "deployed",
+      "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
       "area": "admin",
@@ -16585,9 +16764,9 @@
       "skippedByClaude": [
         "Did not promote .field-row / .settings-footer to a global SCSS partial: eight other components define their own local .field-row with differing margins, so a global rule would change spacing well outside the reported bug."
       ],
-      "lastTouchedCommit": null,
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T20:45:00Z",
-      "updatedAt": "2026-07-22T20:45:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
       "history": [
         {
           "at": "2026-07-22T20:45:00Z",
@@ -16595,6 +16774,753 @@
           "to": "review",
           "by": "claude",
           "note": "reported by the user against the running app; fixed and verified in Chrome against the live local stack with an owner JWT"
+        },
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged to main in PR #22 (af1309e), paired with lords-dashboard-backend PR #21 (abc55a3). Also corrected type 'fix' -> 'bug': 'fix' is not in the type enum, so the whole repo was failing validation and Blueframe showed taskCount 0."
+        }
+      ]
+    },
+    {
+      "id": "T-0259",
+      "title": "Replace favicon.svg with a true vector source",
+      "summary": "The shipped public/favicon.svg is a 75x75 raster wrapped in an <image> tag by RealFaviconGenerator, not real vector art - so it is LOWER resolution than favicon-96x96.png, and Chrome prefers the SVG over the PNG. Harmless at tab sizes (16-32 CSS px, 64 device px at 2x) but wrong at any larger surface. Replace it with a genuine vector crest if one exists; otherwise drop the SVG link so Chrome falls back to the 96px PNG.",
+      "status": "review",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "metadata",
+      "subfeature": "favicon",
+      "repo": "",
+      "paths": [
+        "public/favicon.svg",
+        "src/index.html",
+        "public/manifest.json"
+      ],
+      "dependsOn": [
+        "T-0243"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "no image/svg+xml icon link remains and no favicon.svg ships, so Chrome falls back to the 96px PNG (which is genuinely sharper than the 75px raster the old SVG wrapped)",
+          "status": "passed"
+        },
+        {
+          "desc": "the tab icon is sharp at 2x and in the bookmark/history surfaces that render it larger",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [
+        "Did not author a vector crest. The shipped favicon.svg was a 75px raster in an <image> wrapper whose payload was byte-identical to regiment-logo-sm.png. The only genuine vector in the repo is the crest-divider fleur-de-lis - a DIFFERENT heraldic device used as a horizontal rule ornament, not the laurel-wreath 'L' medallion the brand uses - so shipping it would have made Chrome (which prefers SVG) show a different mark than the .ico, the apple-touch-icon and both manifest PNGs. Dropped the SVG link instead; Chrome falls back to the sharper 96px PNG.",
+        "nginx long-caches unfingerprinted icons (expires 30d, immutable), so returning visitors may keep the old icon for a while after deploy, and /favicon.svg will 404 for anyone holding a cached manifest. Harmless - browsers fall through the icon list - and self-healing once index.html and manifest.json are refetched."
+      ],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-23T01:21:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created during /bf-sync of af1309e"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0260",
+      "title": "Decide the product name: \"Lords Regiment\" or \"Lords of Holdfast\"",
+      "summary": "The favicon generator was fed \"Lords of Holdfast\", but the app names itself \"Lords Regiment\" everywhere - <title>, the meta description, AppTitleStrategy's base title and the manifest name. T-0243 kept \"Lords Regiment\" rather than silently renaming the product from a favicon change. If \"Lords of Holdfast\" is the real regiment name this is an app-wide rename spanning both repos, not a metadata tweak.",
+      "status": "questionnaire",
+      "type": "question",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "platform",
+      "feature": "metadata",
+      "subfeature": "product-name",
+      "repo": "",
+      "paths": [
+        "src/index.html",
+        "public/manifest.json",
+        "src/app/core/title/app-title.strategy.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Is the product called \"Lords Regiment\" (what the app says today) or \"Lords of Holdfast\" (what the favicon set was generated for)? A change means an app-wide rename across the SPA and the API, not a metadata edit.",
+          "answer": null,
+          "askedAt": "2026-07-23T01:21:00Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "title, meta description, AppTitleStrategy base and manifest name/short_name all use the chosen name",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-23T01:21:00Z",
+      "updatedAt": "2026-07-23T01:21:00Z",
+      "history": [
+        {
+          "at": "2026-07-23T01:21:00Z",
+          "from": null,
+          "to": "questionnaire",
+          "by": "claude",
+          "note": "created during /bf-sync of af1309e"
+        }
+      ]
+    },
+    {
+      "id": "T-0261",
+      "title": "Guild-membership gate screen with a Discord join CTA",
+      "summary": "A signed-in user who is not in the regiment Discord guild keeps their session but must not reach the dashboard. Add a full-page gate (routed, not a dismissible modal, so it cannot be clicked past) explaining the requirement, with a Join the Discord button wired to the regiment's discordInviteUrl from /auth/me, an I have joined re-check button, and a sign-out escape hatch.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "auth",
+      "feature": "guild-membership",
+      "subfeature": "gate-screen",
+      "repo": "",
+      "paths": [
+        "src/app/features/auth/guild-required/",
+        "src/app/core/services/auth.service.ts",
+        "src/app/core/models/",
+        "src/app/app-routing.module.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0166"
+      ],
+      "blocks": [],
+      "questions": [
+        {
+          "q": "Should the gate be a dedicated route (/guild-required) or an overlay rendered over a blurred dashboard? Recommend the route: it is unambiguous, deep-linkable, and cannot be dismissed by closing a modal.",
+          "answer": "A dedicated route, /guild-required, declared in a new lazy features/auth module. It is unambiguous, deep-linkable and cannot be dismissed by closing a modal. It deliberately does NOT render hf-app-shell, whose sidebar links straight back into the routes being gated.",
+          "askedAt": "2026-07-22T00:00:00Z",
+          "answeredAt": "2026-07-23T03:56:42Z"
+        },
+        {
+          "q": "What should a gated user still be allowed to reach - only the public site, legal pages and sign-out, or also their own profile / account deletion (which Discord ToS requires to stay reachable)?",
+          "answer": "The gate itself, the user's own profile, the account-deletion page (Discord's Developer ToS requires deletion to stay reachable), the public legal pages and sign-out. Implemented as an exact-match allowlist in guildGuard - GATE_ALLOWED_URLS = ['/app/profile','/app/account-deletion'] - matched after stripping query and fragment, so a prefix match cannot let a gated user read /app/profile/:id (somebody else's record).",
+          "askedAt": "2026-07-22T00:00:00Z",
+          "answeredAt": "2026-07-23T03:56:42Z"
+        }
+      ],
+      "testPlan": [
+        {
+          "desc": "a user with guildMember=false landing on any /app route is sent to the gate",
+          "status": "passed"
+        },
+        {
+          "desc": "the Join button opens the configured invite in a new tab and is hidden (with an explanatory fallback) when discordInviteUrl is null",
+          "status": "passed"
+        },
+        {
+          "desc": "the re-check button calls the status endpoint and lets the user through the moment the verdict flips",
+          "status": "passed"
+        },
+        {
+          "desc": "the gate is reachable and readable on mobile widths and passes the project accessibility checks (focus order, contrast, button labels)",
+          "status": "passed"
+        },
+        {
+          "desc": "a user with guildMember=true never sees the gate",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "CurrentUser gained four REQUIRED fields. Any code path constructing that object (tests, mocks, a future offline stub) must supply them, and a backend that omits one now produces a type that lies. The runtime helpers still treat absent as gate-off, so the failure mode is safe, but the type no longer warns.",
+          "status": "open",
+          "notedAt": "2026-07-23T03:56:42Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-22T00:00:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0262",
+      "title": "Re-check guild membership on dashboard entry, throttled",
+      "summary": "Call GET /auth/guild-status when the user enters the dashboard shell (and on app resume), not on every HTTP call, with a client-side throttle so navigating between tabs does not re-fire it. A false verdict redirects to the gate; a failed/unavailable check must leave the user where they are rather than gating them.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "auth",
+      "feature": "guild-membership",
+      "subfeature": "revalidation",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/core/guards/auth.guard.ts",
+        "src/app/shared/components/app-shell/app-shell.component.ts"
+      ],
+      "dependsOn": [
+        "T-0261",
+        "lords-dashboard-backend:T-0167"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "entering the dashboard triggers exactly one guild-status call; navigating between five dashboard routes triggers no further calls inside the throttle window",
+          "status": "passed"
+        },
+        {
+          "desc": "a false verdict redirects to the gate and clears any in-flight navigation",
+          "status": "passed"
+        },
+        {
+          "desc": "a 5xx or timeout from guild-status leaves the user on the dashboard (no gate, no logout) and logs once",
+          "status": "passed"
+        },
+        {
+          "desc": "no guild-status call is made for an unauthenticated visitor on the public site",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds work to the auth guard / shell init path that every authenticated route passes through.",
+          "status": "resolved",
+          "notedAt": "2026-07-22T00:00:00Z",
+          "resolvedAt": "2026-07-23T03:56:42Z",
+          "resolvedBy": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+          "note": "Retired: the guard never blocks navigation. Inside the 5-minute throttle it emits synchronously with no request; outside it, it races the call against a 2.5s navigation budget and decides on the verdict already in hand, while the shared observable (refCount:false) still lands and updates the signal for the next navigation. Error, timeout and degraded:true all leave the user exactly where they are. Verified live: with the gate OFF - the shipping default - a non-guild-member reaches dashboard and roster normally and /guild-required bounces them onward."
+        },
+        {
+          "desc": "Adds an async guard to the canActivate chain of BOTH authenticated route parents (/app and /app/admin), which every authenticated route passes through. It is the first non-synchronous guard in the app; a future change that makes it await unconditionally would put a network round-trip in front of every navigation.",
+          "status": "open",
+          "notedAt": "2026-07-23T03:56:42Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-22T00:00:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0263",
+      "title": "Route a non-guild-member to the gate straight after sign-in",
+      "summary": "routeAfterLogin currently branches on member vs applicant only. Extend it so the OAuth callback sends a guildMember=false user to the gate instead of the dashboard or the application form, and so a successful re-check resumes the original destination.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "auth",
+      "feature": "guild-membership",
+      "subfeature": "post-login",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/auth.service.ts",
+        "src/app/features/auth/"
+      ],
+      "dependsOn": [
+        "T-0261"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a non-guild member signing in lands on the gate, for both the member and the applicant projections",
+          "status": "passed"
+        },
+        {
+          "desc": "a guild member signing in still lands on the dashboard (member) or the application flow (applicant) exactly as today",
+          "status": "passed"
+        },
+        {
+          "desc": "after the re-check passes, the user continues to the destination they would originally have got",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Touches post-login routing, which the onboarding and owner-setup flows also depend on.",
+          "status": "resolved",
+          "notedAt": "2026-07-22T00:00:00Z",
+          "resolvedAt": "2026-07-23T03:56:42Z",
+          "resolvedBy": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+          "note": "Retired: routeAfterLogin keeps both callers (completeLogin and applyToJoin) and the four existing routing specs plus the two applyToJoin specs stay green. A null user (failed /auth/me) is explicitly never gated, so the isMemberHint fallback cannot strand anyone. Resume replays the stashed destination, so the applicant status-vs-apply branch is preserved rather than re-derived."
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-22T00:00:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0264",
+      "title": "Drop Transfer Ownership from the matrix UI and clear the stale transfer copy",
+      "summary": "The matrix renders straight from the API's capabilities array, so the Transfer Ownership row disappears on its own once the backend retires the capability. Confirmed during planning that the Angular app has NO transfer-ownership, transfer-discord or dissolve page - the settings panel has exactly five sections - so the remaining work is copy: SettingsService still documents discordServerId as moving through 'the dedicated transfer-discord action' and types UpdateSettingsPayload as Omit<SettingsDto,'discordServerId'>, both of which must follow whatever the backend decides about that field.",
+      "status": "review",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "ownership-transfer",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/settings.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0170"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the roles and permissions table renders no transfer_ownership row against the updated API response",
+          "status": "passed"
+        },
+        {
+          "desc": "a grep for transfer across the app source returns no ownership-transfer or transfer-discord reference",
+          "status": "passed"
+        },
+        {
+          "desc": "UpdateSettingsPayload matches what PATCH /settings actually accepts after the backend change, and its doc comment names no deleted endpoint",
+          "status": "passed"
+        },
+        {
+          "desc": "the Discord section still binds a guild through the connect wizard (POST /discord/bind) with no regression",
+          "status": "passed"
+        },
+        {
+          "desc": "saving the matrix still round-trips every remaining capability unchanged",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-22T00:00:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": "planned",
+          "to": "planned",
+          "by": "claude",
+          "note": "scope clarified: no transfer pages exist in the app; task is the matrix row plus stale transfer-discord copy"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0265",
+      "title": "Capability-gate the settings page, its inner nav and the sidebar entry",
+      "summary": "Reported bug: the settings route is guarded by adminGuard (role-based), so a member without manage_settings sees the whole panel and all five inner sections; the API correctly 403s, so it is empty chrome. Gate the route on manage_settings OR manage_regiment_details, filter navItems per capability (Regiment group needs manage_settings, Public pages needs manage_regiment_details), default activeSection to the first permitted one, and hide the sidebar Settings entry when the user has neither.",
+      "status": "review",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "capability-gating",
+      "repo": "",
+      "paths": [
+        "src/app/core/guards/admin.guard.ts",
+        "src/app/features/admin/admin.module.ts",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/shared/components/sidebar/sidebar.component.ts",
+        "src/app/shared/components/app-shell/app-shell.component.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0178"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a member with neither capability sees no Settings entry in the sidebar and is redirected away from /app/settings",
+          "status": "passed"
+        },
+        {
+          "desc": "a member with manage_regiment_details only sees Settings, with the Public pages group only, and lands on Landing and sign-in as the default section",
+          "status": "passed"
+        },
+        {
+          "desc": "a member with manage_settings only sees the Regiment group only and no Public pages group",
+          "status": "passed"
+        },
+        {
+          "desc": "the Owner still sees all five sections in the existing order",
+          "status": "passed"
+        },
+        {
+          "desc": "no settings API call is fired for a section the user cannot see (no 403 noise in the console on load)",
+          "status": "passed"
+        },
+        {
+          "desc": "the sidebar gate is driven by capabilities, not by the coarse isAdmin role flag",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Changes the shared adminGuard and the sidebar nav filter, which other admin routes and every dashboard page render through.",
+          "status": "resolved",
+          "notedAt": "2026-07-22T00:00:00Z",
+          "resolvedAt": "2026-07-23T03:56:42Z",
+          "resolvedBy": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+          "note": "Retired: adminGuard was left doing its role job for every other admin route; the settings route got its own settingsAccessGuard instead, and the sidebar gained a per-item capability that only the Settings entry uses, so Applications / Ranks & Medals / Audit Ledger are untouched. The existing sidebar specs stay green. Verified live: a Moderator holding neither capability is redirected off /app/admin/settings and has no Settings entry, while the Owner still sees all five sections in order."
+        },
+        {
+          "desc": "The sidebar NavItem gained an optional per-item capability list which, when present, REPLACES the adminOnly/isAdmin test. Only the Settings entry uses it today; adding it to another entry silently changes that entry's gate from role-based to capability-based.",
+          "status": "open",
+          "notedAt": "2026-07-23T03:56:42Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-22T00:00:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0266",
+      "title": "Respect the role hierarchy in the admin-action modal and roster row actions",
+      "summary": "An Admin is currently offered role/rank/medal/suspend/ban controls against the Owner, and a Moderator against an Admin - the API will start rejecting those, so the UI must stop offering them. Drive the controls off the per-target permitted-actions flags from the member projection rather than re-deriving the rule client-side, and surface a clear message if a 403 still comes back.",
+      "status": "review",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "admin",
+      "feature": "member-actions",
+      "subfeature": "role-hierarchy",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.ts",
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.html",
+        "src/app/features/member/roster/",
+        "src/app/core/models/member.model.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0177"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "an Admin opening the modal on the Owner sees no role, rank, medal, suspend or ban control",
+          "status": "passed"
+        },
+        {
+          "desc": "a Moderator opening the modal on an Admin sees the same, and on a Member sees the full set",
+          "status": "passed"
+        },
+        {
+          "desc": "the roster row action button is hidden or disabled when no action is permitted on that member",
+          "status": "passed"
+        },
+        {
+          "desc": "the Owner still sees every action against everyone",
+          "status": "passed"
+        },
+        {
+          "desc": "a 403 from a race (permissions changed mid-session) renders a readable error instead of a silent failure",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The admin-action modal is mounted twice (roster row and profile header); both mount points must gate identically.",
+          "status": "resolved",
+          "notedAt": "2026-07-22T00:00:00Z",
+          "resolvedAt": "2026-07-23T03:56:42Z",
+          "resolvedBy": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+          "note": "Retired: both mount points now call one shared canOpenAdminActions(member, hasCapability). The previously INCONSISTENT profile-header trigger (which used the coarse auth.isAdmin() role check while the roster used capabilities) was replaced, so there is a single expression rather than two that must be kept in step. Verified live at 1440px: signed in as an Admin, the roster row action appears only on the Member and Moderator rows - not the Owner, not a peer Admin, not self."
+        },
+        {
+          "desc": "mapMember now carries permittedActions, so every consumer of the member projection sees an actor-dependent field. Any client-side cache keyed on member id alone would serve one caller's permitted actions to another.",
+          "status": "open",
+          "notedAt": "2026-07-23T03:56:42Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-22T00:00:00Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-22T00:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        }
+      ]
+    },
+    {
+      "id": "T-0267",
+      "title": "Admin switch for the guild-membership gate",
+      "summary": "The gate ships feature-flagged (discord_bot_settings.guild_gate_enabled, default false) but nothing in the SPA exposed the switch, so it could only be flipped by hand-calling the API. Adds a Require Discord server membership toggle to the Lord Adjutant panel with copy that states the consequence plainly, plus a pre-flight error notice when the gate is on while the bot is not enabled-and-connected.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "guild-gate-switch",
+      "repo": "",
+      "paths": [
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/core/services/discord.service.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0167"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the toggle renders and is disabled without manage_settings",
+          "status": "passed"
+        },
+        {
+          "desc": "the lock-out consequence copy is present while the gate is on",
+          "status": "passed"
+        },
+        {
+          "desc": "the flag round-trips both directions through updateSettings",
+          "status": "passed"
+        },
+        {
+          "desc": "an unverified bot surfaces the pre-flight warning",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "discovered while implementing T-0259..T-0266"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "fixed in the same branch"
+        }
+      ]
+    },
+    {
+      "id": "T-0268",
+      "title": "Roster showed \"Invalid Date\" for a member who has never signed in",
+      "summary": "mapMember turns a null lastSeenAt into '', and formatLastSeen fed that straight to new Date(), so the Last Seen column rendered the literal string 'Invalid Date' for every member between approval and their first authenticated request. Renders 'Never' instead, guarding the parse rather than the input so any unparseable value degrades the same way. Found while verifying the T-0266 roster against realistic data.",
+      "status": "review",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "roster",
+      "feature": "browse",
+      "subfeature": "last-seen",
+      "repo": "",
+      "paths": [
+        "src/app/features/member/roster/roster.component.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a member with no lastSeenAt renders Never, not Invalid Date",
+          "status": "passed"
+        },
+        {
+          "desc": "an unparseable value renders Never",
+          "status": "passed"
+        },
+        {
+          "desc": "a real timestamp still formats",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "discovered while implementing T-0259..T-0266"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "fixed in the same branch"
+        }
+      ]
+    },
+    {
+      "id": "T-0269",
+      "title": "Guild-gate \"Still open to you\" copy did not share a left edge with its links",
+      "summary": "The panel's paragraph inherited .gate-text's margin:0 auto / max-width:46ch from the centred hero, so inside the left-aligned secondary panel it sat inset above a full-width link list and read as a stray indent. The centring is now scoped to the hero via :not(.gate-centre). Found on a desktop screenshot of the gate.",
+      "status": "review",
+      "type": "bug",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "auth",
+      "feature": "guild-membership",
+      "subfeature": "gate-screen",
+      "repo": "",
+      "paths": [
+        "src/app/features/auth/guild-required/guild-required.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the secondary panel copy shares a left edge with the link list",
+          "status": "passed"
+        },
+        {
+          "desc": "the hero paragraph keeps its centring and 46ch measure",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
+      "createdAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-07-23T03:56:42Z",
+      "history": [
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "discovered while implementing T-0259..T-0266"
+        },
+        {
+          "at": "2026-07-23T03:56:42Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "fixed in the same branch"
         }
       ]
     }

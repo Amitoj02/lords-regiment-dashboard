@@ -25,6 +25,13 @@ interface NavItem {
     id: string;
     label: string;
     group: string;
+    /**
+     * The capability the API enforces behind this section. It drives three
+     * things at once (T-0265): whether the nav entry renders, whether the
+     * section may become `activeSection`, and whether its data is fetched at
+     * all — so a caller who cannot see a section never fires a request for it.
+     */
+    capability: string;
 }
 
 @Component({
@@ -34,18 +41,49 @@ interface NavItem {
     standalone: false,
 })
 export class SettingsComponent implements OnInit, HasUnsavedChanges {
-    activeSection = 'profile';
+    /**
+     * Empty until `ngOnInit` picks the first section the caller may actually
+     * see. It used to default to the hardcoded `'profile'`, which handed a
+     * `manage_regiment_details`-only caller a blank pane they had no way to
+     * leave except by guessing at the nav (T-0265).
+     */
+    activeSection = '';
 
     navItems: NavItem[] = [
-        { id: 'profile', label: 'Profile & visibility', group: 'Regiment' },
-        { id: 'discord', label: 'Discord & Adjutant', group: 'Regiment' },
-        { id: 'roles', label: 'Roles & permissions', group: 'Regiment' },
+        {
+            id: 'profile',
+            label: 'Profile & visibility',
+            group: 'Regiment',
+            capability: 'manage_settings',
+        },
+        {
+            id: 'discord',
+            label: 'Discord & Adjutant',
+            group: 'Regiment',
+            capability: 'manage_settings',
+        },
+        {
+            id: 'roles',
+            label: 'Roles & permissions',
+            group: 'Regiment',
+            capability: 'manage_settings',
+        },
         // Public-facing copy (T-0238..T-0240). Its own group because it is gated
         // on a different capability (manage_regiment_details) from everything
         // above, and because it is the only place in the app that edits pages
         // anonymous visitors read.
-        { id: 'presentation', label: 'Landing & sign-in', group: 'Public pages' },
-        { id: 'legal', label: 'Legal documents', group: 'Public pages' },
+        {
+            id: 'presentation',
+            label: 'Landing & sign-in',
+            group: 'Public pages',
+            capability: 'manage_regiment_details',
+        },
+        {
+            id: 'legal',
+            label: 'Legal documents',
+            group: 'Public pages',
+            capability: 'manage_regiment_details',
+        },
     ];
     navGroups = ['Regiment', 'Public pages'];
 
@@ -106,28 +144,61 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         return this.auth.hasCapability(capability);
     }
 
+    /** Whether the caller holds the capability a given section is gated on. */
+    canSection(id: string): boolean {
+        const item = this.navItems.find((n) => n.id === id);
+        return !!item && this.can(item.capability);
+    }
+
+    /** Every section the caller may open, in the declared order. */
+    get permittedNavItems(): NavItem[] {
+        return this.navItems.filter((n) => this.can(n.capability));
+    }
+
+    /** Group headings that still have at least one visible item under them. */
+    get visibleGroups(): string[] {
+        return this.navGroups.filter((group) => this.getNavByGroup(group).length > 0);
+    }
+
+    /**
+     * Every load is conditional on the capability its section needs (T-0265).
+     * This used to fire five GETs unconditionally, so a caller who could see
+     * only the Public pages group filled the console with 403s on arrival —
+     * `RegimentPresentationComponent` already does the right thing and is the
+     * precedent this follows.
+     */
     ngOnInit(): void {
-        this.settingsService
-            .getSettings()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (settings) => (this.settings = settings),
-                error: (err) => console.error('Failed to load settings', err),
-            });
+        this.activeSection = this.permittedNavItems[0]?.id ?? '';
 
-        this.settingsService
-            .getPermissions()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (matrix) => (this.matrix = this.normalizeMatrix(matrix)),
-                error: (err) => console.error('Failed to load permissions', err),
-            });
+        // GET /settings backs both the Profile section and the Discord section's
+        // invite-link panel, so either one is reason enough to fetch it.
+        if (this.canSection('profile') || this.canSection('discord')) {
+            this.settingsService
+                .getSettings()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (settings) => (this.settings = settings),
+                    error: (err) => console.error('Failed to load settings', err),
+                });
+        }
 
-        this.loadDiscord();
+        if (this.canSection('roles')) {
+            this.settingsService
+                .getPermissions()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (matrix) => (this.matrix = this.normalizeMatrix(matrix)),
+                    error: (err) => console.error('Failed to load permissions', err),
+                });
+        }
+
+        if (this.canSection('discord')) {
+            this.loadDiscord();
+        }
     }
 
     getNavByGroup(group: string): NavItem[] {
-        return this.navItems.filter((n) => n.group === group);
+        return this.permittedNavItems.filter((n) => n.group === group);
     }
 
     /**
@@ -137,9 +208,12 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
      * "Legal documents" section DESTROYS the editor and its drafts without the
      * CanDeactivate guard ever running. Same prompt, same wording — the user
      * cannot tell (or care) which mechanism caught them.
+     *
+     * Sections the caller lacks the capability for are refused outright, so a
+     * stale id can never open a pane whose nav entry is hidden (T-0265).
      */
     setSection(id: string): void {
-        if (id === this.activeSection) {
+        if (id === this.activeSection || !this.canSection(id)) {
             return;
         }
         if (this.hasUnsavedChanges() && !confirm(UNSAVED_CHANGES_PROMPT)) {
@@ -404,6 +478,21 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         return !!this.botSettings?.applyBanRoleOnBan && !this.botSettings?.banRoleId;
     }
 
+    /**
+     * True when the guild gate is switched on while the bot cannot actually
+     * answer "is this identity in the guild?". Nothing blocks saving it — the
+     * gate fails open server-side — but turning it on before the bot is
+     * connected and verified is the one way this switch causes real harm, so it
+     * is called out loudly rather than left to be discovered by locked-out
+     * members.
+     */
+    get guildGateBotUnverified(): boolean {
+        return (
+            !!this.botSettings?.guildGateEnabled &&
+            !(this.botSettings.botEnabled && this.connection?.connected)
+        );
+    }
+
     resync(): void {
         if (this.resyncing || !this.can('manage_settings')) {
             return;
@@ -478,6 +567,7 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
                 banRoleName: b.banRoleName,
                 syncRolesOnChange: b.syncRolesOnChange,
                 applyBanRoleOnBan: b.applyBanRoleOnBan,
+                guildGateEnabled: b.guildGateEnabled,
             })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({

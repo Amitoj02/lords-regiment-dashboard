@@ -19,6 +19,11 @@ export class AppShellComponent {
     /** Reactive auth state — the shell updates when the user logs in or out. */
     readonly currentUser = this.auth.currentUser;
     readonly isAdmin = computed(() => this.auth.isAdmin());
+    /**
+     * Effective capability keys, fed to the sidebar so capability-gated entries
+     * (Settings) track the authorization matrix instead of the role flag (T-0265).
+     */
+    readonly capabilities = computed(() => this.currentUser()?.capabilities ?? []);
 
     /** Mobile off-canvas sidebar drawer state. Ignored on desktop (CSS). */
     drawerOpen = false;

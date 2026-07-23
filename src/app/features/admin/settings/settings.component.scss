@@ -3,6 +3,12 @@
     grid-template-columns: 220px 1fr;
     gap: 24px;
     align-items: start;
+
+    // No nav rendered (the caller holds neither settings capability, T-0265) —
+    // reclaim the empty rail rather than leaving a 220px gutter.
+    &--solo {
+        grid-template-columns: 1fr;
+    }
 }
 
 .settings-nav {
@@ -261,4 +267,27 @@
     align-items: center;
     gap: 6px;
     margin: 0;
+}
+
+// ── Mobile ───────────────────────────────────────────────────────────────────
+// The two-column rail costs more than it earns below 820px, and with the nav
+// now filtered per capability (T-0265) it can be as short as a single entry —
+// so stack it above the panels as a wrapping row instead of a sticky sidebar.
+@media (max-width: 820px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .settings-nav {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+    }
+
+    .nav-group {
+        flex: 1 1 auto;
+        min-width: 150px;
+    }
 }

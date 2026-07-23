@@ -15,9 +15,18 @@
         <meta name="theme-color" content="#0b0e14" />
         <!-- Icons (T-0243). All files live in `public/`, which angular.json copies
              to the dist root — that is why these hrefs are unprefixed. The .ico
-             carries 48/32/16 frames, so the `sizes` list is not a guess. -->
+             carries 48/32/16 frames, so the `sizes` list is not a guess.
+
+             There is deliberately NO `rel="icon" type="image/svg+xml"` here (T-0259).
+             The favicon.svg RealFaviconGenerator emitted was not vector art: it was a
+             75x75 raster (byte-identical to assets/images/regiment-logo-sm.png) wrapped
+             in a single <image> tag, i.e. LOWER resolution than the 96px PNG below —
+             and Chrome prefers an SVG icon over any PNG, so it won every larger surface
+             (bookmarks, history, the tab switcher, install prompts). No genuine vector
+             of the crest exists in this repo, so the link and the file were dropped and
+             Chrome now falls back to favicon-96x96.png. Do not re-add an SVG icon
+             unless it is real path data of the laurel-wreath crest. -->
         <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="48x48 32x32 16x16" />
-        <link rel="icon" type="image/svg+xml" href="favicon.svg" />
         <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
         <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
         <!-- manifest.json, not site.webmanifest: nginx's stock mime.types has no

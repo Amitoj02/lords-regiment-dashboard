@@ -25,14 +25,17 @@
             <div class="notice err aam-error">
                 <div class="n-body">{{ error }}</div>
             </div>
-            } @if (!hasAnyCapability) {
+            }
+            <!-- Nothing at all is on offer: an empty dialog reads as a bug, a
+                 stated rule does not (T-0266). -->
+            @if (!hasAnyPermittedAction) {
             <div class="notice info">
                 <div class="n-body">You don't have permission to manage this member.</div>
             </div>
             }
 
             <!-- 1 · Change rank -->
-            @if (canRanksMedals) {
+            @if (canChangeRank) {
             <section class="aam-section">
                 <div class="field-label">Rank</div>
                 <div class="row aam-inline">
@@ -55,7 +58,7 @@
             }
 
             <!-- 2 · Change role -->
-            @if (canRoles) {
+            @if (canChangeRole) {
             <section class="aam-section">
                 <div class="field-label">Role</div>
                 <div class="row aam-inline">
@@ -78,7 +81,7 @@
             }
 
             <!-- 3 · Medals -->
-            @if (canRanksMedals) {
+            @if (canManageMedals) {
             <section class="aam-section">
                 <div class="field-label">Medals</div>
 
@@ -86,7 +89,7 @@
                 <div class="aam-chips">
                     @for (award of member.medalAwards; track award.id) {
                     <span class="badge aam-chip">
-                        {{ award.title }}
+                        {{ award.title }} @if (canRemoveMedal) {
                         <button
                             type="button"
                             class="aam-chip-x"
@@ -96,13 +99,13 @@
                         >
                             ✕
                         </button>
+                        }
                     </span>
                     }
                 </div>
                 } @else {
                 <div class="aam-empty">No medals awarded yet.</div>
-                }
-
+                } @if (canAwardMedal) {
                 <div class="row aam-inline aam-award-row">
                     <select class="hf-select" [(ngModel)]="selectedMedalId">
                         <option value="">Award a medal…</option>
@@ -125,14 +128,15 @@
                         {{ awardBusy ? 'Awarding…' : 'Award' }}
                     </button>
                 </div>
+                }
             </section>
             }
 
             <!-- 4 · Suspend -->
-            @if (canRoles) {
+            @if (showSuspendSection) {
             <section class="aam-section">
                 <div class="field-label">Suspend</div>
-                @if (isActivelySuspended) {
+                @if (isActivelySuspended && canUnsuspend) {
                 <div class="aam-current aam-current-suspended">
                     <span>
                         Currently suspended until
@@ -147,7 +151,7 @@
                         {{ unsuspendBusy ? 'Lifting…' : 'Unsuspend member' }}
                     </button>
                 </div>
-                }
+                } @if (showSuspendForm) {
                 <div class="aam-stack">
                     <input
                         type="datetime-local"
@@ -181,11 +185,12 @@
                     </div>
                     }
                 </div>
+                }
             </section>
             }
 
             <!-- 5 · Ban / Unban -->
-            @if (canRoles) {
+            @if (showBanSection) {
             <section class="aam-section aam-section--last">
                 <div class="field-label">{{ member.bannedAt ? 'Ban status' : 'Ban' }}</div>
 
@@ -193,6 +198,10 @@
                 <div class="aam-current">
                     Banned on <strong>{{ member.bannedAt | date: 'MMM d, y' }}</strong>
                 </div>
+                }
+                <!-- Lifting a ban is its own permission — an admin who may see the
+                     ban is not necessarily the one who may lift it (T-0266). -->
+                @if (member.bannedAt && canUnban) {
                 <button
                     type="button"
                     class="btn btn-secondary btn-sm"
@@ -201,7 +210,7 @@
                 >
                     {{ banBusy ? 'Unbanning…' : 'Unban member' }}
                 </button>
-                } @else {
+                } @if (!member.bannedAt && showBanForm) {
                 <div class="aam-stack">
                     <input
                         type="text"

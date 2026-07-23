@@ -1,8 +1,10 @@
 <hf-app-shell [activeRoute]="'settings'">
-    <div class="settings-layout">
-        <!-- Sidebar nav -->
+    <div class="settings-layout" [ngClass]="{ 'settings-layout--solo': !visibleGroups.length }">
+        <!-- Sidebar nav — only the groups whose sections the caller may open
+             (T-0265); a group with nothing left in it drops its heading too. -->
+        @if (visibleGroups.length) {
         <aside class="settings-nav">
-            @for (group of navGroups; track group) {
+            @for (group of visibleGroups; track group) {
             <div class="nav-group">
                 <div class="nav-group-label">{{ group }}</div>
                 @for (item of getNavByGroup(group); track item) {
@@ -10,6 +12,7 @@
                     type="button"
                     class="nav-item"
                     [ngClass]="{ 'nav-item--active': activeSection === item.id }"
+                    [attr.aria-current]="activeSection === item.id ? 'true' : null"
                     (click)="setSection(item.id)"
                 >
                     {{ item.label }}
@@ -18,9 +21,18 @@
             </div>
             }
         </aside>
+        }
 
         <!-- Main content -->
         <main class="settings-main">
+            <!-- Belt and braces behind settingsAccessGuard: if the caller's
+                 capabilities are revoked while they are sitting on the page,
+                 say so rather than showing an empty frame (T-0265). -->
+            @if (!permittedNavItems.length) {
+            <hf-notice variant="info">
+                You do not have permission to manage any regiment settings.
+            </hf-notice>
+            }
             <!-- ═══ Profile & visibility ═══ -->
             @if (activeSection === 'profile') { @if (settings) {
             <div class="panel">
@@ -489,6 +501,44 @@
                         With "Apply Ban role on ban" enabled, banning a member here strips their
                         managed Discord roles and applies the configured Ban role. This is
                         reversible via unban → resync; the bot never kicks.
+                    </hf-notice>
+                    }
+
+                    <!-- SENSITIVE: guild-membership gate (T-0261). Ships OFF. -->
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Require Discord server membership</div>
+                            <div class="field-hint">
+                                Off by default. Turning this on requires every member to be in the
+                                regiment's Discord server to use the dashboard — anyone who is not
+                                is held on a join screen instead.
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                id="guild-gate-enabled"
+                                type="checkbox"
+                                [(ngModel)]="botSettings.guildGateEnabled"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    @if (guildGateBotUnverified) {
+                    <hf-notice variant="err">
+                        Do not turn this on yet. Lord Adjutant must be enabled and connected before
+                        the gate can tell who is in the server — enable the bot, click "Verify
+                        connection" above, and confirm it can see your members first.
+                    </hf-notice>
+                    } @if (botSettings.guildGateEnabled) {
+                    <hf-notice variant="warn">
+                        This switch can lock members out. While it is on, any member whose Discord
+                        account is not in the regiment's server loses the dashboard until they join
+                        — they keep only the join screen, their own profile, account deletion, the
+                        public legal pages and sign-out. Anyone holding manage_settings is exempt,
+                        so you cannot lock yourself out of this page. Only turn it on once the bot
+                        is connected and verified and the Discord invite above is a working,
+                        non-expiring link.
                     </hf-notice>
                     } @if (can('manage_settings')) {
                     <div class="row gap-8 bot-save">

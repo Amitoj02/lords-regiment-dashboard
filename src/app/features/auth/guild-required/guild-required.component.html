@@ -1,0 +1,97 @@
+<div class="apply-page">
+    <div class="apply-inner">
+        <div class="apply-header">
+            <img
+                src="assets/images/regiment-logo.png"
+                width="48"
+                height="48"
+                alt="Lord Regiment crest"
+                class="apply-logo"
+            />
+            <h1 class="serif-display apply-title">Discord Membership Required</h1>
+            <p class="apply-subtitle">The regiment runs on Discord — the dashboard follows it.</p>
+        </div>
+
+        <div class="panel apply-panel">
+            <div class="panel-body gate-centre">
+                <div class="gate-icon" aria-hidden="true">🛡</div>
+                <h2 class="serif gate-title">You are not in the regiment Discord server</h2>
+                <p class="gate-text">
+                    Orders, muster calls and announcements are all issued on Discord, so being in
+                    the server is required to use the dashboard. Your sign-in is still good — join
+                    the server, check again, and you will be let straight through to where you were
+                    headed.
+                </p>
+
+                <hf-notice variant="info">
+                    Discord is required for all regiment operations — voice comms, orders, and
+                    announcements.
+                </hf-notice>
+
+                <!-- No invite configured (T-0234 idiom): the button is hidden entirely
+                     rather than rendered dead, and this explains what to do instead. -->
+                @if (!discordInviteUrl) {
+                <hf-notice variant="warn" class="gate-invite-fallback">
+                    No invite link is set up for the regiment yet. Ask an officer to send you one,
+                    then come back and check again.
+                </hf-notice>
+                }
+
+                <div class="row gap-12 gate-actions">
+                    @if (discordInviteUrl) {
+                    <a
+                        [href]="discordInviteUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-discord gate-join"
+                        >Join the Discord</a
+                    >
+                    }
+                    <button
+                        type="button"
+                        class="btn btn-primary gate-recheck"
+                        [disabled]="checking()"
+                        [attr.aria-busy]="checking() ? 'true' : null"
+                        (click)="recheck()"
+                    >
+                        @if (checking()) {
+                        <span class="gate-spinner" aria-hidden="true"></span>
+                        <span>Checking…</span>
+                        } @else {
+                        <span>I have joined — check again</span>
+                        }
+                    </button>
+                    <button type="button" class="btn btn-ghost gate-signout" (click)="signOut()">
+                        Sign out
+                    </button>
+                </div>
+
+                <!-- Live region: the spinner alone says nothing to a screen reader. -->
+                <p class="gate-status" role="status">
+                    @if (checking()) { Checking your membership with Discord… }
+                </p>
+            </div>
+        </div>
+
+        <div class="panel apply-panel">
+            <div class="panel-header">
+                <span class="panel-title">Still open to you</span>
+            </div>
+            <div class="panel-body">
+                <p class="gate-text">
+                    Standing outside the server never locks you out of your own account or of what
+                    we have published about how we handle it.
+                </p>
+                <ul class="gate-links">
+                    <li><a routerLink="/app/profile">My profile</a></li>
+                    <li>
+                        <a routerLink="/app/account-deletion">Discharge &amp; account deletion</a>
+                    </li>
+                    <li><a routerLink="/terms">Terms &amp; Conditions</a></li>
+                    <li><a routerLink="/privacy">Privacy Policy</a></li>
+                    <li><a routerLink="/guidelines">Community Guidelines</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

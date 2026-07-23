@@ -49,9 +49,12 @@ export interface SettingsDto {
 }
 
 /**
- * Body for PATCH /settings — every field optional. The Discord guild binding
- * (`discordServerId`) is intentionally NOT editable here; it moves through the
- * dedicated transfer-discord action.
+ * Body for PATCH /settings — every field optional.
+ *
+ * `discordServerId` is deliberately omitted: `POST /discord/bind` (the connect
+ * wizard, `DiscordService.bind()`) is the SOLE binder of the regiment's guild,
+ * so the id can only ever change down that one audited path. The separate
+ * rebinding action that used to own it has been retired (T-0264).
  */
 export type UpdateSettingsPayload = Partial<Omit<SettingsDto, 'discordServerId'>>;
 
