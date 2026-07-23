@@ -9,7 +9,7 @@ Dashboard frontend, report it privately so it can be fixed before it is
 disclosed:
 
 - **Preferred:** open a [GitHub private security advisory](https://github.com/Amitoj02/lords-regiment-dashboard/security/advisories/new)
-  (Security → Advisories → *Report a vulnerability*).
+  (Security → Advisories → _Report a vulnerability_).
 - **Email:** contact@amitoj.dev
 
 Please include a description of the issue and its impact, steps to reproduce

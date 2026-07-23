@@ -16,6 +16,7 @@ Steps to reproduce the behavior (route, action, what you clicked).
 What you expected to happen.
 
 **Environment**
+
 - Browser + version:
 - Commit / version:
 
