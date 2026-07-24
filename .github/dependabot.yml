@@ -46,6 +46,20 @@ updates:
           - 'angular-eslint'
           - 'ng-*'
           - 'typescript'
+    ignore:
+      # TypeScript's major is Angular's to move, not Dependabot's. Every release
+      # in the Angular 22 line — 22.0.8 and the 22.1.0-rc.0 prerelease alike —
+      # peers `typescript >=6.0 <6.1`, so a TS 7 bump cannot resolve and `npm ci`
+      # dies with ERESOLVE. That is npm being right, not npm being strict: forced
+      # through with --legacy-peer-deps, @angular/compiler-cli then throws
+      # `Cannot read properties of undefined (reading 'Error')` out of
+      # readConfiguration and the build fails before a single file is compiled.
+      # There is no version of this toolchain the bump can land against, so the
+      # PR is unmergeable by construction and reopens weekly until it is ignored.
+      # Lift this when Angular itself widens the peer range; the TS major will
+      # arrive as part of that Angular bump, in the `angular` group above.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     labels:
       - dependencies
 
