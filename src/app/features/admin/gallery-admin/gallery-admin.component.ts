@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
     selector: 'app-gallery-admin',
     templateUrl: './gallery-admin.component.html',
     styleUrls: ['./gallery-admin.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class GalleryAdminComponent implements OnInit {

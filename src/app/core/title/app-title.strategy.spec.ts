@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, TitleStrategy } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -6,7 +6,11 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { AppTitleStrategy } from './app-title.strategy';
 import { PageTitleService } from './page-title.service';
 
-@Component({ template: '<p>stub</p>', standalone: false })
+@Component({
+    template: '<p>stub</p>',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
+})
 class StubPageComponent {}
 
 describe('AppTitleStrategy', () => {

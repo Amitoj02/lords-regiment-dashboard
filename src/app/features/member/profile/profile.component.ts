@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
@@ -15,6 +15,7 @@ import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/s
     selector: 'hf-profile',
     templateUrl: './profile.component.html',
     styleUrls: ['./profile.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class ProfileComponent implements OnInit {

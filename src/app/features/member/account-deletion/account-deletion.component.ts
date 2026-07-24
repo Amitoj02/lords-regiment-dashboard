@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
@@ -14,6 +14,7 @@ interface DeletionRequestResult {
     selector: 'app-account-deletion',
     templateUrl: './account-deletion.component.html',
     styleUrls: ['./account-deletion.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class AccountDeletionComponent {

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
@@ -20,6 +20,7 @@ interface HonorMedal {
     selector: 'hf-dashboard',
     templateUrl: './dashboard.component.html',
     styleUrls: ['./dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class DashboardComponent implements OnInit {

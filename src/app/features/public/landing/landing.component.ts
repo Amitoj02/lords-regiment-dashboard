@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { RegimentPresentation } from '../../../core/models/api.model';
@@ -19,6 +19,7 @@ type GalleryPreview = GalleryItem & { previewUrl: string };
     selector: 'hf-landing',
     templateUrl: './landing.component.html',
     styleUrls: ['./landing.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class LandingComponent implements OnInit {

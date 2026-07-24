@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     BotOperation,
@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
     selector: 'app-bot-status',
     templateUrl: './bot-status.component.html',
     styleUrls: ['./bot-status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class BotStatusComponent implements OnInit {

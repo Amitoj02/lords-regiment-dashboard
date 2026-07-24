@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PermissionsMatrix, SettingsService } from './settings.service';
 
@@ -9,7 +9,7 @@ describe('SettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
         });
         service = TestBed.inject(SettingsService);
         httpMock = TestBed.inject(HttpTestingController);

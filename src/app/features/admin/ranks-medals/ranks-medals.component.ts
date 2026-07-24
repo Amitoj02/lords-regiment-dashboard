@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, Subscription, switchMap, timer } from 'rxjs';
 import { Medal, Rank } from '../../../core/models/member.model';
@@ -56,6 +56,7 @@ interface RelinkPrompt {
     selector: 'app-ranks-medals',
     templateUrl: './ranks-medals.component.html',
     styleUrls: ['./ranks-medals.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class RanksMedalsComponent implements OnInit {

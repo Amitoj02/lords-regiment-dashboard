@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     standalone: false,
     selector: 'hf-topbar',
     templateUrl: './topbar.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent {

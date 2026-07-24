@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, of } from 'rxjs';
@@ -36,6 +36,7 @@ const DOC_TITLES: Record<LegalDoc, string> = {
     selector: 'hf-legal',
     templateUrl: './legal.component.html',
     styleUrls: ['./legal.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class LegalComponent implements OnInit {

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import {
     DEFAULT_STORAGE_POLICY,
@@ -25,7 +25,7 @@ describe('StorageService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
         });
         service = TestBed.inject(StorageService);
         httpMock = TestBed.inject(HttpTestingController);

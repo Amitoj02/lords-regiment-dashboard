@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 export type BadgeVariant = 'brass' | 'laurel' | 'ox' | 'blue' | 'parch' | 'solid' | '';
 
@@ -6,6 +6,7 @@ export type BadgeVariant = 'brass' | 'laurel' | 'ox' | 'blue' | 'parch' | 'solid
     standalone: false,
     selector: 'hf-badge',
     templateUrl: './badge.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./badge.component.scss'],
 })
 export class BadgeComponent {

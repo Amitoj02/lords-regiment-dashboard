@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApplicationsService } from '../../../core/services/applications.service';
@@ -20,6 +20,7 @@ import { RegimentService } from '../../../core/services/regiment.service';
     selector: 'hf-application-form',
     templateUrl: './application-form.component.html',
     styleUrls: ['./application-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class ApplicationFormComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/services/auth.service';
     selector: 'hf-roster',
     templateUrl: './roster.component.html',
     styleUrls: ['./roster.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class RosterComponent implements OnInit {

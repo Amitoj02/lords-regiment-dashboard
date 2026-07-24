@@ -83,8 +83,9 @@
                     <div class="info-row">
                         <span class="field-label">Bot role position</span>
                         <span class="mono"
-                            >{{ connection?.botRolePosition !== null && connection?.botRolePosition
-                            !== undefined ? '#' + connection?.botRolePosition : '—' }}</span
+                            >{{ $safeNavigationMigration(connection?.botRolePosition) !== null &&
+                            $safeNavigationMigration(connection?.botRolePosition) !== undefined ?
+                            '#' + connection?.botRolePosition : '—' }}</span
                         >
                     </div>
                     <div class="info-row">

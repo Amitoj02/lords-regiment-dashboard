@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 export type NoticeVariant = 'warn' | 'err' | 'ok' | 'info' | '';
 
@@ -6,6 +6,7 @@ export type NoticeVariant = 'warn' | 'err' | 'ok' | 'info' | '';
     standalone: false,
     selector: 'hf-notice',
     templateUrl: './notice.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./notice.component.scss'],
 })
 export class NoticeComponent {

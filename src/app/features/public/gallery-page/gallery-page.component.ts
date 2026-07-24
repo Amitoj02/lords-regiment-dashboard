@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem, GalleryItemType } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
     selector: 'hf-gallery-page',
     templateUrl: './gallery-page.component.html',
     styleUrls: ['./gallery-page.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class GalleryPageComponent implements OnInit {

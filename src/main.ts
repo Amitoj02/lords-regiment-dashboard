@@ -1,3 +1,4 @@
+import { provideZoneChangeDetection } from '@angular/core';
 import { platformBrowser } from '@angular/platform-browser';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
@@ -15,6 +16,6 @@ if (environment.production) {
 
 platformBrowser()
     .bootstrapModule(AppModule, {
-        ngZoneEventCoalescing: true,
+        applicationProviders: [provideZoneChangeDetection({ eventCoalescing: true })],
     })
     .catch((err) => console.error(err));

@@ -1,8 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependabot for the Lords Regiment Dashboard SPA.
+#
+# `target-branch: dev` on every ecosystem is deliberate. The branch model is
+# main <- dev <- topic branches, and main only ever moves by merging dev; a bump
+# landing straight on main would put an unrehearsed version one deploy away from
+# production. Queuing bumps behind the same gate as everything else costs a merge
+# and buys the whole integration suite.
+#
+# NOTE: GitHub reads THIS FILE FROM THE DEFAULT BRANCH (main). The redirect only
+# takes effect once this change has travelled dev -> main.
+#
+# The `angular` group's exact membership matters more than it looks. An Angular
+# major is not a package bump, it is a toolchain move: @angular/core, the CLI,
+# compiler-cli, angular-eslint, zone.js and the TypeScript compiler all carry
+# peer ranges on one another. Splitting them across two PRs — which is what an
+# unqualified `dependency-type: development` group did here — produces two PRs
+# that each fail `npm ci` with ERESOLVE and can never go green independently.
+# Hence the explicit exclude-patterns below: the whole toolchain, or nothing.
+# ─────────────────────────────────────────────────────────────────────────────
 version: 2
 updates:
   # Frontend npm dependencies
   - package-ecosystem: npm
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
@@ -11,15 +32,27 @@ updates:
         patterns:
           - '@angular/*'
           - '@angular-devkit/*'
+          - '@schematics/*'
+          - 'angular-eslint'
           - 'ng-*'
+          - 'zone.js'
+          - 'typescript'
       dev-dependencies:
         dependency-type: development
+        exclude-patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@schematics/*'
+          - 'angular-eslint'
+          - 'ng-*'
+          - 'typescript'
     labels:
       - dependencies
 
   # GitHub Actions used by the workflows
   - package-ecosystem: github-actions
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
     labels:
@@ -29,6 +62,7 @@ updates:
   # The production Docker base image (nginx / node build stage)
   - package-ecosystem: docker
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
     labels:

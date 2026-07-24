@@ -1,4 +1,11 @@
-import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    Input,
+    OnInit,
+    inject,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
@@ -8,6 +15,7 @@ import { RegimentService } from '../../../core/services/regiment.service';
     selector: 'hf-public-nav',
     templateUrl: './public-nav.component.html',
     styleUrls: ['./public-nav.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class PublicNavComponent implements OnInit {

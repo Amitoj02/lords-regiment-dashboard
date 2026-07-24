@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -18,6 +18,7 @@ import { AuthService } from '../../../core/services/auth.service';
     selector: 'hf-auth-callback',
     standalone: false,
     templateUrl: './auth-callback.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './auth-callback.component.scss',
 })
 export class AuthCallbackComponent implements OnInit {
