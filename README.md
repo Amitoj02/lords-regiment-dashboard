@@ -427,7 +427,7 @@ Please don't open a public issue for a vulnerability. Report it through a [priva
 
 You are free to fork this, rename it after your own regiment, strip the brass out of the design tokens and run it for a community that has nothing to do with muskets. If you do, we'd love to hear about it.
 
-The regiment's crest, wordmark and the in-game imagery under `src/assets/images/` are project branding and game media, not part of the MIT grant on the source code. Bring your own art.
+The regiment's crest, wordmark and the in-game imagery under `src/assets/images/` are project branding and game media, not part of the MIT grant on the source code — see [NOTICE](./NOTICE). Bring your own art.
 
 ---
 

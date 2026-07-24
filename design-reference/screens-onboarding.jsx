@@ -231,7 +231,7 @@ function OwnerSetupDiscord() {
               <div className="grid-2">
                 <div>
                   <label className="field-label">Server ID</label>
-                  <input className="input mono" defaultValue="1107422384951329421"/>
+                  <input className="input mono" defaultValue="000000000000000000"/>
                 </div>
                 <div>
                   <label className="field-label">Bot connection status</label>
