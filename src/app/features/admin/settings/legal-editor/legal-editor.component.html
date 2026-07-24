@@ -46,10 +46,10 @@
         </div>
 
         <p class="field-hint doc-meta">
-            @if (activeDocument?.updatedAt) { Last edited {{ activeDocument?.updatedAt |
-            date:'medium' }} @if (activeDocument?.updatedByName) { by {{
-            activeDocument?.updatedByName }} } } @else { Never edited — visitors currently see the
-            copy that ships with the site. }
+            @if (activeDocument?.updatedAt) { Last edited {{
+            $safeNavigationMigration(activeDocument?.updatedAt) | date:'medium' }} @if
+            (activeDocument?.updatedByName) { by {{ activeDocument?.updatedByName }} } } @else {
+            Never edited — visitors currently see the copy that ships with the site. }
         </p>
 
         <hf-notice variant="info">

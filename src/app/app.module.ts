@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { TitleStrategy } from '@angular/router';
@@ -15,7 +15,7 @@ import { SharedModule } from './shared/shared.module';
     declarations: [AppComponent],
     imports: [BrowserModule, AppRoutingModule, CoreModule, SharedModule],
     providers: [
-        provideHttpClient(withInterceptors([jwtInterceptor])),
+        provideHttpClient(withXhr(), withInterceptors([jwtInterceptor])),
         // Hydrate the current user from /auth/me before the app renders, so route
         // guards see the correct auth state on the very first navigation.
         {

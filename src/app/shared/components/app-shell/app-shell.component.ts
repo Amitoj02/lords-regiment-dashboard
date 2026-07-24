@@ -1,4 +1,4 @@
-import { Component, Input, computed, inject } from '@angular/core';
+import { Component, Input, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
     standalone: false,
     selector: 'hf-app-shell',
     templateUrl: './app-shell.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./app-shell.component.scss'],
 })
 export class AppShellComponent {

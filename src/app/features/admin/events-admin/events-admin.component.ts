@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { EventsService } from '../../../core/services/events.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
     selector: 'app-events-admin',
     templateUrl: './events-admin.component.html',
     styleUrls: ['./events-admin.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class EventsAdminComponent implements OnInit {

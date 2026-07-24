@@ -1,4 +1,11 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    OnInit,
+    inject,
+    signal,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -19,6 +26,7 @@ import { ToastService } from '../../../core/services/toast.service';
     selector: 'hf-guild-required',
     standalone: false,
     templateUrl: './guild-required.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./guild-required.component.scss'],
 })
 export class GuildRequiredComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
@@ -9,6 +9,7 @@ import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-em
     selector: 'app-gallery-mod',
     templateUrl: './gallery-mod.component.html',
     styleUrls: ['./gallery-mod.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class GalleryModComponent implements OnInit {

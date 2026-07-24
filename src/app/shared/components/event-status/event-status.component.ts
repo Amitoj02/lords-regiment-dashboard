@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { EventStatus } from '../../../core/models/event.model';
 
 @Component({
     standalone: false,
     selector: 'hf-event-status',
     templateUrl: './event-status.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./event-status.component.scss'],
 })
 export class EventStatusComponent {

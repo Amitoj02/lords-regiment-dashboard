@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 interface PlatformConfig {
     key: string;
@@ -16,6 +16,7 @@ const PLATFORM_CONFIGS: PlatformConfig[] = [
     standalone: false,
     selector: 'hf-platform-badges',
     templateUrl: './platform-badges.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./platform-badges.component.scss'],
 })
 export class PlatformBadgesComponent {

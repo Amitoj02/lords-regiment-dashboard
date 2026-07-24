@@ -1,4 +1,11 @@
-import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    OnInit,
+    ViewChild,
+    inject,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MemberRole } from '../../../core/models/member.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -38,6 +45,7 @@ interface NavItem {
     selector: 'app-settings',
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class SettingsComponent implements OnInit, HasUnsavedChanges {

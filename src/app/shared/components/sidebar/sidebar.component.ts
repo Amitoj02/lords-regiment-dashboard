@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { SETTINGS_CAPABILITIES } from '../../../core/guards/settings-access.guard';
 
 export interface NavUser {
@@ -45,6 +45,7 @@ interface NavSection {
     standalone: false,
     selector: 'hf-sidebar',
     templateUrl: './sidebar.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent {

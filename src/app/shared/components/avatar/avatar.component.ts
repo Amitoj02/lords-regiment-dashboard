@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     standalone: false,
     selector: 'hf-avatar',
     templateUrl: './avatar.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./avatar.component.scss'],
 })
 export class AvatarComponent {

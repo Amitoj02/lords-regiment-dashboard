@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationsService } from './applications.service';
 import { ApiApplicantApplication, ApiApplication } from '../models/api.model';
@@ -65,7 +65,11 @@ describe('ApplicationsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [ApplicationsService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                ApplicationsService,
+                provideHttpClient(withXhr()),
+                provideHttpClientTesting(),
+            ],
         });
         service = TestBed.inject(ApplicationsService);
         httpMock = TestBed.inject(HttpTestingController);

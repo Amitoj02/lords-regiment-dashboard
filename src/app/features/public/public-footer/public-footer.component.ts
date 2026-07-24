@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { RegimentService } from '../../../core/services/regiment.service';
@@ -7,6 +7,7 @@ import { RegimentService } from '../../../core/services/regiment.service';
     selector: 'hf-public-footer',
     templateUrl: './public-footer.component.html',
     styleUrls: ['./public-footer.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class PublicFooterComponent implements OnInit {

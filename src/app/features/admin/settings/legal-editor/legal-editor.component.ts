@@ -1,4 +1,11 @@
-import { Component, DestroyRef, HostListener, OnInit, inject } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    HostListener,
+    OnInit,
+    inject,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiAdminRegimentDocument, RegimentDocumentSlug } from '../../../../core/models/api.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -39,6 +46,7 @@ const DOCUMENT_TABS: { slug: RegimentDocumentSlug; label: string; route: string 
     selector: 'hf-legal-editor',
     templateUrl: './legal-editor.component.html',
     styleUrls: ['./legal-editor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class LegalEditorComponent implements OnInit, HasUnsavedChanges {
