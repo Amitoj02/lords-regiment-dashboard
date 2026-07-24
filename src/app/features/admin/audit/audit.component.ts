@@ -6,6 +6,7 @@ import {
     ViewChild,
     inject,
     OnInit,
+    ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditLog, DiscordSyncStatus } from '../../../core/models/audit-log.model';
@@ -17,6 +18,7 @@ import { DiffLine, diffLines, isJsonValue, prettyAuditValue } from './audit-diff
     selector: 'app-audit',
     templateUrl: './audit.component.html',
     styleUrls: ['./audit.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class AuditComponent implements OnInit {

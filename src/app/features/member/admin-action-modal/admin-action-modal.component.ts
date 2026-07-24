@@ -6,6 +6,7 @@ import {
     Input,
     Output,
     inject,
+    ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -42,6 +43,7 @@ import { ToastService } from '../../../core/services/toast.service';
     selector: 'hf-admin-action-modal',
     templateUrl: './admin-action-modal.component.html',
     styleUrls: ['./admin-action-modal.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class AdminActionModalComponent {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * A rank insignia: renders the uploaded rank image (padded, never cropped) and
@@ -10,6 +10,7 @@ import { Component, Input } from '@angular/core';
     standalone: false,
     selector: 'hf-rank-icon',
     templateUrl: './rank-icon.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./rank-icon.component.scss'],
 })
 export class RankIconComponent {

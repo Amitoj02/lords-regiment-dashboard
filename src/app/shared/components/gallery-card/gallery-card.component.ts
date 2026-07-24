@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { MediaEmbed, MediaEmbedService } from '../../services/media-embed.service';
 
@@ -20,6 +20,7 @@ import { MediaEmbed, MediaEmbedService } from '../../services/media-embed.servic
     selector: 'hf-gallery-card',
     templateUrl: './gallery-card.component.html',
     styleUrls: ['./gallery-card.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class GalleryCardComponent {

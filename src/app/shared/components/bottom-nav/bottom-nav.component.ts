@@ -1,4 +1,11 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    EventEmitter,
+    inject,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface BottomNavItem {
@@ -19,6 +26,7 @@ interface BottomNavItem {
     standalone: false,
     selector: 'hf-bottom-nav',
     templateUrl: './bottom-nav.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./bottom-nav.component.scss'],
 })
 export class BottomNavComponent {

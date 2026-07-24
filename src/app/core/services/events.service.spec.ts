@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventsService } from './events.service';
 import { ApiEvent, PaginatedResponse } from '../models/api.model';
@@ -81,7 +81,7 @@ describe('EventsService', () => {
         });
 
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
         });
         service = TestBed.inject(EventsService);
         httpMock = TestBed.inject(HttpTestingController);

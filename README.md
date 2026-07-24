@@ -8,7 +8,7 @@ This repository is the **Angular single-page app** those players actually use: a
   <a href="https://github.com/Amitoj02/lords-regiment-dashboard/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Amitoj02/lords-regiment-dashboard/ci.yml?branch=main&label=CI&logo=github&logoColor=white&style=flat-square"></a>
   <a href="https://lordsofholdfast.com"><img alt="Live site" src="https://img.shields.io/website?url=https%3A%2F%2Flordsofholdfast.com&label=lordsofholdfast.com&up_message=live&up_color=6a8b4e&down_color=a64d44&style=flat-square"></a>
   <a href="./package.json"><img alt="Angular" src="https://img.shields.io/github/package-json/dependency-version/Amitoj02/lords-regiment-dashboard/@angular/core?label=Angular&logo=angular&logoColor=white&color=DD0031&style=flat-square"></a>
-  <a href="./package.json"><img alt="Node" src="https://img.shields.io/badge/Node-18.19%20%C2%B7%2020.11%20%C2%B7%2022%2B-5FA04E?logo=nodedotjs&logoColor=white&style=flat-square"></a>
+  <a href="./package.json"><img alt="Node" src="https://img.shields.io/badge/Node-22.22%20%C2%B7%2024.15%20%C2%B7%2026%2B-5FA04E?logo=nodedotjs&logoColor=white&style=flat-square"></a>
 </p>
 <p align="left">
   <a href="./Dockerfile"><img alt="Docker" src="https://img.shields.io/badge/Docker-multi--stage-2496ED?logo=docker&logoColor=white&style=flat-square"></a>
@@ -120,7 +120,7 @@ Four areas, each a lazy-loaded feature module with its own route table.
 
 ## 🚀 Quickstart
 
-You need [Node](https://nodejs.org) `^18.19.1 || ^20.11.1 || >=22.0.0` and npm `>=10` (that's the `engines` field in `package.json`).
+You need [Node](https://nodejs.org) `^22.22.3 || ^24.15.0 || >=26.0.0` and npm `>=10` (that's the `engines` field in `package.json`). Those are the Angular CLI's own floors, patch versions and all — it refuses to start below them.
 
 ```bash
 git clone https://github.com/Amitoj02/lords-regiment-dashboard.git
@@ -265,7 +265,7 @@ nginx.conf                       # what serves the production build
 - **Every route sets a document title.** `AppTitleStrategy` writes on _every_ navigation (unlike `DefaultTitleStrategy`) in the format `"<Page> | Lords Regiment"`, and never throws — a throw in `updateTitle` aborts navigation app-wide. Titles live only on leaf routes on purpose: `TitleStrategy` takes the deepest one it finds, so a title on a shell route would silently become the fallback for every child that forgot its own.
 - **Production silences `console.log/debug/info`** in [`main.ts`](./src/main.ts); warnings and errors survive. Bootstraps with `ngZoneEventCoalescing: true`.
 - **`CoreModule` holds no providers at all** — everything is `providedIn: 'root'` or a function. It exists solely to throw if it is imported twice.
-- **Build budgets** (production): the initial bundle warns at 540 kB and errors at 1 MB; any single component stylesheet warns at 6 kB and errors at 8 kB. That is the mechanism that keeps the no-extra-dependencies posture honest.
+- **Build budgets** (production): the initial bundle warns at 620 kB and errors at 1 MB; any single component stylesheet warns at 6 kB and errors at 8 kB. That is the mechanism that keeps the no-extra-dependencies posture honest.
 - [`CLAUDE.md`](./CLAUDE.md) is the long-form architecture reference — richer than this section, and honest about its own stale corners (some routing details predate the current `/app/*` layout).
 
 </details>
@@ -351,7 +351,7 @@ Karma and Jasmine, **56 spec files** sitting beside the code they cover — serv
 
 **CI** — [`.github/workflows/ci.yml`](./.github/workflows/ci.yml), workflow **CI**, job **Lint, build & test**. Runs on a push to any branch and on pull requests into `main` or `dev`, in the four-step order above. It declares top-level `permissions: contents: read` and references **no secrets at all**, so a fork PR runs the identical gate. The CI Node major deliberately tracks the Dockerfile's base image — testing on a different major than the release build ships is how a runtime regression slips past.
 
-**Dependabot** runs weekly across npm (with `@angular/*` and `@angular-devkit/*` grouped), GitHub Actions and Docker base images.
+**Dependabot** runs weekly across npm, GitHub Actions and Docker base images, and opens against `dev` rather than `main`. The npm `angular` group is deliberately wide — `@angular/*`, `@angular-devkit/*`, `@schematics/*`, `angular-eslint`, `zone.js` and `typescript` — because Angular peers all of them to one another. A bump that arrives without its siblings cannot resolve, and no amount of rebasing makes it mergeable.
 
 <details>
 <summary><strong>Traps that have cost real time</strong></summary>

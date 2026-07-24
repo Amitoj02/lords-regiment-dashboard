@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 /** Rendered size of a medal tile. */
 export type MedalSize = 'sm' | 'md' | 'lg';
@@ -12,6 +12,7 @@ export type MedalSize = 'sm' | 'md' | 'lg';
     standalone: false,
     selector: 'hf-medal',
     templateUrl: './medal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./medal.component.scss'],
 })
 export class MedalComponent {

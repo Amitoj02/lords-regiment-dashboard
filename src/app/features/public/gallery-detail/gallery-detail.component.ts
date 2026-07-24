@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem } from '../../../core/models/gallery.model';
@@ -16,6 +16,7 @@ import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-em
     selector: 'hf-gallery-detail',
     templateUrl: './gallery-detail.component.html',
     styleUrls: ['./gallery-detail.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class GalleryDetailComponent implements OnInit {

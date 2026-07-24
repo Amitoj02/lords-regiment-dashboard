@@ -1,4 +1,11 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    OnInit,
+    inject,
+    signal,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MyApplication } from '../../../core/models/application.model';
@@ -20,6 +27,7 @@ import { ApplicationsService } from '../../../core/services/applications.service
     selector: 'hf-application-status',
     templateUrl: './application-status.component.html',
     styleUrls: ['./application-status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class ApplicationStatusComponent implements OnInit {

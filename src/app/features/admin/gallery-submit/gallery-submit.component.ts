@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryFileInput, GalleryService } from '../../../core/services/gallery.service';
@@ -33,6 +33,7 @@ interface UploadedFile {
     selector: 'app-gallery-submit',
     templateUrl: './gallery-submit.component.html',
     styleUrls: ['./gallery-submit.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class GallerySubmitComponent implements OnInit {

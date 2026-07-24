@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Application } from '../../../core/models/application.model';
 import { ApplicationsService } from '../../../core/services/applications.service';
@@ -33,6 +33,7 @@ const DECISION_VERB: Record<string, string> = {
     selector: 'app-applications',
     templateUrl: './applications.component.html',
     styleUrls: ['./applications.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class ApplicationsComponent implements OnInit {

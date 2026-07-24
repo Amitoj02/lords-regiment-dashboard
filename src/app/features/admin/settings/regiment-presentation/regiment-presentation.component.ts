@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegimentPresentation } from '../../../../core/models/api.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -60,6 +60,7 @@ interface PresentationDraft {
     selector: 'hf-regiment-presentation',
     templateUrl: './regiment-presentation.component.html',
     styleUrls: ['./regiment-presentation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class RegimentPresentationComponent implements OnInit, HasUnsavedChanges {

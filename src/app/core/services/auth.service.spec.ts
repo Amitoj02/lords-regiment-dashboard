@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -30,7 +30,7 @@ describe('AuthService post-login routing', () => {
         TestBed.configureTestingModule({
             providers: [
                 AuthService,
-                provideHttpClient(),
+                provideHttpClient(withXhr()),
                 provideHttpClientTesting(),
                 { provide: Router, useValue: router },
                 { provide: ApplicationsService, useValue: applications },
@@ -240,7 +240,7 @@ describe('AuthService guild-membership gate (T-0261/T-0262)', () => {
         TestBed.configureTestingModule({
             providers: [
                 AuthService,
-                provideHttpClient(),
+                provideHttpClient(withXhr()),
                 provideHttpClientTesting(),
                 { provide: Router, useValue: router },
                 {
