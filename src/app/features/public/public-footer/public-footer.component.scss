@@ -86,6 +86,16 @@
     color: var(--t-500);
 }
 
+.footer-source-link {
+    color: var(--brass-400);
+    text-decoration: none;
+    transition: color 0.15s;
+
+    &:hover {
+        color: var(--brass-300);
+    }
+}
+
 // ───────── Mobile ─────────
 @media (max-width: 820px) {
     .public-footer {
