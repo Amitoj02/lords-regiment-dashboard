@@ -1,10 +1,14 @@
 name: CI
 
 on:
+  # Every branch, so a PR stacked on another topic branch is still checked — the
+  # pull_request trigger below filters on the BASE branch and would skip it.
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
-    branches: [main]
+    # `dev` is the integration branch (main <- dev <- topic branches) and gets
+    # exactly the same gate main does.
+    branches: [main, dev]
 
 permissions:
   contents: read
@@ -16,12 +20,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          # Must track the Dockerfile's base image — testing on a different major
+          # than the release build ships is how a runtime regression slips past.
+          node-version: 26
           cache: npm
 
       - name: Install dependencies
