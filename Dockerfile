@@ -9,13 +9,13 @@
 # This image is the `web` service of the backend repo's docker-compose stack
 # (build context ../lords-regiment-dashboard).
 # ─────────────────────────────────────────────────────────────────────────────
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 # ── Development image: ng serve (command supplied by the compose dev override) ─
-FROM node:22-alpine AS dev
+FROM node:26-alpine AS dev
 WORKDIR /app
 ENV NODE_ENV=development
 COPY --from=deps /app/node_modules ./node_modules
