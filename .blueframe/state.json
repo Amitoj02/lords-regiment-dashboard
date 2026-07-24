@@ -16575,7 +16575,7 @@
           "from": "planned",
           "to": "in_progress",
           "by": "claude",
-          "note": "DISCORD_MOCK is NOT the only way in: a JWT signed with the backend .env JWT_SECRET for sub 00000000-0000-4000-8000-000000000020 / did 400958439544848384, dropped into localStorage lords_access_token, yields a full-capability Owner session on :4200. Render + dirty-state paths verified; save/upload round-trips still unexercised."
+          "note": "DISCORD_MOCK is NOT the only way in: a JWT signed with the backend .env JWT_SECRET for sub 00000000-0000-4000-8000-000000000020 / did <owner Discord ID>, dropped into localStorage lords_access_token, yields a full-capability Owner session on :4200. Render + dirty-state paths verified; save/upload round-trips still unexercised."
         }
       ]
     },

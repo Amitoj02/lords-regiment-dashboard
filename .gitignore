@@ -41,3 +41,8 @@ testem.log
 .DS_Store
 Thumbs.db
 task-dashboard/
+
+# Vendored Claude skills are local developer tooling, not part of the app.
+# Not tracked: third-party skills carry their own (often unstated) license terms,
+# and this repo is public.
+.claude/skills/
