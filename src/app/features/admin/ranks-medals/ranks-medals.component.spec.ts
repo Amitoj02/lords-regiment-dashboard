@@ -124,11 +124,14 @@ describe('RanksMedalsComponent', () => {
         ranksService.delete.and.returnValue(of(undefined));
         ranksService.reorder.and.returnValue(of(ranks));
         // Default: the change queued nothing (no holders / bot off), so no poll.
-        ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: null }));
+        ranksService.linkDiscord.and.returnValue(
+            of({ entity: rank(), relinkBatchId: null, warning: null }),
+        );
         ranksService.unlinkDiscord.and.returnValue(
             of({
                 entity: rank({ discordLinked: false, discordRoleId: null }),
                 relinkBatchId: null,
+                warning: null,
             }),
         );
 
@@ -137,11 +140,14 @@ describe('RanksMedalsComponent', () => {
         medalsService.update.and.returnValue(of(medal()));
         medalsService.delete.and.returnValue(of(undefined));
         medalsService.reorder.and.returnValue(of(medals));
-        medalsService.linkDiscord.and.returnValue(of({ entity: medal(), relinkBatchId: null }));
+        medalsService.linkDiscord.and.returnValue(
+            of({ entity: medal(), relinkBatchId: null, warning: null }),
+        );
         medalsService.unlinkDiscord.and.returnValue(
             of({
                 entity: medal({ discordLinked: false, discordRoleId: null }),
                 relinkBatchId: null,
+                warning: null,
             }),
         );
 
@@ -263,6 +269,63 @@ describe('RanksMedalsComponent', () => {
         expect(medalsService.linkDiscord).toHaveBeenCalledWith('m1', 'd1', 'Sergeant');
     });
 
+    // ── Privileged-role advisory (lords-dashboard-backend:T-0189) ────────────
+    describe('a privileged Discord role', () => {
+        const WARNING = 'Heads up: this Discord role grants privileged permissions.';
+
+        /** Link r1 to a role the API accepts but warns about. */
+        function linkWithWarning(): void {
+            setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false, holders: 0 })]);
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: null, warning: WARNING }),
+            );
+            component.selectRankEdit(component.ranks[0]);
+            component.onRoleSelect('d2');
+        }
+
+        it('links anyway and shows the advisory — NOT as an error', () => {
+            linkWithWarning();
+
+            expect(component.editDiscordLinked).toBeTrue();
+            expect(component.roleWarning).toBe(WARNING);
+            // The err channel stays clean: nothing failed and nothing needs retrying.
+            expect(component.relinkError).toBe('');
+        });
+
+        it('renders it as a warn notice in the role panel', () => {
+            linkWithWarning();
+            fixture.detectChanges();
+
+            const notice = fixture.nativeElement.querySelector(
+                'hf-notice[variant="warn"].discord-link-notice',
+            ) as HTMLElement | null;
+            expect(notice?.textContent).toContain(WARNING);
+        });
+
+        it('drops the advisory once that role is unlinked', () => {
+            linkWithWarning();
+            component.unlinkCurrentRole();
+
+            expect(ranksService.unlinkDiscord).toHaveBeenCalledWith('r1');
+            expect(component.roleWarning).toBe('');
+        });
+
+        it('does not follow the admin onto the next rank', () => {
+            linkWithWarning();
+            component.closeEditor();
+
+            expect(component.roleWarning).toBe('');
+        });
+
+        it('says nothing for a clean role', () => {
+            setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false, holders: 0 })]);
+            component.selectRankEdit(component.ranks[0]);
+            component.onRoleSelect('d2');
+
+            expect(component.roleWarning).toBe('');
+        });
+    });
+
     it('onRankDrop reorders and posts the new id order', () => {
         setup([rank({ id: 'r1' }), rank({ id: 'r2' }), rank({ id: 'r3' })]);
         component.onRankDragStart(0);
@@ -365,7 +428,9 @@ describe('RanksMedalsComponent', () => {
 
         it('confirming submits the change and follows the batch to 100%', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValues(
                 of(progress({ applied: 4, pending: 4 })),
                 of(progress({ state: 'completed', applied: 8, pending: 0, finishedAt: 'now' })),
@@ -391,7 +456,9 @@ describe('RanksMedalsComponent', () => {
 
         it('does not poll at all when the change queued nothing', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: null }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: null, warning: null }),
+            );
             component.onRoleSelect('d2');
             component.confirmRelink();
             tick(10000);
@@ -401,7 +468,9 @@ describe('RanksMedalsComponent', () => {
 
         it('stops polling when the editor panel closes — not only on destroy', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(of(progress()));
 
             component.onRoleSelect('d2');
@@ -421,7 +490,9 @@ describe('RanksMedalsComponent', () => {
 
         it('reports a cancelled run as partial and honestly refuses to claim a rollback', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(of(progress()));
             discord.cancelRelink.and.returnValue(
                 of(progress({ state: 'partial', applied: 4, pending: 0, cancelled: 4 })),
@@ -443,7 +514,9 @@ describe('RanksMedalsComponent', () => {
 
         it("surfaces the server's failure reason (e.g. bot role hierarchy)", fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(
                 of(
                     progress({
@@ -472,7 +545,9 @@ describe('RanksMedalsComponent', () => {
 
         it('stops polling and explains when the progress endpoint itself fails', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(
                 throwError(() => new HttpErrorResponse({ status: 500 })),
             );

@@ -102,6 +102,13 @@ export interface ApiRank {
      * holders. It is what the admin UI polls and cancels with.
      */
     relinkBatchId?: string | null;
+    /**
+     * Advisory attached to a link that SUCCEEDED
+     * (lords-dashboard-backend:T-0189): the role carries privileged Discord
+     * permissions. Present only on the link response, and only when there is
+     * something to say — absent means the role is clean.
+     */
+    discordRoleWarning?: string | null;
 }
 
 export interface ApiMedal {
@@ -126,6 +133,13 @@ export interface ApiMedal {
      * holders. It is what the admin UI polls and cancels with.
      */
     relinkBatchId?: string | null;
+    /**
+     * Advisory attached to a link that SUCCEEDED
+     * (lords-dashboard-backend:T-0189): the role carries privileged Discord
+     * permissions. Present only on the link response, and only when there is
+     * something to say — absent means the role is clean.
+     */
+    discordRoleWarning?: string | null;
 }
 
 export interface ApiApplication {

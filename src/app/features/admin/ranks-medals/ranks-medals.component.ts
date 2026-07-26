@@ -131,6 +131,13 @@ export class RanksMedalsComponent implements OnInit {
     relink: RoleRelinkProgress | null = null;
     /** A link/unlink or cancel request that failed outright (not a job failure). */
     relinkError = '';
+    /**
+     * Advisory from a link that SUCCEEDED — today, that the role carries
+     * privileged Discord permissions (lords-dashboard-backend:T-0189). Kept apart
+     * from `relinkError` on purpose: nothing went wrong, so it must not read as a
+     * failure or send the admin looking for something to retry.
+     */
+    roleWarning = '';
     /** A link/unlink request is in flight — keeps the confirm button single-fire. */
     relinkBusy = false;
     cancellingRelink = false;
@@ -598,11 +605,15 @@ export class RanksMedalsComponent implements OnInit {
                 ? this.ranksService.linkDiscord(id, roleId, name)
                 : this.medalsService.linkDiscord(id, roleId, name);
         link$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: ({ relinkBatchId }) => {
+            next: ({ relinkBatchId, warning }) => {
                 this.relinkBusy = false;
                 this.editDiscordRoleId = roleId;
                 this.editDiscordRoleName = name;
                 this.editDiscordLinked = true;
+                // The link went through — a privileged role is now the regiment's
+                // call to make (lords-dashboard-backend:T-0189), so this is the
+                // only place the admin is told what they just handed out.
+                this.roleWarning = warning ?? '';
                 this.refreshAfterLink();
                 this.watchRelink(relinkBatchId);
             },
@@ -623,6 +634,8 @@ export class RanksMedalsComponent implements OnInit {
         unlink$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: ({ relinkBatchId }) => {
                 this.relinkBusy = false;
+                // The role it warned about is no longer linked to anything.
+                this.roleWarning = '';
                 this.resetEditorRole();
                 this.refreshAfterLink();
                 this.watchRelink(relinkBatchId);
@@ -727,6 +740,9 @@ export class RanksMedalsComponent implements OnInit {
     /** Clear the whole re-link view when the editor switches to another entity. */
     private resetRelinkView(): void {
         this.relinkPrompt = null;
+        // Scoped to the entity that was being edited — it must not follow the
+        // admin onto the next rank/medal.
+        this.roleWarning = '';
         // A request abandoned by closing the panel must not leave the next
         // editor session with a permanently disabled role picker.
         this.relinkBusy = false;
