@@ -135,4 +135,24 @@ describe('RanksService', () => {
             .flush(apiRank({ linked: false, discordRoleId: null, relinkBatchId: 'batch-2' }));
         expect(batchId).toBe('batch-2');
     });
+
+    // ── Privileged-role advisory (lords-dashboard-backend:T-0189) ────────────
+    it('linkDiscord() surfaces the advisory on a link that SUCCEEDED', () => {
+        let result: { entity: Rank; warning: string | null } | undefined;
+        service.linkDiscord('r1', 'd9', '@Admin').subscribe((r) => (result = r));
+        httpMock
+            .expectOne('/api/ranks/r1/link-discord')
+            .flush(apiRank({ discordRoleWarning: 'Heads up: privileged permissions.' }));
+
+        // 200, not 4xx: the entity must still map so the caller can refresh.
+        expect(result?.entity.id).toBe('r1');
+        expect(result?.warning).toBe('Heads up: privileged permissions.');
+    });
+
+    it('reports a null warning when the field is absent (clean role, or older API)', () => {
+        let warning: string | null | undefined = 'unset';
+        service.linkDiscord('r1', 'd9').subscribe((r) => (warning = r.warning));
+        httpMock.expectOne('/api/ranks/r1/link-discord').flush(apiRank());
+        expect(warning).toBeNull();
+    });
 });

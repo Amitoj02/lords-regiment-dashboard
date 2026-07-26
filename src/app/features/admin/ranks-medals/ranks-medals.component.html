@@ -527,6 +527,15 @@
             </div>
             } @if (relinkError) {
             <hf-notice variant="err" class="discord-link-notice">{{ relinkError }}</hf-notice>
+            }
+            <!--
+                A link that SUCCEEDED but is worth knowing about — today, a role
+                carrying privileged Discord permissions
+                (lords-dashboard-backend:T-0189). Deliberately `warn`, not `err`:
+                nothing failed and there is nothing to retry.
+            -->
+            @if (roleWarning) {
+            <hf-notice variant="warn" class="discord-link-notice">{{ roleWarning }}</hf-notice>
             } @if (rolesUnavailable) {
             <hf-notice variant="warn" class="discord-link-notice">
                 Connect the Discord bot (Settings &rarr; Discord) to load roles before linking.
