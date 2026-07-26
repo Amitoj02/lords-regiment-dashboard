@@ -15,6 +15,7 @@ function apiRank(overrides: Partial<ApiRank> = {}): ApiRank {
         discordRoleId: 'd1',
         linked: true,
         holdersCount: 8,
+        isProtected: false,
         createdAt: '2026-01-01T00:00:00Z',
         updatedAt: '2026-01-01T00:00:00Z',
         ...overrides,
@@ -154,5 +155,34 @@ describe('RanksService', () => {
         service.linkDiscord('r1', 'd9').subscribe((r) => (warning = r.warning));
         httpMock.expectOne('/api/ranks/r1/link-discord').flush(apiRank());
         expect(warning).toBeNull();
+    });
+
+    // ── Protected ranks (lords-dashboard-backend:T-0190) ─────────────────────
+    it('carries isProtected through the mapper — it drives which controls are locked', () => {
+        let result: Rank[] | undefined;
+        service.getAll().subscribe((ranks) => (result = ranks));
+        httpMock
+            .expectOne('/api/ranks')
+            .flush([
+                apiRank({ id: 'r1', name: 'Recruit', isProtected: true }),
+                apiRank({ id: 'r2' }),
+            ]);
+
+        expect(result?.[0].isProtected).toBeTrue();
+        expect(result?.[1].isProtected).toBeFalse();
+    });
+
+    it('reads an absent isProtected as NOT protected, leaving the ladder editable', () => {
+        // An API that predates the field must not freeze every rank — the failure
+        // mode is a control that offers a rename the server then refuses, not an
+        // admin locked out of their own ladder.
+        const legacy = apiRank();
+        delete (legacy as Partial<ApiRank>).isProtected;
+
+        let result: Rank[] | undefined;
+        service.getAll().subscribe((ranks) => (result = ranks));
+        httpMock.expectOne('/api/ranks').flush([legacy]);
+
+        expect(result?.[0].isProtected).toBeFalse();
     });
 });

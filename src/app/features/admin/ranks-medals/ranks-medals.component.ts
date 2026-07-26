@@ -96,6 +96,13 @@ export class RanksMedalsComponent implements OnInit {
     editingRankId: string | null = null;
     editRankName = '';
     editRankPrecedence = 0;
+    /**
+     * The rank open in the editor is one the API resolves by name
+     * (lords-dashboard-backend:T-0190), so its name is frozen while the rest of it
+     * stays editable. False for a new rank — creating one is never refused, only
+     * renaming an existing one.
+     */
+    editRankNameLocked = false;
     // Rank-icon upload (T-0194): a freshly-picked file's object-URL preview + the
     // resolved storage key, plus the already-saved icon URL loaded when editing.
     editRankImageKey: string | null = null;
@@ -272,6 +279,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = 'rank';
         this.editingRankId = null;
         this.editRankName = '';
+        this.editRankNameLocked = false;
         this.editRankPrecedence = this.ranks.length + 1;
         this.resetRankIcon();
         this.resetEditorRole();
@@ -283,6 +291,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = 'rank';
         this.editingRankId = rank.id ?? null;
         this.editRankName = rank.name;
+        this.editRankNameLocked = rank.isProtected === true;
         this.editRankPrecedence = rank.order;
         this.resetRankIcon();
         this.editRankImageUrl = rank.imageUrl ?? null;
@@ -325,10 +334,13 @@ export class RanksMedalsComponent implements OnInit {
 
     saveRank(): void {
         if (this.saving || this.rankImageUploading) return;
-        const payload: RankPayload = {
-            name: this.editRankName.trim(),
-            precedence: this.editRankPrecedence,
-        };
+        const payload: RankPayload = { precedence: this.editRankPrecedence };
+        // A frozen name is left out of the body entirely rather than posted back
+        // unchanged: the API only refuses a name it can see CHANGING, and the one
+        // thing that could differ is our own `.trim()` of a stored value.
+        if (!this.editRankNameLocked) {
+            payload.name = this.editRankName.trim();
+        }
         if (this.editRankImageKey) {
             payload.imageKey = this.editRankImageKey;
         }
@@ -356,6 +368,14 @@ export class RanksMedalsComponent implements OnInit {
 
     deleteRank(rank: Rank): void {
         if (!rank.id) return;
+        // The row menu already hides Delete for a protected rank; this is the
+        // second half of the same rule, so a stale `ranks` array or a keyboard
+        // path into a hidden item cannot fire a request the API will refuse.
+        if (rank.isProtected === true) {
+            this.rowFlash = this.protectedRankNotice(rank.name);
+            this.rowWarn = true;
+            return;
+        }
         this.clearRowFlash();
         this.ranksService
             .delete(rank.id)
@@ -956,6 +976,19 @@ export class RanksMedalsComponent implements OnInit {
     /** The icon to show in the rank editor preview (fresh pick first, else saved). */
     get rankIconPreview(): string | null {
         return this.editRankImagePreview ?? this.editRankImageUrl;
+    }
+
+    /**
+     * Why a protected rank's name and Delete are unavailable
+     * (lords-dashboard-backend:T-0190). One string behind the editor hint, the row
+     * tooltip and the flash, so the three cannot tell an admin three things.
+     */
+    protectedRankNotice(name: string): string {
+        return (
+            `"${name}" is required by the dashboard and cannot be renamed or deleted — ` +
+            'new members are enlisted onto it by name. Its position, icon and Discord role ' +
+            'can still be changed.'
+        );
     }
 
     /** The image to show in the medal editor preview (fresh pick first, else saved). */

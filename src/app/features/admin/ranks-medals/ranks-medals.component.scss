@@ -3,6 +3,19 @@
     align-items: start;
 }
 
+// "Locked" beside the editor's Name label when the API freezes that rank's name
+// (T-0277). Inherits .field-label's uppercase + tracking, so it reads as part of
+// the label rather than a badge bolted onto it; the hint underneath says why.
+.lock-tag {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-1);
+    color: var(--t-500);
+    font-size: 10px;
+    font-weight: 600;
+}
+
 .rank-list,
 .medal-list {
     padding: 0;
@@ -32,8 +45,18 @@
         cursor: pointer;
     }
     &__name {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         font-weight: 600;
         font-size: 0.875rem;
+    }
+    // The padlock on a rank the API refuses to rename or delete (T-0277). Muted
+    // on purpose: it marks a constraint, not a problem, so it should not compete
+    // with the Discord-link badge for attention.
+    &__lock {
+        flex-shrink: 0;
+        color: var(--t-400);
     }
     &__holders {
         font-size: 0.75rem;
@@ -295,5 +318,15 @@
             // Brighter oxblood so "Delete" stays legible on the dark menu.
             color: var(--oxblood-300);
         }
+    }
+
+    // Stands in for Delete on a protected rank (T-0277). Plain text, not a
+    // disabled button: there is no state in which it becomes clickable.
+    &__note {
+        display: block;
+        padding: 7px 10px;
+        color: var(--t-400);
+        font-size: 0.72rem;
+        line-height: 1.35;
     }
 }
