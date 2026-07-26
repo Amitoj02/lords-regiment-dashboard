@@ -92,6 +92,15 @@ export interface ApiRank {
     discordRoleId: string | null;
     linked: boolean;
     holdersCount: number;
+    /**
+     * The API resolves this rank BY NAME in its own logic
+     * (lords-dashboard-backend:T-0190) — today, the entry rank every approved
+     * applicant is enlisted onto. A rename or a delete comes back 403 for every
+     * caller, the Owner included, so the UI locks those two controls instead of
+     * offering them and catching the failure. Precedence, insignia and the
+     * Discord role mapping are unaffected. Present on every rank projection.
+     */
+    isProtected: boolean;
     createdAt: string;
     updatedAt: string;
     /**
@@ -354,6 +363,11 @@ export function mapRank(r: ApiRank): Rank {
         discordRoleId: r.discordRoleId,
         discordLinked: r.linked,
         order: r.precedence,
+        // `=== true`, so an API that does not send the field leaves the ladder
+        // fully editable rather than freezing every row — the failure mode is a
+        // control that offers a rename the server then refuses with a legible
+        // 403, not an admin locked out of their own ladder.
+        isProtected: r.isProtected === true,
     };
 }
 

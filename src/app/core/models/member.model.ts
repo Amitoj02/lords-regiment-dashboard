@@ -35,6 +35,12 @@ export interface Rank {
     order: number;
     /** Discord role id linked to this rank (drives the role picker preselect). */
     discordRoleId?: string | null;
+    /**
+     * The API depends on this rank's NAME, so it cannot be renamed or deleted —
+     * only those two. Optional so legacy stub data still types; read it through
+     * {@link mapRank}, which normalises an absent field to `false`.
+     */
+    isProtected?: boolean;
 }
 
 /** A single medal award held by a member (medals are repeatable). */
