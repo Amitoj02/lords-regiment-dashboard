@@ -63,6 +63,12 @@ export interface RegimentEvent {
     /** Storage key of a freshly-uploaded banner (write-only; sent to the API). */
     bannerKey?: string;
     notifyBefore?: string[];
+    /**
+     * Discord role pinged when the event is ANNOUNCED (member projection only).
+     * Pinged exactly once, at announcement — never on the pre-event reminder and
+     * never when the announcement's RSVP list is re-rendered. `''`/null clears it.
+     */
+    announceRoleId?: string | null;
     /** The signed-in member's own RSVP to this event (member projection only). */
     myRsvp?: RsvpStatus | null;
     /**

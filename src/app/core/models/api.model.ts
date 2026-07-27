@@ -503,6 +503,7 @@ export interface ApiEvent {
     // Member-view-only fields (omitted entirely for public callers). `serverName`
     // is `null` — never `''` — when unset, so templates can branch on it.
     serverName?: string | null;
+    announceRoleId?: string | null;
     serverRegion?: string | null;
     recurrenceRule?: string | null;
     recurrenceCadence?: 'daily' | 'weekly' | 'monthly' | null;
@@ -581,6 +582,7 @@ export function mapEvent(e: ApiEvent): RegimentEvent {
         // Kept NULL rather than coerced to '' so templates can tell "no server"
         // from "server redacted" and drop the field entirely (T-0236).
         serverName: e.serverName ?? null,
+        announceRoleId: e.announceRoleId ?? null,
         serverRegion: e.serverRegion ?? undefined,
         // The password is never in this projection — only the reveal endpoint returns it.
         serverPassword: undefined,
