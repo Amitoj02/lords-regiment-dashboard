@@ -86,8 +86,9 @@ export class AdminActionModalComponent {
     /**
      * Roles this caller may assign, recomputed each time the modal opens. Owner
      * is never in the list (ownership has its own flow) and neither is any role
-     * at or above the caller's own — an Admin offering "Admin" would only ever
-     * produce a 403 (T-0266).
+     * ABOVE the caller's own — a Moderator offering "Admin" would only ever
+     * produce a 403 (T-0266). The caller's OWN tier IS offered: holding
+     * `manage_roles` is what lets an Admin appoint another Admin (T-0283).
      */
     assignableRoles: MemberRole[] = [];
 
