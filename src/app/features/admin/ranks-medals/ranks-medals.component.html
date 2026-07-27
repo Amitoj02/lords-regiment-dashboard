@@ -75,13 +75,26 @@
 
                     <div class="editor-form">
                         <div>
-                            <label class="field-label" for="rank-name">Name</label>
+                            <label class="field-label" for="rank-name">
+                                Name @if (editRankNameLocked) {
+                                <span class="lock-tag" aria-hidden="true">Locked</span>
+                                }
+                            </label>
                             <input
                                 id="rank-name"
                                 class="hf-input"
                                 type="text"
                                 [(ngModel)]="editRankName"
+                                [readOnly]="editRankNameLocked"
+                                [attr.aria-describedby]="
+                                    editRankNameLocked ? 'rank-name-locked' : null
+                                "
                             />
+                            @if (editRankNameLocked) {
+                            <div class="field-hint" id="rank-name-locked">
+                                {{ protectedRankNotice(editRankName) }}
+                            </div>
+                            }
                         </div>
                         <div>
                             <span class="field-label">Icon</span>
@@ -273,7 +286,25 @@
                             (click)="selectRankEdit(rank)"
                             (keydown.enter)="selectRankEdit(rank)"
                         >
-                            <span class="rank-row__name">{{ rank.name }}</span>
+                            <span class="rank-row__name">
+                                {{ rank.name }} @if (rank.isProtected) {
+                                <svg
+                                    class="rank-row__lock"
+                                    width="11"
+                                    height="11"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.4"
+                                    [attr.aria-label]="protectedRankNotice(rank.name)"
+                                    role="img"
+                                >
+                                    <title>{{ protectedRankNotice(rank.name) }}</title>
+                                    <rect x="4" y="11" width="16" height="10" rx="2" />
+                                    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                                </svg>
+                                }
+                            </span>
                             <span class="rank-row__holders">{{ rank.holders }} holders</span>
                         </div>
                         <div class="rank-row__role">
@@ -304,6 +335,10 @@
                                 >
                                     Edit
                                 </button>
+                                <!-- Omitted, not disabled, for a rank the API refuses to
+                                     delete: a greyed-out Delete reads as "not yet",
+                                     when the answer is "never". -->
+                                @if (!rank.isProtected) {
                                 <button
                                     type="button"
                                     class="row-menu__item row-menu__item--danger"
@@ -311,6 +346,11 @@
                                 >
                                     Delete
                                 </button>
+                                } @else {
+                                <span class="row-menu__note">
+                                    Required by the dashboard — cannot be deleted
+                                </span>
+                                }
                             </div>
                             }
                         </div>
@@ -527,6 +567,15 @@
             </div>
             } @if (relinkError) {
             <hf-notice variant="err" class="discord-link-notice">{{ relinkError }}</hf-notice>
+            }
+            <!--
+                A link that SUCCEEDED but is worth knowing about — today, a role
+                carrying privileged Discord permissions
+                (lords-dashboard-backend:T-0189). Deliberately `warn`, not `err`:
+                nothing failed and there is nothing to retry.
+            -->
+            @if (roleWarning) {
+            <hf-notice variant="warn" class="discord-link-notice">{{ roleWarning }}</hf-notice>
             } @if (rolesUnavailable) {
             <hf-notice variant="warn" class="discord-link-notice">
                 Connect the Discord bot (Settings &rarr; Discord) to load roles before linking.

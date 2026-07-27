@@ -124,11 +124,14 @@ describe('RanksMedalsComponent', () => {
         ranksService.delete.and.returnValue(of(undefined));
         ranksService.reorder.and.returnValue(of(ranks));
         // Default: the change queued nothing (no holders / bot off), so no poll.
-        ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: null }));
+        ranksService.linkDiscord.and.returnValue(
+            of({ entity: rank(), relinkBatchId: null, warning: null }),
+        );
         ranksService.unlinkDiscord.and.returnValue(
             of({
                 entity: rank({ discordLinked: false, discordRoleId: null }),
                 relinkBatchId: null,
+                warning: null,
             }),
         );
 
@@ -137,11 +140,14 @@ describe('RanksMedalsComponent', () => {
         medalsService.update.and.returnValue(of(medal()));
         medalsService.delete.and.returnValue(of(undefined));
         medalsService.reorder.and.returnValue(of(medals));
-        medalsService.linkDiscord.and.returnValue(of({ entity: medal(), relinkBatchId: null }));
+        medalsService.linkDiscord.and.returnValue(
+            of({ entity: medal(), relinkBatchId: null, warning: null }),
+        );
         medalsService.unlinkDiscord.and.returnValue(
             of({
                 entity: medal({ discordLinked: false, discordRoleId: null }),
                 relinkBatchId: null,
+                warning: null,
             }),
         );
 
@@ -227,6 +233,128 @@ describe('RanksMedalsComponent', () => {
         expect(component.rowFlash).toContain('still has holders');
     });
 
+    /**
+     * lords-dashboard-backend:T-0190 — the API resolves the entry rank BY NAME
+     * when enlisting an approved applicant, so it refuses a rename or a delete on
+     * that row with 403. These cases pin BOTH halves: the two frozen controls are
+     * gone, and everything else about the rank (and every other rank) is not.
+     */
+    describe('a protected rank', () => {
+        const recruit = (overrides: Partial<Rank> = {}) =>
+            rank({ id: 'r-recruit', name: 'Recruit', order: 10, isProtected: true, ...overrides });
+
+        it('locks the name when the editor opens on it, and unlocks it on another rank', () => {
+            setup([recruit(), rank({ id: 'r2', name: 'Sergeant' })]);
+
+            component.selectRankEdit(component.ranks[0]);
+            expect(component.editRankNameLocked).toBeTrue();
+
+            component.selectRankEdit(component.ranks[1]);
+            expect(component.editRankNameLocked).toBeFalse();
+        });
+
+        it('does not carry the lock onto a NEW rank opened straight after it', () => {
+            // The state-bleed case: leaving editRankNameLocked set would make the
+            // create form's name field read-only and unfillable.
+            setup([recruit()]);
+            component.selectRankEdit(component.ranks[0]);
+            component.newRank();
+            expect(component.editRankNameLocked).toBeFalse();
+        });
+
+        it('renders the name field read-only with the reason underneath', () => {
+            setup([recruit()]);
+            component.selectRankEdit(component.ranks[0]);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector(
+                '#rank-name',
+            ) as HTMLInputElement | null;
+            expect(input?.readOnly).toBeTrue();
+            expect(
+                (fixture.nativeElement as HTMLElement).querySelector('#rank-name-locked')
+                    ?.textContent,
+            ).toContain('cannot be renamed or deleted');
+        });
+
+        it('leaves the name field editable for an ordinary rank', () => {
+            setup([rank({ id: 'r2', name: 'Sergeant' })]);
+            component.selectRankEdit(component.ranks[0]);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector(
+                '#rank-name',
+            ) as HTMLInputElement | null;
+            expect(input?.readOnly).toBeFalse();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#rank-name-locked')).toBe(
+                null,
+            );
+        });
+
+        it('saves precedence and icon while leaving `name` out of the body entirely', () => {
+            setup([recruit()]);
+            component.selectRankEdit(component.ranks[0]);
+            component.editRankPrecedence = 11;
+            component.saveRank();
+
+            expect(ranksService.update).toHaveBeenCalledWith('r-recruit', { precedence: 11 });
+            const body = ranksService.update.calls.mostRecent().args[1];
+            expect('name' in body).toBeFalse();
+        });
+
+        it('still posts `name` for an ordinary rank', () => {
+            setup([rank({ id: 'r2', name: 'Sergeant', order: 5 })]);
+            component.selectRankEdit(component.ranks[0]);
+            component.editRankName = 'Staff Sergeant';
+            component.saveRank();
+
+            expect(ranksService.update).toHaveBeenCalledWith(
+                'r2',
+                jasmine.objectContaining({ name: 'Staff Sergeant' }),
+            );
+        });
+
+        it('offers no Delete in the row menu, and says why instead', () => {
+            setup([recruit()]);
+            component.toggleMenu('rank:r-recruit');
+            fixture.detectChanges();
+
+            const el: HTMLElement = fixture.nativeElement;
+            expect(el.querySelector('.row-menu__item--danger')).toBeNull();
+            expect(el.querySelector('.row-menu__note')?.textContent).toContain('cannot be deleted');
+            // Edit is still on offer — the rank is editable, just not renameable.
+            expect(el.querySelector('.row-menu__item')?.textContent).toContain('Edit');
+        });
+
+        it('keeps Delete for an ordinary rank', () => {
+            setup([rank({ id: 'r2', name: 'Sergeant' })]);
+            component.toggleMenu('rank:r2');
+            fixture.detectChanges();
+
+            const el: HTMLElement = fixture.nativeElement;
+            expect(el.querySelector('.row-menu__item--danger')?.textContent).toContain('Delete');
+            expect(el.querySelector('.row-menu__note')).toBeNull();
+        });
+
+        it('marks the ladder row with a padlock, and only that row', () => {
+            setup([recruit(), rank({ id: 'r2', name: 'Sergeant' })]);
+            fixture.detectChanges();
+
+            const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('.rank-row');
+            expect(rows[0].querySelector('.rank-row__lock')).not.toBeNull();
+            expect(rows[1].querySelector('.rank-row__lock')).toBeNull();
+        });
+
+        it('refuses a delete locally rather than firing a request the API will reject', () => {
+            setup([recruit()]);
+            component.deleteRank(component.ranks[0]);
+
+            expect(ranksService.delete).not.toHaveBeenCalled();
+            expect(component.rowWarn).toBeTrue();
+            expect(component.rowFlash).toContain('cannot be renamed or deleted');
+        });
+    });
+
     it('selectMedalEdit populates precedence AND discordRoleId (the fix)', () => {
         setup([rank()], [medal({ id: 'm1', precedence: 4, discordRoleId: 'd2' })]);
         component.selectMedalEdit(component.medals[0]);
@@ -261,6 +389,63 @@ describe('RanksMedalsComponent', () => {
         component.selectMedalEdit(component.medals[0]);
         component.onRoleSelect('d1');
         expect(medalsService.linkDiscord).toHaveBeenCalledWith('m1', 'd1', 'Sergeant');
+    });
+
+    // ── Privileged-role advisory (lords-dashboard-backend:T-0189) ────────────
+    describe('a privileged Discord role', () => {
+        const WARNING = 'Heads up: this Discord role grants privileged permissions.';
+
+        /** Link r1 to a role the API accepts but warns about. */
+        function linkWithWarning(): void {
+            setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false, holders: 0 })]);
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: null, warning: WARNING }),
+            );
+            component.selectRankEdit(component.ranks[0]);
+            component.onRoleSelect('d2');
+        }
+
+        it('links anyway and shows the advisory — NOT as an error', () => {
+            linkWithWarning();
+
+            expect(component.editDiscordLinked).toBeTrue();
+            expect(component.roleWarning).toBe(WARNING);
+            // The err channel stays clean: nothing failed and nothing needs retrying.
+            expect(component.relinkError).toBe('');
+        });
+
+        it('renders it as a warn notice in the role panel', () => {
+            linkWithWarning();
+            fixture.detectChanges();
+
+            const notice = fixture.nativeElement.querySelector(
+                'hf-notice[variant="warn"].discord-link-notice',
+            ) as HTMLElement | null;
+            expect(notice?.textContent).toContain(WARNING);
+        });
+
+        it('drops the advisory once that role is unlinked', () => {
+            linkWithWarning();
+            component.unlinkCurrentRole();
+
+            expect(ranksService.unlinkDiscord).toHaveBeenCalledWith('r1');
+            expect(component.roleWarning).toBe('');
+        });
+
+        it('does not follow the admin onto the next rank', () => {
+            linkWithWarning();
+            component.closeEditor();
+
+            expect(component.roleWarning).toBe('');
+        });
+
+        it('says nothing for a clean role', () => {
+            setup([rank({ id: 'r1', discordRoleId: null, discordLinked: false, holders: 0 })]);
+            component.selectRankEdit(component.ranks[0]);
+            component.onRoleSelect('d2');
+
+            expect(component.roleWarning).toBe('');
+        });
     });
 
     it('onRankDrop reorders and posts the new id order', () => {
@@ -365,7 +550,9 @@ describe('RanksMedalsComponent', () => {
 
         it('confirming submits the change and follows the batch to 100%', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValues(
                 of(progress({ applied: 4, pending: 4 })),
                 of(progress({ state: 'completed', applied: 8, pending: 0, finishedAt: 'now' })),
@@ -391,7 +578,9 @@ describe('RanksMedalsComponent', () => {
 
         it('does not poll at all when the change queued nothing', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: null }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: null, warning: null }),
+            );
             component.onRoleSelect('d2');
             component.confirmRelink();
             tick(10000);
@@ -401,7 +590,9 @@ describe('RanksMedalsComponent', () => {
 
         it('stops polling when the editor panel closes — not only on destroy', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(of(progress()));
 
             component.onRoleSelect('d2');
@@ -421,7 +612,9 @@ describe('RanksMedalsComponent', () => {
 
         it('reports a cancelled run as partial and honestly refuses to claim a rollback', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(of(progress()));
             discord.cancelRelink.and.returnValue(
                 of(progress({ state: 'partial', applied: 4, pending: 0, cancelled: 4 })),
@@ -443,7 +636,9 @@ describe('RanksMedalsComponent', () => {
 
         it("surfaces the server's failure reason (e.g. bot role hierarchy)", fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(
                 of(
                     progress({
@@ -472,7 +667,9 @@ describe('RanksMedalsComponent', () => {
 
         it('stops polling and explains when the progress endpoint itself fails', fakeAsync(() => {
             editLinkedRank();
-            ranksService.linkDiscord.and.returnValue(of({ entity: rank(), relinkBatchId: 'b1' }));
+            ranksService.linkDiscord.and.returnValue(
+                of({ entity: rank(), relinkBatchId: 'b1', warning: null }),
+            );
             discord.getRelinkProgress.and.returnValue(
                 throwError(() => new HttpErrorResponse({ status: 500 })),
             );

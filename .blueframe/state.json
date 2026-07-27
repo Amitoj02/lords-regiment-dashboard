@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "c52ba3aabaae02cade9c825aaa53f79ebb4b615d",
-  "lastSyncedAt": "2026-07-23T15:45:00Z",
-  "notesForNextSession": "LATEST SESSION: implemented the four remaining PLANNED tasks T-0270..T-0273 on the existing branch feat/planned-tasks-t0256-t0266 (PR #23), paired with lords-dashboard-backend feat/planned-tasks-t0163-t0178 (PR #22). T-0272 and T-0273 READ FROM THE BACKEND BRANCH — the welcome-message editor needs the blank->NULL normalisation and the {user}/{regiment} expansion, and T-0273's premise is that the API stopped DM'ing the staff note — SO THE TWO MUST MERGE AND DEPLOY TOGETHER. Both repos are at status `review`; flip to `deployed` once merged. *** THE TOAST WAS INVISIBLE AND HAD BEEN SINCE IT SHIPPED. *** --t-200 (#d8d2c2, the LIGHT body text) on --parch-100 (#ebe2c8, a parchment card) measures 1.17:1 — every toast the app has ever raised, on every screen. It now sits on --ink-750 with --t-100 at ~13.3:1. The reason nothing caught it is worth keeping: BOTH SIDES WERE VALID TOKENS, just from opposite halves of the palette, which is exactly what a linter and a class-name test both wave through. So the fix ships with two guards that measure rather than inspect: scripts/check-contrast.mjs resolves both sides of every rule against _variables.scss and fails `npm run lint` below 4.5:1 (self-tested — reverting the toast makes it fail with 1.17:1), and toast.component.spec.ts computes the ratio from getComputedStyle in the real browser (karma loads src/styles.scss, so tokens resolve). There was NO toast spec before; the task plan assumed one. THE PARCHMENT SWEEP FOUND SOMETHING DIFFERENT FROM WHAT WAS PLANNED: of the eleven parchment backgrounds, the three the plan named as broken — .orders-toolbar, .discord-reauth, .upload-target — are DEAD CSS, referenced by no template (.archive-label too, though it was already correct). They were given the right text colour rather than deleted, so wiring one up later cannot ship invisible copy — deleting them is the owner's call. The real finding came from the guard, which measures ink surfaces too: four of them carried --t-400 under AA (thead th 4.17:1; .topbar-search, .privacy-hint, .drop-zone all 3.90:1) and moved one muted step to --t-300. --t-400 ITSELF IS UNCHANGED and is still ~3.9:1 wherever .field-hint sits on a panel — the guard cannot see those (no background is declared in the same rule), and raising the token is an app-wide visual decision, filed as T-0275. CORRECTION TO T-0272'S PREMISE: the settings page did NOT track welcomeMessage for dirty-checking. hasUnsavedChanges() covered only the presentation and legal CHILD editors, so this — the first free-text control in the Lord Adjutant panel — would have been discarded silently by both the section-switch confirm and the CanDeactivate guard. Bot settings are now snapshotted on load and after every successful save. A cleared box normalises to null, not '', because the API stores and returns NULL for blank and '' would leave the section permanently dirty. T-0273 needed no code change on this side — decline/hold already posted the note as `note` and approve only discordDmMessage — so the work was PINNING it: the spec now asserts the exact sorted key set per endpoint, and approve gained request-body coverage it never had. The guard is scoped to approve/decline/hold deliberately; blockApplicant legitimately sends `reason`. The decision notice also stopped claiming \"both boxes are kept after a decision\" — approve does not store a note, so that was wrong for one of the three outcomes it covered. VERIFIED THIS SESSION: prettier clean, ng lint clean, the contrast guard clean (28 pairs), production build clean, 577 unit tests (was 549). Browser at 1440px AND at a true 387px viewport — for the mobile pass an in-origin 390px IFRAME was used rather than CDP, because the extension masks the JWT in localStorage so a separate headless Chrome cannot be seeded with the session; the iframe shares the origin, so media queries evaluate against 387px for real and the app is authenticated. PREVIOUS SESSION NOTES BELOW STILL APPLY.\n\n---\n\nLATEST (T-0274, commit 466c2d5 on feat/planned-tasks-t0256-t0266): the 'Approved by / Declined by' officer is now an avatar + name chip linking to /app/profile/:id. The id was already on the wire (decidedByMemberId) and was simply being dropped in mapApplication. Two degradations are pinned by tests: no member id renders the same chip UNLINKED (the FK is ON DELETE SET NULL, so a removed officer must not link to a profile that is gone), and an id without a name renders no chip at all. The label and the chip are separate elements now, so 'Approved by' carries an explicit &ngsp; - without it Angular drops the whitespace-only node between them and the line reads 'Approved byColonel Hale'. The AVATAR ITSELF needs lords-dashboard-backend:T-0186 (the Discord-avatar fallback); until that ships the chip is a link with initials. --- SESSION: implemented every remaining planned task (T-0259, T-0261..T-0266) on branch feat/planned-tasks-t0256-t0266, plus 3 discovered items (T-0267..T-0269). Status `review` pending PR merge. COUPLED BACKEND BRANCH: lords-dashboard-backend feat/planned-tasks-t0163-t0178 - THE TWO MUST MERGE AND DEPLOY TOGETHER; this app now reads guildMember / discordInviteUrl / guildGateEnabled / guildGateExempt off /auth/me and permittedActions off the member projection, none of which exist on today's production API. *** THE GUILD GATE SHIPS OFF. *** Enforcement is gated on guildGateEnabled from /auth/me, which the backend defaults to false; the single predicate is AuthService.isGuildGated() (guildGateEnabled && !guildMember && !guildGateExempt) and guard, gate screen and routeAfterLogin all defer to it. With the flag off the guard is a pass-through - verified live both ways. The switch itself is T-0267, in the Lord Adjutant settings panel. The four CurrentUser gate fields are now REQUIRED on the interface but the runtime helpers still treat absent as gate-off, so a client running ahead of the backend deploy gates nobody. T-0256 IS BLOCKED, NOT DONE: it needs a real iOS device and none is available. An emulated 390x844 iPhone viewport with an iOS UA shows both the poster tile and the no-poster fallback rendering with zero console errors, but Chrome does not reproduce Safari's video-poster behaviour, so that proves the markup path and not the reported symptom. Do not close it on the emulated pass. T-0259 RESOLUTION: favicon.svg was DELETED, not replaced. Its payload was byte-identical to regiment-logo-sm.png (a 75px raster in an <image> wrapper), and the repo's only real vector is the crest-divider fleur-de-lis, which is a different heraldic device. Chrome now falls back to the 96px PNG. If a genuine vector crest is ever commissioned, re-add the link and the file together. VERIFIED THIS SESSION: prettier --check, ng lint, production build and 553 karma specs all clean. Browser checks at 1440px AND a true 390x844 viewport against the running dev stack: as an Admin the roster row action shows only on the Member and Moderator rows (not the Owner, not a peer Admin, not self); a Moderator with neither settings capability is redirected off /app/admin/settings and has no sidebar entry; with the gate ON a non-guild-member is sent to /guild-required from dashboard/roster/settings while /app/profile, /app/account-deletion and /privacy stay reachable; with the gate OFF nothing is gated. TOOLING NOTE worth keeping: resize_window does NOT shrink the Chrome extension's headless viewport (stuck at 1920px), so mobile cannot be screenshotted that way. Launch `google-chrome --headless=new --remote-debugging-port=9222` and drive CDP directly - Emulation.setDeviceMetricsOverride gives a true device viewport, and Node 22's global WebSocket is enough to speak CDP with no dependencies. KNOWN PRE-EXISTING, NOT INTRODUCED: profile.component.scss is 176 bytes over its 6kB budget (a build WARNING, not a failure - the file is byte-identical to main), and TopbarComponent's breadcrumb loop throws a dev-mode-only NG0100 ExpressionChangedAfterItHasBeenCheckedError (the topbar is untouched by this branch and NG0100 does not occur in production builds). --- PREVIOUS:SYNC of af1309e (PR #22 merge). Two things happened here. FIRST, Blueframe was showing this repo as EMPTY (taskCount 0 at http://127.0.0.1:7317/api/repos) because T-0258 was written with type \"fix\" - not in the type enum (feature|bug|chore|infra|question|spike) - and ONE invalid value fails validation for the WHOLE repo with no visible error. Corrected to \"bug\". Always verify after editing state.json: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == broken), then curl -s 'http://127.0.0.1:7317/api/state?repo=lords-regiment-dashboard' for the exact zod path. SECOND, PR #22 (131a834 + b510ab0 + efa68cd) merged to main together with its coupled backend PR #21 (abc55a3, lords-dashboard-backend), so all 24 tasks parked at `review` - T-0233..T-0254, T-0257, T-0258 - are now `deployed`. The pair deployed together as required. STILL OPEN: T-0255 (in_progress) - presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt were never exercised; use the minted-Owner-JWT browser recipe from the previous handoff. T-0256 (planned) needs a real iOS device for the gallery video poster. T-0232 (questionnaire) still waits on the Cloudflare Web Analytics vs CSP call. NEW: T-0259 (favicon.svg is a raster in vector clothing) and T-0260 (is the product \"Lords Regiment\" or \"Lords of Holdfast\"? - an app-wide rename either way). Two testPlan items on T-0243 stay pending for want of hardware (Safari/Firefox tabs, iOS home screen) and one regressionRisk stays open there (nginx 30d-immutable caching may hold the old favicon after deploy). This sync was NOT committed - the user asked for the reconciliation only.",
-  "nextIdCounter": 276,
+  "lastSyncedCommit": "f2b48ac39c48e5ecd207d722d9203aa6d6f1fa2f",
+  "lastSyncedAt": "2026-07-26T23:55:00Z",
+  "notesForNextSession": "LATEST SESSION (T-0277): the ranks admin now locks the entry rank's NAME and its Delete. PR #47 -> dev, CI green, status `review`; flip to `deployed` once merged and shipped. Coupled backend: lords-dashboard-backend PR #52 (T-0190) — MERGE THAT ONE FIRST, this SPA reads `isProtected` off the rank projection. Delete is OMITTED from the row menu rather than disabled, because a greyed-out Delete reads as \"not yet\" when the answer is \"never\"; Edit stays, since the rank IS editable — precedence, icon and Discord role all still save. WATCH THIS: saveRank no longer always sends `name`. It omits it entirely for a locked rank, because the API only refuses a name it can see CHANGING and, with the field read-only, our own .trim() of the stored value is the one thing that could still differ — an icon-only save on Recruit would otherwise have 403'd on a rename nobody asked for. Any new rank-editor field must keep working with `name` absent. mapRank FAILS OPEN on a missing isProtected (an older API leaves the ladder editable rather than freezing every row) — so the lock is only as present as the projection; if the controls ever unlock while the API still 403s, that is the shape of the bug. The Name input is readOnly, NOT disabled, so the value stays selectable and is announced as read-only, with aria-describedby tying it to the reason. One copy string (protectedRankNotice) feeds the tooltip, the editor hint and the flash. VERIFIED: 597 tests (was 585) — the 12 new ones assert on the DOM, including the padlock's ABSENCE on every unprotected row and the state-bleed case where New Role follows an edit of the protected rank. ng lint, the contrast guard and prettier clean; tsc clean on tsconfig.app.json AND tsconfig.spec.json. Browser at 1536px signed in as Owner against the dev stack: padlock on Recruit alone, typing into the locked field does nothing, row menu shows Edit + the reason while Private keeps Delete, a precedence save on Recruit succeeds, New Role opens editable, dev ladder left byte-identical at 12 ranks. LOCAL GOTCHA: Angular 22 needs Node >= 22.22.3 and this machine has 22.22.2, so `npm run test:ci` and `ng lint` both refuse to start. Workaround used: a scratchpad launcher that requires @angular/cli/bin/bootstrap.js after patching isNodeVersionSupported/isNodeVersionMinSupported on src/utilities/node-version.js — nothing added to the repo. CI runs Node 26 and is unaffected. Upgrading local Node is the real fix.\n\n---\n\nLATEST SESSION: implemented the four remaining PLANNED tasks T-0270..T-0273 on the existing branch feat/planned-tasks-t0256-t0266 (PR #23), paired with lords-dashboard-backend feat/planned-tasks-t0163-t0178 (PR #22). T-0272 and T-0273 READ FROM THE BACKEND BRANCH — the welcome-message editor needs the blank->NULL normalisation and the {user}/{regiment} expansion, and T-0273's premise is that the API stopped DM'ing the staff note — SO THE TWO MUST MERGE AND DEPLOY TOGETHER. Both repos are at status `review`; flip to `deployed` once merged. *** THE TOAST WAS INVISIBLE AND HAD BEEN SINCE IT SHIPPED. *** --t-200 (#d8d2c2, the LIGHT body text) on --parch-100 (#ebe2c8, a parchment card) measures 1.17:1 — every toast the app has ever raised, on every screen. It now sits on --ink-750 with --t-100 at ~13.3:1. The reason nothing caught it is worth keeping: BOTH SIDES WERE VALID TOKENS, just from opposite halves of the palette, which is exactly what a linter and a class-name test both wave through. So the fix ships with two guards that measure rather than inspect: scripts/check-contrast.mjs resolves both sides of every rule against _variables.scss and fails `npm run lint` below 4.5:1 (self-tested — reverting the toast makes it fail with 1.17:1), and toast.component.spec.ts computes the ratio from getComputedStyle in the real browser (karma loads src/styles.scss, so tokens resolve). There was NO toast spec before; the task plan assumed one. THE PARCHMENT SWEEP FOUND SOMETHING DIFFERENT FROM WHAT WAS PLANNED: of the eleven parchment backgrounds, the three the plan named as broken — .orders-toolbar, .discord-reauth, .upload-target — are DEAD CSS, referenced by no template (.archive-label too, though it was already correct). They were given the right text colour rather than deleted, so wiring one up later cannot ship invisible copy — deleting them is the owner's call. The real finding came from the guard, which measures ink surfaces too: four of them carried --t-400 under AA (thead th 4.17:1; .topbar-search, .privacy-hint, .drop-zone all 3.90:1) and moved one muted step to --t-300. --t-400 ITSELF IS UNCHANGED and is still ~3.9:1 wherever .field-hint sits on a panel — the guard cannot see those (no background is declared in the same rule), and raising the token is an app-wide visual decision, filed as T-0275. CORRECTION TO T-0272'S PREMISE: the settings page did NOT track welcomeMessage for dirty-checking. hasUnsavedChanges() covered only the presentation and legal CHILD editors, so this — the first free-text control in the Lord Adjutant panel — would have been discarded silently by both the section-switch confirm and the CanDeactivate guard. Bot settings are now snapshotted on load and after every successful save. A cleared box normalises to null, not '', because the API stores and returns NULL for blank and '' would leave the section permanently dirty. T-0273 needed no code change on this side — decline/hold already posted the note as `note` and approve only discordDmMessage — so the work was PINNING it: the spec now asserts the exact sorted key set per endpoint, and approve gained request-body coverage it never had. The guard is scoped to approve/decline/hold deliberately; blockApplicant legitimately sends `reason`. The decision notice also stopped claiming \"both boxes are kept after a decision\" — approve does not store a note, so that was wrong for one of the three outcomes it covered. VERIFIED THIS SESSION: prettier clean, ng lint clean, the contrast guard clean (28 pairs), production build clean, 577 unit tests (was 549). Browser at 1440px AND at a true 387px viewport — for the mobile pass an in-origin 390px IFRAME was used rather than CDP, because the extension masks the JWT in localStorage so a separate headless Chrome cannot be seeded with the session; the iframe shares the origin, so media queries evaluate against 387px for real and the app is authenticated. PREVIOUS SESSION NOTES BELOW STILL APPLY.\n\n---\n\nLATEST (T-0274, commit 466c2d5 on feat/planned-tasks-t0256-t0266): the 'Approved by / Declined by' officer is now an avatar + name chip linking to /app/profile/:id. The id was already on the wire (decidedByMemberId) and was simply being dropped in mapApplication. Two degradations are pinned by tests: no member id renders the same chip UNLINKED (the FK is ON DELETE SET NULL, so a removed officer must not link to a profile that is gone), and an id without a name renders no chip at all. The label and the chip are separate elements now, so 'Approved by' carries an explicit &ngsp; - without it Angular drops the whitespace-only node between them and the line reads 'Approved byColonel Hale'. The AVATAR ITSELF needs lords-dashboard-backend:T-0186 (the Discord-avatar fallback); until that ships the chip is a link with initials. --- SESSION: implemented every remaining planned task (T-0259, T-0261..T-0266) on branch feat/planned-tasks-t0256-t0266, plus 3 discovered items (T-0267..T-0269). Status `review` pending PR merge. COUPLED BACKEND BRANCH: lords-dashboard-backend feat/planned-tasks-t0163-t0178 - THE TWO MUST MERGE AND DEPLOY TOGETHER; this app now reads guildMember / discordInviteUrl / guildGateEnabled / guildGateExempt off /auth/me and permittedActions off the member projection, none of which exist on today's production API. *** THE GUILD GATE SHIPS OFF. *** Enforcement is gated on guildGateEnabled from /auth/me, which the backend defaults to false; the single predicate is AuthService.isGuildGated() (guildGateEnabled && !guildMember && !guildGateExempt) and guard, gate screen and routeAfterLogin all defer to it. With the flag off the guard is a pass-through - verified live both ways. The switch itself is T-0267, in the Lord Adjutant settings panel. The four CurrentUser gate fields are now REQUIRED on the interface but the runtime helpers still treat absent as gate-off, so a client running ahead of the backend deploy gates nobody. T-0256 IS BLOCKED, NOT DONE: it needs a real iOS device and none is available. An emulated 390x844 iPhone viewport with an iOS UA shows both the poster tile and the no-poster fallback rendering with zero console errors, but Chrome does not reproduce Safari's video-poster behaviour, so that proves the markup path and not the reported symptom. Do not close it on the emulated pass. T-0259 RESOLUTION: favicon.svg was DELETED, not replaced. Its payload was byte-identical to regiment-logo-sm.png (a 75px raster in an <image> wrapper), and the repo's only real vector is the crest-divider fleur-de-lis, which is a different heraldic device. Chrome now falls back to the 96px PNG. If a genuine vector crest is ever commissioned, re-add the link and the file together. VERIFIED THIS SESSION: prettier --check, ng lint, production build and 553 karma specs all clean. Browser checks at 1440px AND a true 390x844 viewport against the running dev stack: as an Admin the roster row action shows only on the Member and Moderator rows (not the Owner, not a peer Admin, not self); a Moderator with neither settings capability is redirected off /app/admin/settings and has no sidebar entry; with the gate ON a non-guild-member is sent to /guild-required from dashboard/roster/settings while /app/profile, /app/account-deletion and /privacy stay reachable; with the gate OFF nothing is gated. TOOLING NOTE worth keeping: resize_window does NOT shrink the Chrome extension's headless viewport (stuck at 1920px), so mobile cannot be screenshotted that way. Launch `google-chrome --headless=new --remote-debugging-port=9222` and drive CDP directly - Emulation.setDeviceMetricsOverride gives a true device viewport, and Node 22's global WebSocket is enough to speak CDP with no dependencies. KNOWN PRE-EXISTING, NOT INTRODUCED: profile.component.scss is 176 bytes over its 6kB budget (a build WARNING, not a failure - the file is byte-identical to main), and TopbarComponent's breadcrumb loop throws a dev-mode-only NG0100 ExpressionChangedAfterItHasBeenCheckedError (the topbar is untouched by this branch and NG0100 does not occur in production builds). --- PREVIOUS:SYNC of af1309e (PR #22 merge). Two things happened here. FIRST, Blueframe was showing this repo as EMPTY (taskCount 0 at http://127.0.0.1:7317/api/repos) because T-0258 was written with type \"fix\" - not in the type enum (feature|bug|chore|infra|question|spike) - and ONE invalid value fails validation for the WHOLE repo with no visible error. Corrected to \"bug\". Always verify after editing state.json: curl -s http://127.0.0.1:7317/api/repos (taskCount 0 == broken), then curl -s 'http://127.0.0.1:7317/api/state?repo=lords-regiment-dashboard' for the exact zod path. SECOND, PR #22 (131a834 + b510ab0 + efa68cd) merged to main together with its coupled backend PR #21 (abc55a3, lords-dashboard-backend), so all 24 tasks parked at `review` - T-0233..T-0254, T-0257, T-0258 - are now `deployed`. The pair deployed together as required. STILL OPEN: T-0255 (in_progress) - presentation save round-trip, banner upload presign->PUT->PATCH, and the unsaved-changes prompt were never exercised; use the minted-Owner-JWT browser recipe from the previous handoff. T-0256 (planned) needs a real iOS device for the gallery video poster. T-0232 (questionnaire) still waits on the Cloudflare Web Analytics vs CSP call. NEW: T-0259 (favicon.svg is a raster in vector clothing) and T-0260 (is the product \"Lords Regiment\" or \"Lords of Holdfast\"? - an app-wide rename either way). Two testPlan items on T-0243 stay pending for want of hardware (Safari/Firefox tabs, iOS home screen) and one regressionRisk stays open there (nginx 30d-immutable caching may hold the old favicon after deploy). This sync was NOT committed - the user asked for the reconciliation only.",
+  "nextIdCounter": 278,
   "connections": [],
   "tasks": [
     {
@@ -17976,6 +17976,169 @@
       "area": "platform",
       "feature": "design-system",
       "subfeature": "muted-text"
+    },
+    {
+      "repo": "",
+      "dependsOn": [
+        "lords-dashboard-backend:T-0189"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "linking a rank to a privileged role leaves the role linked and shows the advisory, with relinkError untouched",
+          "status": "passed"
+        },
+        {
+          "desc": "the advisory renders as a warn notice in the Discord role panel, not an err one",
+          "status": "passed"
+        },
+        {
+          "desc": "unlinking that role, or closing the editor, drops the advisory",
+          "status": "passed"
+        },
+        {
+          "desc": "a clean role says nothing",
+          "status": "passed"
+        },
+        {
+          "desc": "toLinkResult reports a null warning when the field is absent, so an older API degrades to silence",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: link a rank to a privileged role as Owner and confirm the notice reads as advice rather than a failure, at 1440px and at a true mobile viewport",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "LinkDiscordResult gained a required `warning` field, so every construction site (including specs) must supply it. Shared by ranks and medals link + unlink.",
+          "status": "open",
+          "notedAt": "2026-07-26T18:00:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "The advisory only appears AFTER the link succeeds, because the API is what classifies the role — GET /api/discord/roles does not expose whether a role is privileged, so the picker cannot flag it up front. Pre-emptive warning would need that field (see lords-dashboard-backend:T-0189).",
+        "No confirm step: linking a privileged role is one click, exactly as before. The re-role confirmation (T-0254) still fires on top of it whenever an existing role is being replaced and the entity has holders."
+      ],
+      "lastTouchedCommit": null,
+      "createdAt": "2026-07-26T18:00:00Z",
+      "updatedAt": "2026-07-26T18:00:00Z",
+      "history": [
+        {
+          "at": "2026-07-26T18:00:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-07-26T18:00:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented + 585 specs green on feat/privileged-role-link-warning; PR open against dev"
+        }
+      ],
+      "id": "T-0276",
+      "title": "Surface the privileged-Discord-role advisory in the Ranks & Medals role picker",
+      "summary": "Pairs with lords-dashboard-backend:T-0189, which turned the 400 on linking a rank or medal to a privileged Discord role into an advisory on the 200. LinkDiscordResult carries that advisory as `warning` (null when absent, so a backend without the field degrades to silence rather than a broken screen), and the Discord role panel renders it as a warn notice — deliberately not the err channel `relinkError` uses, because nothing failed and there is nothing to retry. Cleared when that role is unlinked and when the editor moves to another rank or medal, so it can never describe a link the admin is no longer looking at.",
+      "status": "review",
+      "type": "feature",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "admin",
+      "feature": "ranks-medals",
+      "subfeature": "role-warning"
+    },
+    {
+      "id": "T-0277",
+      "title": "Lock the entry rank's name and Delete in the ranks admin",
+      "summary": "The API now refuses a rename or a delete on a rank it resolves by name (Recruit), 403 for every caller, so the UI locks those two controls instead of offering them and catching the failure. Ladder row gets a muted padlock with the reason as its title; the editor Name field goes read-only with a LOCKED chip, the reason underneath and aria-describedby tying them together; the row menu OMITS Delete (a greyed-out Delete reads as \"not yet\" when the answer is \"never\") and shows a line of text saying why, keeping Edit. saveRank leaves `name` out of the body entirely for a locked rank, because the API only refuses a name it can see CHANGING and our own .trim() of the stored value is the one thing that could still differ. deleteRank re-checks the flag so a stale array or a keyboard path cannot fire a doomed request. mapRank reads an absent isProtected as false, so an older API leaves the ladder editable rather than freezing every row. One copy string feeds the tooltip, hint and flash.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "ranks-medals",
+      "subfeature": "protected-ranks",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/api.model.ts",
+        "src/app/core/models/member.model.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.ts",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.html",
+        "src/app/features/admin/ranks-medals/ranks-medals.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0190"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "padlock renders on the protected row and on NO other row",
+          "status": "passed"
+        },
+        {
+          "desc": "editor Name field is readOnly with the reason wired via aria-describedby",
+          "status": "passed"
+        },
+        {
+          "desc": "row menu omits Delete for a protected rank and keeps it for an ordinary one",
+          "status": "passed"
+        },
+        {
+          "desc": "saveRank omits `name` for a locked rank but still posts precedence/imageKey",
+          "status": "passed"
+        },
+        {
+          "desc": "deleteRank refuses locally without calling the service",
+          "status": "passed"
+        },
+        {
+          "desc": "New Role straight after editing the protected rank leaves the name editable (state bleed)",
+          "status": "passed"
+        },
+        {
+          "desc": "mapRank normalises an absent isProtected to false",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "note": "saveRank no longer always sends `name`. Any future rank-editor field added to the payload must keep working when the name is omitted, and a backend that starts REQUIRING name on PATCH would break the protected-rank save path.",
+          "status": "open"
+        },
+        {
+          "note": "mapRank fails OPEN on a missing isProtected, so a backend that stops sending the field silently unlocks every control while the API still 403s. Deliberate (an admin locked out of their own ladder is worse), but it means the lock is only as present as the projection.",
+          "status": "open"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not disable the Save button or add a confirm dialog for a protected rank — the rank IS saveable, only its name is frozen.",
+        "Did not touch the medal cabinet: no medal is resolved by name server-side, so there is nothing to protect there.",
+        "Did not exercise the Discord role panel in the browser — the dev stack has a live bot and a link/unlink fans role changes out to real people."
+      ],
+      "lastTouchedCommit": "f2b48ac39c48e5ecd207d722d9203aa6d6f1fa2f",
+      "createdAt": "2026-07-26T23:55:00Z",
+      "updatedAt": "2026-07-26T23:55:00Z",
+      "history": [
+        {
+          "at": "2026-07-26T23:55:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created alongside lords-dashboard-backend:T-0190"
+        },
+        {
+          "at": "2026-07-26T23:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/protected-ranks; PR #47 open against dev, CI green"
+        }
+      ]
     }
   ]
 }

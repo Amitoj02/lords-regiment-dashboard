@@ -96,6 +96,13 @@ export class RanksMedalsComponent implements OnInit {
     editingRankId: string | null = null;
     editRankName = '';
     editRankPrecedence = 0;
+    /**
+     * The rank open in the editor is one the API resolves by name
+     * (lords-dashboard-backend:T-0190), so its name is frozen while the rest of it
+     * stays editable. False for a new rank — creating one is never refused, only
+     * renaming an existing one.
+     */
+    editRankNameLocked = false;
     // Rank-icon upload (T-0194): a freshly-picked file's object-URL preview + the
     // resolved storage key, plus the already-saved icon URL loaded when editing.
     editRankImageKey: string | null = null;
@@ -131,6 +138,13 @@ export class RanksMedalsComponent implements OnInit {
     relink: RoleRelinkProgress | null = null;
     /** A link/unlink or cancel request that failed outright (not a job failure). */
     relinkError = '';
+    /**
+     * Advisory from a link that SUCCEEDED — today, that the role carries
+     * privileged Discord permissions (lords-dashboard-backend:T-0189). Kept apart
+     * from `relinkError` on purpose: nothing went wrong, so it must not read as a
+     * failure or send the admin looking for something to retry.
+     */
+    roleWarning = '';
     /** A link/unlink request is in flight — keeps the confirm button single-fire. */
     relinkBusy = false;
     cancellingRelink = false;
@@ -265,6 +279,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = 'rank';
         this.editingRankId = null;
         this.editRankName = '';
+        this.editRankNameLocked = false;
         this.editRankPrecedence = this.ranks.length + 1;
         this.resetRankIcon();
         this.resetEditorRole();
@@ -276,6 +291,7 @@ export class RanksMedalsComponent implements OnInit {
         this.editorMode = 'rank';
         this.editingRankId = rank.id ?? null;
         this.editRankName = rank.name;
+        this.editRankNameLocked = rank.isProtected === true;
         this.editRankPrecedence = rank.order;
         this.resetRankIcon();
         this.editRankImageUrl = rank.imageUrl ?? null;
@@ -318,10 +334,13 @@ export class RanksMedalsComponent implements OnInit {
 
     saveRank(): void {
         if (this.saving || this.rankImageUploading) return;
-        const payload: RankPayload = {
-            name: this.editRankName.trim(),
-            precedence: this.editRankPrecedence,
-        };
+        const payload: RankPayload = { precedence: this.editRankPrecedence };
+        // A frozen name is left out of the body entirely rather than posted back
+        // unchanged: the API only refuses a name it can see CHANGING, and the one
+        // thing that could differ is our own `.trim()` of a stored value.
+        if (!this.editRankNameLocked) {
+            payload.name = this.editRankName.trim();
+        }
         if (this.editRankImageKey) {
             payload.imageKey = this.editRankImageKey;
         }
@@ -349,6 +368,14 @@ export class RanksMedalsComponent implements OnInit {
 
     deleteRank(rank: Rank): void {
         if (!rank.id) return;
+        // The row menu already hides Delete for a protected rank; this is the
+        // second half of the same rule, so a stale `ranks` array or a keyboard
+        // path into a hidden item cannot fire a request the API will refuse.
+        if (rank.isProtected === true) {
+            this.rowFlash = this.protectedRankNotice(rank.name);
+            this.rowWarn = true;
+            return;
+        }
         this.clearRowFlash();
         this.ranksService
             .delete(rank.id)
@@ -598,11 +625,15 @@ export class RanksMedalsComponent implements OnInit {
                 ? this.ranksService.linkDiscord(id, roleId, name)
                 : this.medalsService.linkDiscord(id, roleId, name);
         link$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: ({ relinkBatchId }) => {
+            next: ({ relinkBatchId, warning }) => {
                 this.relinkBusy = false;
                 this.editDiscordRoleId = roleId;
                 this.editDiscordRoleName = name;
                 this.editDiscordLinked = true;
+                // The link went through — a privileged role is now the regiment's
+                // call to make (lords-dashboard-backend:T-0189), so this is the
+                // only place the admin is told what they just handed out.
+                this.roleWarning = warning ?? '';
                 this.refreshAfterLink();
                 this.watchRelink(relinkBatchId);
             },
@@ -623,6 +654,8 @@ export class RanksMedalsComponent implements OnInit {
         unlink$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: ({ relinkBatchId }) => {
                 this.relinkBusy = false;
+                // The role it warned about is no longer linked to anything.
+                this.roleWarning = '';
                 this.resetEditorRole();
                 this.refreshAfterLink();
                 this.watchRelink(relinkBatchId);
@@ -727,6 +760,9 @@ export class RanksMedalsComponent implements OnInit {
     /** Clear the whole re-link view when the editor switches to another entity. */
     private resetRelinkView(): void {
         this.relinkPrompt = null;
+        // Scoped to the entity that was being edited — it must not follow the
+        // admin onto the next rank/medal.
+        this.roleWarning = '';
         // A request abandoned by closing the panel must not leave the next
         // editor session with a permanently disabled role picker.
         this.relinkBusy = false;
@@ -940,6 +976,19 @@ export class RanksMedalsComponent implements OnInit {
     /** The icon to show in the rank editor preview (fresh pick first, else saved). */
     get rankIconPreview(): string | null {
         return this.editRankImagePreview ?? this.editRankImageUrl;
+    }
+
+    /**
+     * Why a protected rank's name and Delete are unavailable
+     * (lords-dashboard-backend:T-0190). One string behind the editor hint, the row
+     * tooltip and the flash, so the three cannot tell an admin three things.
+     */
+    protectedRankNotice(name: string): string {
+        return (
+            `"${name}" is required by the dashboard and cannot be renamed or deleted — ` +
+            'new members are enlisted onto it by name. Its position, icon and Discord role ' +
+            'can still be changed.'
+        );
     }
 
     /** The image to show in the medal editor preview (fresh pick first, else saved). */
