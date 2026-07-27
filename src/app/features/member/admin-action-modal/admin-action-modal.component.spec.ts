@@ -374,8 +374,23 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         expect(component.error).toContain("don't have permission");
     });
 
-    it('never offers a role at or above the caller’s own', () => {
+    it('offers the caller’s own tier, but never one above it (T-0283)', () => {
+        // Holding manage_roles is what lets an Admin appoint another Admin; what
+        // stays shut is escalation, and Owner has its own flow entirely.
         setup(currentUser({ role: 'Admin' }));
+        component.member = member();
+        expect(component.assignableRoles).toEqual([
+            'Admin',
+            'Moderator',
+            'Member',
+            'Mercenary',
+            'Applicant',
+        ]);
+        expect(component.assignableRoles).not.toContain('Owner');
+    });
+
+    it('narrows the role list further for a Moderator', () => {
+        setup(currentUser({ role: 'Moderator' }));
         component.member = member();
         expect(component.assignableRoles).toEqual([
             'Moderator',
@@ -383,14 +398,9 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
             'Mercenary',
             'Applicant',
         ]);
+        // A Moderator appoints Moderators, never Admins — the ceiling is the
+        // caller's own tier, not the whole ladder.
         expect(component.assignableRoles).not.toContain('Admin');
-        expect(component.assignableRoles).not.toContain('Owner');
-    });
-
-    it('narrows the role list further for a Moderator', () => {
-        setup(currentUser({ role: 'Moderator' }));
-        component.member = member();
-        expect(component.assignableRoles).toEqual(['Member', 'Mercenary', 'Applicant']);
     });
 
     it('opens the role list to the Owner, but never offers Owner itself', () => {
@@ -408,9 +418,19 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
     });
 
     it('does not preselect a role the caller cannot re-assign', () => {
-        setup(currentUser({ role: 'Admin' }));
+        // A Moderator opening an Admin: 'Admin' is above their ceiling, so the
+        // select seeds blank rather than showing a label it cannot offer.
+        setup(currentUser({ role: 'Moderator' }));
         component.member = member({ role: 'Admin' });
         expect(component.selectedRole).toBe('');
+    });
+
+    it('preselects the target’s own tier once the caller may assign it (T-0283)', () => {
+        // The peer entry is now in the list, so an Admin opening a Moderator sees
+        // that member's actual role selected — not a blank control.
+        setup(currentUser({ role: 'Admin' }));
+        component.member = member({ role: 'Moderator' });
+        expect(component.selectedRole).toBe('Moderator');
     });
 
     it('renders a readable error and folds the controls away on a 403 race', () => {
