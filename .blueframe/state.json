@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "7e5ba6447db07a1569a05c49158bcddc7c3a3353",
-  "lastSyncedAt": "2026-07-27T15:35:00Z",
-  "notesForNextSession": "LATEST SESSION (T-0283): the client half of a one-rule permission change the owner asked for - \"Manage roles\" in the permission matrix should let a role promote others to its OWN level (an Admin can add another Admin). The server rule lives in lords-dashboard-backend T-0203 and is authoritative; all this repo does is stop cutting the role dropdown one entry too early (assignableRolesFor: slice(own), not slice(own + 1)). WHAT DID NOT CHANGE: permittedActions.changeRole, the server-computed per-target gate, is untouched and still false for a peer - so the new entry only ever applies to a member BELOW the caller, and the Admin you just appointed immediately drops out of your reach (every action flag false, controls fold away). That asymmetry is intended, not a bug to \"fix\" later. THE MIRROR IS THE RISK: assignableRolesFor duplicates the server's canGrantRole. It is safe only as an UNDER-offer; drift the other way and the dropdown offers a role the API 403s. If this rule moves again, change both repos in the same breath. Merge order between the two PRs does not matter.",
-  "nextIdCounter": 284,
+  "lastSyncedCommit": "097be38382a7aac2b1f818ed9386dc41f5ecf4bc",
+  "lastSyncedAt": "2026-07-27T16:45:00Z",
+  "notesForNextSession": "LATEST SESSION (T-0284): the client half of backend T-0204 (derive a member's rank + medals from their Discord roles), plus a sweep the modal had needed for a while. THE SWEEP IS THE PART TO REMEMBER: every admin action now raises a success toast. Failures have toasted since T-0246; successes raised nothing, and because these dialogs sit over a page the change is not visible on -- and several actions leave no mark inside the modal either -- a completed action and a click that did nothing looked exactly the same. Each message is built from the member the SERVER returned, never from the form state, so it reports what actually landed; the medal messages read their title BEFORE the request fires, because the select is cleared and the chip removed by the time it resolves. Keep both properties if you touch run(). The toast needed no new styling: T-0270 already moved it onto the elevated ink surface, so \"dark snackbar\" was a matter of raising one at all. The derive is deliberately the only action that ALSO leaves its result in the dialog - it is the one whose effect the admin could not predict, and the medal list is worth reading after the 4.5s toast has gone. It is also the only one that can succeed with nothing to report, which is why it picks info vs success on whether anything changed. CROSS-REPO: MemberPermittedActions gained deriveFromDiscord, so this ships with lords-dashboard-backend T-0204 (same branch name). The flag is false on your own record because a self-derive is a self-promotion - the server decides that, and the modal simply hides the section.",
+  "nextIdCounter": 285,
   "connections": [],
   "tasks": [
     {
@@ -18523,6 +18523,104 @@
           "to": "review",
           "by": "claude",
           "note": "client half of the owner request that \"Manage roles\" let a role promote others to its own level. Implemented on feat/manage-roles-grant-own-tier; lint, production build and the full karma suite green (602 specs); PR opened against dev."
+        }
+      ]
+    },
+    {
+      "id": "T-0284",
+      "title": "Derive-from-Discord button, and a confirmation for every admin action",
+      "summary": "Two halves of the same complaint: an admin presses something in the member admin modal and cannot tell what happened. (1) A new Discord section offers \"Derive data from Discord\" with the hint \"It will derive rank and medals already assigned on Discord side.\", calling the new POST /members/:id/derive-from-discord (backend T-0204). It is the one action whose effect the caller cannot predict, so the server's own summary sentence is shown twice - as a toast AND left in the dialog, where the list of medals that came across can be re-read after the toast has gone. A run that found nothing is reported in the neutral (info) tone, not as an achievement. (2) EVERY admin action now raises a success toast. Failures have raised one since T-0246; successes raised nothing at all, and these dialogs sit over a page the change is not visible on - a role change swaps a value in a select that already showed it, a medal removal takes away a chip nobody was looking at, so a completed action and a click that silently did nothing looked identical. Each message is built from the member the SERVER returned rather than from the local form state, so it reports what landed; the award/remove messages read their medal title BEFORE the request, because the select is cleared and the chip is gone by the time it resolves. The existing toast component was already the dark elevated-ink card T-0270 made it, so no new surface was needed.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "member-actions",
+      "subfeature": "discord-history-carry-over",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/member.model.ts",
+        "src/app/core/services/members.service.ts",
+        "src/app/core/services/members.service.spec.ts",
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.ts",
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.html",
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.scss",
+        "src/app/features/member/admin-action-modal/admin-action-modal.component.spec.ts",
+        "src/app/features/member/roster/roster.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0204",
+        "T-0266",
+        "T-0246",
+        "T-0270"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the button renders with the exact hint, wired by aria-describedby",
+          "status": "passed"
+        },
+        {
+          "desc": "the section is absent when the server did not permit the action (your own record)",
+          "status": "passed"
+        },
+        {
+          "desc": "a derive that changed something toasts success and leaves the summary in the dialog",
+          "status": "passed"
+        },
+        {
+          "desc": "a derive that found nothing uses the info tone, not success",
+          "status": "passed"
+        },
+        {
+          "desc": "a refused derive surfaces the server's message and clears the outcome",
+          "status": "passed"
+        },
+        {
+          "desc": "rank, role, award, remove, suspend, unsuspend, ban and unban each confirm themselves",
+          "status": "passed"
+        },
+        {
+          "desc": "the award/remove confirmations still name the medal after the select is cleared and the chip is gone",
+          "status": "passed"
+        },
+        {
+          "desc": "a failed action raises no success toast",
+          "status": "passed"
+        },
+        {
+          "desc": "the gated-control matrix (T-0266) now covers the new button in every caller/target cell",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "MemberPermittedActions grew a ninth flag (deriveFromDiscord) and PERMITTED_ACTION_KEYS with it. Every fixture that builds a full block had to be updated, and hasAnyPermittedAction/canOpenAdminActions now count it - so a member for whom ONLY the derive is permitted opens the modal, which is intended. Any new consumer enumerating the block must include it or fail closed.",
+          "status": "open",
+          "notedAt": "2026-07-27T16:45:00Z"
+        },
+        {
+          "desc": "Every admin action now raises a toast, so a burst of them (removing several medals in a row) stacks several cards. The stack is a fixed-position column with no cap; on a phone it is full-width and could briefly cover the dialog's own controls.",
+          "status": "open",
+          "notedAt": "2026-07-27T16:45:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "The derive hint does not mention that the action also queues a Discord reconcile (which can strip a role the roster did not adopt) - tracked as the open risk on backend T-0204.",
+        "No confirmation step before deriving: it is promotion-only, additive-only and idempotent server-side, so it is not destructive, but it is not previewable either.",
+        "Did not add toasts to admin actions OUTSIDE this modal (ranks & medals editors, applications, gallery) - out of scope, and several already show inline state."
+      ],
+      "lastTouchedCommit": "097be38382a7aac2b1f818ed9386dc41f5ecf4bc",
+      "createdAt": "2026-07-27T16:45:00Z",
+      "updatedAt": "2026-07-27T16:45:00Z",
+      "history": [
+        {
+          "at": "2026-07-27T16:45:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "owner request: a derive-from-Discord button on the profile admin section, and a dark snackbar on the admin actions that had none. Implemented on feat/derive-member-data-from-discord; 614 unit tests green; verified in the running dev app (button, hint, both snackbars). PR opened against dev."
         }
       ]
     }
