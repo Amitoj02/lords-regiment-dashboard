@@ -659,6 +659,13 @@ export interface ApiGalleryItem {
     liked?: boolean;
     submittedAt: string;
     approvedAt: string | null;
+    /**
+     * The officer who approved it. The API sends this key ONLY to callers
+     * holding `moderate_gallery` — it is absent, not null, for everyone else
+     * (including the public feed), so its mere presence is the server's answer
+     * about whether this caller may see the attribution.
+     */
+    approvedBy?: ApiGalleryMemberRef | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -685,6 +692,8 @@ export function mapGalleryItem(g: ApiGalleryItem): GalleryItem {
         declineReason: g.declineReason,
         caption: g.caption ?? undefined,
         fileCount: g.files?.length,
+        approvedAt: g.approvedAt,
+        approvedBy: g.approvedBy ?? null,
     };
 }
 

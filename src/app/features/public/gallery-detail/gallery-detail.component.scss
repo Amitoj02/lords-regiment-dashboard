@@ -123,6 +123,13 @@
     color: var(--t-400);
 }
 
+// Moderation metadata, quieter than the byline it hangs beneath.
+.detail-approver {
+    font-size: 11.5px;
+    color: var(--t-500);
+    margin-top: 2px;
+}
+
 .detail-caption {
     color: var(--t-200);
     line-height: 1.7;

@@ -445,9 +445,48 @@
         margin: 0 -16px;
     }
 
+    // ── The identity block sits BELOW the banner, always (T-0278) ────────────
+    // The name used to render ON the banner. The desktop rule pulls the WHOLE
+    // header up 40-48px and leans on `align-items: flex-end` to push the text
+    // back down — which only holds while .profile-header-info is SHORTER than
+    // the 132px avatar. At phone widths the rigid buttons squeeze that column
+    // to ~106px, the 24px serif name wraps to two lines, the info becomes the
+    // tallest flex item (~147px), and bottom-aligning the tallest item is a
+    // no-op: its top edge IS the container's, i.e. 40px inside the banner.
+    // So: stop moving the header at all and pull only the AVATAR up. The text
+    // then starts at the banner's bottom edge by construction, at any height.
     .profile-header {
-        margin-top: -40px;
+        margin-top: 0;
         gap: 14px;
+        align-items: flex-start;
+    }
+
+    .profile-avatar-wrap {
+        margin-top: -40px; // the overlap, now the avatar's alone
+    }
+
+    .profile-header-info {
+        padding-bottom: 0;
+    }
+
+    // Bootstrap's grid gutters leak onto every `.row` (margin-inline: -12px);
+    // on a phone that spills the name left across the avatar gutter.
+    .profile-name-row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    // Actions drop to their own full-width row — the mobile reference's shape.
+    // `align-self: flex-start` is what pinned the Edit button to the top of the
+    // flex line and put it inside the banner; freeing this width is also what
+    // stops the name wrapping in the first place.
+    .profile-actions {
+        flex-basis: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        align-self: stretch;
+        padding-top: 0;
+        margin-top: 12px;
     }
 
     .profile-grid {

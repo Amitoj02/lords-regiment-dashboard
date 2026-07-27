@@ -69,6 +69,19 @@
                         <div class="detail-submitter-name">{{ item.submittedBy }}</div>
                         }
                         <div class="detail-date">{{ item.submittedAt }}</div>
+                        <!--
+                            Staff-only. `approvedBy` is absent, not null, unless
+                            the API decided this caller holds `moderate_gallery`,
+                            so the field's presence is the gate; `can()` beside
+                            it is a second, local one.
+                        -->
+                        @if (item.approvedBy && can('moderate_gallery')) {
+                        <div class="detail-approver">
+                            Approved by {{ item.approvedBy.name }}@if (item.approvedAt) {<span>
+                                on {{ item.approvedAt | date: 'MMM d, y' }}</span
+                            >}
+                        </div>
+                        }
                     </div>
                 </div>
 

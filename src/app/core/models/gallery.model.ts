@@ -20,4 +20,12 @@ export interface GalleryItem {
     declineReason?: string | null;
     caption?: string;
     fileCount?: number;
+    /** ISO-8601 instant the item was approved; null while pending/declined. */
+    approvedAt?: string | null;
+    /**
+     * The officer who approved it — populated ONLY when the API decided this
+     * caller may see it (holders of `moderate_gallery`). Null otherwise, and
+     * null for an item nobody has approved.
+     */
+    approvedBy?: { memberId: string; name: string; avatarUrl?: string | null } | null;
 }
