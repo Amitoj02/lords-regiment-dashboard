@@ -73,6 +73,13 @@ export interface MemberPermittedActions {
     unsuspend: boolean;
     ban: boolean;
     unban: boolean;
+    /**
+     * Pull across the rank and medals this member's Discord roles already say
+     * they earned (backend T-0204). Requires `edit_ranks_medals`, and is never
+     * true on your OWN record — deriving yourself would be a self-promotion, so
+     * the server refuses it like every other self-targeted action.
+     */
+    deriveFromDiscord: boolean;
 }
 
 /** The permitted-action flags, in one place so every read fails closed the same way. */
@@ -85,6 +92,7 @@ const PERMITTED_ACTION_KEYS: readonly (keyof MemberPermittedActions)[] = [
     'unsuspend',
     'ban',
     'unban',
+    'deriveFromDiscord',
 ];
 
 /**
@@ -133,7 +141,7 @@ export function canOpenAdminActions(
  * Roles the role dropdown can offer, most senior first. `Owner` is absent on
  * purpose — ownership moves through its own flow, never this control.
  *
- * This is display order plus the caller's own-rank cut (see
+ * This is display order plus the caller's own-tier cut (see
  * {@link assignableRolesFor}); it is NOT a client-side copy of the server's
  * hierarchy rule. Whether the caller may touch a given member's role at all
  * comes from `permittedActions.changeRole`.
@@ -147,9 +155,16 @@ export const ASSIGNABLE_ROLES: readonly MemberRole[] = [
 ];
 
 /**
- * The roles `callerRole` may hand out: strictly below their own, so an Admin can
- * never mint a peer Admin and a Moderator can never mint an Admin. An unknown or
- * absent role offers nothing (fail closed); the Owner may assign the whole list.
+ * The roles `callerRole` may hand out: their own tier and everything below it,
+ * so an Admin holding `manage_roles` may appoint another Admin and a Moderator
+ * another Moderator — but a Moderator can still never mint an Admin (T-0283,
+ * mirroring the server's `canGrantRole`). An unknown or absent role offers
+ * nothing (fail closed); the Owner may assign the whole list.
+ *
+ * The peer entry only ever appears against a target the caller may act on at
+ * all — `permittedActions.changeRole` is the separate, server-computed gate, and
+ * it stays false for a peer. So this widens who you can PROMOTE, never who you
+ * can moderate: the Admin you just appointed is immediately out of your reach.
  */
 export function assignableRolesFor(callerRole: MemberRole | null | undefined): MemberRole[] {
     if (callerRole === 'Owner') {
@@ -159,7 +174,7 @@ export function assignableRolesFor(callerRole: MemberRole | null | undefined): M
     if (own === -1) {
         return [];
     }
-    return ASSIGNABLE_ROLES.slice(own + 1);
+    return ASSIGNABLE_ROLES.slice(own);
 }
 
 export interface Member {

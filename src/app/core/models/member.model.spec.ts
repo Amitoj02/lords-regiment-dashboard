@@ -1,6 +1,9 @@
 import {
+    ASSIGNABLE_ROLES,
     INACTIVE_AFTER_DAYS,
     Member,
+    MemberRole,
+    assignableRolesFor,
     deriveMemberStatus,
     statusTooltip,
     statusVariant,
@@ -108,5 +111,46 @@ describe('statusTooltip (T-0184)', () => {
     it('explains a pending application', () => {
         const m = member({ status: 'Pending' });
         expect(statusTooltip(m)).toContain('awaiting review');
+    });
+});
+
+describe('assignableRolesFor (T-0283)', () => {
+    it('offers the caller’s own tier and everything below it', () => {
+        // Holding manage_roles is what lets a role appoint its own kind, so the
+        // dropdown must contain the caller's own tier — this is the client half
+        // of the server's `canGrantRole`.
+        expect(assignableRolesFor('Admin')).toEqual([
+            'Admin',
+            'Moderator',
+            'Member',
+            'Mercenary',
+            'Applicant',
+        ]);
+        expect(assignableRolesFor('Moderator')).toEqual([
+            'Moderator',
+            'Member',
+            'Mercenary',
+            'Applicant',
+        ]);
+    });
+
+    it('never offers a tier above the caller’s own', () => {
+        expect(assignableRolesFor('Moderator')).not.toContain('Admin');
+        expect(assignableRolesFor('Member')).not.toContain('Moderator');
+    });
+
+    it('never offers Owner, not even to the Owner', () => {
+        // Ownership moves through provisioning, never this control — and the
+        // server refuses the role outright, so offering it could only ever 403.
+        expect(assignableRolesFor('Owner')).toEqual([...ASSIGNABLE_ROLES]);
+        for (const caller of ['Owner', 'Admin', 'Moderator', 'Member'] as MemberRole[]) {
+            expect(assignableRolesFor(caller)).not.toContain('Owner');
+        }
+    });
+
+    it('fails closed on an absent or unknown role', () => {
+        expect(assignableRolesFor(null)).toEqual([]);
+        expect(assignableRolesFor(undefined)).toEqual([]);
+        expect(assignableRolesFor('Nonsense' as unknown as MemberRole)).toEqual([]);
     });
 });

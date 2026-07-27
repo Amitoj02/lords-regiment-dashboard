@@ -22,6 +22,7 @@ function allPermitted(overrides: Partial<MemberPermittedActions> = {}): MemberPe
         unsuspend: true,
         ban: true,
         unban: true,
+        deriveFromDiscord: true,
         ...overrides,
     };
 }
@@ -37,6 +38,7 @@ function nonePermitted(): MemberPermittedActions {
         unsuspend: false,
         ban: false,
         unban: false,
+        deriveFromDiscord: false,
     });
 }
 
@@ -93,6 +95,7 @@ describe('AdminActionModalComponent (T-0246 no self-suspend/self-ban)', () => {
             'unsuspend',
             'ban',
             'unban',
+            'deriveFromDiscord',
         ]);
         toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info']);
         user = signal<CurrentUser | null>(me);
@@ -226,10 +229,11 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
     let members: jasmine.SpyObj<MembersService>;
     let toast: jasmine.SpyObj<ToastService>;
 
-    /** Labels of the five gated controls, one per section. */
+    /** Labels of the gated controls, one per section, in the order they render. */
     const RANK = 'Change rank';
     const ROLE = 'Change role';
     const AWARD = 'Award';
+    const DERIVE = 'Derive data from Discord';
     const SUSPEND = 'Suspend member';
     const BAN = 'Ban member';
 
@@ -243,6 +247,7 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
             'unsuspend',
             'ban',
             'unban',
+            'deriveFromDiscord',
         ]);
         toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info']);
         const user = signal<CurrentUser | null>(me);
@@ -284,7 +289,7 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
     }
 
     function labels(el: HTMLElement): string[] {
-        return [RANK, ROLE, AWARD, SUSPEND, BAN].filter((l) => control(el, l) !== null);
+        return [RANK, ROLE, AWARD, DERIVE, SUSPEND, BAN].filter((l) => control(el, l) !== null);
     }
 
     function noPermissionNotice(el: HTMLElement): Element | null {
@@ -317,7 +322,7 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         setup(currentUser({ id: 'mod-1', role: 'Moderator' }));
         const el = open(member({ id: 'm1', role: 'Member' }));
 
-        expect(labels(el)).toEqual([RANK, ROLE, AWARD, SUSPEND, BAN]);
+        expect(labels(el)).toEqual([RANK, ROLE, AWARD, DERIVE, SUSPEND, BAN]);
         expect(noPermissionNotice(el)).toBeNull();
     });
 
@@ -325,7 +330,7 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         setup(currentUser({ id: 'owner-1', role: 'Owner' }));
         const el = open(member({ id: 'adm-2', role: 'Admin' }));
 
-        expect(labels(el)).toEqual([RANK, ROLE, AWARD, SUSPEND, BAN]);
+        expect(labels(el)).toEqual([RANK, ROLE, AWARD, DERIVE, SUSPEND, BAN]);
         expect(noPermissionNotice(el)).toBeNull();
     });
 
@@ -346,7 +351,7 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         setup(currentUser({ role: 'Owner', capabilities: ['edit_ranks_medals'] }));
         const el = open(member({ id: 'm1' }));
 
-        expect(labels(el)).toEqual([RANK, AWARD]);
+        expect(labels(el)).toEqual([RANK, AWARD, DERIVE]);
     });
 
     it('shows only the section whose flag is set', () => {
@@ -374,8 +379,23 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         expect(component.error).toContain("don't have permission");
     });
 
-    it('never offers a role at or above the caller’s own', () => {
+    it('offers the caller’s own tier, but never one above it (T-0283)', () => {
+        // Holding manage_roles is what lets an Admin appoint another Admin; what
+        // stays shut is escalation, and Owner has its own flow entirely.
         setup(currentUser({ role: 'Admin' }));
+        component.member = member();
+        expect(component.assignableRoles).toEqual([
+            'Admin',
+            'Moderator',
+            'Member',
+            'Mercenary',
+            'Applicant',
+        ]);
+        expect(component.assignableRoles).not.toContain('Owner');
+    });
+
+    it('narrows the role list further for a Moderator', () => {
+        setup(currentUser({ role: 'Moderator' }));
         component.member = member();
         expect(component.assignableRoles).toEqual([
             'Moderator',
@@ -383,14 +403,9 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
             'Mercenary',
             'Applicant',
         ]);
+        // A Moderator appoints Moderators, never Admins — the ceiling is the
+        // caller's own tier, not the whole ladder.
         expect(component.assignableRoles).not.toContain('Admin');
-        expect(component.assignableRoles).not.toContain('Owner');
-    });
-
-    it('narrows the role list further for a Moderator', () => {
-        setup(currentUser({ role: 'Moderator' }));
-        component.member = member();
-        expect(component.assignableRoles).toEqual(['Member', 'Mercenary', 'Applicant']);
     });
 
     it('opens the role list to the Owner, but never offers Owner itself', () => {
@@ -408,9 +423,19 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
     });
 
     it('does not preselect a role the caller cannot re-assign', () => {
-        setup(currentUser({ role: 'Admin' }));
+        // A Moderator opening an Admin: 'Admin' is above their ceiling, so the
+        // select seeds blank rather than showing a label it cannot offer.
+        setup(currentUser({ role: 'Moderator' }));
         component.member = member({ role: 'Admin' });
         expect(component.selectedRole).toBe('');
+    });
+
+    it('preselects the target’s own tier once the caller may assign it (T-0283)', () => {
+        // The peer entry is now in the list, so an Admin opening a Moderator sees
+        // that member's actual role selected — not a blank control.
+        setup(currentUser({ role: 'Admin' }));
+        component.member = member({ role: 'Moderator' });
+        expect(component.selectedRole).toBe('Moderator');
     });
 
     it('renders a readable error and folds the controls away on a 403 race', () => {
@@ -455,5 +480,315 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         expect(component.error).toBe('Already banned');
         // A 409 says nothing about permissions, so the controls stay.
         expect(component.hasAnyPermittedAction).toBe(true);
+    });
+});
+
+/**
+ * T-0284 — every admin action confirms itself.
+ *
+ * These dialogs sit over a page the change is not visible on, and several
+ * actions leave no mark inside the modal either: a role change swaps a value in
+ * a select that already showed it, a medal removal takes away a chip nobody was
+ * looking at. Before this, a completed action and a click that silently did
+ * nothing were indistinguishable — failures raised a toast (T-0246) and
+ * successes raised nothing at all.
+ */
+describe('AdminActionModalComponent (T-0284 action confirmations)', () => {
+    let fixture: ComponentFixture<AdminActionModalComponent>;
+    let component: AdminActionModalComponent;
+    let members: jasmine.SpyObj<MembersService>;
+    let toast: jasmine.SpyObj<ToastService>;
+
+    function setup(me: CurrentUser = currentUser()): void {
+        members = jasmine.createSpyObj<MembersService>('MembersService', [
+            'changeRank',
+            'changeRole',
+            'awardMedal',
+            'removeMedal',
+            'suspend',
+            'unsuspend',
+            'ban',
+            'unban',
+            'deriveFromDiscord',
+        ]);
+        toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info']);
+        const user = signal<CurrentUser | null>(me);
+        const auth = {
+            currentUser: user,
+            hasCapability: (capability: string) =>
+                user()?.capabilities?.includes(capability) ?? false,
+        } as unknown as AuthService;
+
+        TestBed.configureTestingModule({
+            imports: [CommonModule, FormsModule],
+            declarations: [AdminActionModalComponent],
+            providers: [
+                { provide: MembersService, useValue: members },
+                { provide: RanksService, useValue: { getAll: () => of([]) } },
+                { provide: MedalsService, useValue: { getAll: () => of([]) } },
+                { provide: AuthService, useValue: auth },
+                { provide: ToastService, useValue: toast },
+            ],
+            schemas: [NO_ERRORS_SCHEMA],
+        });
+        fixture = TestBed.createComponent(AdminActionModalComponent);
+        component = fixture.componentInstance;
+    }
+
+    /** The message of the single success toast raised, or null if none was. */
+    function successMessage(): string | null {
+        return toast.success.calls.count() === 1
+            ? (toast.success.calls.mostRecent().args[0] as string)
+            : null;
+    }
+
+    it('confirms a rank change with the rank the SERVER came back with', () => {
+        // Built from the response, not the form: if the server applied something
+        // other than what was asked for, the confirmation says what landed.
+        setup();
+        members.changeRank.and.returnValue(of(member({ rank: 'Captain' })));
+        component.member = member({ rank: 'Sergeant' });
+        component.selectedRankId = 'r9';
+        component.changeRank();
+
+        expect(successMessage()).toBe('Jameson Nolt is now Captain.');
+        expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('confirms a role change', () => {
+        setup();
+        members.changeRole.and.returnValue(of(member({ role: 'Moderator' })));
+        component.member = member({ role: 'Member' });
+        component.selectedRole = 'Moderator';
+        component.changeRole();
+
+        expect(successMessage()).toBe('Jameson Nolt is now a Moderator.');
+    });
+
+    it('names the medal it awarded, though the select is cleared by then', () => {
+        setup();
+        members.awardMedal.and.returnValue(of(member()));
+        component.member = member();
+        component.medals = [{ id: 'md1', letter: 'V', title: 'Medal of Valor', description: '' }];
+        component.selectedMedalId = 'md1';
+        component.awardMedal();
+
+        expect(successMessage()).toBe('Awarded Medal of Valor to Jameson Nolt.');
+        // The select is empty again — which is exactly why the title was read first.
+        expect(component.selectedMedalId).toBe('');
+    });
+
+    it('names the medal it removed, though the chip is gone by then', () => {
+        setup();
+        members.removeMedal.and.returnValue(of(member({ medalAwards: [] })));
+        component.member = member({
+            medalAwards: [
+                {
+                    id: 'a1',
+                    medalId: 'md1',
+                    title: 'Medal of Valor',
+                    glyph: 'V',
+                    awardedAt: '2026-01-01T00:00:00Z',
+                },
+            ],
+        });
+        component.removeMedal('md1');
+
+        expect(successMessage()).toBe('Removed Medal of Valor from Jameson Nolt.');
+    });
+
+    it('confirms a suspension, a lift, a ban and an unban', () => {
+        setup();
+        const target = member();
+        members.suspend.and.returnValue(of(target));
+        members.unsuspend.and.returnValue(of(target));
+        members.ban.and.returnValue(of(target));
+        members.unban.and.returnValue(of(target));
+
+        component.member = target;
+        component.suspendUntil = '2099-01-01T12:00';
+        component.suspend();
+        expect(toast.success.calls.mostRecent().args[0]).toContain('is suspended until');
+
+        component.member = member({ suspendedUntil: '2099-01-01T12:00:00Z' });
+        component.unsuspend();
+        expect(toast.success.calls.mostRecent().args[0]).toContain('suspension is lifted');
+
+        component.member = target;
+        component.confirmBan();
+        expect(toast.success.calls.mostRecent().args[0]).toContain('is banned');
+
+        component.member = member({ bannedAt: '2026-06-01T00:00:00Z' });
+        component.unban();
+        expect(toast.success.calls.mostRecent().args[0]).toContain('ban is lifted');
+
+        expect(toast.success.calls.count()).toBe(4);
+        expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('raises no success toast when the action fails', () => {
+        // The failure path is unchanged (T-0246) and must not gain a second,
+        // contradictory notification.
+        setup();
+        members.ban.and.returnValue(throwError(() => ({ status: 409, error: { message: 'No' } })));
+        component.member = member();
+        component.confirmBan();
+
+        expect(toast.success).not.toHaveBeenCalled();
+        expect(toast.error).toHaveBeenCalledWith('No');
+    });
+});
+
+/** T-0284 / backend T-0204 — the repair button. */
+describe('AdminActionModalComponent (T-0284 derive from Discord)', () => {
+    let fixture: ComponentFixture<AdminActionModalComponent>;
+    let component: AdminActionModalComponent;
+    let members: jasmine.SpyObj<MembersService>;
+    let toast: jasmine.SpyObj<ToastService>;
+
+    function setup(me: CurrentUser = currentUser()): void {
+        members = jasmine.createSpyObj<MembersService>('MembersService', [
+            'changeRank',
+            'changeRole',
+            'awardMedal',
+            'removeMedal',
+            'suspend',
+            'unsuspend',
+            'ban',
+            'unban',
+            'deriveFromDiscord',
+        ]);
+        toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info']);
+        const user = signal<CurrentUser | null>(me);
+        const auth = {
+            currentUser: user,
+            hasCapability: (capability: string) =>
+                user()?.capabilities?.includes(capability) ?? false,
+        } as unknown as AuthService;
+
+        TestBed.configureTestingModule({
+            imports: [CommonModule, FormsModule],
+            declarations: [AdminActionModalComponent],
+            providers: [
+                { provide: MembersService, useValue: members },
+                { provide: RanksService, useValue: { getAll: () => of([]) } },
+                { provide: MedalsService, useValue: { getAll: () => of([]) } },
+                { provide: AuthService, useValue: auth },
+                { provide: ToastService, useValue: toast },
+            ],
+            schemas: [NO_ERRORS_SCHEMA],
+        });
+        fixture = TestBed.createComponent(AdminActionModalComponent);
+        component = fixture.componentInstance;
+    }
+
+    function open(target: Member): HTMLElement {
+        component.member = target;
+        fixture.detectChanges();
+        return fixture.nativeElement as HTMLElement;
+    }
+
+    it('offers the button with the hint that says what it will do', () => {
+        setup();
+        const el = open(member());
+
+        const button = Array.from(el.querySelectorAll('button')).find(
+            (b) => (b.textContent ?? '').trim() === 'Derive data from Discord',
+        );
+        expect(button).toBeTruthy();
+        // An action whose effect the admin cannot predict has to explain itself
+        // BEFORE it is pressed, not only after.
+        const hint = el.querySelector('#aam-derive-hint');
+        expect(hint?.textContent?.trim()).toBe(
+            'It will derive rank and medals already assigned on Discord side.',
+        );
+        expect(button?.getAttribute('aria-describedby')).toBe('aam-derive-hint');
+    });
+
+    it('hides the button on a member the server did not permit it for', () => {
+        // Your own record is the case that matters: deriving yourself is a
+        // self-promotion, so the server refuses it and the flag is false.
+        setup(currentUser({ id: 'm1' }));
+        const el = open(
+            member({ id: 'm1', permittedActions: { ...allPermitted(), deriveFromDiscord: false } }),
+        );
+
+        expect(el.querySelector('#aam-derive-hint')).toBeNull();
+        expect(component.canDeriveFromDiscord).toBe(false);
+    });
+
+    it('shows what it derived as a toast AND leaves it in the dialog', () => {
+        setup();
+        members.deriveFromDiscord.and.returnValue(
+            of({
+                member: member({ rank: 'Captain' }),
+                rank: 'Captain',
+                medals: ['Medal of Valor'],
+                summary:
+                    'Derived from Discord: Jameson Nolt promoted to Captain and awarded Medal of Valor.',
+            }),
+        );
+        component.member = member();
+        component.deriveFromDiscord();
+        fixture.detectChanges();
+
+        const summary =
+            'Derived from Discord: Jameson Nolt promoted to Captain and awarded Medal of Valor.';
+        expect(toast.success).toHaveBeenCalledWith(summary);
+        // The toast lasts 4.5 seconds; the list of medals that came across is
+        // worth reading twice, so it stays in the section too.
+        expect(component.deriveOutcome).toBe(summary);
+        expect(
+            (fixture.nativeElement as HTMLElement).querySelector('.aam-derive-outcome')
+                ?.textContent,
+        ).toContain('promoted to Captain');
+        expect(component.deriveBusy).toBe(false);
+    });
+
+    it('reports finding nothing in the neutral tone, not as an achievement', () => {
+        setup();
+        members.deriveFromDiscord.and.returnValue(
+            of({
+                member: member(),
+                rank: null,
+                medals: [],
+                summary: 'Nothing to derive — their Discord roles are already reflected.',
+            }),
+        );
+        component.member = member();
+        component.deriveFromDiscord();
+
+        expect(toast.info).toHaveBeenCalledWith(
+            'Nothing to derive — their Discord roles are already reflected.',
+        );
+        expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('surfaces a refusal from the server, like every other action', () => {
+        setup();
+        members.deriveFromDiscord.and.returnValue(
+            throwError(() => ({
+                status: 409,
+                error: { message: 'Jameson Nolt has not linked a Discord account' },
+            })),
+        );
+        component.member = member();
+        component.deriveFromDiscord();
+
+        expect(toast.error).toHaveBeenCalledWith('Jameson Nolt has not linked a Discord account');
+        expect(component.error).toBe('Jameson Nolt has not linked a Discord account');
+        expect(component.deriveBusy).toBe(false);
+        expect(component.deriveOutcome).toBeNull();
+    });
+
+    it('never calls the API when the server did not permit it', () => {
+        setup();
+        component.member = member({
+            permittedActions: { ...allPermitted(), deriveFromDiscord: false },
+        });
+        component.deriveFromDiscord();
+
+        expect(members.deriveFromDiscord).not.toHaveBeenCalled();
+        expect(component.error).toContain("don't have permission");
     });
 });

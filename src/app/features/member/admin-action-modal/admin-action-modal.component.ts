@@ -86,8 +86,9 @@ export class AdminActionModalComponent {
     /**
      * Roles this caller may assign, recomputed each time the modal opens. Owner
      * is never in the list (ownership has its own flow) and neither is any role
-     * at or above the caller's own — an Admin offering "Admin" would only ever
-     * produce a 403 (T-0266).
+     * ABOVE the caller's own — a Moderator offering "Admin" would only ever
+     * produce a 403 (T-0266). The caller's OWN tier IS offered: holding
+     * `manage_roles` is what lets an Admin appoint another Admin (T-0283).
      */
     assignableRoles: MemberRole[] = [];
 
@@ -99,7 +100,16 @@ export class AdminActionModalComponent {
     suspendBusy = false;
     unsuspendBusy = false;
     banBusy = false;
+    deriveBusy = false;
     error: string | null = null;
+
+    /**
+     * What the last derive found, kept in the dialog after its toast has gone
+     * (T-0284). The toast is a 4.5-second notification and this is a RESULT the
+     * admin may well want to read twice — it is the only place the list of medals
+     * that came across is written down.
+     */
+    deriveOutcome: string | null = null;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -175,6 +185,14 @@ export class AdminActionModalComponent {
     get canUnban(): boolean {
         return this.canRoles && !!this.actions?.unban;
     }
+    /**
+     * Pull rank + medals from Discord. Same capability as the rank/medal controls
+     * it writes through, and the server's own per-target flag — which is false on
+     * your own record, because deriving yourself is a self-promotion.
+     */
+    get canDeriveFromDiscord(): boolean {
+        return this.canRanksMedals && !!this.actions?.deriveFromDiscord;
+    }
     /** The ban inputs; same self-record carve-out as {@link showSuspendForm}. */
     get showBanForm(): boolean {
         return this.canBan || this.selfExplained;
@@ -193,6 +211,7 @@ export class AdminActionModalComponent {
             this.canChangeRank ||
             this.canChangeRole ||
             this.canManageMedals ||
+            this.canDeriveFromDiscord ||
             this.showSuspendSection ||
             this.showBanSection
         );
@@ -232,6 +251,7 @@ export class AdminActionModalComponent {
     // ── Lifecycle ────────────────────────────────────────────────────────────
     private initialise(): void {
         this.error = null;
+        this.deriveOutcome = null;
         this.banConfirming = false;
         this.medalDetail = '';
         this.suspendUntil = '';
@@ -292,12 +312,24 @@ export class AdminActionModalComponent {
     // Each re-checks its gate before calling out. The control is already hidden,
     // but a stale [member] binding could still let a click through, and a stated
     // refusal beats a silent no-op or a bare 403 from the server (T-0266).
+    //
+    // Each also names its own OUTCOME, which `run` raises as a toast (T-0284).
+    // These dialogs sit over a page the change is not visible on, and several
+    // actions (a role change, a medal removal) leave no mark inside the modal
+    // either — so before this, a successful action and a click that did nothing
+    // at all looked identical. The message is built from the member the SERVER
+    // returned, never from the local form state, so it reports what actually
+    // landed rather than what was asked for.
     changeRank(): void {
         const m = this._member;
         if (!m || !this.selectedRankId) return;
         if (!this.canChangeRank) return this.refuse("change this member's rank");
         this.rankBusy = true;
-        this.run(this.members.changeRank(m.id, this.selectedRankId), () => (this.rankBusy = false));
+        this.run(
+            this.members.changeRank(m.id, this.selectedRankId),
+            () => (this.rankBusy = false),
+            (updated) => `${updated.inGameName} is now ${updated.rank}.`,
+        );
     }
 
     changeRole(): void {
@@ -308,13 +340,20 @@ export class AdminActionModalComponent {
             return this.refuse(`assign the ${this.selectedRole} role`);
         }
         this.roleBusy = true;
-        this.run(this.members.changeRole(m.id, this.selectedRole), () => (this.roleBusy = false));
+        this.run(
+            this.members.changeRole(m.id, this.selectedRole),
+            () => (this.roleBusy = false),
+            (updated) => `${updated.inGameName} is now a ${updated.role}.`,
+        );
     }
 
     awardMedal(): void {
         const m = this._member;
         if (!m || !this.selectedMedalId) return;
         if (!this.canAwardMedal) return this.refuse('award a medal to this member');
+        // Read the title BEFORE the request clears the select, so the confirmation
+        // can name the medal rather than saying "a medal was awarded".
+        const title = this.medals.find((medal) => medal.id === this.selectedMedalId)?.title;
         this.awardBusy = true;
         this.run(
             this.members.awardMedal(m.id, this.selectedMedalId, this.medalDetail || undefined),
@@ -323,6 +362,7 @@ export class AdminActionModalComponent {
                 this.medalDetail = '';
                 this.selectedMedalId = '';
             },
+            (updated) => `Awarded ${title ?? 'the medal'} to ${updated.inGameName}.`,
         );
     }
 
@@ -330,8 +370,50 @@ export class AdminActionModalComponent {
         const m = this._member;
         if (!m || this.removingMedalId) return;
         if (!this.canRemoveMedal) return this.refuse("remove this member's medals");
+        // Same reason as the award: the chip is gone by the time this resolves.
+        const title = m.medalAwards?.find((award) => award.medalId === medalId)?.title;
         this.removingMedalId = medalId;
-        this.run(this.members.removeMedal(m.id, medalId), () => (this.removingMedalId = null));
+        this.run(
+            this.members.removeMedal(m.id, medalId),
+            () => (this.removingMedalId = null),
+            (updated) => `Removed ${title ?? 'the medal'} from ${updated.inGameName}.`,
+        );
+    }
+
+    /**
+     * Pull the rank + medals this member's Discord roles already carry onto their
+     * record (T-0284 / backend T-0204).
+     *
+     * The one admin action whose effect the caller cannot predict, so it is also
+     * the one that most needs to report back: the server authors the sentence
+     * (it is the same one written to the audit log) and it is shown twice — as a
+     * toast, and left in the dialog where it can be re-read.
+     */
+    deriveFromDiscord(): void {
+        const m = this._member;
+        if (!m || this.deriveBusy) return;
+        if (!this.canDeriveFromDiscord) {
+            return this.refuse("derive this member's rank and medals from Discord");
+        }
+        this.deriveBusy = true;
+        this.deriveOutcome = null;
+        this.members
+            .deriveFromDiscord(m.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (result) => {
+                    this.deriveBusy = false;
+                    this.applyUpdate(result.member);
+                    this.deriveOutcome = result.summary;
+                    // A run that found nothing is a success, but not an
+                    // achievement — say so in the neutral tone, so "already up to
+                    // date" does not read as "records changed".
+                    const changed = !!result.rank || result.medals.length > 0;
+                    if (changed) this.toast.success(result.summary);
+                    else this.toast.info(result.summary);
+                },
+                error: this.onFailure(() => (this.deriveBusy = false)),
+            });
     }
 
     suspend(): void {
@@ -357,6 +439,11 @@ export class AdminActionModalComponent {
         this.run(
             this.members.suspend(m.id, until.toISOString(), this.suspendReason || undefined),
             () => (this.suspendBusy = false),
+            (updated) =>
+                `${updated.inGameName} is suspended until ${until.toLocaleString(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                })}.`,
         );
     }
 
@@ -385,10 +472,14 @@ export class AdminActionModalComponent {
             return this.refuse('ban this member');
         }
         this.banBusy = true;
-        this.run(this.members.ban(m.id, this.banReason || undefined), () => {
-            this.banBusy = false;
-            this.banConfirming = false;
-        });
+        this.run(
+            this.members.ban(m.id, this.banReason || undefined),
+            () => {
+                this.banBusy = false;
+                this.banConfirming = false;
+            },
+            (updated) => `${updated.inGameName} is banned and their access is revoked.`,
+        );
     }
 
     unban(): void {
@@ -396,7 +487,11 @@ export class AdminActionModalComponent {
         if (!m) return;
         if (!this.canUnban) return this.refuse("lift this member's ban");
         this.banBusy = true;
-        this.run(this.members.unban(m.id), () => (this.banBusy = false));
+        this.run(
+            this.members.unban(m.id),
+            () => (this.banBusy = false),
+            (updated) => `${updated.inGameName}'s ban is lifted.`,
+        );
     }
 
     unsuspend(): void {
@@ -404,29 +499,53 @@ export class AdminActionModalComponent {
         if (!m) return;
         if (!this.canUnsuspend) return this.refuse("lift this member's suspension");
         this.unsuspendBusy = true;
-        this.run(this.members.unsuspend(m.id), () => (this.unsuspendBusy = false));
+        this.run(
+            this.members.unsuspend(m.id),
+            () => (this.unsuspendBusy = false),
+            (updated) => `${updated.inGameName}'s suspension is lifted.`,
+        );
     }
 
     // ── Shared plumbing ──────────────────────────────────────────────────────
-    private run(obs: Observable<Member>, stop: () => void): void {
+
+    /**
+     * Run one admin action. `success` builds the confirmation toast from the
+     * member the SERVER returned — every action raises one (T-0284), so a
+     * completed action never looks the same as a click that did nothing.
+     */
+    private run(
+        obs: Observable<Member>,
+        stop: () => void,
+        success: (updated: Member) => string,
+    ): void {
         this.error = null;
         obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (updated) => {
                 stop();
                 this.applyUpdate(updated);
+                this.toast.success(success(updated));
             },
-            error: (e) => {
-                stop();
-                const err = e as HttpErrorResponse;
-                if (err?.status === 403) {
-                    // The projection this modal gated on is provably stale, so
-                    // drop it: the offered controls fold away instead of sitting
-                    // there inviting a second rejected click.
-                    this.revokePermittedActions();
-                }
-                this.fail(this.extractError(e));
-            },
+            error: this.onFailure(stop),
         });
+    }
+
+    /**
+     * The shared error arm, so the actions that do not return a bare member (the
+     * derive) cannot drift from the ones that do — including the 403 handling,
+     * which is the part that must never be forgotten.
+     */
+    private onFailure(stop: () => void): (error: unknown) => void {
+        return (e) => {
+            stop();
+            const err = e as HttpErrorResponse;
+            if (err?.status === 403) {
+                // The projection this modal gated on is provably stale, so drop
+                // it: the offered controls fold away instead of sitting there
+                // inviting a second rejected click.
+                this.revokePermittedActions();
+            }
+            this.fail(this.extractError(e));
+        };
     }
 
     /**
