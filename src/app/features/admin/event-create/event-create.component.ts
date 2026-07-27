@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { instantToWallClock } from '../../../core/models/event-time';
 import { RecurrenceCadence, RegimentEvent } from '../../../core/models/event.model';
+import { DiscordRole, DiscordService } from '../../../core/services/discord.service';
 import { EventsService } from '../../../core/services/events.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DEFAULT_STORAGE_POLICY, StorageService } from '../../../core/services/storage.service';
@@ -43,6 +44,19 @@ export class EventCreateComponent implements OnInit {
         { value: 'monthly', label: 'Monthly' },
     ];
 
+    /**
+     * Guild roles offered by the "Role to ping" picker (T-0206).
+     *
+     * Empty is a perfectly normal state — the bot may be off, disconnected, or
+     * simply not configured — so the picker degrades to its "No ping" option
+     * rather than blocking the form. `announceRolesError` explains WHY it is
+     * empty when the reason is knowable, because "no roles" and "we could not
+     * ask" look identical in a dropdown and only one of them is the admin's
+     * problem to fix.
+     */
+    announceRoles: DiscordRole[] = [];
+    announceRolesError: string | null = null;
+
     tagInput = '';
     tags: string[] = ['line-battle'];
     /** Common tags surfaced as autocomplete suggestions (T-0088). */
@@ -77,6 +91,7 @@ export class EventCreateComponent implements OnInit {
     constructor(
         private fb: FormBuilder,
         private eventsService: EventsService,
+        private discord: DiscordService,
         private auth: AuthService,
         private storage: StorageService,
         private router: Router,
@@ -92,6 +107,9 @@ export class EventCreateComponent implements OnInit {
             // Default to Eastern (EST/EDT) per T-0089; members can change it.
             timezone: ['America/New_York'],
             recurrenceCadence: [''],
+            // '' is a real value here, not a placeholder: it is how an author
+            // says "announce this, but ping nobody".
+            announceRoleId: [''],
             serverName: [''],
             serverRegion: [''],
             serverPassword: [''],
@@ -106,6 +124,31 @@ export class EventCreateComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((policy) => {
                 this.bannerHint = StorageService.uploadHint(policy, 'event-banner');
+            });
+
+        // The ping-role picker's options. Best-effort: a failure leaves the list
+        // empty and the form fully usable, because an event that announces
+        // silently is a normal event — not a broken one.
+        this.discord
+            .getRoles()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (roles) => {
+                    // @everyone is dropped, not offered. Discord will not ping it
+                    // from an explicit role allow-list — that needs `parse:
+                    // ["everyone"]`, which the API deliberately never sends — so
+                    // choosing it would render the words "@everyone" and notify
+                    // nobody. A control that silently does nothing is worse than
+                    // one that is absent.
+                    this.announceRoles = roles.filter((r) => r.name !== '@everyone');
+                    this.announceRolesError = this.announceRoles.length
+                        ? null
+                        : 'No Discord roles available — the bot is off or not connected.';
+                },
+                error: () => {
+                    this.announceRolesError =
+                        'Could not load Discord roles; the event will announce without a ping.';
+                },
             });
 
         this.editId = this.route.snapshot.paramMap.get('id');
@@ -156,6 +199,7 @@ export class EventCreateComponent implements OnInit {
             recurrenceCadence: event.recurrenceCadence ?? '',
             serverName: event.serverName ?? '',
             serverRegion: event.serverRegion ?? '',
+            announceRoleId: event.announceRoleId ?? '',
         });
         this.tags = [...event.tags];
         this.selectedPlatforms = [...event.platforms];
@@ -272,6 +316,9 @@ export class EventCreateComponent implements OnInit {
             serverName: v.serverName ?? '',
             serverRegion: v.serverRegion || undefined,
             serverPassword: v.serverPassword || undefined,
+            // Always sent, '' included — clearing the picker has to actually
+            // clear the stored role, not silently keep the old one.
+            announceRoleId: v.announceRoleId ?? '',
             date: v.date,
             endDate: v.endDate || v.date,
             startTime: v.startTime,
