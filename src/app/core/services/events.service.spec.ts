@@ -179,6 +179,42 @@ describe('EventsService', () => {
         req.flush(apiEvent());
     });
 
+    it('sends the ping role on create, and sends a blank to CLEAR it (T-0206)', () => {
+        // '' rather than omitting the key: clearing the picker has to actually
+        // clear the stored role. Omitting it would leave the old one in place,
+        // and the event would keep pinging a role the author just removed.
+        service
+            .create({
+                title: 'Drill',
+                description: '',
+                serverName: null,
+                date: '2026-07-01',
+                startTime: '20:00',
+                endTime: '',
+                timezone: 'UTC',
+                platforms: ['steam'],
+                status: 'upcoming',
+                tags: [],
+                rsvpCounts: { interested: 0, tentative: 0, declined: 0, neutral: 0 },
+                announceRoleId: '777000000000000001',
+            })
+            .subscribe();
+        expect(httpMock.expectOne('/api/events').request.body.announceRoleId).toBe(
+            '777000000000000001',
+        );
+        httpMock.verify();
+
+        service.update('ev1', { announceRoleId: null }).subscribe();
+        expect(httpMock.expectOne('/api/events/ev1').request.body.announceRoleId).toBe('');
+    });
+
+    it('leaves the ping role ALONE when the caller did not touch it (T-0206)', () => {
+        // An edit that only renames the event must not rewrite announceRoleId.
+        service.update('ev1', { title: 'Renamed' }).subscribe();
+        const req = httpMock.expectOne('/api/events/ev1');
+        expect('announceRoleId' in req.request.body).toBe(false);
+    });
+
     it('revealPassword() hits the dedicated reveal endpoint', () => {
         let revealed: { serverPassword: string | null } | undefined;
         service.revealPassword('ev1').subscribe((r) => (revealed = r));

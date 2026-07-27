@@ -179,6 +179,10 @@ export class EventsService {
         }
         if (e.timezone !== undefined) body['timezone'] = e.timezone;
         if (e.serverName !== undefined) body['serverName'] = e.serverName;
+        // The ping role travels as a bare snowflake, or '' to clear it — the API
+        // normalises blank to NULL. Sent only when the form actually touched it,
+        // so an edit that leaves the picker alone does not rewrite the value.
+        if (e.announceRoleId !== undefined) body['announceRoleId'] = e.announceRoleId ?? '';
         if (e.serverRegion !== undefined) body['serverRegion'] = e.serverRegion;
         if (e.serverPassword !== undefined) body['serverPassword'] = e.serverPassword;
         if (e.platforms !== undefined) body['platforms'] = e.platforms;

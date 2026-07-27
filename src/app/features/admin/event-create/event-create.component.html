@@ -171,6 +171,31 @@
                         </div>
 
                         <div class="field-row">
+                            <label class="field-label" for="event-announce-role"
+                                >Role to ping</label
+                            >
+                            <select
+                                id="event-announce-role"
+                                class="hf-select"
+                                formControlName="announceRoleId"
+                                [attr.aria-describedby]="'event-announce-role-hint'"
+                            >
+                                <option value="">No ping</option>
+                                @for (role of announceRoles; track role.id) {
+                                <option [value]="role.id">{{ role.name }}</option>
+                                }
+                            </select>
+                            <p id="event-announce-role-hint" class="field-hint">
+                                @if (announceRolesError) { {{ announceRolesError }} } @else if
+                                (isEdit) { Changing this affects the NEXT announcement only — the
+                                message already posted keeps the role it pinged, and saving an edit
+                                never pings again. } @else { Pinged once, when the event is
+                                announced in Discord — not on the reminder, and not when the RSVP
+                                list updates. }
+                            </p>
+                        </div>
+
+                        <div class="field-row">
                             <div class="field-label">Notify before</div>
                             <div class="notify-chips">
                                 @for (n of notifyOptions; track n) {
