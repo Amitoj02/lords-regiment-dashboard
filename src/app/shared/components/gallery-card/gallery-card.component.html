@@ -72,5 +72,14 @@
                 <span class="gallery-submitter-name">{{ item.submittedBy }}</span>
             </div>
         </div>
+        <!--
+            Who passed this submission. Staff-only: the API omits `approvedBy`
+            entirely for anyone without `moderate_gallery`, so its presence IS
+            the gate — the `can()` check beside it is belt and braces, not the
+            authority. Absent (not empty) for every public visitor.
+        -->
+        @if (showApprover) {
+        <div class="gallery-card-approver">Approved by {{ item.approvedBy!.name }}</div>
+        }
     </div>
 </ng-template>

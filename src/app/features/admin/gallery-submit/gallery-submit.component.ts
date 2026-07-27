@@ -7,6 +7,7 @@ import { SettingsService } from '../../../core/services/settings.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 import { VideoPosterService } from '../../../core/services/video-poster.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface UploadedFile {
     id: string;
@@ -63,6 +64,8 @@ export class GallerySubmitComponent implements OnInit {
     /** Set when the resolved poster image fails to load (falls back to a link chip). */
     linkPosterFailed = false;
     submitting = false;
+    /** Server-side reason the last submit failed, shown beside the button. */
+    submitError = '';
 
     private fileSeq = 0;
     private readonly destroyRef = inject(DestroyRef);
@@ -75,6 +78,7 @@ export class GallerySubmitComponent implements OnInit {
         private router: Router,
         private media: MediaEmbedService,
         private videoPoster: VideoPosterService,
+        private toast: ToastService,
     ) {}
 
     ngOnInit(): void {
@@ -241,6 +245,7 @@ export class GallerySubmitComponent implements OnInit {
               : 'image';
 
         this.submitting = true;
+        this.submitError = '';
         this.galleryService
             .submit({
                 title,
@@ -257,11 +262,26 @@ export class GallerySubmitComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.submitting = false;
+                    // *** SAY WHAT JUST HAPPENED. *** A submission lands as
+                    // `pending`, and /app/gallery lists only APPROVED items — so
+                    // this navigation used to drop the member on a grid that
+                    // pointedly did not contain the thing they had just spent
+                    // several minutes uploading, with no explanation at all. The
+                    // toast is the only thing that tells them it worked.
+                    this.toast.info(
+                        'Submitted for review. An officer will approve it before it appears in the gallery.',
+                    );
                     this.router.navigateByUrl('/app/gallery');
                 },
-                error: (err) => {
+                error: (err: unknown) => {
                     console.error('Failed to submit to gallery', err);
                     this.submitting = false;
+                    // A failed submit was previously SILENT — console only. The
+                    // button simply un-disabled itself and nothing was said.
+                    this.submitError =
+                        (err as { error?: { message?: string } })?.error?.message ??
+                        'Could not submit — try again.';
+                    this.toast.error(this.submitError);
                 },
             });
     }

@@ -189,6 +189,33 @@
             justify-content: flex-start;
         }
 
+        // ── Cancel Bootstrap's grid gutters on the three `.row` cells (T-0279) ──
+        //
+        // Every `td` in the card has `padding: 5px 0`, so the 14px inset comes
+        // from the `tr` alone and all six rows share one content box. Role,
+        // Status and Last Seen hold a BARE span and therefore sit flush inside
+        // it — correct. The avatar/nameplate, Rank and Medals cells each wrap
+        // their contents in `<div class="row">`, and the app inherits Bootstrap
+        // grid's `margin-inline: -12px` on that class (the app's own `.row` rule
+        // overrides `flex-wrap` but never the margins).
+        //
+        // The 12px therefore escapes the card's inset in whichever direction the
+        // cell is aligned: the header block is `flex-start`, so it starts 12px
+        // LEFT of the divider directly beneath it; Rank and Medals are the last
+        // item in a `space-between` row, so their border boxes overhang 12px to
+        // the RIGHT — 2px from the card border, against the Role/Status badges
+        // ending correctly at the inset. Zeroing both sides aligns all six.
+        //
+        // Scoped to the card breakpoint on purpose: the same leak exists in the
+        // desktop TABLE, but there the columns read as intended and this change
+        // is not licence to shift them.
+        .roster-member-cell,
+        .roster-rank-cell,
+        .roster-medals-cell {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
         // Drop the row-actions menu on mobile (the whole card is tappable)
         td.col-actions {
             display: none;

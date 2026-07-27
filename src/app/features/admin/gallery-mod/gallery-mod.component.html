@@ -156,7 +156,12 @@
                                 <span class="field-label">Submitted by</span>
                                 <span>{{ selected.submittedBy }}</span>
                             </div>
-                            @if (selected.status === 'declined' && selected.declineReason) {
+                            @if (selected.status === 'approved' && selected.approvedBy) {
+                            <div class="meta-row">
+                                <span class="field-label">Approved by</span>
+                                <span>{{ selected.approvedBy.name }}</span>
+                            </div>
+                            } @if (selected.status === 'declined' && selected.declineReason) {
                             <div class="meta-row">
                                 <span class="field-label">Decline reason</span>
                                 <span class="decline-reason">{{ selected.declineReason }}</span>

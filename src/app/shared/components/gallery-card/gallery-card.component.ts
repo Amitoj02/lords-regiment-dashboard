@@ -1,4 +1,5 @@
 import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { MediaEmbed, MediaEmbedService } from '../../services/media-embed.service';
 
@@ -25,6 +26,7 @@ import { MediaEmbed, MediaEmbedService } from '../../services/media-embed.servic
 })
 export class GalleryCardComponent {
     private readonly mediaEmbed = inject(MediaEmbedService);
+    private readonly auth = inject(AuthService);
 
     private _item!: GalleryItem;
     /** The resolved media preview for the current item. */
@@ -74,5 +76,18 @@ export class GalleryCardComponent {
     /** VOD badge for an external non-media link. */
     get showLinkBadge(): boolean {
         return this.preview?.kind === 'link' || (!this.preview && this._item?.type === 'link');
+    }
+
+    /**
+     * Whether to name the approving officer on this card.
+     *
+     * Two conditions on purpose. The FIELD is the real gate — the API sends
+     * `approvedBy` only to `moderate_gallery` holders — and the capability check
+     * is a second, local one so a future endpoint that over-shares cannot turn
+     * this card into the leak. Either alone would be enough today; both together
+     * mean the card is never the weakest link.
+     */
+    get showApprover(): boolean {
+        return !!this._item?.approvedBy && this.auth.hasCapability('moderate_gallery');
     }
 }
