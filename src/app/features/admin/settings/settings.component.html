@@ -462,25 +462,89 @@
                         </select>
                     </div>
 
-                    <!-- Role pickers (populated by "Verify connection") -->
                     <div class="field-row bot-field">
-                        <label class="field-label" for="join-role">Join role</label>
+                        <label class="field-label" for="gallery-submission-channel"
+                            >Gallery review channel</label
+                        >
                         <select
-                            id="join-role"
+                            id="gallery-submission-channel"
                             class="hf-select"
-                            [ngModel]="botSettings.joinRoleId ?? ''"
-                            (ngModelChange)="setJoinRole($event)"
+                            [ngModel]="botSettings.gallerySubmissionChannelId ?? ''"
+                            (ngModelChange)="setGallerySubmissionChannel($event)"
                             [disabled]="!can('manage_settings')"
                         >
                             <option value="">— None —</option>
-                            @if (botSettings.joinRoleId && !roleLoaded(botSettings.joinRoleId)) {
-                            <option [value]="botSettings.joinRoleId">
-                                {{ botSettings.joinRoleName || botSettings.joinRoleId }}
+                            @if (botSettings.gallerySubmissionChannelId &&
+                            !channelLoaded(botSettings.gallerySubmissionChannelId)) {
+                            <option [value]="botSettings.gallerySubmissionChannelId">
+                                {{ botSettings.gallerySubmissionChannelName ||
+                                botSettings.gallerySubmissionChannelId }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
+                        <p class="field-hint">
+                            Where a new gallery submission is posted for officers to review. It
+                            carries content nobody has approved yet — point it at a staff-only
+                            channel.
+                        </p>
+                    </div>
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="gallery-approved-channel"
+                            >Approved gallery channel</label
+                        >
+                        <select
+                            id="gallery-approved-channel"
+                            class="hf-select"
+                            [ngModel]="botSettings.galleryApprovedChannelId ?? ''"
+                            (ngModelChange)="setGalleryApprovedChannel($event)"
+                            [disabled]="!can('manage_settings')"
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.galleryApprovedChannelId &&
+                            !channelLoaded(botSettings.galleryApprovedChannelId)) {
+                            <option [value]="botSettings.galleryApprovedChannelId">
+                                {{ botSettings.galleryApprovedChannelName ||
+                                botSettings.galleryApprovedChannelId }}
+                            </option>
+                            } @for (channel of channels; track channel.id) {
+                            <option [value]="channel.id">#{{ channel.name }}</option>
+                            }
+                        </select>
+                        <p class="field-hint">
+                            Where an approved submission is showcased for the whole guild, with the
+                            picture or clip playable in the message.
+                        </p>
+                    </div>
+
+                    <!-- Role pickers (populated by "Verify connection") -->
+                    <div class="field-row bot-field">
+                        <label class="field-label" for="membership-role">Membership role</label>
+                        <select
+                            id="membership-role"
+                            class="hf-select"
+                            [ngModel]="botSettings.membershipRoleId ?? ''"
+                            (ngModelChange)="setMembershipRole($event)"
+                            [disabled]="!can('manage_settings')"
+                        >
+                            <option value="">— None —</option>
+                            @if (botSettings.membershipRoleId &&
+                            !roleLoaded(botSettings.membershipRoleId)) {
+                            <option [value]="botSettings.membershipRoleId">
+                                {{ botSettings.membershipRoleName || botSettings.membershipRoleId }}
                             </option>
                             } @for (role of roles; track role.id) {
                             <option [value]="role.id">{{ role.name }}</option>
                             }
                         </select>
+                        <p class="field-hint">
+                            The single role every enrolled member carries, whatever their rank — so
+                            channel permissions can hang off one role instead of the whole ladder.
+                            The adjutant grants it when an application is approved and takes it back
+                            if someone leaves the roster. Mercenaries do not receive it, and neither
+                            does anyone who merely joins the Discord server.
+                        </p>
                     </div>
                     <div class="field-row bot-field">
                         <label class="field-label" for="ban-role">Ban role</label>

@@ -72,8 +72,21 @@ export interface DiscordBotSettings {
     auditLogChannelName: string | null;
     eventAnnouncementChannelId: string | null;
     eventAnnouncementChannelName: string | null;
-    joinRoleId: string | null;
-    joinRoleName: string;
+    /** Staff channel a gallery submission is posted to for review. */
+    gallerySubmissionChannelId: string | null;
+    gallerySubmissionChannelName: string | null;
+    /** Public channel an approved gallery item is showcased in. */
+    galleryApprovedChannelId: string | null;
+    galleryApprovedChannelName: string | null;
+    /**
+     * The regiment's single "Member" role, carried by every enrolled member
+     * whatever their rank. Granted from ROSTER STATE by the adjutant — an
+     * approved application earns it, a mercenary does not, and joining the guild
+     * does not. Replaces the old `joinRoleId`, which was handed to everyone who
+     * walked in and so could not be used as a permission anchor.
+     */
+    membershipRoleId: string | null;
+    membershipRoleName: string;
     /** Role applied on an app-side ban (required before applyBanRoleOnBan). */
     banRoleId: string | null;
     banRoleName: string | null;

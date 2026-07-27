@@ -476,11 +476,11 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
     }
 
     // ── Picker handlers: set both the id and its cached display name ──────────
-    setJoinRole(id: string): void {
+    setMembershipRole(id: string): void {
         if (!this.botSettings) return;
-        this.botSettings.joinRoleId = id || null;
-        this.botSettings.joinRoleName = id
-            ? (this.roleName(id) ?? this.botSettings.joinRoleName)
+        this.botSettings.membershipRoleId = id || null;
+        this.botSettings.membershipRoleName = id
+            ? (this.roleName(id) ?? this.botSettings.membershipRoleName)
             : '';
     }
 
@@ -511,6 +511,18 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         if (!this.botSettings) return;
         this.botSettings.eventAnnouncementChannelId = id || null;
         this.botSettings.eventAnnouncementChannelName = id ? this.channelName(id) : null;
+    }
+
+    setGallerySubmissionChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.gallerySubmissionChannelId = id || null;
+        this.botSettings.gallerySubmissionChannelName = id ? this.channelName(id) : null;
+    }
+
+    setGalleryApprovedChannel(id: string): void {
+        if (!this.botSettings) return;
+        this.botSettings.galleryApprovedChannelId = id || null;
+        this.botSettings.galleryApprovedChannelName = id ? this.channelName(id) : null;
     }
 
     /** The backend rejects applyBanRoleOnBan unless a Ban role is configured. */
@@ -632,8 +644,12 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
                 auditLogChannelName: b.auditLogChannelName,
                 eventAnnouncementChannelId: b.eventAnnouncementChannelId,
                 eventAnnouncementChannelName: b.eventAnnouncementChannelName,
-                joinRoleId: b.joinRoleId,
-                joinRoleName: b.joinRoleName,
+                gallerySubmissionChannelId: b.gallerySubmissionChannelId,
+                gallerySubmissionChannelName: b.gallerySubmissionChannelName,
+                galleryApprovedChannelId: b.galleryApprovedChannelId,
+                galleryApprovedChannelName: b.galleryApprovedChannelName,
+                membershipRoleId: b.membershipRoleId,
+                membershipRoleName: b.membershipRoleName,
                 banRoleId: b.banRoleId,
                 banRoleName: b.banRoleName,
                 syncRolesOnChange: b.syncRolesOnChange,

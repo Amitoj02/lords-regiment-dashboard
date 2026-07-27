@@ -181,7 +181,22 @@
                     </div>
                 </div>
 
+                <!--
+                    Said BEFORE the button, not after the fact. An approved
+                    submission is published to the public gallery and to the
+                    regiment's Discord — the member deserves to know that while
+                    they can still change their mind, not once it is live.
+                -->
+                <hf-notice variant="info" class="submit-visibility-notice">
+                    Once an officer approves it, this is <strong>public</strong> — anyone with the
+                    link can see it, and it is posted to the regiment's Discord. Do not submit
+                    anything you would not want seen outside the regiment.
+                </hf-notice>
+
                 <div class="submit-actions">
+                    @if (submitError) {
+                    <hf-notice variant="err">{{ submitError }}</hf-notice>
+                    }
                     <button
                         type="button"
                         class="btn btn-primary btn-block"

@@ -292,8 +292,12 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
             auditLogChannelName: null,
             eventAnnouncementChannelId: null,
             eventAnnouncementChannelName: null,
-            joinRoleId: null,
-            joinRoleName: '',
+            gallerySubmissionChannelId: null,
+            gallerySubmissionChannelName: null,
+            galleryApprovedChannelId: null,
+            galleryApprovedChannelName: null,
+            membershipRoleId: null,
+            membershipRoleName: '',
             banRoleId: null,
             banRoleName: null,
             syncRolesOnChange: true,
@@ -505,7 +509,7 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
         });
 
         it('carries welcomeMessage on the shared save payload without disturbing the rest', () => {
-            const settings = bot({ welcomeChannelId: '123', joinRoleName: 'Guest' });
+            const settings = bot({ welcomeChannelId: '123', membershipRoleName: 'Member' });
             const { component, discord } = render(['manage_settings'], settings);
             component.setWelcomeMessage('Welcome {user}!');
 
@@ -529,9 +533,13 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
                 'enlistmentChannelName',
                 'eventAnnouncementChannelId',
                 'eventAnnouncementChannelName',
+                'galleryApprovedChannelId',
+                'galleryApprovedChannelName',
+                'gallerySubmissionChannelId',
+                'gallerySubmissionChannelName',
                 'guildGateEnabled',
-                'joinRoleId',
-                'joinRoleName',
+                'membershipRoleId',
+                'membershipRoleName',
                 'syncRolesOnChange',
                 'welcomeChannelId',
                 'welcomeMessage',
