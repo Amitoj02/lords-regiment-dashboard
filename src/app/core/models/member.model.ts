@@ -73,6 +73,13 @@ export interface MemberPermittedActions {
     unsuspend: boolean;
     ban: boolean;
     unban: boolean;
+    /**
+     * Pull across the rank and medals this member's Discord roles already say
+     * they earned (backend T-0204). Requires `edit_ranks_medals`, and is never
+     * true on your OWN record — deriving yourself would be a self-promotion, so
+     * the server refuses it like every other self-targeted action.
+     */
+    deriveFromDiscord: boolean;
 }
 
 /** The permitted-action flags, in one place so every read fails closed the same way. */
@@ -85,6 +92,7 @@ const PERMITTED_ACTION_KEYS: readonly (keyof MemberPermittedActions)[] = [
     'unsuspend',
     'ban',
     'unban',
+    'deriveFromDiscord',
 ];
 
 /**
