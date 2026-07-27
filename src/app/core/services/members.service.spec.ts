@@ -15,6 +15,7 @@ const PERMITTED_ALL = {
     unsuspend: true,
     ban: true,
     unban: true,
+    deriveFromDiscord: true,
 };
 
 function apiMember(overrides: Partial<ApiMember> = {}): ApiMember {
@@ -133,6 +134,7 @@ describe('MembersService permittedActions (T-0266)', () => {
             unsuspend: false,
             ban: false,
             unban: false,
+            deriveFromDiscord: false,
         });
     });
 

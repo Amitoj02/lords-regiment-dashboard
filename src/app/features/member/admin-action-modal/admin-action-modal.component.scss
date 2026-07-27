@@ -175,6 +175,19 @@
     margin-bottom: 2px;
 }
 
+// — Derive from Discord (T-0284) —
+// The hint explains an action whose effect the admin cannot predict, so it is
+// held to the same contrast as the self-action hint above (--t-300 is 7.20:1 on
+// the modal's --ink-800) rather than the global .field-hint colour.
+.aam-derive-hint {
+    color: var(--t-300);
+    margin-top: 8px;
+}
+
+.aam-derive-outcome {
+    margin-top: 10px;
+}
+
 .aam-ban-hint {
     margin-top: 8px;
 }

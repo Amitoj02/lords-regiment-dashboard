@@ -19,6 +19,7 @@ function allPermitted(): MemberPermittedActions {
         unsuspend: true,
         ban: true,
         unban: true,
+        deriveFromDiscord: true,
     };
 }
 
@@ -32,6 +33,7 @@ function nonePermitted(): MemberPermittedActions {
         unsuspend: false,
         ban: false,
         unban: false,
+        deriveFromDiscord: false,
     };
 }
 

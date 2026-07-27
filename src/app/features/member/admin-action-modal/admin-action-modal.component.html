@@ -132,7 +132,33 @@
             </section>
             }
 
-            <!-- 4 · Suspend -->
+            <!-- 4 · Derive from Discord -->
+            @if (canDeriveFromDiscord) {
+            <section class="aam-section">
+                <div class="field-label">Discord</div>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    [disabled]="deriveBusy"
+                    aria-describedby="aam-derive-hint"
+                    (click)="deriveFromDiscord()"
+                >
+                    {{ deriveBusy ? 'Deriving…' : 'Derive data from Discord' }}
+                </button>
+                <div id="aam-derive-hint" class="field-hint aam-derive-hint">
+                    It will derive rank and medals already assigned on Discord side.
+                </div>
+                <!-- The outcome stays put after its toast has gone: this is the only
+                     place the medals that came across are written down. -->
+                @if (deriveOutcome) {
+                <div class="notice info aam-derive-outcome">
+                    <div class="n-body">{{ deriveOutcome }}</div>
+                </div>
+                }
+            </section>
+            }
+
+            <!-- 5 · Suspend -->
             @if (showSuspendSection) {
             <section class="aam-section">
                 <div class="field-label">Suspend</div>
@@ -189,7 +215,7 @@
             </section>
             }
 
-            <!-- 5 · Ban / Unban -->
+            <!-- 6 · Ban / Unban -->
             @if (showBanSection) {
             <section class="aam-section aam-section--last">
                 <div class="field-label">{{ member.bannedAt ? 'Ban status' : 'Ban' }}</div>
