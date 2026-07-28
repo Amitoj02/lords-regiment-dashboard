@@ -31,11 +31,11 @@ function allPermitted(overrides: Partial<MemberPermittedActions> = {}): MemberPe
 }
 
 /**
- * Nothing permitted — what the API sends on your OWN record, or to a caller
- * holding neither capability (T-0266).
+ * Nothing permitted — what the API sends to a caller holding neither capability
+ * (T-0266).
  *
- * ⚠️ NOT what a peer or a superior looks like any more — see
- * {@link ranksMedalsOnly}.
+ * ⚠️ NOT what a peer, a superior or your OWN record looks like any more — those
+ * all carry the four rank/medal flags. See {@link ranksMedalsOnly}.
  */
 function nonePermitted(): MemberPermittedActions {
     return allPermitted({
@@ -52,9 +52,10 @@ function nonePermitted(): MemberPermittedActions {
 }
 
 /**
- * The shape a peer, a superior or the regiment owner now arrives in for a caller
- * holding both capabilities (backend T-0211): the moderation half refused on
- * standing, the rank/medal half permitted because a decoration is not authority.
+ * The shape a peer, a superior, the regiment owner or the caller's OWN record
+ * now arrives in for a caller holding both capabilities (backend T-0211): the
+ * moderation half refused, the rank/medal half permitted because a decoration is
+ * not authority.
  */
 function ranksMedalsOnly(): MemberPermittedActions {
     return allPermitted({
@@ -222,25 +223,33 @@ describe('AdminActionModalComponent (T-0246 no self-suspend/self-ban)', () => {
         expect(toast.error).toHaveBeenCalledWith('You cannot ban your own account.');
     });
 
-    it('never calls the API for a self-targeted rank or medal write either', () => {
-        // Self is the ONLY per-target guard the rank/medal actions have left
-        // (backend T-0211), so the client's own belt-and-braces re-check has to
-        // hold for them too. The server sends every flag false on your own
-        // record; this proves a stale block cannot get a write through.
+    it('⚠️ lets a rank or medal write through on your OWN record', () => {
+        // The self-promotion path, permitted deliberately (backend T-0211). The
+        // dialog opens on your own row now, offers Rank/Medals/Derive, and only
+        // Suspend and Ban stay dead — which is the state the hints above explain.
         setup(currentUser({ id: 'm1' }));
-        component.member = member({ id: 'm1', permittedActions: nonePermitted() });
+        const self = member({ id: 'm1', permittedActions: ranksMedalsOnly() });
+        members.changeRank.and.returnValue(of(self));
+        component.member = self;
         component.selectedRankId = 'r1';
-        component.selectedMedalId = 'md1';
 
         component.changeRank();
-        component.awardMedal();
-        component.removeMedal('md1');
-        component.deriveFromDiscord();
 
-        expect(members.changeRank).not.toHaveBeenCalled();
-        expect(members.awardMedal).not.toHaveBeenCalled();
-        expect(members.removeMedal).not.toHaveBeenCalled();
-        expect(members.deriveFromDiscord).not.toHaveBeenCalled();
+        expect(members.changeRank).toHaveBeenCalledWith('m1', 'r1');
+        expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('still shows the Suspend and Ban hints on your own record, now that it opens', () => {
+        setup(currentUser({ id: 'm1' }));
+        const el = open(member({ id: 'm1', permittedActions: ranksMedalsOnly() }));
+
+        expect(buttonLabelled(el, 'Suspend member').disabled).toBe(true);
+        expect(buttonLabelled(el, 'Ban member').disabled).toBe(true);
+        expect(el.querySelectorAll('.aam-self-hint').length).toBe(2);
+        // ...and the rank section is offered alongside them. (Its button waits on
+        // a rank being picked, so presence is the assertion, not enabledness.)
+        expect(component.canChangeRank).toBe(true);
+        expect(buttonLabelled(el, 'Change rank')).toBeTruthy();
     });
 
     it('still suspends another member normally', () => {
@@ -505,6 +514,10 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
     });
 
     it('never calls the API for an action the server did not permit', () => {
+        // A deliberately IMPOSSIBLE block — the server would send ranksMedalsOnly()
+        // for this caller and target. That is the point: this pins the
+        // belt-and-braces re-check against a stale projection, which by definition
+        // is a shape the API is no longer producing.
         setup(currentUser({ role: 'Admin' }));
         component.member = member({ role: 'Owner', permittedActions: nonePermitted() });
         component.suspendUntil = '2099-01-01T12:00';
@@ -873,16 +886,25 @@ describe('AdminActionModalComponent (T-0284 derive from Discord)', () => {
     });
 
     it('hides the button on a member the server did not permit it for', () => {
-        // Your own record is the case that matters, and since backend T-0211 it is
-        // the ONLY one: deriving yourself is a self-promotion, so the server
-        // refuses it and the flag is false.
-        setup(currentUser({ id: 'm1' }));
+        // Fail closed on the server's own flag, whatever the reason for it — the
+        // modal never re-derives why. Since backend T-0211 the server sets it
+        // false only when the caller lacks the capability, so the fixture is what
+        // a stale or narrowed projection looks like.
+        setup(currentUser({ id: 'adm-1' }));
         const el = open(
             member({ id: 'm1', permittedActions: { ...allPermitted(), deriveFromDiscord: false } }),
         );
 
         expect(el.querySelector('#aam-derive-hint')).toBeNull();
         expect(component.canDeriveFromDiscord).toBe(false);
+    });
+
+    it('⚠️ offers it on your OWN record — the self-derive the server now permits', () => {
+        setup(currentUser({ id: 'm1' }));
+        const el = open(member({ id: 'm1', permittedActions: ranksMedalsOnly() }));
+
+        expect(el.querySelector('#aam-derive-hint')).not.toBeNull();
+        expect(component.canDeriveFromDiscord).toBe(true);
     });
 
     it('offers it on a superior, where the server now permits it', () => {

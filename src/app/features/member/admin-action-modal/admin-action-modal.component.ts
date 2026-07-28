@@ -146,8 +146,12 @@ export class AdminActionModalComponent {
      * Your own record, with a block present. The server always refuses a
      * self-suspend/self-ban, but T-0246 wants those controls rendered disabled
      * with a stated reason rather than silently absent — so the two sections
-     * stay alive for this case alone. It is deliberately NOT enough to make
-     * `canOpenAdminActions()` offer the modal in the first place.
+     * stay alive for this case.
+     *
+     * Written defensively and now genuinely REACHABLE: since backend T-0211 your
+     * own record carries four permitted rank/medal flags, so
+     * `canOpenAdminActions()` opens the dialog on it and these hints are what
+     * explain the two controls that stay dead.
      */
     private get selfExplained(): boolean {
         return this.canRoles && this.isSelf && !!this.actions;
@@ -189,9 +193,9 @@ export class AdminActionModalComponent {
     }
     /**
      * Pull rank + medals from Discord. Same capability as the rank/medal controls
-     * it writes through, and the server's own per-target flag — which is false on
-     * your own record, because deriving yourself is a self-promotion. That is the
-     * only per-target restriction left on it (backend T-0211).
+     * it writes through, and the server's own per-target flag — which since
+     * backend T-0211 carries no target restriction at all, your own record
+     * included. It refused self until then.
      */
     get canDeriveFromDiscord(): boolean {
         return this.canRanksMedals && !!this.actions?.deriveFromDiscord;
@@ -266,11 +270,13 @@ export class AdminActionModalComponent {
      * Whether the modal has anything at all to show. False renders the "no
      * permission" notice instead of an empty dialog.
      *
-     * It is now false only when the caller holds NO relevant capability for this
-     * target, or the record is their own. An Admin opening the Owner and a
-     * Moderator opening an Admin — the two cases this used to describe — reach
-     * it with the rank and medal sections live and the moderation half missing;
-     * that state is explained by {@link moderationLockedOut}, not here.
+     * It is now false only when the member arrived with no `permittedActions`
+     * block at all, or the caller holds neither capability. An Admin opening the
+     * Owner and a Moderator opening an Admin — the two cases this used to
+     * describe — reach it with the rank and medal sections live and the
+     * moderation half missing; that state is explained by
+     * {@link moderationLockedOut}, not here. So does the caller's OWN record,
+     * where T-0246's disabled-and-explained Suspend/Ban hints take over.
      */
     get hasAnyPermittedAction(): boolean {
         return (

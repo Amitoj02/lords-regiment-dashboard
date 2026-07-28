@@ -24,8 +24,8 @@ function allPermitted(): MemberPermittedActions {
 }
 
 /**
- * Nothing permitted — the caller's OWN row, or a caller holding neither
- * capability. NOT what a peer or a superior looks like any more: see
+ * Nothing permitted — a caller holding neither capability. NOT what a peer, a
+ * superior or the caller's OWN row looks like any more: see
  * {@link ranksMedalsOnly}.
  */
 function nonePermitted(): MemberPermittedActions {
@@ -43,8 +43,8 @@ function nonePermitted(): MemberPermittedActions {
 }
 
 /**
- * A peer, a superior or the regiment owner, for a caller holding both
- * capabilities: the moderation half refused on standing, the rank/medal half
+ * A peer, a superior, the regiment owner or the caller's OWN row, for a caller
+ * holding both capabilities: the moderation half refused, the rank/medal half
  * permitted (backend T-0211).
  */
 function ranksMedalsOnly(): MemberPermittedActions {
@@ -151,13 +151,18 @@ describe('RosterComponent row actions (T-0266)', () => {
         expect(actionButtons(el).length).toBe(1);
     });
 
-    it('hides the button on the caller’s own row', () => {
-        // The one row the API refuses every action on, so it comes back with an
-        // empty permittedActions block. It is now the ONLY such row for a caller
-        // holding a capability (backend T-0211).
+    it('⚠️ shows it on the caller’s OWN row, for the rank and medal actions', () => {
+        // Your own row used to be untouchable. Since backend T-0211 it carries the
+        // four rank/medal flags — you may record your own promotion — so the
+        // `···` belongs there too. Suspend and Ban stay dead inside the dialog.
         const el = setup([
-            member({ id: 'admin-1', role: 'Admin', permittedActions: nonePermitted() }),
+            member({ id: 'admin-1', role: 'Admin', permittedActions: ranksMedalsOnly() }),
         ]);
+        expect(actionButtons(el).length).toBe(1);
+    });
+
+    it('hides it on a row the API permits nothing on', () => {
+        const el = setup([member({ id: 'm9', role: 'Member', permittedActions: nonePermitted() })]);
         expect(actionButtons(el).length).toBe(0);
     });
 

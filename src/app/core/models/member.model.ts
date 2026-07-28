@@ -68,13 +68,15 @@ export interface MemberMedalAward {
  *  - MODERATION (`changeRole`, `suspend`, `unsuspend`, `ban`, `unban`) — never
  *    yourself, never the regiment owner, and only against a strictly lower role.
  *  - RANK & MEDALS (`changeRank`, `awardMedal`, `removeMedal`,
- *    `deriveFromDiscord`) — never yourself, and nothing else. A decoration is a
- *    record of what someone did, not authority over them, so whoever keeps the
- *    service record keeps all of it (backend T-0211).
+ *    `deriveFromDiscord`) — no target rule at all. A decoration is a record of
+ *    what someone did, not authority over them, so whoever keeps the service
+ *    record keeps all of it: peers, seniors, the regiment owner, and their own
+ *    row (backend T-0211).
  *
- * Never infer one flag from another. Against a peer Admin the four rank/medal
- * flags are true while all five moderation flags are false, and that is the
- * ORDINARY shape of the block, not an edge case.
+ * Never infer one flag from another. Against a peer Admin — or on the caller's
+ * own record — the four rank/medal flags are true while all five moderation
+ * flags are false, and that is the ORDINARY shape of the block, not an edge
+ * case.
  */
 export interface MemberPermittedActions {
     changeRole: boolean;
@@ -87,13 +89,10 @@ export interface MemberPermittedActions {
     unban: boolean;
     /**
      * Pull across the rank and medals this member's Discord roles already say
-     * they earned (backend T-0204). Requires `edit_ranks_medals`, and is never
-     * true on your OWN record — deriving yourself would be a self-promotion, so
-     * the server refuses it like every other self-targeted action.
-     *
-     * That self refusal is now the WHOLE rule for this action (backend T-0211):
-     * on anyone else's record — a peer, a senior, the regiment owner — it is a
-     * rank and medal write like any other and the flag is true.
+     * they earned (backend T-0204). Requires `edit_ranks_medals` and carries no
+     * target restriction at all (backend T-0211) — including on your OWN record,
+     * where it credits whatever your own Discord roles say you have earned. It
+     * refused self until T-0211; the owner removed that.
      */
     deriveFromDiscord: boolean;
 }
@@ -194,10 +193,10 @@ const ROLE_LADDER: readonly MemberRole[] = [
  * the server refuses the MODERATION actions against that member: `changeRole`,
  * `suspend`, `unsuspend`, `ban`, `unban`.
  *
- * ⚠️ It does NOT explain a rank or medal refusal. Those four actions dropped the
- * standing rule (backend T-0211), so on a peer or a senior they stay available
- * and the dialog is only PARTLY shut. Copy derived from this must say which half
- * is missing, never that the record cannot be managed.
+ * ⚠️ It does NOT explain a rank or medal refusal. Those four actions dropped
+ * every target rule (backend T-0211), so on a peer or a senior they stay
+ * available and the dialog is only PARTLY shut. Copy derived from this must say
+ * which half is missing, never that the record cannot be managed.
  *
  * The case this exists for: appointing a peer is allowed, moderating one is not,
  * so an Admin who promotes a Moderator to Admin succeeds and loses the

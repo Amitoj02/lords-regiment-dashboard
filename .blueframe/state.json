@@ -18627,7 +18627,7 @@
     {
       "id": "T-0285",
       "title": "Explain the partial lockout when only the moderation half is withheld",
-      "summary": "Companion to backend T-0211, which stopped subjecting rank and medal writes to the role hierarchy: an edit_ranks_medals holder may now decorate a peer, a senior or the regiment owner, while role/suspend/ban keep the full rule. No gate in this repo changed - every getter is already `capability && !!actions?.<flag>` and parsePermittedActions copies the block key-for-key, so the widened flags flow straight through. What changed is that a permittedActions block can now MIX true and false for one target, which produced a UI state the modal had no words for: a Moderator opening an Admin sees Rank, Medals and Derive working while Role, Suspend and Ban are simply absent. The only explanation of a hierarchy lockout lived in the all-or-nothing `!hasAnyPermittedAction` branch, which no longer fires for exactly the two cases it was written for. Adds moderationAvailable + moderationLockedOut and a second notice placed in the gap the missing sections leave, and narrows every sentence derived from standsLevelOrAbove from 'this record can only be managed by someone who outranks them' to the role/suspension/ban half - the old wording is now visibly untrue with the rank control on screen. The notice is suppressed for a caller who never held manage_roles: telling them a rule was applied that they were not subject to is noise. Also unpins the section divider from the Ban section (`:last-of-type`), because a rank/medal-only admin never renders Suspend or Ban and was left with a dangling rule.",
+      "summary": "Companion to backend T-0211, which stopped subjecting rank and medal writes to the role hierarchy: an edit_ranks_medals holder may now decorate a peer, a senior, the regiment owner and their OWN record, while role/suspend/ban keep the full rule. No gate in this repo changed - every getter is already `capability && !!actions?.<flag>` and parsePermittedActions copies the block key-for-key, so the widened flags flow straight through. What changed is that a permittedActions block can now MIX true and false for one target, which produced a UI state the modal had no words for: a Moderator opening an Admin sees Rank, Medals and Derive working while Role, Suspend and Ban are simply absent. The only explanation of a hierarchy lockout lived in the all-or-nothing `!hasAnyPermittedAction` branch, which no longer fires for exactly the two cases it was written for. Adds moderationAvailable + moderationLockedOut and a second notice placed in the gap the missing sections leave, and narrows every sentence derived from standsLevelOrAbove from 'this record can only be managed by someone who outranks them' to the role/suspension/ban half - the old wording is now visibly untrue with the rank control on screen. The notice is suppressed for a caller who never held manage_roles: telling them a rule was applied that they were not subject to is noise. Also unpins the section divider from the Ban section (`:last-of-type`), because a rank/medal-only admin never renders Suspend or Ban and was left with a dangling rule. The owner then widened it again mid-review to include the caller's own record, which made two previously-unreachable states real: the roster `\u00b7\u00b7\u00b7` appears on your own row, and T-0246's disabled-and-explained Suspend/Ban treatment - written defensively for a dialog that never opened on self - is now the thing explaining the two dead controls beside a live rank picker.",
       "status": "review",
       "type": "feature",
       "size": "S",
@@ -18690,6 +18690,22 @@
         {
           "desc": "full suite green: 630 tests, lint + contrast guard + production build clean",
           "status": "passed"
+        },
+        {
+          "desc": "the roster `\u00b7\u00b7\u00b7` now appears on the caller's OWN row, and still not on a row the API permits nothing on",
+          "status": "passed"
+        },
+        {
+          "desc": "opening your own record offers Rank/Medals/Derive with Suspend and Ban disabled and both T-0246 hints rendered",
+          "status": "passed"
+        },
+        {
+          "desc": "a self-targeted rank write reaches the API instead of being refused client-side",
+          "status": "passed"
+        },
+        {
+          "desc": "the derive button is offered on your own record (it was hidden there before)",
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -18707,16 +18723,21 @@
           "desc": "moderationLockedOut is wording, never a gate. If it is ever read as one, a caller whose moderation half is withheld for a reason OTHER than standing (a revoked capability mid-session) would silently lose the explanation rather than the control.",
           "status": "open",
           "notedAt": "2026-07-28T16:45:00Z"
+        },
+        {
+          "desc": "The self fixtures flipped meaning. nonePermitted() no longer describes your own record - ranksMedalsOnly() does - and the modal's isSelf branch is now reached with rank/medal flags TRUE. A future test that builds a self target with nonePermitted() will pass while asserting a block the API cannot send, and will not exercise the disabled-Suspend/Ban-beside-a-live-rank-picker state at all.",
+          "status": "open",
+          "notedAt": "2026-07-28T19:10:00Z"
         }
       ],
       "skippedByClaude": [
-        "Did not add the T-0246 'disabled + explained' treatment to the rank/medal controls on your own record. Self is now their only guard, but canOpenAdminActions never opens the modal on self (every flag is false there), so the state is unreachable; the client-side refuse() path is covered by a spec instead.",
+        "Did not add a 'you are editing your own record' notice beside the rank/medal controls on your own row. T-0246's existing Suspend/Ban hints already say which controls are dead and why, and the owner asked for the self edits to work rather than to be annotated.",
         "Did not rename standsLevelOrAbove to standsLevelOrAboveForModeration - the docblock now scopes it and the rename would churn every call site and both spec files.",
         "profile.component.spec still has no admin-action coverage, so the second mount point of this modal is verified only through the roster. Pre-existing; not widened here."
       ],
       "lastTouchedCommit": "",
       "createdAt": "2026-07-28T16:45:00Z",
-      "updatedAt": "2026-07-28T16:45:00Z",
+      "updatedAt": "2026-07-28T19:10:00Z",
       "history": [
         {
           "at": "2026-07-28T16:45:00Z",
@@ -18724,6 +18745,13 @@
           "to": "review",
           "by": "claude",
           "note": "Frontend half of backend T-0211. Open as a PR into dev on feat/rank-medal-decoration-exemption, the same branch name as the backend. 630 tests green, lint + contrast + build clean."
+        },
+        {
+          "at": "2026-07-28T19:10:00Z",
+          "from": "review",
+          "to": "review",
+          "by": "claude",
+          "note": "Owner follow-up: capability holders may also change their OWN rank and medals, self-derive included. No gate changed here either - the widened flags flow through - but the own-row and own-record states became reachable, so the roster and modal specs were re-pointed at them. 633 tests green, lint + contrast + build clean."
         }
       ]
     }
