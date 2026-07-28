@@ -18751,7 +18751,7 @@
           "from": "review",
           "to": "review",
           "by": "claude",
-          "note": "Owner follow-up: capability holders may also change their OWN rank and medals, self-derive included. No gate changed here either - the widened flags flow through - but the own-row and own-record states became reachable, so the roster and modal specs were re-pointed at them. 633 tests green, lint + contrast + build clean."
+          "note": "Owner follow-up: capability holders may also change their OWN rank and medals, self-derive included. No gate changed here either - the widened flags flow through - but the own-row and own-record states became reachable, so the roster and modal specs were re-pointed at them. 633 tests green, lint + contrast + build clean. PRs open into dev: this repo #59, backend [lords-dashboard-backend #69](https://github.com/Amitoj02/lords-dashboard-backend/pull/69)."
         }
       ]
     }
