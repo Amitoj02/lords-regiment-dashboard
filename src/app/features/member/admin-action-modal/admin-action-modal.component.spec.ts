@@ -307,7 +307,8 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         expect(labels(el)).toEqual([]);
         expect(el.querySelectorAll('.aam-section').length).toBe(0);
         expect(component.hasAnyPermittedAction).toBe(false);
-        expect(noPermissionNotice(el)?.textContent).toContain("don't have permission");
+        // The notice names the RULE, not a bare "no permission" — see below.
+        expect(noPermissionNotice(el)?.textContent).toContain('equal standing to you or above it');
     });
 
     it('offers a Moderator nothing on an Admin', () => {
@@ -316,6 +317,44 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
 
         expect(labels(el)).toEqual([]);
         expect(noPermissionNotice(el)).not.toBeNull();
+    });
+
+    /**
+     * The reported confusion. Appointing a peer is allowed and moderating one is
+     * not, so an Admin who promotes a Moderator to Admin gets a success toast and
+     * a projection with every flag false in the SAME tick — and the dialog used
+     * to answer that with "You don't have permission to manage this member",
+     * which reads as the promotion having been rejected. It was not.
+     */
+    it('explains the peer-appointment lockout instead of claiming no permission', () => {
+        setup(currentUser({ id: 'adm-1', role: 'Admin' }));
+        const el = open(
+            member({
+                id: 'adm-2',
+                inGameName: 'Nolt',
+                role: 'Admin',
+                permittedActions: nonePermitted(),
+            }),
+        );
+
+        const notice = noPermissionNotice(el)?.textContent ?? '';
+        expect(notice).toContain('Nolt is an Admin');
+        // "someone who outranks them", NOT "only the Owner": the server rule is
+        // strict precedence (`outranks`), so an Admin may still act on this
+        // Moderator-appointed-Moderator case. Naming the Owner would be wrong
+        // for every target below Admin.
+        expect(notice).toContain('outranks them');
+        expect(notice).not.toContain("don't have permission");
+    });
+
+    it('falls back to the generic notice when standing is not the reason', () => {
+        // A Moderator with neither capability on an ordinary Member: the server
+        // withheld every flag on CAPABILITY, not on hierarchy, so the standing
+        // sentence would be a lie.
+        setup(currentUser({ id: 'mod-1', role: 'Moderator', capabilities: [] }));
+        const el = open(member({ id: 'm1', role: 'Member', permittedActions: nonePermitted() }));
+
+        expect(noPermissionNotice(el)?.textContent).toContain("don't have permission");
     });
 
     it('offers a Moderator the full set on an ordinary Member', () => {
