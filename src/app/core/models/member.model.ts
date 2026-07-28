@@ -59,10 +59,22 @@ export interface MemberMedalAward {
 
 /**
  * Which admin actions the CALLER may perform on THIS member, computed by the
- * server from the same guard the endpoints enforce (backend T-0176). The API
- * never reports a permitted flag where the endpoint would 403, so the UI gates
- * on these instead of re-deriving a role hierarchy client-side — a re-derived
- * rule is a rule that can drift.
+ * server from the same guards the endpoints enforce (backend T-0176/T-0211). The
+ * API never reports a permitted flag where the endpoint would 403, so the UI
+ * gates on these instead of re-deriving a role hierarchy client-side — a
+ * re-derived rule is a rule that can drift.
+ *
+ * TWO guards, so a single member's block can legitimately MIX true and false:
+ *  - MODERATION (`changeRole`, `suspend`, `unsuspend`, `ban`, `unban`) — never
+ *    yourself, never the regiment owner, and only against a strictly lower role.
+ *  - RANK & MEDALS (`changeRank`, `awardMedal`, `removeMedal`,
+ *    `deriveFromDiscord`) — never yourself, and nothing else. A decoration is a
+ *    record of what someone did, not authority over them, so whoever keeps the
+ *    service record keeps all of it (backend T-0211).
+ *
+ * Never infer one flag from another. Against a peer Admin the four rank/medal
+ * flags are true while all five moderation flags are false, and that is the
+ * ORDINARY shape of the block, not an edge case.
  */
 export interface MemberPermittedActions {
     changeRole: boolean;
@@ -78,6 +90,10 @@ export interface MemberPermittedActions {
      * they earned (backend T-0204). Requires `edit_ranks_medals`, and is never
      * true on your OWN record — deriving yourself would be a self-promotion, so
      * the server refuses it like every other self-targeted action.
+     *
+     * That self refusal is now the WHOLE rule for this action (backend T-0211):
+     * on anyone else's record — a peer, a senior, the regiment owner — it is a
+     * rank and medal write like any other and the flag is true.
      */
     deriveFromDiscord: boolean;
 }
@@ -160,9 +176,9 @@ export const ASSIGNABLE_ROLES: readonly MemberRole[] = [
  * ⚠️ FOR EXPLAINING A REFUSAL, NEVER FOR MAKING ONE. Whether an action is
  * available is `permittedActions`, computed by the server from the very
  * predicate its endpoints enforce — nothing here may gate a control. This exists
- * only so the dialog can say WHY it has nothing to offer, and a drift between
- * this list and the server's costs a slightly-off sentence rather than a wrong
- * permission.
+ * only so the dialog can say WHY part or all of it is unavailable, and a drift
+ * between this list and the server's costs a slightly-off sentence rather than a
+ * wrong permission.
  */
 const ROLE_LADDER: readonly MemberRole[] = [
     'Owner',
@@ -175,12 +191,19 @@ const ROLE_LADDER: readonly MemberRole[] = [
 
 /**
  * True when `targetRole` stands level with `callerRole` or above it — the reason
- * the server refuses every moderation action against that member.
+ * the server refuses the MODERATION actions against that member: `changeRole`,
+ * `suspend`, `unsuspend`, `ban`, `unban`.
+ *
+ * ⚠️ It does NOT explain a rank or medal refusal. Those four actions dropped the
+ * standing rule (backend T-0211), so on a peer or a senior they stay available
+ * and the dialog is only PARTLY shut. Copy derived from this must say which half
+ * is missing, never that the record cannot be managed.
  *
  * The case this exists for: appointing a peer is allowed, moderating one is not,
- * so an Admin who promotes a Moderator to Admin succeeds and is then locked out
- * of that record in the same instant. Reported as "Permission denied", because
- * that is what the dialog used to say.
+ * so an Admin who promotes a Moderator to Admin succeeds and loses the
+ * moderation half of that record in the same instant. Before the wording landed
+ * this was reported as "Permission denied", which read as though the promotion
+ * had been rejected.
  *
  * Unknown roles answer false — an unrecognised ladder position is not evidence
  * of anything, and the generic wording is the safe fallback.
@@ -213,7 +236,8 @@ export function articleFor(role: MemberRole | null | undefined): string {
  * The peer entry only ever appears against a target the caller may act on at
  * all — `permittedActions.changeRole` is the separate, server-computed gate, and
  * it stays false for a peer. So this widens who you can PROMOTE, never who you
- * can moderate: the Admin you just appointed is immediately out of your reach.
+ * can moderate: the Admin you just appointed is immediately out of your
+ * MODERATION reach. Their rank and medals stay yours to set (backend T-0211).
  */
 export function assignableRolesFor(callerRole: MemberRole | null | undefined): MemberRole[] {
     if (callerRole === 'Owner') {

@@ -5,6 +5,7 @@ import {
     MemberRole,
     assignableRolesFor,
     deriveMemberStatus,
+    standsLevelOrAbove,
     statusTooltip,
     statusVariant,
 } from './member.model';
@@ -111,6 +112,39 @@ describe('statusTooltip (T-0184)', () => {
     it('explains a pending application', () => {
         const m = member({ status: 'Pending' });
         expect(statusTooltip(m)).toContain('awaiting review');
+    });
+});
+
+/**
+ * The predicate behind the modal's lockout wording. It has been exercised only
+ * through rendered copy until now; it is pinned directly here because backend
+ * T-0211 re-scoped what it EXPLAINS — the moderation half of a record, never the
+ * record as a whole.
+ *
+ * ⚠️ It still gates nothing. `permittedActions` decides what is available; a
+ * drift here costs a slightly-off sentence, never a wrong permission.
+ */
+describe('standsLevelOrAbove', () => {
+    it('is true for a peer — the case the lockout wording exists for', () => {
+        expect(standsLevelOrAbove('Admin', 'Admin')).toBe(true);
+        expect(standsLevelOrAbove('Moderator', 'Moderator')).toBe(true);
+    });
+
+    it('is true for a target above the caller', () => {
+        expect(standsLevelOrAbove('Moderator', 'Admin')).toBe(true);
+        expect(standsLevelOrAbove('Admin', 'Owner')).toBe(true);
+    });
+
+    it('is false for a target the caller outranks', () => {
+        expect(standsLevelOrAbove('Owner', 'Admin')).toBe(false);
+        expect(standsLevelOrAbove('Admin', 'Member')).toBe(false);
+        expect(standsLevelOrAbove('Member', 'Mercenary')).toBe(false);
+    });
+
+    it('answers false for an unknown or absent role, so the generic wording wins', () => {
+        expect(standsLevelOrAbove(null, 'Admin')).toBe(false);
+        expect(standsLevelOrAbove('Admin', undefined)).toBe(false);
+        expect(standsLevelOrAbove('Nonsense' as unknown as MemberRole, 'Admin')).toBe(false);
     });
 });
 

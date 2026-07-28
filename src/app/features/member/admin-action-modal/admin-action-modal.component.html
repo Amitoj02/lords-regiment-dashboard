@@ -35,9 +35,9 @@
                      lockedOutByStanding. -->
                 <div class="n-body">
                     @if (lockedOutByStanding) { {{ member?.inGameName }} is {{ memberRoleWithArticle
-                    }} — equal standing to you or above it, so this record can only be managed by
-                    someone who outranks them. } @else { You don't have permission to manage this
-                    member. }
+                    }} — equal standing to you or above it, so their role, suspension and ban can
+                    only be changed by someone who outranks them. } @else { You don't have
+                    permission to manage this member. }
                 </div>
             </div>
             }
@@ -164,6 +164,21 @@
                 </div>
                 }
             </section>
+            }
+
+            <!-- The moderation half is missing and standing is why (backend
+                 T-0211). Sits exactly in the gap sections 2, 5 and 6 have left,
+                 because an absent control with no explanation reads as a bug —
+                 and here the caller can see the rank and medal controls working,
+                 so silence would look like the dialog half-failed. -->
+            @if (moderationLockedOut) {
+            <div class="notice info aam-partial">
+                <div class="n-body">
+                    {{ member.inGameName }} is {{ memberRoleWithArticle }} — equal standing to you
+                    or above it, so their role, suspension and ban can only be changed by someone
+                    who outranks them. Their rank and medals are still yours to set.
+                </div>
+            </div>
             }
 
             <!-- 5 · Suspend -->
