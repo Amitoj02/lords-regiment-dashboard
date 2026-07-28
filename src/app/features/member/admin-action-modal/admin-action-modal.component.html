@@ -30,7 +30,15 @@
                  stated rule does not (T-0266). -->
             @if (!hasAnyPermittedAction) {
             <div class="notice info">
-                <div class="n-body">You don't have permission to manage this member.</div>
+                <!-- Say WHICH rule shut the dialog. "No permission" against an
+                     action that has just succeeded reads as a rejection — see
+                     lockedOutByStanding. -->
+                <div class="n-body">
+                    @if (lockedOutByStanding) { {{ member?.inGameName }} is {{ memberRoleWithArticle
+                    }} — equal standing to you or above it, so this record can only be managed by
+                    someone who outranks them. } @else { You don't have permission to manage this
+                    member. }
+                </div>
             </div>
             }
 
@@ -290,8 +298,15 @@
                     }
                 </div>
                 }
+                <!-- This used to read "Also removes the member from Discord once
+                     the bot is enabled", which was wrong twice over: the bot has
+                     no kick at all, and the Discord effect is gated on "Apply Ban
+                     role on ban" (off by default) rather than on the bot being
+                     enabled. Matches the Settings copy. -->
                 <div class="field-hint aam-ban-hint">
-                    Also removes the member from Discord once the bot is enabled.
+                    With “Apply Ban role on ban” enabled in Settings, this also strips the member’s
+                    bot-managed Discord roles and applies the Ban role. Reversible via unban →
+                    resync; the bot never kicks anyone.
                 </div>
             </section>
             }

@@ -155,6 +155,55 @@ export const ASSIGNABLE_ROLES: readonly MemberRole[] = [
 ];
 
 /**
+ * The role ladder, most senior first.
+ *
+ * ⚠️ FOR EXPLAINING A REFUSAL, NEVER FOR MAKING ONE. Whether an action is
+ * available is `permittedActions`, computed by the server from the very
+ * predicate its endpoints enforce — nothing here may gate a control. This exists
+ * only so the dialog can say WHY it has nothing to offer, and a drift between
+ * this list and the server's costs a slightly-off sentence rather than a wrong
+ * permission.
+ */
+const ROLE_LADDER: readonly MemberRole[] = [
+    'Owner',
+    'Admin',
+    'Moderator',
+    'Member',
+    'Mercenary',
+    'Applicant',
+];
+
+/**
+ * True when `targetRole` stands level with `callerRole` or above it — the reason
+ * the server refuses every moderation action against that member.
+ *
+ * The case this exists for: appointing a peer is allowed, moderating one is not,
+ * so an Admin who promotes a Moderator to Admin succeeds and is then locked out
+ * of that record in the same instant. Reported as "Permission denied", because
+ * that is what the dialog used to say.
+ *
+ * Unknown roles answer false — an unrecognised ladder position is not evidence
+ * of anything, and the generic wording is the safe fallback.
+ */
+export function standsLevelOrAbove(
+    callerRole: MemberRole | null | undefined,
+    targetRole: MemberRole | null | undefined,
+): boolean {
+    const caller = ROLE_LADDER.indexOf(callerRole as MemberRole);
+    const target = ROLE_LADDER.indexOf(targetRole as MemberRole);
+    if (caller === -1 || target === -1) {
+        return false;
+    }
+    // Lower index = more senior, so "caller is not STRICTLY above target".
+    return caller >= target;
+}
+
+/** "a Moderator" but "an Admin" — roles are shown inline in sentences. */
+export function articleFor(role: MemberRole | null | undefined): string {
+    return /^[aeiou]/i.test(role ?? '') ? 'an' : 'a';
+}
+
+/**
  * The roles `callerRole` may hand out: their own tier and everything below it,
  * so an Admin holding `manage_roles` may appoint another Admin and a Moderator
  * another Moderator — but a Moderator can still never mint an Admin (T-0283,

@@ -17,7 +17,9 @@ import {
     MemberPermittedActions,
     MemberRole,
     Rank,
+    articleFor,
     assignableRolesFor,
+    standsLevelOrAbove,
 } from '../../../core/models/member.model';
 import { MembersService } from '../../../core/services/members.service';
 import { RanksService } from '../../../core/services/ranks.service';
@@ -202,6 +204,36 @@ export class AdminActionModalComponent {
     }
 
     /**
+     * Why the dialog has nothing to offer: the member stands level with the
+     * signed-in admin or above them, so the server refuses every moderation
+     * action against them and only the Owner can act.
+     *
+     * ── WHY THIS EARNS ITS OWN NOTICE ───────────────────────────────────────
+     * Appointing a peer is allowed; moderating one is not. So an Admin who
+     * promotes a Moderator to Admin gets a success toast and, in the SAME tick,
+     * a projection whose every `permittedActions` flag is false — the controls
+     * vanish and the dialog said "You don't have permission to manage this
+     * member." Read against an action that had just succeeded, that says the
+     * promotion was rejected. It was not; the promotion is exactly what put the
+     * member out of reach.
+     *
+     * Deliberately NOT a gate — `hasAnyPermittedAction` still decides what is
+     * shown, from the server's own flags. This picks the wording only.
+     */
+    get lockedOutByStanding(): boolean {
+        const me = this.auth.currentUser();
+        if (!me?.isMember || this.isSelf || !this._member) {
+            return false;
+        }
+        return standsLevelOrAbove(me.role, this._member.role);
+    }
+
+    /** "an Admin" / "a Moderator", for the notice above. */
+    get memberRoleWithArticle(): string {
+        return `${articleFor(this._member?.role)} ${this._member?.role ?? 'member'}`;
+    }
+
+    /**
      * Whether the modal has anything at all to show. False renders the existing
      * "no permission" notice instead of an empty dialog — which is what an Admin
      * opening the Owner, or a Moderator opening an Admin, now sees.
@@ -343,7 +375,8 @@ export class AdminActionModalComponent {
         this.run(
             this.members.changeRole(m.id, this.selectedRole),
             () => (this.roleBusy = false),
-            (updated) => `${updated.inGameName} is now a ${updated.role}.`,
+            (updated) =>
+                `${updated.inGameName} is now ${articleFor(updated.role)} ${updated.role}.`,
         );
     }
 
