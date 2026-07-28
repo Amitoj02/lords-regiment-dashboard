@@ -65,10 +65,21 @@
     padding: 16px 0;
     border-bottom: 1px solid var(--rule);
 
-    &--last {
+    // The closing rule belongs to whichever section is actually last, not to the
+    // Ban section specifically: an admin holding only `edit_ranks_medals` never
+    // renders Suspend or Ban, and since backend T-0211 that is the ordinary
+    // shape of this dialog rather than a corner case. The modifier is kept so
+    // the intent stays legible in the template.
+    &--last,
+    &:last-of-type {
         border-bottom: none;
         padding-bottom: 4px;
     }
+}
+
+// The partial-lockout notice, sitting where the moderation sections would be.
+.aam-partial {
+    margin-top: 16px;
 }
 
 // Inline control rows (select + button) — wrap on narrow widths

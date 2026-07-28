@@ -11,7 +11,10 @@ import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Member, MemberPermittedActions } from '../../../core/models/member.model';
 
-/** Every action permitted — what the API sends when the caller outranks the target. */
+/**
+ * Every action permitted — what the API sends when the caller holds both
+ * capabilities AND outranks the target.
+ */
 function allPermitted(overrides: Partial<MemberPermittedActions> = {}): MemberPermittedActions {
     return {
         changeRole: true,
@@ -27,7 +30,13 @@ function allPermitted(overrides: Partial<MemberPermittedActions> = {}): MemberPe
     };
 }
 
-/** Nothing permitted — what the API sends for a peer or a superior (T-0266). */
+/**
+ * Nothing permitted — what the API sends to a caller holding neither capability
+ * (T-0266).
+ *
+ * ⚠️ NOT what a peer, a superior or your OWN record looks like any more — those
+ * all carry the four rank/medal flags. See {@link ranksMedalsOnly}.
+ */
 function nonePermitted(): MemberPermittedActions {
     return allPermitted({
         changeRole: false,
@@ -39,6 +48,22 @@ function nonePermitted(): MemberPermittedActions {
         ban: false,
         unban: false,
         deriveFromDiscord: false,
+    });
+}
+
+/**
+ * The shape a peer, a superior, the regiment owner or the caller's OWN record
+ * now arrives in for a caller holding both capabilities (backend T-0211): the
+ * moderation half refused, the rank/medal half permitted because a decoration is
+ * not authority.
+ */
+function ranksMedalsOnly(): MemberPermittedActions {
+    return allPermitted({
+        changeRole: false,
+        suspend: false,
+        unsuspend: false,
+        ban: false,
+        unban: false,
     });
 }
 
@@ -198,6 +223,35 @@ describe('AdminActionModalComponent (T-0246 no self-suspend/self-ban)', () => {
         expect(toast.error).toHaveBeenCalledWith('You cannot ban your own account.');
     });
 
+    it('⚠️ lets a rank or medal write through on your OWN record', () => {
+        // The self-promotion path, permitted deliberately (backend T-0211). The
+        // dialog opens on your own row now, offers Rank/Medals/Derive, and only
+        // Suspend and Ban stay dead — which is the state the hints above explain.
+        setup(currentUser({ id: 'm1' }));
+        const self = member({ id: 'm1', permittedActions: ranksMedalsOnly() });
+        members.changeRank.and.returnValue(of(self));
+        component.member = self;
+        component.selectedRankId = 'r1';
+
+        component.changeRank();
+
+        expect(members.changeRank).toHaveBeenCalledWith('m1', 'r1');
+        expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('still shows the Suspend and Ban hints on your own record, now that it opens', () => {
+        setup(currentUser({ id: 'm1' }));
+        const el = open(member({ id: 'm1', permittedActions: ranksMedalsOnly() }));
+
+        expect(buttonLabelled(el, 'Suspend member').disabled).toBe(true);
+        expect(buttonLabelled(el, 'Ban member').disabled).toBe(true);
+        expect(el.querySelectorAll('.aam-self-hint').length).toBe(2);
+        // ...and the rank section is offered alongside them. (Its button waits on
+        // a rank being picked, so presence is the assertion, not enabledness.)
+        expect(component.canChangeRank).toBe(true);
+        expect(buttonLabelled(el, 'Change rank')).toBeTruthy();
+    });
+
     it('still suspends another member normally', () => {
         setup(currentUser({ id: 'admin-1' }));
         const target = member({ id: 'm1' });
@@ -292,30 +346,129 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         return [RANK, ROLE, AWARD, DERIVE, SUSPEND, BAN].filter((l) => control(el, l) !== null);
     }
 
+    /**
+     * The "nothing at all" notice specifically. `.notice.info` is not unique —
+     * the partial-lockout notice and the derive outcome share the class — so both
+     * are excluded rather than matched by position.
+     */
     function noPermissionNotice(el: HTMLElement): Element | null {
-        return el.querySelector('.notice.info');
+        return el.querySelector('.notice.info:not(.aam-partial):not(.aam-derive-outcome)');
     }
 
-    it('offers an Admin nothing at all on the Owner', () => {
-        // The backend's strictly-outranks guard refuses every one of these, so the
-        // modal must not put a single control on screen.
+    /** The partial-lockout notice: rank/medals on offer, moderation withheld. */
+    function partialNotice(el: HTMLElement): Element | null {
+        return el.querySelector('.aam-partial');
+    }
+
+    it('offers an Admin the rank and medal half on the Owner', () => {
+        // The owner pointer guards the SEAT. Their rank and medals are a record
+        // of what they did, so an edit_ranks_medals holder keeps writing it
+        // (backend T-0211) — this dialog used to be empty.
         setup(currentUser({ role: 'Admin' }));
         const el = open(
-            member({ id: 'owner-1', role: 'Owner', permittedActions: nonePermitted() }),
+            member({ id: 'owner-1', role: 'Owner', permittedActions: ranksMedalsOnly() }),
+        );
+
+        expect(labels(el)).toEqual([RANK, AWARD, DERIVE]);
+        expect(component.hasAnyPermittedAction).toBe(true);
+        expect(noPermissionNotice(el)).toBeNull();
+    });
+
+    it('offers a Moderator the rank and medal half on an Admin', () => {
+        // The case the exemption exists for: a Moderator trusted with the service
+        // record was refused against every peer and superior on the roster.
+        setup(currentUser({ id: 'mod-1', role: 'Moderator' }));
+        const el = open(
+            member({ id: 'adm-2', role: 'Admin', permittedActions: ranksMedalsOnly() }),
+        );
+
+        expect(labels(el)).toEqual([RANK, AWARD, DERIVE]);
+        expect(noPermissionNotice(el)).toBeNull();
+    });
+
+    /**
+     * The reported confusion. Appointing a peer is allowed and moderating one is
+     * not, so an Admin who promotes a Moderator to Admin gets a success toast and,
+     * in the SAME tick, a projection whose moderation flags are all false — and
+     * the dialog used to answer that with "You don't have permission to manage
+     * this member", which reads as the promotion having been rejected. It was not.
+     *
+     * Since backend T-0211 the lockout is PARTIAL: the rank and medal controls are
+     * still on screen, so the sentence has to name the half that is missing rather
+     * than the record as a whole.
+     */
+    it('explains the peer-appointment lockout beside the controls that still work', () => {
+        setup(currentUser({ id: 'adm-1', role: 'Admin' }));
+        const el = open(
+            member({
+                id: 'adm-2',
+                inGameName: 'Nolt',
+                role: 'Admin',
+                permittedActions: ranksMedalsOnly(),
+            }),
+        );
+
+        expect(component.moderationLockedOut).toBe(true);
+        const notice = partialNotice(el)?.textContent ?? '';
+        expect(notice).toContain('Nolt is an Admin');
+        // "someone who outranks them", NOT "only the Owner": the server rule is
+        // strict precedence (`outranks`), so an Admin may still act on this
+        // Moderator-appointed-Moderator case. Naming the Owner would be wrong
+        // for every target below Admin.
+        expect(notice).toContain('outranks them');
+        expect(notice).not.toContain("don't have permission");
+        // ...and it must be about the moderation half only, because the rank and
+        // medal controls are visibly right there.
+        expect(notice).toContain('role, suspension and ban');
+        expect(notice).toContain('rank and medals are still yours');
+        expect(labels(el)).toEqual([RANK, AWARD, DERIVE]);
+    });
+
+    it('keeps the empty dialog for a caller who only ever held manage_roles', () => {
+        // No edit_ranks_medals, so nothing survives the standing rule and the
+        // all-or-nothing notice is still the right answer.
+        setup(currentUser({ id: 'adm-1', role: 'Admin', capabilities: ['manage_roles'] }));
+        const el = open(
+            member({ id: 'adm-2', role: 'Admin', permittedActions: ranksMedalsOnly() }),
         );
 
         expect(labels(el)).toEqual([]);
-        expect(el.querySelectorAll('.aam-section').length).toBe(0);
         expect(component.hasAnyPermittedAction).toBe(false);
-        expect(noPermissionNotice(el)?.textContent).toContain("don't have permission");
+        expect(component.moderationLockedOut).toBe(false);
+        expect(partialNotice(el)).toBeNull();
+        expect(noPermissionNotice(el)?.textContent).toContain('equal standing to you or above it');
     });
 
-    it('offers a Moderator nothing on an Admin', () => {
-        setup(currentUser({ id: 'mod-1', role: 'Moderator' }));
-        const el = open(member({ id: 'adm-2', role: 'Admin', permittedActions: nonePermitted() }));
+    it('raises no standing notice when the caller could not moderate anyone anyway', () => {
+        // edit_ranks_medals only: they never held the moderation half, so telling
+        // them it is withheld on standing is noise about a rule they are not
+        // subject to.
+        setup(currentUser({ id: 'mod-1', role: 'Moderator', capabilities: ['edit_ranks_medals'] }));
+        const el = open(
+            member({ id: 'adm-2', role: 'Admin', permittedActions: ranksMedalsOnly() }),
+        );
 
-        expect(labels(el)).toEqual([]);
-        expect(noPermissionNotice(el)).not.toBeNull();
+        expect(labels(el)).toEqual([RANK, AWARD, DERIVE]);
+        expect(component.moderationLockedOut).toBe(false);
+        expect(partialNotice(el)).toBeNull();
+    });
+
+    it('raises no standing notice on a member the caller CAN moderate', () => {
+        setup(currentUser({ id: 'mod-1', role: 'Moderator' }));
+        const el = open(member({ id: 'm1', role: 'Member' }));
+
+        expect(component.moderationLockedOut).toBe(false);
+        expect(partialNotice(el)).toBeNull();
+    });
+
+    it('falls back to the generic notice when standing is not the reason', () => {
+        // A Moderator with neither capability on an ordinary Member: the server
+        // withheld every flag on CAPABILITY, not on hierarchy, so the standing
+        // sentence would be a lie.
+        setup(currentUser({ id: 'mod-1', role: 'Moderator', capabilities: [] }));
+        const el = open(member({ id: 'm1', role: 'Member', permittedActions: nonePermitted() }));
+
+        expect(noPermissionNotice(el)?.textContent).toContain("don't have permission");
     });
 
     it('offers a Moderator the full set on an ordinary Member', () => {
@@ -361,6 +514,10 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
     });
 
     it('never calls the API for an action the server did not permit', () => {
+        // A deliberately IMPOSSIBLE block — the server would send ranksMedalsOnly()
+        // for this caller and target. That is the point: this pins the
+        // belt-and-braces re-check against a stale projection, which by definition
+        // is a shape the API is no longer producing.
         setup(currentUser({ role: 'Admin' }));
         component.member = member({ role: 'Owner', permittedActions: nonePermitted() });
         component.suspendUntil = '2099-01-01T12:00';
@@ -377,6 +534,29 @@ describe('AdminActionModalComponent (T-0266 role hierarchy)', () => {
         expect(members.changeRole).not.toHaveBeenCalled();
         expect(component.banConfirming).toBe(false);
         expect(component.error).toContain("don't have permission");
+    });
+
+    it('refuses the withheld half of a mixed block and lets the permitted half through', () => {
+        // The block genuinely mixes true and false now, so the belt-and-braces
+        // re-check has to read it per action rather than treating one flag as the
+        // verdict for the record.
+        setup(currentUser({ role: 'Admin' }));
+        const target = member({ id: 'adm-2', role: 'Admin', permittedActions: ranksMedalsOnly() });
+        members.changeRank.and.returnValue(of(target));
+        component.member = target;
+        component.suspendUntil = '2099-01-01T12:00';
+        component.selectedRankId = 'r1';
+        component.selectedRole = 'Member';
+
+        component.changeRank();
+        component.suspend();
+        component.changeRole();
+        component.startBan();
+
+        expect(members.changeRank).toHaveBeenCalledWith('adm-2', 'r1');
+        expect(members.suspend).not.toHaveBeenCalled();
+        expect(members.changeRole).not.toHaveBeenCalled();
+        expect(component.banConfirming).toBe(false);
     });
 
     it('offers the caller’s own tier, but never one above it (T-0283)', () => {
@@ -706,15 +886,35 @@ describe('AdminActionModalComponent (T-0284 derive from Discord)', () => {
     });
 
     it('hides the button on a member the server did not permit it for', () => {
-        // Your own record is the case that matters: deriving yourself is a
-        // self-promotion, so the server refuses it and the flag is false.
-        setup(currentUser({ id: 'm1' }));
+        // Fail closed on the server's own flag, whatever the reason for it — the
+        // modal never re-derives why. Since backend T-0211 the server sets it
+        // false only when the caller lacks the capability, so the fixture is what
+        // a stale or narrowed projection looks like.
+        setup(currentUser({ id: 'adm-1' }));
         const el = open(
             member({ id: 'm1', permittedActions: { ...allPermitted(), deriveFromDiscord: false } }),
         );
 
         expect(el.querySelector('#aam-derive-hint')).toBeNull();
         expect(component.canDeriveFromDiscord).toBe(false);
+    });
+
+    it('⚠️ offers it on your OWN record — the self-derive the server now permits', () => {
+        setup(currentUser({ id: 'm1' }));
+        const el = open(member({ id: 'm1', permittedActions: ranksMedalsOnly() }));
+
+        expect(el.querySelector('#aam-derive-hint')).not.toBeNull();
+        expect(component.canDeriveFromDiscord).toBe(true);
+    });
+
+    it('offers it on a superior, where the server now permits it', () => {
+        setup(currentUser({ id: 'adm-1', role: 'Admin' }));
+        const el = open(
+            member({ id: 'owner-1', role: 'Owner', permittedActions: ranksMedalsOnly() }),
+        );
+
+        expect(el.querySelector('#aam-derive-hint')).not.toBeNull();
+        expect(component.canDeriveFromDiscord).toBe(true);
     });
 
     it('shows what it derived as a toast AND leaves it in the dialog', () => {
