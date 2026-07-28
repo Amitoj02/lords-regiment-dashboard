@@ -60,9 +60,14 @@ export class RosterComponent implements OnInit {
     /**
      * Whether the caller may open the admin-action modal on THIS row (T-0266).
      * Was a global `canManage` getter, which put a `···` on every row — including
-     * the Owner's and the caller's own — for actions the API would refuse. Shares
+     * the caller's own — for actions the API would refuse. Shares
      * `canOpenAdminActions` with the profile header's trigger so the two entry
      * points to the same modal can never disagree.
+     *
+     * An `edit_ranks_medals` holder now gets the `···` on the Owner's row and on
+     * every peer's, because their rank and medals really are editable there
+     * (backend T-0211). The caller's OWN row is the one that stays without it:
+     * every flag on your own record is false.
      */
     canActOn(member: Member): boolean {
         return canOpenAdminActions(member, (capability) => this.auth.hasCapability(capability));

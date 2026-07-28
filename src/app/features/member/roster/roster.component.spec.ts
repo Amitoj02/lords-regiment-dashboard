@@ -23,6 +23,11 @@ function allPermitted(): MemberPermittedActions {
     };
 }
 
+/**
+ * Nothing permitted — a caller holding neither capability. NOT what a peer, a
+ * superior or the caller's OWN row looks like any more: see
+ * {@link ranksMedalsOnly}.
+ */
 function nonePermitted(): MemberPermittedActions {
     return {
         changeRole: false,
@@ -34,6 +39,22 @@ function nonePermitted(): MemberPermittedActions {
         ban: false,
         unban: false,
         deriveFromDiscord: false,
+    };
+}
+
+/**
+ * A peer, a superior, the regiment owner or the caller's OWN row, for a caller
+ * holding both capabilities: the moderation half refused, the rank/medal half
+ * permitted (backend T-0211).
+ */
+function ranksMedalsOnly(): MemberPermittedActions {
+    return {
+        ...allPermitted(),
+        changeRole: false,
+        suspend: false,
+        unsuspend: false,
+        ban: false,
+        unban: false,
     };
 }
 
@@ -110,7 +131,7 @@ describe('RosterComponent row actions (T-0266)', () => {
     it('shows the row action button only where an action is permitted', () => {
         const el = setup([
             member({ id: 'm1', inGameName: 'Jameson Nolt' }),
-            member({ id: 'owner-1', inGameName: 'The Colonel', permittedActions: nonePermitted() }),
+            member({ id: 'admin-1', inGameName: 'Admin One', permittedActions: nonePermitted() }),
         ]);
 
         const buttons = actionButtons(el);
@@ -118,14 +139,41 @@ describe('RosterComponent row actions (T-0266)', () => {
         expect(buttons[0].getAttribute('aria-label')).toBe('Member actions for Jameson Nolt');
     });
 
-    it('hides the button on the Owner’s row and on the caller’s own row', () => {
-        // Both are rows the API refuses every action on, so both come back with an
-        // empty permittedActions block.
+    it('shows it on a row where only the rank and medal half is permitted', () => {
         const el = setup([
-            member({ id: 'owner-1', role: 'Owner', permittedActions: nonePermitted() }),
-            member({ id: 'admin-1', role: 'Admin', permittedActions: nonePermitted() }),
+            member({
+                id: 'adm-2',
+                inGameName: 'Nolt',
+                role: 'Admin',
+                permittedActions: ranksMedalsOnly(),
+            }),
         ]);
+        expect(actionButtons(el).length).toBe(1);
+    });
+
+    it('⚠️ shows it on the caller’s OWN row, for the rank and medal actions', () => {
+        // Your own row used to be untouchable. Since backend T-0211 it carries the
+        // four rank/medal flags — you may record your own promotion — so the
+        // `···` belongs there too. Suspend and Ban stay dead inside the dialog.
+        const el = setup([
+            member({ id: 'admin-1', role: 'Admin', permittedActions: ranksMedalsOnly() }),
+        ]);
+        expect(actionButtons(el).length).toBe(1);
+    });
+
+    it('hides it on a row the API permits nothing on', () => {
+        const el = setup([member({ id: 'm9', role: 'Member', permittedActions: nonePermitted() })]);
         expect(actionButtons(el).length).toBe(0);
+    });
+
+    it('shows it on the Owner’s row, for the rank and medal actions', () => {
+        // The Owner used to be untouchable from every angle. Their rank and medals
+        // are not: an edit_ranks_medals holder keeps the whole service record, so
+        // the `···` belongs on that row (backend T-0211).
+        const el = setup([
+            member({ id: 'owner-1', role: 'Owner', permittedActions: ranksMedalsOnly() }),
+        ]);
+        expect(actionButtons(el).length).toBe(1);
     });
 
     it('shows no action button at all to a caller with no capabilities', () => {

@@ -146,8 +146,12 @@ export class AdminActionModalComponent {
      * Your own record, with a block present. The server always refuses a
      * self-suspend/self-ban, but T-0246 wants those controls rendered disabled
      * with a stated reason rather than silently absent — so the two sections
-     * stay alive for this case alone. It is deliberately NOT enough to make
-     * `canOpenAdminActions()` offer the modal in the first place.
+     * stay alive for this case.
+     *
+     * Written defensively and now genuinely REACHABLE: since backend T-0211 your
+     * own record carries four permitted rank/medal flags, so
+     * `canOpenAdminActions()` opens the dialog on it and these hints are what
+     * explain the two controls that stay dead.
      */
     private get selfExplained(): boolean {
         return this.canRoles && this.isSelf && !!this.actions;
@@ -189,8 +193,9 @@ export class AdminActionModalComponent {
     }
     /**
      * Pull rank + medals from Discord. Same capability as the rank/medal controls
-     * it writes through, and the server's own per-target flag — which is false on
-     * your own record, because deriving yourself is a self-promotion.
+     * it writes through, and the server's own per-target flag — which since
+     * backend T-0211 carries no target restriction at all, your own record
+     * included. It refused self until then.
      */
     get canDeriveFromDiscord(): boolean {
         return this.canRanksMedals && !!this.actions?.deriveFromDiscord;
@@ -204,21 +209,24 @@ export class AdminActionModalComponent {
     }
 
     /**
-     * Why the dialog has nothing to offer: the member stands level with the
-     * signed-in admin or above them, so the server refuses every moderation
-     * action against them and only the Owner can act.
+     * The member stands level with the signed-in admin or above them, so the
+     * server refuses every MODERATION action against them and only someone who
+     * outranks them can take one.
      *
      * ── WHY THIS EARNS ITS OWN NOTICE ───────────────────────────────────────
      * Appointing a peer is allowed; moderating one is not. So an Admin who
      * promotes a Moderator to Admin gets a success toast and, in the SAME tick,
-     * a projection whose every `permittedActions` flag is false — the controls
-     * vanish and the dialog said "You don't have permission to manage this
-     * member." Read against an action that had just succeeded, that says the
-     * promotion was rejected. It was not; the promotion is exactly what put the
-     * member out of reach.
+     * a projection whose moderation flags are all false — the Role, Suspend and
+     * Ban sections vanish. Left unexplained next to an action that had just
+     * succeeded, that reads as though the promotion was rejected. It was not;
+     * the promotion is exactly what put the member out of moderation reach.
      *
-     * Deliberately NOT a gate — `hasAnyPermittedAction` still decides what is
-     * shown, from the server's own flags. This picks the wording only.
+     * Deliberately NOT a gate — the server's own flags decide what is shown.
+     * This picks the wording only, and it is the reason the wording has to be
+     * about the moderation half specifically: since backend T-0211 the same
+     * target's rank and medal controls are right there on screen, so "this
+     * record can only be managed by someone who outranks them" would be visibly
+     * untrue.
      */
     get lockedOutByStanding(): boolean {
         const me = this.auth.currentUser();
@@ -228,15 +236,47 @@ export class AdminActionModalComponent {
         return standsLevelOrAbove(me.role, this._member.role);
     }
 
+    /** Whether any authority-moving control is on offer for this member. */
+    get moderationAvailable(): boolean {
+        return this.canChangeRole || this.showSuspendSection || this.showBanSection;
+    }
+
+    /**
+     * The PARTIAL lockout (backend T-0211): the dialog has something to offer,
+     * but not the moderation half, and standing is why. Without this the Role,
+     * Suspend and Ban sections would simply be absent from an otherwise working
+     * dialog — a silence that reads as a bug.
+     *
+     * Gated on `canRoles` through {@link moderationAvailable}'s inputs only
+     * indirectly, so it is checked here too: a caller who never held
+     * `manage_roles` is not locked out of anything by standing, and telling them
+     * about a restriction they were never subject to is noise.
+     */
+    get moderationLockedOut(): boolean {
+        return (
+            this.canRoles &&
+            this.hasAnyPermittedAction &&
+            !this.moderationAvailable &&
+            this.lockedOutByStanding
+        );
+    }
+
     /** "an Admin" / "a Moderator", for the notice above. */
     get memberRoleWithArticle(): string {
         return `${articleFor(this._member?.role)} ${this._member?.role ?? 'member'}`;
     }
 
     /**
-     * Whether the modal has anything at all to show. False renders the existing
-     * "no permission" notice instead of an empty dialog — which is what an Admin
-     * opening the Owner, or a Moderator opening an Admin, now sees.
+     * Whether the modal has anything at all to show. False renders the "no
+     * permission" notice instead of an empty dialog.
+     *
+     * It is now false only when the member arrived with no `permittedActions`
+     * block at all, or the caller holds neither capability. An Admin opening the
+     * Owner and a Moderator opening an Admin — the two cases this used to
+     * describe — reach it with the rank and medal sections live and the
+     * moderation half missing; that state is explained by
+     * {@link moderationLockedOut}, not here. So does the caller's OWN record,
+     * where T-0246's disabled-and-explained Suspend/Ban hints take over.
      */
     get hasAnyPermittedAction(): boolean {
         return (
