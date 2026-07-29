@@ -18846,7 +18846,7 @@
           "from": null,
           "to": "review",
           "by": "claude",
-          "note": "cabinet-order medals + catalogue description + centred Honours rows; PR into dev"
+          "note": "cabinet-order medals + catalogue description + centred Honours rows; PR into dev. PRs open into dev: this repo #60, backend [lords-dashboard-backend #70](https://github.com/Amitoj02/lords-dashboard-backend/pull/70). Merge the backend FIRST \u2014 the Honours panel renders a blank description until the API sends it."
         }
       ]
     }
