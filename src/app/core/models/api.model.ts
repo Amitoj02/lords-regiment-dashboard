@@ -45,6 +45,9 @@ export interface ApiMemberMedal {
     title: string;
     glyph: string;
     imageUrl: string | null;
+    /** Catalogue text — what the medal is awarded FOR. Same for every holder. */
+    description: string | null;
+    /** This award's own citation — why THIS member got it. Differs per holder. */
     detail: string | null;
     awardedAt: string;
 }
@@ -321,6 +324,7 @@ export function mapMedalAward(m: ApiMemberMedal): MemberMedalAward {
         title: m.title,
         glyph: m.glyph,
         imageUrl: m.imageUrl,
+        description: m.description ?? null,
         detail: m.detail,
         awardedAt: m.awardedAt,
     };

@@ -77,10 +77,16 @@
                                     [letter]="award.glyph"
                                     [title]="award.title"
                                 ></hf-medal>
+                                <!--
+                                    The catalogue description, not this award's
+                                    citation: a viewer reading someone else's
+                                    honours wants to know what the medal TAKES,
+                                    not the one-line reason it was handed over.
+                                -->
                                 <div class="medal-info">
                                     <div class="medal-title">{{ award.title }}</div>
-                                    @if (award.detail) {
-                                    <div class="medal-desc">{{ award.detail }}</div>
+                                    @if (award.description) {
+                                    <div class="medal-desc">{{ award.description }}</div>
                                     }
                                 </div>
                             </div>

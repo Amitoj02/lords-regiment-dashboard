@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "83609264254a356f6cc345029c647cc5dc61c50c",
-  "lastSyncedAt": "2026-07-28T16:45:00Z",
-  "notesForNextSession": "LATEST SESSION (T-0285): the frontend half of backend T-0211. Rank and medal writes are no longer subject to the role hierarchy on the server, so a permittedActions block can now MIX true and false for one member - an edit_ranks_medals holder gets [Change rank, Award, Derive] on the Owner, on peers and on seniors, with Role/Suspend/Ban absent. THE PART TO REMEMBER: nothing in this repo gates on the hierarchy and nothing should start. The only client-side role reasoning is standsLevelOrAbove, and it is WORDING ONLY - it now explains the moderation half specifically, because 'this record can only be managed by someone who outranks them' is visibly untrue while the rank control sits on screen. moderationLockedOut renders that explanation in the gap the missing sections leave; it is suppressed for a caller who never held manage_roles. Two spec traps: `.notice.info` is shared by the partial notice and the derive outcome (use the class-excluding helper), and nonePermitted() now means 'your own record / no capability' - a peer or a senior is ranksMedalsOnly(). Both halves are open as PRs into dev on feat/rank-medal-decoration-exemption. Still true from before: the host Node is 22.22.2 and the Angular CLI needs >=22.22.3, so tests and builds run in a node:22 container (install chromium, run as the node user, and pass --security-opt seccomp=unconfined or Chrome cannot open its sandbox); dist/ has root-owned directories from an old container run, so build to an output path outside the repo.",
-  "nextIdCounter": 286,
+  "lastSyncedCommit": "618f038b30ca49f27111eb9707abbe803bf39cbf",
+  "lastSyncedAt": "2026-07-29T22:20:00Z",
+  "notesForNextSession": "T-0286 is the live thread, paired with lords-dashboard-backend T-0212 \u2014 feat/medal-precedence-ordering in both repos. Medals now render in cabinet order on the roster, the profile and the dashboard, and the profile's Honours & Decorations panel shows the medal's CATALOGUE description (the /admin/ranks text) instead of the per-award citation, vertically centred against its tile. Three things to know: (1) NOTHING on the client sorts medals and `precedence` is deliberately absent from MemberMedalAward \u2014 the server decides the order once and four render sites (roster, profile, dashboard, admin dialog chips) inherit it; adding a client sort is the regression to watch for. (2) `mapMedalAward` in api.model.ts is a WHITELIST copy \u2014 a new backend field vanishes there with no type error, which is exactly what a members.service spec now pins. (3) `description` and `detail` both live on MemberMedalAward and both sound like 'the description'; `detail` is the citation and is rendered nowhere in the app now. profile.component.scss was already over its 6 kB style budget before this change (a pre-existing warning, now ~492 bytes over) \u2014 trim it before anything substantial lands there. Still open from last session: T-0285's note that profile.component.spec has no admin-action coverage, so the modal's second mount point is still verified only through the roster.",
+  "nextIdCounter": 287,
   "connections": [],
   "tasks": [
     {
@@ -18752,6 +18752,101 @@
           "to": "review",
           "by": "claude",
           "note": "Owner follow-up: capability holders may also change their OWN rank and medals, self-derive included. No gate changed here either - the widened flags flow through - but the own-row and own-record states became reachable, so the roster and modal specs were re-pointed at them. 633 tests green, lint + contrast + build clean. PRs open into dev: this repo #59, backend [lords-dashboard-backend #69](https://github.com/Amitoj02/lords-dashboard-backend/pull/69)."
+        }
+      ]
+    },
+    {
+      "id": "T-0286",
+      "title": "Show medals in cabinet order, and centre the Honours panel on the medal's own description",
+      "summary": "Three fixes to how a member's decorations read. (1) ORDER: nothing here changes \u2014 the roster, the profile panel and the dashboard strip already render `medalAwards` verbatim, so the backend's precedence sort (lords-dashboard-backend T-0212) corrects all three plus the admin dialog chips for free. `precedence` is deliberately kept off the award shape so no client sort can creep back in; a spec pins that the mapper preserves the API's order, repeats included. (2) DESCRIPTION: `MemberMedalAward` gains `description` \u2014 the catalogue text /admin/ranks edits \u2014 and the Honours & Decorations panel now shows it instead of `award.detail`. `detail` was the per-award citation, which on the live roster is the same sentence on every medal ('Derived from their existing Discord roles'); a viewer wants to know what the medal TAKES. The field had to be threaded through all three hops \u2014 ApiMemberMedal, MemberMedalAward, and the `mapMedalAward` whitelist copy, which drops unknown wire fields with no type error. (3) LAYOUT: `.medal-item` was `align-items: flex-start`, pinning a ~48px text block to the top of a 64px hf-medal tile; it is now `center`, with `.medal-info` given its own column box so title and description centre as one block. Measured, not asserted from the stylesheet: the spec fails at a 16.3px offset under the old rule and passes at 0.00px under the new one.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "honours-panel",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/api.model.ts",
+        "src/app/core/models/member.model.ts",
+        "src/app/core/services/members.service.spec.ts",
+        "src/app/features/member/profile/profile.component.html",
+        "src/app/features/member/profile/profile.component.scss",
+        "src/app/features/member/profile/profile.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0212"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the Honours panel shows the catalogue description, never the per-award citation",
+          "status": "passed"
+        },
+        {
+          "desc": "a medal with a blank catalogue description renders no description line at all",
+          "status": "passed"
+        },
+        {
+          "desc": "the panel renders awards in the API's order \u2014 a deliberately non-alphabetical, non-chronological list stays put",
+          "status": "passed"
+        },
+        {
+          "desc": "the title block's vertical centre matches the 64px tile's to within 1.5px (measured via getBoundingClientRect)",
+          "status": "passed"
+        },
+        {
+          "desc": "the alignment spec was proved to discriminate: restoring `align-items: flex-start` fails it at 16.3px",
+          "status": "passed"
+        },
+        {
+          "desc": "the mapper carries `description` across the wire boundary and keeps a missing one null",
+          "status": "passed"
+        },
+        {
+          "desc": "full suite green: 640 tests, lint + contrast guard + production build clean",
+          "status": "passed"
+        },
+        {
+          "desc": "confirmed against a real API + real bundle: profile lists precedence 1..5 with catalogue text at 0.00px centre delta, dashboard shows D C M V F, roster row matches \u2014 all from awards inserted in REVERSE precedence order",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "`mapMedalAward` (api.model.ts) is a whitelist copy: a field the backend adds is dropped silently, with NO type error, unless the mapper is taught about it. That is how `description` could have looked wired and rendered blank; a service spec now pins the crossing.",
+          "status": "open",
+          "notedAt": "2026-07-29T22:20:00Z"
+        },
+        {
+          "desc": "`description` and `detail` are both on MemberMedalAward and both read as 'the medal's description'. `detail` is the per-award citation and is now rendered NOWHERE in the app \u2014 kept on the shape because it is real API data, but easy to reach for by mistake.",
+          "status": "open",
+          "notedAt": "2026-07-29T22:20:00Z"
+        },
+        {
+          "desc": "profile.component.scss was already ~429 bytes over its 6 kB component-style budget before this change; `.medal-info` adds ~63 more. The warning is pre-existing and non-blocking, but the file needs a trim before anything substantial lands in it.",
+          "status": "open",
+          "notedAt": "2026-07-29T22:20:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not add `precedence` to MemberMedalAward or sort anywhere on the client \u2014 ordering is the server's job and four render sites would drift.",
+        "Did not surface the catalogue description on the roster/dashboard medal tiles (their hf-medal tooltip still shows only the title); only the profile panel was asked to explain the medal.",
+        "Did not trim profile.component.scss back under its style budget \u2014 pre-existing overage, unrelated to this change, and a trim would touch rules this task has no reason to move.",
+        "Did not add a Honours-panel case to the dashboard/roster specs; their medal rendering is covered by the backend order plus the mapper spec, and neither shows descriptive text."
+      ],
+      "lastTouchedCommit": "618f038b30ca49f27111eb9707abbe803bf39cbf",
+      "createdAt": "2026-07-29T22:20:00Z",
+      "updatedAt": "2026-07-29T22:20:00Z",
+      "history": [
+        {
+          "at": "2026-07-29T22:20:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "cabinet-order medals + catalogue description + centred Honours rows; PR into dev. PRs open into dev: this repo #60, backend [lords-dashboard-backend #70](https://github.com/Amitoj02/lords-dashboard-backend/pull/70). Merge the backend FIRST \u2014 the Honours panel renders a blank description until the API sends it."
         }
       ]
     }
