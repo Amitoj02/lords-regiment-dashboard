@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MembersService } from './members.service';
-import { ApiMember } from '../models/api.model';
+import { ApiMember, ApiMemberMedal } from '../models/api.model';
 import { Member } from '../models/member.model';
 
 /** The permitted-actions block as the API sends it (CONTRACT §3, backend T-0176). */
@@ -144,5 +144,81 @@ describe('MembersService permittedActions (T-0266)', () => {
         httpMock.expectOne('/api/members/m1').flush(withPermissions(apiMember(), true));
 
         expect(result?.permittedActions).toBeUndefined();
+    });
+});
+
+describe('MembersService medal awards (T-0286)', () => {
+    let service: MembersService;
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
+        });
+        service = TestBed.inject(MembersService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    function wireAward(over: Partial<ApiMemberMedal> = {}): ApiMemberMedal {
+        return {
+            id: 'a1',
+            medalId: 'md1',
+            title: 'Marksman',
+            glyph: 'M',
+            imageUrl: null,
+            description: 'Top 5% accuracy across three or more events.',
+            detail: 'Derived from their existing Discord roles',
+            awardedAt: '2026-01-01T00:00:00Z',
+            ...over,
+        };
+    }
+
+    it('carries the catalogue description across the wire boundary', () => {
+        // `mapMedalAward` is a whitelist copy, so a field the backend adds is
+        // dropped silently — with no type error — unless the mapper is taught
+        // about it. That silence is the whole reason this test exists.
+        let result: Member | undefined;
+        service.getById('m1').subscribe((m) => (result = m));
+        httpMock.expectOne('/api/members/m1').flush(apiMember({ medals: [wireAward()] }));
+
+        const awarded = result?.medalAwards?.[0];
+        expect(awarded?.description).toBe('Top 5% accuracy across three or more events.');
+        // The citation survives too — they are two fields, not a rename.
+        expect(awarded?.detail).toBe('Derived from their existing Discord roles');
+    });
+
+    it('keeps a missing description null instead of undefined', () => {
+        let result: Member | undefined;
+        service.getById('m1').subscribe((m) => (result = m));
+        httpMock
+            .expectOne('/api/members/m1')
+            .flush(apiMember({ medals: [wireAward({ description: null })] }));
+
+        expect(result?.medalAwards?.[0].description).toBeNull();
+    });
+
+    it('preserves the order the API sent, medal for medal', () => {
+        // Ordering is the server's job (backend T-0212 sorts by medal
+        // precedence). The mapper must not reorder, dedupe or collapse repeats.
+        let result: Member | undefined;
+        service.getById('m1').subscribe((m) => (result = m));
+        httpMock.expectOne('/api/members/m1').flush(
+            apiMember({
+                medals: [
+                    wireAward({ id: 'a1', medalId: 'md-senior' }),
+                    wireAward({ id: 'a2', medalId: 'md-senior' }),
+                    wireAward({ id: 'a3', medalId: 'md-junior' }),
+                ],
+            }),
+        );
+
+        expect(result?.medalAwards?.map((a) => a.id)).toEqual(['a1', 'a2', 'a3']);
+        expect(result?.medalAwards?.map((a) => a.medalId)).toEqual([
+            'md-senior',
+            'md-senior',
+            'md-junior',
+        ]);
     });
 });

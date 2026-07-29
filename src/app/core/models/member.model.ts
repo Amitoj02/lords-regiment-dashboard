@@ -43,7 +43,14 @@ export interface Rank {
     isProtected?: boolean;
 }
 
-/** A single medal award held by a member (medals are repeatable). */
+/**
+ * A single medal award held by a member (medals are repeatable).
+ *
+ * The API delivers these in MEDAL CABINET order — `precedence` ascending, the
+ * same order /admin/ranks shows — so every view renders the array as given.
+ * Nothing here sorts, and `precedence` is deliberately not on this shape: one
+ * ordering, decided once, on the server.
+ */
 export interface MemberMedalAward {
     /** The award (member_medal) id — used to identify a specific award. */
     id: string;
@@ -53,6 +60,18 @@ export interface MemberMedalAward {
     glyph: string;
     /** Public URL of the medal image (null → glyph fallback tile). */
     imageUrl?: string | null;
+    /**
+     * The CATALOGUE description — what the medal is awarded FOR, identical for
+     * every holder and authored on /admin/ranks. This is what a viewer reads to
+     * learn what earning it takes, and it is what the profile's Honours &
+     * Decorations panel shows. Not `detail`.
+     */
+    description?: string | null;
+    /**
+     * This award's own citation — why THIS member received it on THIS occasion
+     * (e.g. "Derived from their existing Discord roles"). Per-award, so it says
+     * nothing about the medal itself.
+     */
     detail?: string | null;
     awardedAt: string;
 }

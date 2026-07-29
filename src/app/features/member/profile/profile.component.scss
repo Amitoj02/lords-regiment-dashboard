@@ -97,10 +97,22 @@
     gap: 12px;
 }
 
+// The icon is a fixed 64px `hf-medal` tile and the text beside it is two short
+// lines, so `flex-start` left the title hanging off the top of the ribbon.
+// Centre the row (same treatment as the medal cabinet on /admin/ranks) and give
+// the text its own column box, so title and description stay one block that
+// centres together instead of two independently-aligned lines.
 .medal-item {
     display: flex;
     gap: 12px;
-    align-items: flex-start;
+    align-items: center;
+}
+
+.medal-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 /* Particulars */
