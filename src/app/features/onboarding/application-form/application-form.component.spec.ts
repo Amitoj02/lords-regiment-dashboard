@@ -406,4 +406,33 @@ describe('ApplicationFormComponent (age confirmation)', () => {
         control?.setValue(true);
         expect(control?.hasError('required')).toBeFalse();
     });
+
+    /**
+     * "Why do you want to join the Lords Regiment?" is REQUIRED
+     * (lords-dashboard-backend:T-0213). It used to be an optional "note to the
+     * recruiting officer", so the risk this pins is a silent regression to
+     * `['']` with no validator — the form would then submit an empty answer and
+     * take a 400 from the API instead of showing the applicant an inline error.
+     */
+    it('blocks submission until "why do you want to join" is answered (T-0213)', () => {
+        setup();
+        component.form.patchValue({
+            inGameName: 'Rhett_Asher',
+            currentRegiment: 'None',
+            howFound: 'Discord',
+            preferredClasses: 'Line Infantry',
+            skillsToImprove: 'Melee',
+            ageConfirm: true,
+            interestConfirm: true,
+        });
+
+        // Every OTHER answer is in place, so this control alone holds the form.
+        const control = component.form.get('representativeNote');
+        expect(control?.hasError('required')).toBeTrue();
+        expect(component.form.valid).toBeFalse();
+
+        control?.setValue('I want to fight in a line that actually holds.');
+        expect(control?.hasError('required')).toBeFalse();
+        expect(component.form.valid).toBeTrue();
+    });
 });
