@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "618f038b30ca49f27111eb9707abbe803bf39cbf",
-  "lastSyncedAt": "2026-07-29T22:20:00Z",
-  "notesForNextSession": "T-0286 is the live thread, paired with lords-dashboard-backend T-0212 \u2014 feat/medal-precedence-ordering in both repos. Medals now render in cabinet order on the roster, the profile and the dashboard, and the profile's Honours & Decorations panel shows the medal's CATALOGUE description (the /admin/ranks text) instead of the per-award citation, vertically centred against its tile. Three things to know: (1) NOTHING on the client sorts medals and `precedence` is deliberately absent from MemberMedalAward \u2014 the server decides the order once and four render sites (roster, profile, dashboard, admin dialog chips) inherit it; adding a client sort is the regression to watch for. (2) `mapMedalAward` in api.model.ts is a WHITELIST copy \u2014 a new backend field vanishes there with no type error, which is exactly what a members.service spec now pins. (3) `description` and `detail` both live on MemberMedalAward and both sound like 'the description'; `detail` is the citation and is rendered nowhere in the app now. profile.component.scss was already over its 6 kB style budget before this change (a pre-existing warning, now ~492 bytes over) \u2014 trim it before anything substantial lands there. Still open from last session: T-0285's note that profile.component.spec has no admin-action coverage, so the modal's second mount point is still verified only through the roster.",
-  "nextIdCounter": 287,
+  "lastSyncedCommit": "14166b1808752c1bbaec15957695f4cc0a70ceb7",
+  "lastSyncedAt": "2026-08-04T22:10:00Z",
+  "notesForNextSession": "T-0287 is the live thread and it is HALF A TASK \u2014 the backend half is lords-dashboard-backend T-0215, on branch feat/public-site-redesign in BOTH repos (PRs into dev, not main). The site is now two products: everything a visitor or ordinary member uses lives at the ROOT (/roster, /u/:handle, /me, /events, /events/:id, /gallery, /gallery/submit, /account, /account/deletion), and /app is a STAFF-ONLY console (overview, applications, ranks, events authoring, gallery/moderation, audit, settings, bot). FOUR things not to undo. (1) Every legacy URL keeps a permanent redirect \u2014 the member-facing ones in PublicModule (they must NOT live at the root, or staffGuard bounces an ordinary member off their own bookmark before the redirect fires) and the staff-facing ones in AdminModule. Do not 'tidy these away'; there is no date at which an old Discord link stops being clicked. (2) jwtInterceptor only navigates to /login when the CURRENT url is under /app \u2014 a 401 from a public page must never eject an anonymous reader. (3) Every authenticated call on a public page sits behind auth.isAuthenticated(); the roster and profile fetch the public projection for the body and the authenticated one only as enrichment. (4) The wildcard route renders a real NotFoundComponent instead of redirecting to /home \u2014 the old redirect made every typo and every deleted profile a 200 soft-404, which is what de-prioritises a whole URL pattern. staffGuard is capability-based, not role-based, and shares STAFF_CAPABILITIES with AuthService.isStaff() so the nav and the router cannot disagree. STILL TO DO: click through the legacy redirects in a real browser, and do a 360px mobile pass on roster/profile/event-detail/account \u2014 both were reasoned from the SCSS, not observed. Node on this host is v22.22.2 and the Angular CLI needs >=22.22.3, so build and test run in a node:22 container (karma additionally needs chromium installed and a --no-sandbox launcher).",
+  "nextIdCounter": 288,
   "connections": [],
   "tasks": [
     {
@@ -18847,6 +18847,110 @@
           "to": "review",
           "by": "claude",
           "note": "cabinet-order medals + catalogue description + centred Honours rows; PR into dev. PRs open into dev: this repo #60, backend [lords-dashboard-backend #70](https://github.com/Amitoj02/lords-dashboard-backend/pull/70). Merge the backend FIRST \u2014 the Honours panel renders a blank description until the API sends it."
+        }
+      ]
+    },
+    {
+      "id": "T-0287",
+      "title": "Split the site: public roster/profiles/events/gallery, staff-only dashboard",
+      "summary": "Moved everything a visitor or ordinary member uses out of /app to the root as indexable public pages (roster, /u/:handle profiles, events + RSVP, gallery + submit, account settings), left /app as a staff-only console gated on capabilities, replaced the soft-404 wildcard with a real 404, added SeoService + robots.txt, and built the account page hosting the new vanity handle.",
+      "status": "review",
+      "type": "feature",
+      "size": "XL",
+      "sizeWeight": 8,
+      "area": "public",
+      "feature": "public-site",
+      "subfeature": "roster-and-profiles",
+      "repo": "",
+      "paths": [
+        "src/app/app-routing.module.ts",
+        "src/app/features/public/",
+        "src/app/features/admin/admin.module.ts",
+        "src/app/core/guards/staff.guard.ts",
+        "src/app/core/services/seo.service.ts",
+        "src/app/core/services/public-members.service.ts",
+        "src/app/core/models/public-member.model.ts",
+        "public/robots.txt"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0215"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "roster: anonymous render hides Last Seen/Status; signed-in shows them",
+          "status": "passed"
+        },
+        {
+          "desc": "roster: server-side paging, debounced search, real anchors per row",
+          "status": "passed"
+        },
+        {
+          "desc": "profile: short-id URL canonicalises to /u/@handle with replaceUrl",
+          "status": "passed"
+        },
+        {
+          "desc": "account: availability probe reasons, invalid blocks save, 409 surfaces",
+          "status": "passed"
+        },
+        {
+          "desc": "guards: staffGuard, authGuard return-URL capture, interceptor scoped to /app",
+          "status": "passed"
+        },
+        {
+          "desc": "manual: click through every legacy URL redirect in a browser",
+          "status": "pending"
+        },
+        {
+          "desc": "manual: mobile pass at 360px on roster, profile, event detail, account",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "jwtInterceptor no longer navigates to /login on a 401 outside /app. It still drops the session, but a stale-token 401 raised by a page under /app that somehow escapes the check would now fail silently instead of bouncing to sign-in.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "MemberModule was deleted and its components redistributed across PublicModule/AdminModule/SharedModule. Any deep import of features/member/* from outside the repo (or a stale branch) breaks.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "AdminActionModalComponent moved into SharedModule, so it is now in every lazy chunk that imports SharedModule rather than only the member one. Bundle impact is small but it is loaded on public pages.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "The public EventDto lost rsvpCounts/attendeesCount/expectedAttendance/attendanceGoal. Templates must render those only when signed in; a missed one shows a blank or 0 to anonymous readers.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "anyComponentStyle budget raised 6kB -> 8kB (warning) / 8 -> 10kB (error) for the profile page. It now hides genuine style growth up to the new ceiling.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "hf-app-shell is still hand-pasted into every admin template rather than becoming a layout route. Only the public tree got PublicLayoutComponent. Converting the dashboard too would have meant touching every admin template inside a routing rewrite, for a much smaller win now that /app is a handful of screens.",
+        "The global Bootstrap .row gutter reset was written and then BACKED OUT: pages laid out against the -12px leak shift the moment it is removed, and re-tuning them does not belong in a routing change. _base.scss carries a comment explaining this; roster and profile keep their local patches.",
+        "No return-URL round trip for the guild gate + auth guard combined \u2014 they still stash separately, so a gated user who was also anonymous replays only one of the two.",
+        "Did not add a 'my submissions' view. A member still cannot see their own PENDING gallery item anywhere; the submit-success toast remains the only acknowledgement.",
+        "No visual regression screenshots were captured. The mobile passes are reasoned from the SCSS breakpoints, not observed in a browser."
+      ],
+      "lastTouchedCommit": "14166b1808752c1bbaec15957695f4cc0a70ceb7",
+      "createdAt": "2026-08-04T22:10:00Z",
+      "updatedAt": "2026-08-04T22:10:00Z",
+      "history": [
+        {
+          "at": "2026-08-04T22:10:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "shipped on feat/public-site-redesign; 733 unit tests, production build, eslint and prettier all green"
         }
       ]
     }
