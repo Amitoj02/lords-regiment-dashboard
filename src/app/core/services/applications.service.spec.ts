@@ -277,6 +277,7 @@ describe('ApplicationsService', () => {
                 preferredClasses: 'Line Infantry',
                 skillsToImprove: 'Melee',
                 interestConfirmed: true,
+                representativeNote: 'To fight in a line that actually holds.',
             })
             .subscribe((a) => (created = a));
 

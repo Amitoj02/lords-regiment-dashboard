@@ -210,19 +210,22 @@
                         <div class="field-hint field-error">This field is required.</div>
                         }
                     </div>
-                    <!-- Representative Note (optional) -->
-                    <div>
+                    <!-- Why Join -->
+                    <div class="field-group">
                         <label class="field-label" for="representativeNote"
-                            >Note to the recruiting officer</label
+                            >Why do you want to join the Lords Regiment?</label
                         >
                         <textarea
                             id="representativeNote"
                             class="hf-textarea"
                             formControlName="representativeNote"
                             rows="3"
-                            placeholder="Anything else you'd like the reviewing officer to know (optional)…"
+                            placeholder="Tell us what draws you to the regiment…"
                         ></textarea>
-                        <div class="field-hint">Optional.</div>
+                        @if ( form.get('representativeNote')?.touched &&
+                        form.get('representativeNote')?.hasError('required') ) {
+                        <div class="field-hint field-error">This field is required.</div>
+                        }
                     </div>
                 </div>
             </div>

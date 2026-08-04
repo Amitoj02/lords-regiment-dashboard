@@ -28,7 +28,8 @@ export interface CreateApplicationPayload {
     preferredClasses: string;
     skillsToImprove: string;
     interestConfirmed: boolean;
-    representativeNote?: string;
+    /** "Why do you want to join the Lords Regiment?" — required at intake. */
+    representativeNote: string;
 }
 
 /** Editable fields for PATCH /applications/mine (a pending application). */
