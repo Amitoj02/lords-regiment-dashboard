@@ -2,8 +2,8 @@
   "version": 1,
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
-  "lastSyncedAt": "2026-08-04T22:50:00Z",
-  "notesForNextSession": "T-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. STILL TO DO: a staff-persona browser pass (/app reachable, admin actions from the public roster), a 390px pass on profile / event detail / account, and an Applicant walkthrough \u2014 an identity-only session is the viewer state least exercised so far. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
+  "lastSyncedAt": "2026-08-04T23:05:00Z",
+  "notesForNextSession": "T-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. All four viewer states (guest, ordinary member, staff, identity-only applicant) have now been walked in a browser, and profile / event detail / account / events / gallery were checked at 390px with no horizontal scroll on any. What is NOT done is listed in skippedByClaude \u2014 the biggest is that a member still cannot see their own PENDING gallery submission anywhere. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
   "nextIdCounter": 288,
   "connections": [],
   "tasks": [
@@ -18854,7 +18854,7 @@
       "id": "T-0287",
       "title": "Split the site: public roster/profiles/events/gallery, staff-only dashboard",
       "summary": "Moved everything a visitor or ordinary member uses out of /app to the root as indexable public pages (roster, /u/:handle profiles, events + RSVP, gallery + submit, account settings), left /app as a staff-only console gated on capabilities, replaced the soft-404 wildcard with a real 404, added SeoService + robots.txt, and built the account page hosting the new vanity handle.",
-      "status": "test",
+      "status": "review",
       "type": "feature",
       "size": "XL",
       "sizeWeight": 8,
@@ -18915,16 +18915,16 @@
           "status": "passed"
         },
         {
-          "desc": "BROWSER as staff: dashboard reachable, admin actions on the public roster",
-          "status": "pending"
+          "desc": "BROWSER as staff: /app reachable, capability-gated sidebar, admin modal from the PUBLIC roster",
+          "status": "passed"
         },
         {
-          "desc": "390px pass on profile, event detail and account",
-          "status": "pending"
+          "desc": "390px pass on profile, event detail, account, events list and gallery \u2014 no horizontal scroll on any",
+          "status": "passed"
         },
         {
-          "desc": "Applicant (identity-only, not enrolled) walkthrough of every public page",
-          "status": "pending"
+          "desc": "Applicant (identity-only): locked tabs stay locked, no signed-in roster columns, /account explains itself",
+          "status": "passed"
         }
       ],
       "regressionRisk": [
@@ -18976,7 +18976,7 @@
       ],
       "lastTouchedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
       "createdAt": "2026-08-04T22:10:00Z",
-      "updatedAt": "2026-08-04T22:50:00Z",
+      "updatedAt": "2026-08-04T23:05:00Z",
       "history": [
         {
           "at": "2026-08-04T22:10:00Z",
