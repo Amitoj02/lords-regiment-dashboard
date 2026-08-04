@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem, GalleryItemType } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SeoService } from '../../../core/services/seo.service';
 
 @Component({
     selector: 'hf-gallery-page',
@@ -32,6 +33,7 @@ export class GalleryPageComponent implements OnInit {
     readonly topTagCount = 5;
 
     private readonly destroyRef = inject(DestroyRef);
+    private readonly seo = inject(SeoService);
 
     constructor(
         private galleryService: GalleryService,
@@ -88,6 +90,16 @@ export class GalleryPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // Not deferred until the items land: the archive describes itself the
+        // same way whether it holds three dispatches or three hundred, and a
+        // crawler that gives up on the fetch should still get the description.
+        this.seo.apply({
+            title: 'Gallery',
+            description:
+                "Photographs, clips and dispatches from the regiment's campaigns, submitted by members and approved by its officers.",
+            canonicalPath: '/gallery',
+        });
+
         this.galleryService
             .getAll()
             .pipe(takeUntilDestroyed(this.destroyRef))

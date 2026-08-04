@@ -4,6 +4,7 @@ import { catchError, of } from 'rxjs';
 import { RegimentPresentation } from '../../../core/models/api.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegimentService } from '../../../core/services/regiment.service';
+import { SeoService } from '../../../core/services/seo.service';
 import { LOGIN_DEFAULTS } from './login.defaults';
 
 @Component({
@@ -16,6 +17,7 @@ import { LOGIN_DEFAULTS } from './login.defaults';
 export class LoginPageComponent implements OnInit {
     private readonly auth = inject(AuthService);
     private readonly regiment = inject(RegimentService);
+    private readonly seo = inject(SeoService);
     private readonly destroyRef = inject(DestroyRef);
     isLoading = false;
 
@@ -56,6 +58,15 @@ export class LoginPageComponent implements OnInit {
     ];
 
     ngOnInit(): void {
+        // A sign-in form is not a search result. Everything a visitor should
+        // find is on /home, /roster, /events and /gallery, all of which carry a
+        // route into this page.
+        this.seo.apply({
+            title: 'Sign In',
+            description: 'Sign in to the regiment dashboard with Discord.',
+            noIndex: true,
+        });
+
         this.regiment
             .getProfile()
             .pipe(

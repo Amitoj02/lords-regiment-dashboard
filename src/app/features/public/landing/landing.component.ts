@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
@@ -9,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { RegimentService } from '../../../core/services/regiment.service';
+import { SeoService } from '../../../core/services/seo.service';
 import { MediaEmbedService } from '../../../shared/services/media-embed.service';
 import { LANDING_DEFAULTS } from './landing.defaults';
 
@@ -67,6 +69,8 @@ export class LandingComponent implements OnInit {
 
     private readonly auth = inject(AuthService);
     private readonly media = inject(MediaEmbedService);
+    private readonly seo = inject(SeoService);
+    private readonly document = inject(DOCUMENT);
 
     constructor(
         private eventsService: EventsService,
@@ -123,6 +127,7 @@ export class LandingComponent implements OnInit {
                 if (profile?.missionStatement) this.missionStatement = profile.missionStatement;
                 this.discordInviteUrl = profile?.discordInviteUrl?.trim() || null;
                 this.applyPresentation(profile?.presentation);
+                this.applySeo();
             });
 
         // Hero stats. A 403 means the Regiment-statistics visibility toggle is
@@ -142,6 +147,46 @@ export class LandingComponent implements OnInit {
                 this.memberCount = stats.enrolledExcludingMercenaries;
                 this.establishedLabel = this.formatEstablished(stats.establishedAt);
             });
+
+        // Tags for the fallback copy first: if the profile request never lands,
+        // the home page still describes itself rather than inheriting whatever
+        // the previous route set.
+        this.applySeo();
+    }
+
+    /**
+     * Home is the site's root entity, so it is where the Organization and WebSite
+     * nodes for the whole domain belong — the pages that hang off it (profiles,
+     * gallery items) describe themselves and let this one describe the regiment.
+     *
+     * Re-applied once the profile lands because the regiment's real name and
+     * mission are what belong in those nodes, not the shipped placeholder.
+     * `canonicalPath` is '/home' on both `/` and `/home`, which is the only thing
+     * stopping the two routes competing to be indexed as separate pages.
+     */
+    private applySeo(): void {
+        const origin = this.document.location?.origin;
+        this.seo.apply({
+            title: this.regimentName,
+            description: this.missionStatement,
+            canonicalPath: '/home',
+            jsonLd: [
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'Organization',
+                    name: this.regimentName,
+                    description: this.missionStatement,
+                    url: origin || undefined,
+                    sameAs: this.discordInviteUrl ? [this.discordInviteUrl] : undefined,
+                },
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'WebSite',
+                    name: this.regimentName,
+                    url: origin || undefined,
+                },
+            ],
+        });
     }
 
     /**

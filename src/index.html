@@ -10,6 +10,44 @@
             name="description"
             content="Roster, events, gallery and command tools for a Holdfast: Nations at War regiment."
         />
+
+        <!-- Social card + canonical: DEFAULTS ONLY (T-0287). Three writers touch
+             these tags and the overlap is deliberate, not duplication to clean up:
+
+             1. SeoService rewrites every one of them on each route (and REMOVES
+                og:image on a page that has none, dropping twitter:card back to
+                `summary`). It owns the live document.
+             2. Crawlers and unfurlers never get this file at all — Caddy matches
+                their User-Agent and rewrites /u/*, /roster* and /gallery/* to the
+                API's server-rendered shells, because no unfurler runs JavaScript.
+                That shell is what search engines actually index.
+             3. What is left for these tags is the pre-boot window a human's
+                browser sees, and any route that never calls SeoService.
+
+             Delete them and a cold share of "/" unfurls with no card at all.
+
+             The attribute matters: og:* must use `property` and twitter:* must use
+             `name`, because that is the selector Angular's Meta service matches on
+             — swap one and SeoService appends a second tag instead of updating
+             this one. URLs are absolute against the production origin on purpose:
+             an unfurler cannot resolve a relative one, and nothing unfurls a dev
+             build. -->
+        <meta property="og:site_name" content="Lords Regiment" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Lords Regiment" />
+        <meta
+            property="og:description"
+            content="Roster, events, gallery and command tools for a Holdfast: Nations at War regiment."
+        />
+        <meta property="og:image" content="https://lordsofholdfast.com/assets/images/banner.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Lords Regiment" />
+        <meta
+            name="twitter:description"
+            content="Roster, events, gallery and command tools for a Holdfast: Nations at War regiment."
+        />
+        <link rel="canonical" href="https://lordsofholdfast.com/" />
+
         <base href="/" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0b0e14" />

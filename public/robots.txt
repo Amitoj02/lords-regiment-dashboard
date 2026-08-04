@@ -1,0 +1,28 @@
+# Lords Regiment — https://lordsofholdfast.com
+#
+# This file is static and ships with the Angular build: public/ is copied
+# verbatim to the dist root by angular.json and served by nginx like any other
+# asset, so a normal deploy publishes it and no edge config has to change.
+#
+# The sitemap below is NOT a static file next to this one, and cannot be: it
+# enumerates every public profile from live data, so the API generates it at
+# /api/sitemap.xml and Caddy carries an explicit `handle /sitemap.xml` block
+# that proxies the apex path to it. Adding a static sitemap.xml here would
+# shadow that route with a file that is stale the moment a member joins.
+
+User-agent: *
+Allow: /
+
+# The staff dashboard and every auth hop. None of these have anything to index,
+# and a crawler following them only burns budget on redirects to Discord.
+Disallow: /app/
+Disallow: /login
+Disallow: /auth/
+Disallow: /onboarding/
+Disallow: /guild-required
+
+# A member's own settings. Reachable only with their session, so a crawler
+# would never see anything but the sign-in redirect.
+Disallow: /account
+
+Sitemap: https://lordsofholdfast.com/sitemap.xml

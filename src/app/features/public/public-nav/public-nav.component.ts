@@ -1,15 +1,20 @@
-import {
-    Component,
-    DestroyRef,
-    Input,
-    OnInit,
-    inject,
-    ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegimentService } from '../../../core/services/regiment.service';
+
+/** A top-level destination on the public site. */
+interface PublicNavLink {
+    label: string;
+    path: string;
+    /**
+     * Whether the highlight requires the WHOLE URL to match. Only Home does:
+     * every other entry owns a subtree (`/events/:id`, `/gallery/:id`) whose
+     * pages should keep their parent lit.
+     */
+    exact: boolean;
+}
 
 @Component({
     selector: 'hf-public-nav',
@@ -19,10 +24,8 @@ import { RegimentService } from '../../../core/services/regiment.service';
     standalone: false,
 })
 export class PublicNavComponent implements OnInit {
-    @Input() activeLink = '';
-
-    /** Drives the auth-aware CTA: member → Dashboard, applicant → status,
-     *  anonymous → Join Discord + Sign in. */
+    /** Drives the auth-aware CTA: staff → dashboard, member → their profile,
+     *  applicant → status, anonymous → Join Discord + Sign in. */
     protected readonly auth = inject(AuthService);
 
     private readonly regiment = inject(RegimentService);
@@ -38,10 +41,15 @@ export class PublicNavComponent implements OnInit {
     /** Mobile collapsible menu state. */
     menuOpen = false;
 
-    navLinks = [
-        { label: 'Home', path: '/' },
-        { label: 'Events', path: '/events' },
-        { label: 'Gallery', path: '/gallery' },
+    /**
+     * `/home` rather than `/`, because the root route redirects there — a `/`
+     * link would highlight nothing once the redirect has rewritten the URL.
+     */
+    readonly navLinks: readonly PublicNavLink[] = [
+        { label: 'Home', path: '/home', exact: true },
+        { label: 'Roster', path: '/roster', exact: false },
+        { label: 'Events', path: '/events', exact: false },
+        { label: 'Gallery', path: '/gallery', exact: false },
     ];
 
     ngOnInit(): void {
@@ -56,10 +64,6 @@ export class PublicNavComponent implements OnInit {
             .subscribe((profile) => {
                 this.discordInviteUrl = profile?.discordInviteUrl?.trim() || null;
             });
-    }
-
-    isActive(path: string): boolean {
-        return this.activeLink === path;
     }
 
     toggleMenu(): void {

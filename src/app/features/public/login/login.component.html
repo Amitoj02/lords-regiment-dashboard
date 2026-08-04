@@ -1,4 +1,11 @@
-<div class="login-layout">
+<!--
+    `min-height` is overridden inline because this page is now a CHILD of
+    PublicLayoutComponent: the nav and the footer are rendered above and below
+    it, so the stylesheet's `100vh` would guarantee a scrollbar on a page that
+    fits — the two panels are the only thing that used to own the viewport, and
+    they no longer do. 70vh matches the sibling auth-callback page.
+-->
+<div class="login-layout" style="min-height: 70vh">
     <!-- Left panel: branding. Image, scrim and quote come from the ANONYMOUS
          regiment profile (T-0239) and fall back to the shipped panel. -->
     <div

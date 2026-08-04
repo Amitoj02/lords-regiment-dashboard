@@ -1,0 +1,222 @@
+<div class="page public-page account-page">
+    <div class="page-head account-head">
+        <div>
+            <div class="admin-label account-eyebrow">Your account</div>
+            <h1 class="page-title serif">My Account</h1>
+            <p class="page-sub">
+                Your name, your handle, and the images that appear on your public profile.
+            </p>
+        </div>
+    </div>
+
+    @if (!isMember) {
+    <hf-notice variant="info" title="Nothing to manage yet">
+        Account settings open once you are enrolled in the regiment. Until then your application
+        status is the page you want.
+    </hf-notice>
+    } @else { @if (loadError) {
+    <hf-notice variant="err">{{ loadError }}</hf-notice>
+    }
+
+    <!-- ── Identity ────────────────────────────────────────────────────────── -->
+    <section class="panel account-panel">
+        <div class="panel-header">
+            <span class="panel-title">Identity</span>
+        </div>
+        <div class="panel-body account-body">
+            <div class="account-field">
+                <label class="field-label" for="acct-ign">In-game name</label>
+                <input
+                    id="acct-ign"
+                    class="hf-input"
+                    type="text"
+                    autocomplete="off"
+                    [maxlength]="inGameNameMaxLength"
+                    [(ngModel)]="inGameName"
+                />
+                @if (!inGameName.trim()) {
+                <div class="field-error">In-game name is required.</div>
+                } @else {
+                <div class="field-hint">How you are listed on the roster and in event rosters.</div>
+                }
+            </div>
+
+            <div class="account-field">
+                <label class="field-label" for="acct-username">Username</label>
+                <div class="input-wrap account-handle">
+                    <span class="input-icon account-sigil" aria-hidden="true">&#64;</span>
+                    <input
+                        id="acct-username"
+                        class="hf-input has-icon mono"
+                        type="text"
+                        autocapitalize="none"
+                        autocorrect="off"
+                        spellcheck="false"
+                        autocomplete="off"
+                        maxlength="20"
+                        placeholder="panda"
+                        aria-describedby="acct-username-hint acct-username-verdict"
+                        [ngModel]="username"
+                        (ngModelChange)="onUsernameInput($event)"
+                    />
+                </div>
+
+                <div
+                    id="acct-username-verdict"
+                    class="account-verdict"
+                    role="status"
+                    aria-live="polite"
+                    [class.is-ok]="handleVerdict === 'available' || handleVerdict === 'current'"
+                    [class.is-bad]="handleVerdict === 'unavailable'"
+                >
+                    {{ handleMessage }}
+                </div>
+
+                <div id="acct-username-hint" class="field-hint">
+                    3-20 characters, lowercase letters, numbers and underscore.
+                </div>
+
+                <div class="account-url">
+                    <span class="account-url-label">Profile address</span>
+                    <span class="mono account-url-value">{{ profileUrlPreview }}</span>
+                </div>
+
+                <p class="account-note">
+                    A username is optional — without one your profile stays reachable at its id
+                    address.
+                </p>
+
+                @if (currentUsername) { @if (!removeConfirming) {
+                <button type="button" class="btn btn-ghost btn-sm" (click)="startRemove()">
+                    Remove my username
+                </button>
+                } @else {
+                <div class="account-confirm">
+                    <p class="account-confirm-text">
+                        Removing <span class="mono">&#64;{{ currentUsername }}</span> sends your
+                        profile back to its id address. The handle is then held for {{ cooldownDays
+                        }} days before anyone else can take it.
+                    </p>
+                    <div class="account-confirm-actions">
+                        <button type="button" class="btn btn-ghost btn-sm" (click)="cancelRemove()">
+                            Keep it
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm"
+                            [disabled]="removing"
+                            (click)="removeUsername()"
+                        >
+                            {{ removing ? 'Removing…' : 'Remove my username' }}
+                        </button>
+                    </div>
+                </div>
+                } }
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Appearance ──────────────────────────────────────────────────────── -->
+    <section class="panel account-panel">
+        <div class="panel-header">
+            <span class="panel-title">Appearance</span>
+        </div>
+        <div class="panel-body account-body">
+            <div class="account-field">
+                <span class="field-label">Avatar</span>
+                <div class="account-upload">
+                    <hf-avatar
+                        [name]="inGameName"
+                        [avatarUrl]="avatarPreview ?? member?.avatarUrl"
+                        [size]="64"
+                    ></hf-avatar>
+                    <label class="btn btn-ghost btn-sm account-choose">
+                        {{ avatarUploading ? 'Uploading…' : 'Choose image' }}
+                        <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            hidden
+                            (change)="onAvatarSelected($event)"
+                        />
+                    </label>
+                </div>
+                <div class="field-hint">{{ avatarHint }}</div>
+            </div>
+
+            <div class="account-field">
+                <span class="field-label">Banner</span>
+                <div class="account-upload">
+                    <div
+                        class="account-banner-thumb"
+                        [style.background-image]="
+                            (bannerPreview ?? member?.bannerUrl)
+                                ? 'url(' + (bannerPreview ?? member?.bannerUrl) + ')'
+                                : null
+                        "
+                    ></div>
+                    <label class="btn btn-ghost btn-sm account-choose">
+                        {{ bannerUploading ? 'Uploading…' : 'Choose image' }}
+                        <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            hidden
+                            (change)="onBannerSelected($event)"
+                        />
+                    </label>
+                </div>
+                <div class="field-hint">{{ bannerHint }}</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Danger zone ─────────────────────────────────────────────────────── -->
+    <section class="panel account-panel account-danger">
+        <div class="panel-header">
+            <span class="panel-title">Danger zone</span>
+        </div>
+        <div class="panel-body account-body">
+            <div class="account-danger-row">
+                <div>
+                    <div class="account-danger-title">Delete my account</div>
+                    <p class="account-danger-text">
+                        Permanently delete your account and anonymise your data. Your username is
+                        retired with it and cannot be claimed by anyone else.
+                    </p>
+                </div>
+                <a routerLink="/account/deletion" class="btn btn-destructive btn-sm">
+                    Delete my account
+                </a>
+            </div>
+        </div>
+    </section>
+
+    @if (saveError) {
+    <hf-notice variant="err">{{ saveError }}</hf-notice>
+    }
+
+    <div class="account-savebar">
+        <span class="account-savebar-state">
+            @if (avatarUploading || bannerUploading) { Uploading… } @else if (dirty) { Unsaved
+            changes }
+        </span>
+        <div class="account-savebar-actions">
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                [disabled]="!dirty || saving"
+                (click)="revert()"
+            >
+                Discard
+            </button>
+            <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                [disabled]="!canSave"
+                (click)="save()"
+            >
+                {{ saving ? 'Saving…' : 'Save changes' }}
+            </button>
+        </div>
+    </div>
+    }
+</div>

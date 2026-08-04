@@ -16,7 +16,10 @@ export const onboardingGuard: CanActivateFn = (): boolean | UrlTree => {
         return router.createUrlTree(['/login']);
     }
     if (auth.isMember()) {
-        return router.createUrlTree(['/app/dashboard']);
+        // T-0287: /app/dashboard was where every member landed; it is now the
+        // staff console, which would refuse them a second time. Send them to
+        // the public front page.
+        return router.createUrlTree(['/home']);
     }
     return true;
 };

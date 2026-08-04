@@ -1,0 +1,12 @@
+:host {
+    display: block;
+    min-height: 100vh;
+    /* The footer sits at the bottom of a short page instead of floating
+       mid-screen — a 404 and an empty roster are both short pages. */
+    display: flex;
+    flex-direction: column;
+}
+
+.public-main {
+    flex: 1 1 auto;
+}

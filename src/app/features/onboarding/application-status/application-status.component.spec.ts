@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ApplicationStatusComponent } from './application-status.component';
+import { AuthService } from '../../../core/services/auth.service';
 import { ApplicationsService } from '../../../core/services/applications.service';
 import { ApplicantApplication, MyApplication } from '../../../core/models/application.model';
 
@@ -43,6 +44,12 @@ describe('ApplicationStatusComponent', () => {
             providers: [
                 { provide: ApplicationsService, useValue: applications },
                 { provide: Router, useValue: router },
+                // T-0287: an approved applicant is now sent to their own PUBLIC
+                // profile, so the component asks AuthService where that is.
+                {
+                    provide: AuthService,
+                    useValue: { myProfilePath: () => '/u/aB3x9KqLm2Zt' },
+                },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         });
@@ -129,10 +136,12 @@ describe('ApplicationStatusComponent', () => {
 
     // ── Routing (unchanged behaviour, pinned) ───────────────────────────────────
 
-    it('sends an approved applicant on to the dashboard rather than rendering', () => {
+    it('sends an approved applicant on to their own profile rather than rendering', () => {
+        // Was the dashboard; that is staff-only now (T-0287), and a freshly
+        // approved applicant is an ordinary member who would be bounced off it.
         setup({ application: applicantApplication({ status: 'approved' }), blocked: false });
 
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/aB3x9KqLm2Zt');
     });
 
     it('sends someone with no application to the blank apply form', () => {

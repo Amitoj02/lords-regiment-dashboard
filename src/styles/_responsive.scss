@@ -44,6 +44,13 @@
         max-width: none;
     }
 
+    // The public site has no bottom nav, so it only needs the gutters tightened.
+    // Declared after `.page` so a page carrying both classes lands here.
+    .public-page {
+        padding: 24px 16px 40px;
+        max-width: none;
+    }
+
     // ───────── Page head ─────────
     .page-head {
         flex-direction: column;
@@ -156,6 +163,10 @@
 @media (max-width: 480px) {
     .page {
         padding: 14px 13px 24px;
+    }
+
+    .public-page {
+        padding: 20px 12px 32px;
     }
 
     .grid-3 {

@@ -41,9 +41,10 @@ export class EventsAdminComponent implements OnInit {
     private load(): void {
         this.loading = true;
         this.loadError = '';
-        // Member projection (T-0085): every member reads the in-shell calendar;
-        // enrolled members also get their own myRsvp per event. Moderators may
-        // additionally request archived events via the toggle (T-0137).
+        // Member projection (T-0085) even though this list is staff-only now
+        // (T-0287): it is the only one that carries the server binding, and it
+        // is the only one that honours `archived=true` — which the backend gates
+        // on ManageEvents, matching the toggle above it (T-0137).
         this.eventsService
             .getAllMine(undefined, this.includeArchived)
             .pipe(takeUntilDestroyed(this.destroyRef))

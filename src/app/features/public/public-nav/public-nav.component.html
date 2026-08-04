@@ -13,20 +13,38 @@
         </div>
     </div>
 
+    <!-- Also the mobile drawer: everything below collapses behind the burger. -->
     <div class="public-nav-links">
-        @for (link of navLinks; track link) {
+        @for (link of navLinks; track link.path) {
+        <!-- The highlight comes from the router (T-0287). It used to be an
+             @Input each page set by hand, which the layout route has nobody
+             left to set. -->
         <a
+            class="nav-link"
             [routerLink]="link.path"
+            routerLinkActive="nav-link--active"
+            [routerLinkActiveOptions]="{ exact: link.exact }"
             (click)="closeMenu()"
-            [ngClass]="{ 'nav-link': true, 'nav-link--active': activeLink === link.path }"
             >{{ link.label }}</a
         >
         }
 
         <div class="public-nav-cta">
-            @if (auth.isAuthenticated()) { @if (auth.isMember()) {
-            <a routerLink="/app/dashboard" class="btn btn-primary" (click)="closeMenu()"
-                >Dashboard</a
+            @if (auth.isAuthenticated()) {
+            <!-- Staff only. `/app` is behind staffGuard now, so offering this to
+                 an ordinary member would be a button that bounces them. -->
+            @if (auth.isStaff()) {
+            <a routerLink="/app" class="btn btn-primary" (click)="closeMenu()">Dashboard</a>
+            } @if (auth.isMember()) {
+            <!-- Demoted to secondary only when it sits beside Dashboard, so a
+                 plain member's single destination is not a muted button. -->
+            <a
+                [routerLink]="auth.myProfilePath()"
+                class="btn"
+                [class.btn-primary]="!auth.isStaff()"
+                [class.btn-secondary]="auth.isStaff()"
+                (click)="closeMenu()"
+                >My profile</a
             >
             } @else {
             <a routerLink="/onboarding/status" class="btn btn-primary" (click)="closeMenu()"

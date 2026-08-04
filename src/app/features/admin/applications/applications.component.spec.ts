@@ -422,7 +422,7 @@ describe('ApplicationsComponent', () => {
         const chip = officerChip();
         expect(chip).withContext('the officer renders as a chip').toBeTruthy();
         expect(chip!.tagName).toBe('A');
-        expect(chip!.getAttribute('href')).toBe('/app/profile/mem-hale');
+        expect(chip!.getAttribute('href')).toBe('/u/mem-hale');
         // The avatar belongs INSIDE the link: clicking the officer's face opens
         // their profile too, not only their name.
         expect(chip!.querySelector('hf-avatar'))

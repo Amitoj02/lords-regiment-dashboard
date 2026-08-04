@@ -15,5 +15,8 @@ export const submitGalleryGuard: CanActivateFn = (): boolean | UrlTree => {
     if (auth.isAuthenticated() && auth.hasCapability('submit_to_gallery')) {
         return true;
     }
-    return router.createUrlTree(['/app/dashboard']);
+    // T-0287: /app/dashboard was where every member landed; it is now the
+    // staff console, which would refuse them a second time. Send them to
+    // the public gallery they were trying to contribute to.
+    return router.createUrlTree(['/gallery']);
 };

@@ -6,6 +6,26 @@ import { ApiEvent, ApiMember, PaginatedResponse, mapEvent, mapMember } from '../
 import { Member, MemberRole } from '../models/member.model';
 import { RegimentEvent } from '../models/event.model';
 
+/** The fields a member may change about themselves (PATCH /members/:id). */
+export interface MemberSelfEdit {
+    inGameName?: string;
+    avatarKey?: string;
+    bannerKey?: string;
+    /** The vanity handle, without the @. `null` releases it. */
+    username?: string | null;
+}
+
+/** Why a vanity handle cannot be claimed (GET /members/me/username-available). */
+export type UsernameRejection =
+    'invalid' | 'reserved' | 'taken' | 'cooldown_target' | 'cooldown_actor';
+
+export interface UsernameAvailability {
+    available: boolean;
+    reason?: UsernameRejection;
+    /** For `cooldown_actor`: ISO timestamp of when the caller may next rename. */
+    retryAfter?: string;
+}
+
 /** A member's service-record timeline entry (GET /members/:id/service-record). */
 export interface ServiceRecordEntry {
     id: string;
@@ -60,12 +80,26 @@ export class MembersService {
      * self-edit DTO accepts: inGameName (the sole display identity) and the
      * storage KEYS of freshly-uploaded avatar/banner images (avatarKey/bannerKey).
      */
-    update(id: string, changes: Partial<Member>): Observable<Member> {
+    update(id: string, changes: MemberSelfEdit): Observable<Member> {
         const body: Record<string, unknown> = {};
         if (changes.inGameName !== undefined) body['inGameName'] = changes.inGameName;
         if (changes.avatarKey !== undefined) body['avatarKey'] = changes.avatarKey;
         if (changes.bannerKey !== undefined) body['bannerKey'] = changes.bannerKey;
+        // `null` is a MEANINGFUL value here — it releases the vanity handle — so
+        // this tests for `undefined` rather than truthiness (T-0287).
+        if (changes.username !== undefined) body['username'] = changes.username;
         return this.http.patch<ApiMember>(`${this.base}/${id}`, body).pipe(map(mapMember));
+    }
+
+    /**
+     * Advisory availability probe for the account form (T-0287). The UNIQUE index
+     * is what actually decides, so a PATCH can still 409 after this says yes —
+     * two members can claim the same handle in the same instant.
+     */
+    checkUsername(username: string): Observable<UsernameAvailability> {
+        return this.http.get<UsernameAvailability>(`${this.base}/me/username-available`, {
+            params: { username },
+        });
     }
 
     /** A member's attended events (profile Event History tab, T-0142). */

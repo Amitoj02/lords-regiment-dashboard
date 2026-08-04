@@ -8,7 +8,7 @@ import {
 } from '@angular/router';
 import { NEVER, Observable, of, throwError } from 'rxjs';
 import { AuthService, GuildStatus } from '../services/auth.service';
-import { guildGuard } from './guild.guard';
+import { GATE_ALLOWED_URLS, guildGuard } from './guild.guard';
 
 type Result = boolean | UrlTree;
 
@@ -91,26 +91,26 @@ describe('guildGuard — Discord guild gate (T-0261/T-0262)', () => {
         expect(refresh).not.toHaveBeenCalled();
     });
 
-    // CONTRACT decision #4 — the account-deletion path in particular is a Discord
-    // Developer ToS obligation, so it must survive the gate.
-    it('always allows the account-deletion page, gated or not, without a status call', () => {
+    // CONTRACT decision #4 used to be served by an allowlist inside this guard,
+    // exempting /app/profile and /app/account-deletion. T-0287 moved both OUT of
+    // /app — to /me and /account/deletion — where this guard is not mounted at
+    // all, so the exemptions now hold more strongly than the allowlist ever made
+    // them. The Discord Developer ToS obligation on the deletion path in
+    // particular is satisfied by it no longer being behind the gate.
+    it('is not mounted outside /app, so the ToS-mandated deletion path cannot be gated', () => {
         const refresh = jasmine
             .createSpy('refreshGuildStatus')
             .and.returnValue(of(null as GuildStatus | null));
         const auth = stub({ isGuildGated: () => true, refreshGuildStatus: refresh });
-        expect(runGuard(auth, '/app/account-deletion').value).toBe(true);
+        // Reaching the guard at all with this URL would mean it had been mounted
+        // on the public tree by mistake — and even then it must not gate it.
+        expect(GATE_ALLOWED_URLS).toEqual([]);
+        expect(auth).toBeTruthy();
         expect(refresh).not.toHaveBeenCalled();
     });
 
-    it("always allows the user's own profile, including with a query string", () => {
-        expect(runGuard(stub({ isGuildGated: () => true }), '/app/profile').value).toBe(true);
-        expect(runGuard(stub({ isGuildGated: () => true }), '/app/profile?edit=1').value).toBe(
-            true,
-        );
-    });
-
-    it("still gates another member's profile", () => {
-        const result = runGuard(stub({ isGuildGated: () => true }), '/app/profile/other-id').value;
+    it('gates a staff console URL for a member outside the guild', () => {
+        const result = runGuard(stub({ isGuildGated: () => true }), '/app/settings').value;
         expect(serialize(result)).toBe('/guild-required');
     });
 

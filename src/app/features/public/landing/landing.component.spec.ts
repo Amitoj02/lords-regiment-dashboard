@@ -31,6 +31,7 @@ function makeUser(isMember: boolean): CurrentUser {
     return {
         id: 'u1',
         inGameName: 'Test User',
+        username: null,
         rank: null,
         role: isMember ? 'Member' : 'Applicant',
         discordTag: null,

@@ -16,7 +16,10 @@
         <div class="footer-links">
             <div class="footer-col">
                 <div class="footer-col-title">Regiment</div>
-                <a routerLink="/" class="footer-link">Home</a>
+                <!-- `/home`, not `/`: the root route redirects there, and a
+                     redirect hop on every footer click is pure latency. -->
+                <a routerLink="/home" class="footer-link">Home</a>
+                <a routerLink="/roster" class="footer-link">Roster</a>
                 <a routerLink="/events" class="footer-link">Events</a>
                 <a routerLink="/gallery" class="footer-link">Gallery</a>
             </div>

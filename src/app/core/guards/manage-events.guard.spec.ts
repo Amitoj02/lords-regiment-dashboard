@@ -26,13 +26,11 @@ describe('manageEventsGuard', () => {
         expect(result).toBe(true);
     });
 
-    it('redirects a signed-in caller lacking manage_events to /app/dashboard', () => {
+    it('redirects a signed-in caller lacking manage_events to /events', () => {
         const result = runGuard({ isAuthenticated: () => true, hasCapability: () => false });
         const router = TestBed.inject(Router);
         expect(result).not.toBe(true);
-        expect(router.serializeUrl(result as ReturnType<Router['createUrlTree']>)).toBe(
-            '/app/dashboard',
-        );
+        expect(router.serializeUrl(result as ReturnType<Router['createUrlTree']>)).toBe('/events');
     });
 
     it('redirects an anonymous caller', () => {

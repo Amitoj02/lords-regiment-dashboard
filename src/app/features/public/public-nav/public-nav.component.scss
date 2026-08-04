@@ -63,7 +63,10 @@
 
     &--active {
         color: var(--brass-300);
-        background: rgba(var(--brass-400), 0.08);
+        // Literal channels: `--brass-400` holds a hex string, so the old
+        // `rgba(var(--brass-400), .08)` never parsed and the router-driven
+        // highlight (T-0287) would have been colour-only.
+        background: rgba(198, 154, 69, 0.1);
     }
 }
 
@@ -104,6 +107,14 @@
         border-bottom: 1px solid var(--rule);
         box-shadow: var(--shadow-2);
 
+        // Four destinations plus up to three CTAs overflow a short phone, and
+        // the panel is absolutely positioned — without a bound the tail is
+        // simply unreachable rather than merely below the fold.
+        max-height: calc(100vh - 60px);
+        max-height: calc(100dvh - 60px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+
         // Hidden until toggled
         display: none;
     }
@@ -130,5 +141,33 @@
             width: 100%;
             justify-content: center;
         }
+    }
+}
+
+// ───────── Small phones ─────────
+// Tightened so the fullest drawer a viewer can get — four links plus Dashboard,
+// My profile and Sign out — still lands inside a 360×640 screen.
+@media (max-width: 480px) {
+    .public-nav {
+        padding: 0 14px;
+    }
+
+    .public-nav-title {
+        font-size: 15px;
+    }
+
+    .public-nav-links {
+        padding: 8px 12px 12px;
+    }
+
+    .nav-link {
+        padding: 9px 12px;
+        font-size: 14px;
+    }
+
+    .public-nav-cta {
+        margin-top: 8px;
+        padding-top: 10px;
+        gap: 6px;
     }
 }

@@ -1,0 +1,301 @@
+<section class="public-page roster-page">
+    <!-- Page Head -->
+    <div class="page-head between roster-page-head">
+        <div>
+            <div class="admin-label roster-roll-call">Roll Call</div>
+            <h1 class="page-title serif">Regimental Roster</h1>
+            <p class="page-sub roster-lede">
+                Every serving member of the Lords Regiment, with their rank and decorations.
+            </p>
+        </div>
+        <div class="row roster-head-actions">
+            @if (hasLoaded) {
+            <span class="roster-total">{{ total }} {{ total === 1 ? 'member' : 'members' }}</span>
+            }
+            <!-- Signed-in Owners/Admins only: the CSV carries the columns that
+                 exist solely for an authenticated viewer. -->
+            @if (canExport) {
+            <button type="button" class="btn btn-ghost btn-sm" (click)="exportLedger()">
+                ↓ Export Ledger
+            </button>
+            }
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Filter Row. Everything here is a SERVER query param now, so it works
+         across the whole roster rather than only the page in front of you. -->
+    <div class="filter-bar">
+        <input
+            type="search"
+            class="hf-input roster-search"
+            placeholder="Search by in-game name or @username…"
+            aria-label="Search the roster by in-game name or username"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchInput($event)"
+        />
+
+        <!-- Absent for an anonymous visitor by construction: the public endpoint
+             filters on a rank ID that only the authenticated roster carries, so
+             `rankOptions` is empty without a session (see deriveRankOptions). -->
+        @if (rankOptions.length) {
+        <select
+            class="hf-select roster-filter-rank"
+            aria-label="Filter the roster by rank"
+            [(ngModel)]="filterRankId"
+            (ngModelChange)="onRankChange()"
+        >
+            <option value="">All Ranks</option>
+            @for (rank of rankOptions; track rank.id) {
+            <option [value]="rank.id">{{ rank.name }}</option>
+            }
+        </select>
+        }
+
+        <span class="sp"></span>
+
+        @if (hasActiveFilters) {
+        <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+            Clear filters
+        </button>
+        }
+    </div>
+
+    <!-- A refresh failed but we still have rows: say so above the stale table
+         rather than throwing away a page the reader is mid-way through. -->
+    @if (error && members.length > 0) {
+    <div class="notice err roster-error">
+        <div class="n-content">
+            <div class="n-title">The roster did not refresh</div>
+            <div class="n-body">You are looking at the last page that loaded.</div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="retry()">Try again</button>
+    </div>
+    }
+
+    <!-- Table -->
+    <div class="panel roster-panel">
+        @if (loading && !hasLoaded) {
+        <div class="roster-loading" role="status" aria-live="polite">
+            <span class="roster-spinner" aria-hidden="true"></span>
+            <span class="roster-loading-text">Mustering the roll…</span>
+        </div>
+        } @else if (error && members.length === 0) {
+        <div class="empty roster-state">
+            <div class="e-title">The roster could not be loaded</div>
+            <div class="e-body">
+                Something went wrong reaching the regiment's records. This is usually temporary.
+            </div>
+            <button
+                type="button"
+                class="btn btn-secondary btn-sm roster-state-action"
+                (click)="retry()"
+            >
+                Try again
+            </button>
+        </div>
+        } @else if (members.length === 0) {
+        <div class="empty roster-state">
+            @if (hasActiveFilters) {
+            <div class="e-title">No members match</div>
+            <div class="e-body">
+                No one on the roll matches that search. Try a shorter term, or clear the filters.
+            </div>
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm roster-state-action"
+                (click)="clearFilters()"
+            >
+                Clear filters
+            </button>
+            } @else {
+            <div class="e-title">The roll is empty</div>
+            <div class="e-body">
+                No members have been enrolled yet. Check back after the muster.
+            </div>
+            }
+        </div>
+        } @else {
+        <div class="table-scroll" [class.is-refreshing]="loading">
+            <table class="hf-table roster-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Member</th>
+                        <th scope="col">Rank</th>
+                        <th scope="col">Medals</th>
+                        <th scope="col">Role</th>
+                        <!-- Status, and the Banned/Suspended pill derived from it,
+                             are moderation state. The public API cannot return
+                             them, and an excluded member is not in the list at
+                             all — so this column exists only for a member. -->
+                        @if (auth.isAuthenticated()) {
+                        <th scope="col">Status</th>
+                        }
+                        <th scope="col">Joined</th>
+                        <th scope="col">Events</th>
+                        <!-- Last seen is a live activity trail, so it is for
+                             signed-in members only — never on the public page. -->
+                        @if (auth.isAuthenticated()) {
+                        <th scope="col">Last Seen</th>
+                        }
+                        <th class="roster-th-actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (member of members; track member.id) {
+                    <!-- The row click is a mouse convenience over the anchor below;
+                         keyboard users tab straight to that anchor, which is why
+                         this <tr> carries no role, tabindex or key handlers of its
+                         own (a <tr> cannot take focus, so those never fired). -->
+                    <tr class="roster-row" (click)="onRowClick(member, $event)">
+                        <td class="col-member">
+                            <!-- A REAL ANCHOR, not a click handler on the <tr>.
+                                 These links are the entire crawlable graph into
+                                 the profiles; a JS row handler is invisible to a
+                                 search engine and unusable with a middle-click.
+                                 Nothing else in the row is a link, so nothing
+                                 here nests. -->
+                            <a class="roster-member-link" [routerLink]="member.canonicalPath">
+                                <hf-avatar
+                                    [name]="member.inGameName"
+                                    [avatarUrl]="member.avatarUrl"
+                                    [size]="32"
+                                ></hf-avatar>
+                                <span class="roster-member-text">
+                                    <span class="roster-member-name">{{ member.inGameName }}</span>
+                                    @if (member.username) {
+                                    <span class="mono roster-member-handle"
+                                        >&#64;{{ member.username }}</span
+                                    >
+                                    } @if (discordTagFor(member); as tag) {
+                                    <span class="mono roster-member-tag">{{ tag }}</span>
+                                    }
+                                </span>
+                            </a>
+                        </td>
+                        <td data-label="Rank">
+                            <div class="row roster-rank-cell">
+                                <hf-rank-icon
+                                    [imageUrl]="member.rankImageUrl"
+                                    [name]="member.rank ?? ''"
+                                    [size]="20"
+                                ></hf-rank-icon>
+                                <span class="roster-rank-label">{{ member.rank ?? '—' }}</span>
+                            </div>
+                        </td>
+                        <td data-label="Medals">
+                            <div class="row roster-medals-cell">
+                                @for (award of member.medals; track award.id) {
+                                <hf-medal
+                                    size="sm"
+                                    [imageUrl]="award.imageUrl"
+                                    [letter]="award.glyph"
+                                    [title]="award.title"
+                                ></hf-medal>
+                                } @if (member.medals.length === 0) {
+                                <span class="roster-medal-empty">—</span>
+                                }
+                            </div>
+                        </td>
+                        <td data-label="Role">
+                            <span class="badge" [ngClass]="getRoleClass(member.role)"
+                                >{{ member.role }}</span
+                            >
+                        </td>
+                        @if (auth.isAuthenticated()) {
+                        <td data-label="Status">
+                            @if (enriched(member); as row) {
+                            <!-- @let so the derivation runs once per row, not once
+                                 per binding that reads it. -->
+                            @let ds = deriveStatus(row);
+                            <span
+                                class="badge"
+                                [ngClass]="statusVariant(ds)"
+                                [title]="statusTooltip(row)"
+                                >{{ ds }}</span
+                            >
+                            } @else {
+                            <span class="roster-medal-empty">—</span>
+                            }
+                        </td>
+                        }
+                        <td data-label="Joined">
+                            <span class="roster-joined">{{ formatJoined(member.joinedAt) }}</span>
+                        </td>
+                        <td data-label="Events">
+                            <span class="mono roster-events">{{ member.eventsAttended }}</span>
+                        </td>
+                        @if (auth.isAuthenticated()) {
+                        <td data-label="Last Seen">
+                            <span class="mono roster-lastseen">
+                                {{ lastSeenFor(member) ?? '—' }}
+                            </span>
+                        </td>
+                        }
+                        <td class="col-actions">
+                            <!-- Per-row, not per-caller: the button only appears where
+                                 the API would actually accept an action (T-0266). It
+                                 reads the ENRICHED row, so it is structurally absent
+                                 for an anonymous visitor. -->
+                            @if (canActOn(member)) {
+                            <button
+                                type="button"
+                                class="btn btn-icon btn-ghost btn-sm"
+                                title="Actions"
+                                [attr.aria-label]="'Member actions for ' + member.inGameName"
+                                (click)="$event.stopPropagation(); openActions(member)"
+                            >
+                                ···
+                            </button>
+                            }
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+
+    <!-- Pagination. Real, server-backed — the bar this replaced was decorative
+         chrome that always read "Showing 1–N of N" and hid everyone past 100.
+         It stays mounted while a page is in flight so the button under the
+         reader's cursor does not vanish the instant they press it. -->
+    @if (hasLoaded && total > 0) {
+    <nav class="pagination-bar" aria-label="Roster pages">
+        <span class="roster-page-summary">
+            Showing {{ firstShown }}–{{ lastShown }} of {{ total }} members
+        </span>
+        <div class="row roster-page-controls">
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                [disabled]="!hasPrev || loading"
+                (click)="goToPage(page - 1)"
+            >
+                ← Prev
+            </button>
+            <span class="btn btn-secondary btn-sm roster-page-num" aria-live="polite"
+                >Page {{ page }} of {{ totalPages }}</span
+            >
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                [disabled]="!hasNext || loading"
+                (click)="goToPage(page + 1)"
+            >
+                Next →
+            </button>
+        </div>
+    </nav>
+    }
+
+    <!-- Admin action modal. Reachable from a public page, but only ever with a
+         signed-in staff session — `selectedMember` is set from the enriched row. -->
+    <hf-admin-action-modal
+        [member]="selectedMember"
+        (closed)="selectedMember = null"
+        (memberUpdated)="onMemberUpdated($event)"
+    ></hf-admin-action-modal>
+</section>

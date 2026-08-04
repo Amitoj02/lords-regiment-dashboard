@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SeoService } from '../../../core/services/seo.service';
 
 /**
  * Landing target for the Discord OAuth handoff. On success the backend redirects
@@ -25,10 +26,19 @@ export class AuthCallbackComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly auth = inject(AuthService);
+    private readonly seo = inject(SeoService);
 
     error: string | null = null;
 
     ngOnInit(): void {
+        // A transient handoff target that only ever exists mid-redirect — it
+        // must never be the thing a search result offers somebody.
+        this.seo.apply({
+            title: 'Signing In',
+            description: 'Completing your Discord sign-in.',
+            noIndex: true,
+        });
+
         const failure = this.route.snapshot.queryParamMap.get('error');
 
         // Parse the handoff from the URL fragment (never the query string, H4).
