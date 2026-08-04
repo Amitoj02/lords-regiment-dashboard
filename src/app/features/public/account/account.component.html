@@ -11,8 +11,8 @@
 
     @if (!isMember) {
     <hf-notice variant="info" title="Nothing to manage yet">
-        Account settings open once you are enrolled in the regiment. Until then your application
-        status is the page you want.
+        Account settings open once you are enrolled in the regiment. Until then,
+        <a routerLink="/onboarding/status">your application status</a> is the page you want.
     </hf-notice>
     } @else { @if (loadError) {
     <hf-notice variant="err">{{ loadError }}</hf-notice>
