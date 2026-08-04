@@ -26,7 +26,20 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     selector: 'hf-public-layout',
     templateUrl: './public-layout.component.html',
     styleUrls: ['./public-layout.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    // ⚠️ MUST NOT be OnPush, and this is the whole reason the comment exists.
+    //
+    // This component is a LAYOUT ROUTE: every public page renders inside its
+    // <router-outlet>, which makes it their change-detection ancestor. An OnPush
+    // view that never goes dirty causes ApplicationRef.tick() to skip its entire
+    // subtree — and this one has no inputs, no events and no async state, so it
+    // would NEVER go dirty. Shipping it as OnPush froze the whole public site:
+    // the landing hero kept its hardcoded fallback name and its stats block
+    // stayed hidden even though the component had already received the data,
+    // and the roster and profile rendered their loading states forever.
+    //
+    // Every other component in this app is Eager (Angular 22's name for what
+    // used to be Default). A layout route has to match.
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class PublicLayoutComponent {}

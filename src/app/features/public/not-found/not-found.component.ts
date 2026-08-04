@@ -22,7 +22,10 @@ import { SeoService } from '../../../core/services/seo.service';
     selector: 'hf-not-found',
     templateUrl: './not-found.component.html',
     styleUrls: ['./not-found.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    // Eager like every other component here. The page is static, so OnPush
+    // would be harmless — but the app has one convention and a lone exception
+    // is a trap for whoever adds async state to this page later.
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class NotFoundComponent implements OnInit {
