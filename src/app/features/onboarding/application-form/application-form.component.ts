@@ -105,7 +105,7 @@ export class ApplicationFormComponent implements OnInit {
             howFound: ['', [Validators.required]],
             preferredClasses: ['', [Validators.required]],
             skillsToImprove: ['', [Validators.required]],
-            representativeNote: [''],
+            representativeNote: ['', [Validators.required]],
             // Client-only gate: confirms age + the community guidelines. NOT sent to the API.
             ageConfirm: [false, [Validators.requiredTrue]],
             interestConfirm: [false, [Validators.requiredTrue]],
@@ -192,7 +192,7 @@ export class ApplicationFormComponent implements OnInit {
             preferredClasses: v.preferredClasses,
             skillsToImprove: v.skillsToImprove,
             interestConfirmed: !!v.interestConfirm,
-            representativeNote: v.representativeNote || undefined,
+            representativeNote: v.representativeNote,
         };
 
         const request$ = this.editing
