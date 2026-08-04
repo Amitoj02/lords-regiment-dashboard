@@ -1,9 +1,9 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "14166b1808752c1bbaec15957695f4cc0a70ceb7",
-  "lastSyncedAt": "2026-08-04T22:10:00Z",
-  "notesForNextSession": "T-0287 is the live thread and it is HALF A TASK \u2014 the backend half is lords-dashboard-backend T-0215, on branch feat/public-site-redesign in BOTH repos (PRs into dev, not main). The site is now two products: everything a visitor or ordinary member uses lives at the ROOT (/roster, /u/:handle, /me, /events, /events/:id, /gallery, /gallery/submit, /account, /account/deletion), and /app is a STAFF-ONLY console (overview, applications, ranks, events authoring, gallery/moderation, audit, settings, bot). FOUR things not to undo. (1) Every legacy URL keeps a permanent redirect \u2014 the member-facing ones in PublicModule (they must NOT live at the root, or staffGuard bounces an ordinary member off their own bookmark before the redirect fires) and the staff-facing ones in AdminModule. Do not 'tidy these away'; there is no date at which an old Discord link stops being clicked. (2) jwtInterceptor only navigates to /login when the CURRENT url is under /app \u2014 a 401 from a public page must never eject an anonymous reader. (3) Every authenticated call on a public page sits behind auth.isAuthenticated(); the roster and profile fetch the public projection for the body and the authenticated one only as enrichment. (4) The wildcard route renders a real NotFoundComponent instead of redirecting to /home \u2014 the old redirect made every typo and every deleted profile a 200 soft-404, which is what de-prioritises a whole URL pattern. staffGuard is capability-based, not role-based, and shares STAFF_CAPABILITIES with AuthService.isStaff() so the nav and the router cannot disagree. STILL TO DO: click through the legacy redirects in a real browser, and do a 360px mobile pass on roster/profile/event-detail/account \u2014 both were reasoned from the SCSS, not observed. Node on this host is v22.22.2 and the Angular CLI needs >=22.22.3, so build and test run in a node:22 container (karma additionally needs chromium installed and a --no-sandbox launcher).",
+  "lastSyncedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
+  "lastSyncedAt": "2026-08-04T22:50:00Z",
+  "notesForNextSession": "T-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. STILL TO DO: a staff-persona browser pass (/app reachable, admin actions from the public roster), a 390px pass on profile / event detail / account, and an Applicant walkthrough \u2014 an identity-only session is the viewer state least exercised so far. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
   "nextIdCounter": 288,
   "connections": [],
   "tasks": [
@@ -18854,7 +18854,7 @@
       "id": "T-0287",
       "title": "Split the site: public roster/profiles/events/gallery, staff-only dashboard",
       "summary": "Moved everything a visitor or ordinary member uses out of /app to the root as indexable public pages (roster, /u/:handle profiles, events + RSVP, gallery + submit, account settings), left /app as a staff-only console gated on capabilities, replaced the soft-404 wildcard with a real 404, added SeoService + robots.txt, and built the account page hosting the new vanity handle.",
-      "status": "review",
+      "status": "test",
       "type": "feature",
       "size": "XL",
       "sizeWeight": 8,
@@ -18899,11 +18899,31 @@
           "status": "passed"
         },
         {
-          "desc": "manual: click through every legacy URL redirect in a browser",
+          "desc": "BROWSER, guest: home hero stats, roster, profile, locked tabs, gallery, login, 404",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER, ordinary member: nav CTAs, own profile, /account, handle claim end to end",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: handle rename writes the cooldown reservation and the old URL 404s",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: 390px pass on home + roster (nav drawer, table-to-cards)",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER as staff: dashboard reachable, admin actions on the public roster",
           "status": "pending"
         },
         {
-          "desc": "manual: mobile pass at 360px on roster, profile, event detail, account",
+          "desc": "390px pass on profile, event detail and account",
+          "status": "pending"
+        },
+        {
+          "desc": "Applicant (identity-only, not enrolled) walkthrough of every public page",
           "status": "pending"
         }
       ],
@@ -18932,6 +18952,14 @@
           "desc": "anyComponentStyle budget raised 6kB -> 8kB (warning) / 8 -> 10kB (error) for the profile page. It now hides genuine style growth up to the new ceiling.",
           "status": "open",
           "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "PublicLayoutComponent shipped as OnPush and froze change detection for the entire public tree \u2014 every page rendered once with its pre-fetch state. Fixed, but the same trap exists for any future layout route, and nothing in the build or the test suite catches it (the specs instantiate pages directly, without the layout).",
+          "status": "resolved",
+          "notedAt": "2026-08-04T22:50:00Z",
+          "resolvedAt": "2026-08-04T22:50:00Z",
+          "resolvedBy": "claude",
+          "note": "Fixed in the same session; the file carries a comment explaining why it must stay Eager. A guard test would need a layout-route integration spec, which does not exist yet."
         }
       ],
       "skippedByClaude": [
@@ -18939,11 +18967,16 @@
         "The global Bootstrap .row gutter reset was written and then BACKED OUT: pages laid out against the -12px leak shift the moment it is removed, and re-tuning them does not belong in a routing change. _base.scss carries a comment explaining this; roster and profile keep their local patches.",
         "No return-URL round trip for the guild gate + auth guard combined \u2014 they still stash separately, so a gated user who was also anonymous replays only one of the two.",
         "Did not add a 'my submissions' view. A member still cannot see their own PENDING gallery item anywhere; the submit-success toast remains the only acknowledgement.",
-        "No visual regression screenshots were captured. The mobile passes are reasoned from the SCSS breakpoints, not observed in a browser."
+        "No visual regression screenshots were captured. The mobile passes are reasoned from the SCSS breakpoints, not observed in a browser.",
+        "Still no 'my submissions' view \u2014 after submitting, a member cannot see their own PENDING gallery item anywhere. The design review flagged it as high severity; it needs either a by-author endpoint that includes non-approved items for the author, or a 'Mine' tab, and both are new feature work rather than a fix to this change.",
+        "openRecruitment is not surfaced: the hero, footer and login page all invite an application even when the regiment has recruitment closed, and the API only refuses at submit time. Needs the flag on RegimentProfileDto first.",
+        "The nav brand and footer hard-code 'Lord Regiment' while the hero renders the admin-configured regiment name, so an install named anything else shows two names at once. Pre-existing, and a wider change than this task.",
+        "The roster's signed-in enrichment is still one MembersService.getAll() capped at ?limit=100, so past 100 members a staff viewer loses the row actions and the Status/Last Seen cells on later pages.",
+        "Service Record entries still print the backend's raw enum as a tag (ROLE, AWARD, ENLISTMENT), and two are actively misleading \u2014 a medal REMOVAL is typed 'award'."
       ],
-      "lastTouchedCommit": "14166b1808752c1bbaec15957695f4cc0a70ceb7",
+      "lastTouchedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
       "createdAt": "2026-08-04T22:10:00Z",
-      "updatedAt": "2026-08-04T22:10:00Z",
+      "updatedAt": "2026-08-04T22:50:00Z",
       "history": [
         {
           "at": "2026-08-04T22:10:00Z",
