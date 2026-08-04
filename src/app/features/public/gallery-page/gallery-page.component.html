@@ -90,7 +90,28 @@
         <hf-gallery-card [item]="item" [aspectIndex]="i % 3"></hf-gallery-card>
         }
     </div>
-    } @if (filteredItems.length === 0) {
+    } @if (loading) {
+    <div class="empty gallery-empty" role="status" aria-live="polite">Opening the archive…</div>
+    } @else if (loadFailed) {
+    <div class="notice err gallery-empty">
+        <div class="n-content">
+            <div class="n-title">The archive could not be loaded</div>
+            <div class="n-body">Something went wrong reaching the regiment's gallery.</div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Try again</button>
+    </div>
+    } @else if (filteredItems.length === 0) {
+    <!-- Three states, not one. A pending fetch, a genuinely empty archive and a
+         filter that matches nothing used to share the sentence "No items match
+         the selected filter" — shown to readers who had touched no filter. -->
+    @if (hasActiveFilter) {
     <div class="notice info gallery-empty">No items match the selected filter.</div>
-    }
+    } @else {
+    <div class="empty gallery-empty">
+        <div class="e-title">The archive is empty</div>
+        <div class="e-body">
+            Nothing has been approved yet. Dispatches appear here once an officer clears them.
+        </div>
+    </div>
+    } }
 </div>

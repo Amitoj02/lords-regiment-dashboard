@@ -69,6 +69,16 @@ export class EventDetailComponent implements OnInit {
     }
 
     /** Whether the reader has a session at all — the gate on every member surface here. */
+    /**
+     * Stash this event before handing the reader to /login, so signing in brings
+     * them back to it (T-0287). Without this they land on a generic destination
+     * having lost the event they were reading — and the event page is the single
+     * most linked-to URL in Discord.
+     */
+    rememberReturn(): void {
+        this.auth.stashReturnUrl(this.router.url);
+    }
+
     get signedIn(): boolean {
         return this.auth.isAuthenticated();
     }
@@ -188,7 +198,13 @@ export class EventDetailComponent implements OnInit {
                     this.event = event;
                     this.selectedRsvp = status;
                 },
-                error: (err) => console.error('Failed to record RSVP', err),
+                error: (err) => {
+                    // Silence here meant the button simply did not light up, so
+                    // the member clicked it again, and again. Every other write
+                    // on this surface reports itself.
+                    console.error('Failed to record RSVP', err);
+                    this.toast.error('Could not record your RSVP. Please try again.');
+                },
             });
     }
 

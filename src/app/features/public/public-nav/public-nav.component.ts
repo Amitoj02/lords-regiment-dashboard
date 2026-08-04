@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegimentService } from '../../../core/services/regiment.service';
 
@@ -29,6 +30,7 @@ export class PublicNavComponent implements OnInit {
     protected readonly auth = inject(AuthService);
 
     private readonly regiment = inject(RegimentService);
+    private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
 
     /**
@@ -40,6 +42,24 @@ export class PublicNavComponent implements OnInit {
 
     /** Mobile collapsible menu state. */
     menuOpen = false;
+
+    /**
+     * True on the pages that ARE the sign-in flow (T-0287).
+     *
+     * Offering "Sign in" in the topbar of the sign-in page is the kind of dead
+     * control that makes a site feel unfinished — it either does nothing or
+     * reloads the page you are already reading. "Join Discord" goes with it:
+     * beside "Continue with Discord" it reads as the same button twice when the
+     * two do entirely different things, and the footer still carries the invite
+     * for anyone who wants it.
+     *
+     * Read from the router rather than passed in, so nothing has to remember to
+     * set it.
+     */
+    get onAuthPage(): boolean {
+        const url = this.router.url.split('?')[0].split('#')[0];
+        return url === '/login' || url.startsWith('/auth/');
+    }
 
     /**
      * `/home` rather than `/`, because the root route redirects there — a `/`

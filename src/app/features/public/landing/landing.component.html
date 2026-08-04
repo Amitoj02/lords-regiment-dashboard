@@ -82,7 +82,9 @@
                             ></hf-platform-badges>
                         </div>
                         <div class="event-actions">
-                            <a routerLink="/events" class="btn btn-secondary btn-sm">Details</a>
+                            <a [routerLink]="['/events', event.id]" class="btn btn-secondary btn-sm"
+                                >Details</a
+                            >
                         </div>
                     </div>
                     } @if (upcomingEvents.length === 0) {

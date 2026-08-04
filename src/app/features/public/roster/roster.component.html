@@ -16,7 +16,7 @@
                  exist solely for an authenticated viewer. -->
             @if (canExport) {
             <button type="button" class="btn btn-ghost btn-sm" (click)="exportLedger()">
-                ↓ Export Ledger
+                ↓ Export this page
             </button>
             }
         </div>
@@ -129,14 +129,14 @@
                              are moderation state. The public API cannot return
                              them, and an excluded member is not in the list at
                              all — so this column exists only for a member. -->
-                        @if (auth.isAuthenticated()) {
+                        @if (auth.isMember()) {
                         <th scope="col">Status</th>
                         }
                         <th scope="col">Joined</th>
                         <th scope="col">Events</th>
                         <!-- Last seen is a live activity trail, so it is for
                              signed-in members only — never on the public page. -->
-                        @if (auth.isAuthenticated()) {
+                        @if (auth.isMember()) {
                         <th scope="col">Last Seen</th>
                         }
                         <th class="roster-th-actions"></th>
@@ -203,7 +203,7 @@
                                 >{{ member.role }}</span
                             >
                         </td>
-                        @if (auth.isAuthenticated()) {
+                        @if (auth.isMember()) {
                         <td data-label="Status">
                             @if (enriched(member); as row) {
                             <!-- @let so the derivation runs once per row, not once
@@ -226,7 +226,7 @@
                         <td data-label="Events">
                             <span class="mono roster-events">{{ member.eventsAttended }}</span>
                         </td>
-                        @if (auth.isAuthenticated()) {
+                        @if (auth.isMember()) {
                         <td data-label="Last Seen">
                             <span class="mono roster-lastseen">
                                 {{ lastSeenFor(member) ?? '—' }}

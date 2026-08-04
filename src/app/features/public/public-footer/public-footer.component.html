@@ -25,8 +25,18 @@
             </div>
             <div class="footer-col">
                 <div class="footer-col-title">Join</div>
-                <a routerLink="/login" class="footer-link">Apply Now</a>
-                <a routerLink="/login" class="footer-link">Sign In</a>
+                <!-- "Apply Now" and "Sign In" were two adjacent links to the
+                     SAME URL, shown to everyone — including members who are
+                     already in, who were being invited to apply (T-0287).
+                     One entry per audience now. -->
+                @if (auth.isAuthenticated()) { @if (auth.isMember()) {
+                <a [routerLink]="auth.myProfilePath()" class="footer-link">My Profile</a>
+                <a routerLink="/account" class="footer-link">Account</a>
+                } @else {
+                <a routerLink="/onboarding/status" class="footer-link">My Application</a>
+                } } @else {
+                <a routerLink="/login" class="footer-link">Apply to Join</a>
+                }
                 <!-- Dropped entirely when no invite is configured (T-0234). -->
                 @if (discordInviteUrl) {
                 <a

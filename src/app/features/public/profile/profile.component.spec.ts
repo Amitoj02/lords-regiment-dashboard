@@ -161,6 +161,7 @@ function setup(options: SetupOptions = {}): Harness {
     const auth = {
         currentUser: signal<CurrentUser | null>(user),
         isAuthenticated: () => user !== null,
+        isMember: () => user?.isMember ?? false,
         hasCapability: (capability: string) => user?.capabilities.includes(capability) ?? false,
         stashReturnUrl: () => undefined,
     } as unknown as AuthService;

@@ -130,9 +130,11 @@ export class AuthService {
             return;
         }
         if (this.isMember()) {
-            // Already enrolled — there is nothing to apply for. Send them to
-            // their own profile, not to the staff-only dashboard (T-0287).
-            this.router.navigateByUrl(this.myProfilePath());
+            // Already enrolled — there is nothing to apply for. Staff go to the
+            // console; everyone else to their own profile, because /app is
+            // staff-only now and would bounce them (T-0287). This branch has to
+            // agree with LandingComponent.applyLabel, which renders the button.
+            this.router.navigateByUrl(this.isStaff() ? '/app' : this.myProfilePath());
             return;
         }
         this.routeAfterLogin(this.currentUser(), false);
@@ -176,7 +178,13 @@ export class AuthService {
         // dashboard the member may not even be able to open.
         const attempted = this.returnUrl;
         this.returnUrl = null;
-        if (enrolled && attempted) {
+        // Replayed for ANY caller, not just an enrolled one. The locked panels on
+        // a public profile and an event page show "Sign in" to whoever is
+        // reading, and most of them are not on the roster yet — gating the
+        // replay on enrolment sent exactly those people to the application form
+        // instead of back to the page they asked for. Every stashed URL is
+        // either public or behind a guard that handles a non-member itself.
+        if (attempted) {
             this.router.navigateByUrl(attempted);
             return;
         }
@@ -235,7 +243,12 @@ export class AuthService {
                 this.clearToken();
                 this.currentUser.set(null);
                 this.resetGuildState();
-                this.router.navigateByUrl('/login');
+                // Home, not /login (T-0287). Signing out from a public page used
+                // to drop the reader on "Continue with Discord" one click after
+                // they asked to LEAVE, which reads as the sign-out having failed.
+                // The whole site is readable signed-out now, so there is
+                // somewhere sensible to land.
+                this.router.navigateByUrl('/home');
             });
     }
 

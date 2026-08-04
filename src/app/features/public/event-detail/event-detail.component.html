@@ -205,7 +205,30 @@
                         <p class="field-hint rsvp-signin-hint">
                             Members sign up here and get the server details before the muster.
                         </p>
-                        <a routerLink="/login" class="btn btn-primary btn-block">Sign in to RSVP</a>
+                        <a
+                            routerLink="/login"
+                            class="btn btn-primary btn-block"
+                            (click)="rememberReturn()"
+                            >Sign in to RSVP</a
+                        >
+                    </div>
+                </div>
+                } @else {
+                <!-- Signed in, but without rsvp_to_events — an Applicant whose
+                     enlistment is still with the officers. They followed "Sign in
+                     to RSVP" and would otherwise arrive back here to find the
+                     whole panel gone, with nothing saying why. -->
+                <div class="panel rsvp-panel rsvp-panel--signin">
+                    <div class="panel-header">
+                        <span class="panel-title">RSVP</span>
+                    </div>
+                    <div class="panel-body rsvp-signin">
+                        <p class="field-hint rsvp-signin-hint">
+                            Signing up for musters opens once you are on the roster.
+                        </p>
+                        <a routerLink="/onboarding/status" class="btn btn-secondary btn-block"
+                            >Check my application</a
+                        >
                     </div>
                 </div>
                 }

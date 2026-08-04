@@ -25,6 +25,10 @@ class MockAuthService {
     isMember(): boolean {
         return this.currentUser()?.isMember ?? false;
     }
+    /** Staff, not merely enrolled — the hero CTA branches on this (T-0287). */
+    isStaff(): boolean {
+        return (this.currentUser()?.capabilities?.length ?? 0) > 0;
+    }
 }
 
 function makeUser(isMember: boolean): CurrentUser {
@@ -141,8 +145,16 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
         expect(heroLabel()).toBe('Apply to Join');
     });
 
-    it('labels the CTA "Go to Dashboard" for a signed-in member', () => {
+    // T-0287: the dashboard is staff-only, so naming it to an ordinary member
+    // promised a place staffGuard would refuse them.
+    it('labels the CTA "View My Profile" for a signed-in ordinary member', () => {
         auth.currentUser.set(makeUser(true));
+        fixture.detectChanges();
+        expect(heroLabel()).toBe('View My Profile');
+    });
+
+    it('labels the CTA "Go to Dashboard" only for staff', () => {
+        auth.currentUser.set({ ...makeUser(true), capabilities: ['manage_events'] });
         fixture.detectChanges();
         expect(heroLabel()).toBe('Go to Dashboard');
     });

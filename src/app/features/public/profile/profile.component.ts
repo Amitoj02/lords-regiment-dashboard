@@ -484,7 +484,12 @@ export class ProfileComponent implements OnInit {
      * locked tab says the same thing to both.
      */
     tabLocked(tab: ProfileTab): boolean {
-        return tab !== 'gallery' && !this.auth.isAuthenticated();
+        // Enrolment, not merely a session (T-0287). Both tabs are backed by
+        // endpoints carrying @RequireCapability(view_members_directory), which
+        // an Applicant does not hold — unlocking them for anyone signed in gave
+        // that person two tabs that 403 into a permanently empty list, with the
+        // "no events" copy implying the member has never attended anything.
+        return tab !== 'gallery' && !this.auth.isMember();
     }
 
     /** Send the reader back here once they have signed in. */

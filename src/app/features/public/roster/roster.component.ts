@@ -153,7 +153,11 @@ export class RosterComponent implements OnInit {
         this.searchInput$
             .pipe(debounceTime(SEARCH_DEBOUNCE_MS), takeUntilDestroyed(this.destroyRef))
             .subscribe((raw) => {
-                const term = raw.trim();
+                // Strip the sigil the roster itself renders: every row shows
+                // "@panda", so that is what people copy into the box — and the
+                // API stores handles without it, so the search found nothing and
+                // read as "that member is not on the roster".
+                const term = raw.trim().replace(/^@+/, '');
                 // The box can settle back on what is already applied — type then
                 // undo, or clear the filters while a keystroke is still pending.
                 if (term === this.appliedSearch) {
@@ -380,6 +384,9 @@ export class RosterComponent implements OnInit {
      */
     exportLedger(): void {
         if (!this.canExport) return;
+        // NOTE: this exports the CURRENT PAGE, which is what the viewer can see.
+        // The label and filename say so, because an Owner taking a ledger for a
+        // muster must not silently get 25 of 137 names.
         const headers = [
             'In-game name',
             'Username',
@@ -414,7 +421,7 @@ export class RosterComponent implements OnInit {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = `roster-${new Date().toISOString().slice(0, 10)}.csv`;
+        anchor.download = `roster-page-${this.page}-${new Date().toISOString().slice(0, 10)}.csv`;
         anchor.click();
         URL.revokeObjectURL(url);
     }

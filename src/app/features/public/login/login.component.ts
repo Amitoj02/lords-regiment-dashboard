@@ -48,12 +48,15 @@ export class LoginPageComponent implements OnInit {
         {
             num: 2,
             title: 'Match your account',
-            desc: 'Your Discord identity is matched against the regimental roll.',
+            desc: 'Your Discord identity is matched against the roll. Not on it yet? You go straight to the enlistment form.',
         },
         {
             num: 3,
-            title: 'Access the dashboard',
-            desc: 'View orders, manage your profile, and track regiment activity.',
+            // NOT "the dashboard" (T-0287): /app is staff-only now, so most
+            // people who read this page will never see one. Name what they
+            // actually get.
+            title: 'Get your regiment access',
+            desc: 'Your profile, event sign-ups, server details and the gallery.',
         },
     ];
 

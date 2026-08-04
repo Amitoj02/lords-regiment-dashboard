@@ -289,8 +289,17 @@ export class AccountComponent implements OnInit {
         this.removeConfirming = false;
 
         if (!value) {
-            this.handleVerdict = 'idle';
-            this.handleMessage = '';
+            // Emptying the box is the obvious way to try to drop a handle, and it
+            // silently did nothing: `save()` only sends `username` when something
+            // was CLAIMED, so the member got the green "account updated" toast
+            // with their handle still attached. Say what actually releases it.
+            if (this.currentUsername) {
+                this.handleVerdict = 'unavailable';
+                this.handleMessage = `Clearing this box does not release @${this.currentUsername} — use "Remove my username" below.`;
+            } else {
+                this.handleVerdict = 'idle';
+                this.handleMessage = '';
+            }
         } else if (value === this.currentUsername) {
             this.handleVerdict = 'current';
             this.handleMessage = 'This is your username.';

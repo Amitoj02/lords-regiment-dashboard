@@ -84,13 +84,19 @@ export class LandingComponent implements OnInit {
     }
 
     /**
-     * Hero CTA label follows the session (the click target is handled by
-     * applyToJoin): member → dashboard, applicant → their application, anonymous
-     * → apply.
+     * Hero CTA label, following the session — and it has to agree with where
+     * `applyToJoin()` actually sends the click (T-0287).
+     *
+     * It used to read "Go to Dashboard" for every member. That was true when
+     * every member had a dashboard; now `/app` is staff-only, so for an ordinary
+     * member it promised a place staffGuard would bounce them out of, and the
+     * click had already been re-pointed at their profile. A button whose label
+     * and destination disagree is worse than either being wrong on its own.
      */
     get applyLabel(): string {
         if (!this.auth.isAuthenticated()) return 'Apply to Join';
-        return this.auth.isMember() ? 'Go to Dashboard' : 'View Application';
+        if (!this.auth.isMember()) return 'View Application';
+        return this.auth.isStaff() ? 'Go to Dashboard' : 'View My Profile';
     }
 
     ngOnInit(): void {

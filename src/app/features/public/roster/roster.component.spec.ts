@@ -183,6 +183,9 @@ describe('RosterComponent — the public roster (T-0287)', () => {
         const auth = {
             currentUser: user,
             isAuthenticated: () => user() !== null,
+            // The signed-in-only columns are gated on ENROLMENT (T-0287): their
+            // data comes from an endpoint an Applicant cannot call.
+            isMember: () => user()?.isMember ?? false,
             isOwnerOrAdmin: () => user()?.role === 'Owner' || user()?.role === 'Admin',
             hasCapability: (capability: string) =>
                 user()?.capabilities?.includes(capability) ?? false,
@@ -300,7 +303,7 @@ describe('RosterComponent — the public roster (T-0287)', () => {
         it('offers no ledger export', () => {
             const el = setup();
             expect(component.canExport).toBeFalse();
-            expect(el.textContent).not.toContain('Export Ledger');
+            expect(el.textContent).not.toContain('Export this page');
         });
 
         it('applies roster SEO tags with the member count and an ItemList', () => {
@@ -375,12 +378,12 @@ describe('RosterComponent — the public roster (T-0287)', () => {
         // second assertion against a real second component.
         it('offers the ledger export to an Owner/Admin', () => {
             const el = setup({ session: currentUser({ role: 'Admin' }) });
-            expect(el.textContent).toContain('Export Ledger');
+            expect(el.textContent).toContain('Export this page');
         });
 
         it('withholds the ledger export from a Moderator', () => {
             const el = setup({ session: currentUser({ role: 'Moderator' }) });
-            expect(el.textContent).not.toContain('Export Ledger');
+            expect(el.textContent).not.toContain('Export this page');
         });
     });
 
