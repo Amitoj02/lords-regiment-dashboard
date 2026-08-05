@@ -254,15 +254,7 @@ describe('RosterComponent — the public roster (T-0287)', () => {
 
         it('shows no signed-in-only columns', () => {
             const el = setup();
-            expect(headers(el)).toEqual([
-                'Member',
-                'Rank',
-                'Medals',
-                'Role',
-                'Joined',
-                'Events',
-                '',
-            ]);
+            expect(headers(el)).toEqual(['Member', 'Rank', 'Medals', 'Role', 'Joined', '']);
             expect(headers(el)).not.toContain('Last Seen');
             expect(headers(el)).not.toContain('Status');
         });
@@ -338,12 +330,17 @@ describe('RosterComponent — the public roster (T-0287)', () => {
             expect(el.textContent).toContain('Active');
         });
 
-        it('shows the Discord tag under the name, which the public projection has no field for', () => {
+        it('never shows the Discord tag, even though the enrichment call returns one', () => {
+            // The authenticated roster call still carries `discordTag` — other
+            // screens need it — but the roster row deliberately does not render
+            // it. A signed-in viewer and an anonymous one now see the SAME row,
+            // which is also what the crawler shell renders.
             const el = setup({
                 session: currentUser(),
                 enrichment: [member({ id: 'm1', discordTag: 'nolt#0001' })],
             });
-            expect(el.querySelector('.roster-member-tag')?.textContent?.trim()).toBe('nolt#0001');
+            expect(el.querySelector('.roster-member-tag')).toBeNull();
+            expect(el.textContent).not.toContain('nolt#0001');
         });
 
         it('degrades to the public view when the authenticated call fails', () => {

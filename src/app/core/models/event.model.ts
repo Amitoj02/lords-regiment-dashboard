@@ -9,10 +9,12 @@ export interface RegimentEvent {
     title: string;
     description: string;
     /**
-     * The bound server name, or null when the event has none — and null on every
-     * PUBLIC projection, which never carries the binding at all. Templates must
-     * branch on `hasServerName`, not on this: a public event WITH a server still
-     * reads null here.
+     * The bound server name, or null when the event has none — on EVERY
+     * projection, public included (lords-dashboard-backend:T-0298). This used to
+     * read null for an anonymous caller even when a server WAS bound, which is
+     * why templates were told to branch on `hasServerName`; they can branch on
+     * this directly now. `hasServerName` survives to distinguish "nothing bound"
+     * from "bound to an empty string".
      */
     serverName: string | null;
     serverRegion?: string;

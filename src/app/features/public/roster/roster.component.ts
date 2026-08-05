@@ -115,6 +115,12 @@ export class RosterComponent implements OnInit {
      */
     private regimentName = DEFAULT_REGIMENT_NAME;
 
+    /**
+     * The picture a shared `/roster` link previews as (T-0297). Same source and
+     * same precedence as the landing page's, and as the API shell's.
+     */
+    private cardBannerUrl: string | null = null;
+
     /** Signed-in-only enrichment, keyed by member id. Empty when signed out. */
     private enrichment = new Map<string, Member>();
 
@@ -186,6 +192,14 @@ export class RosterComponent implements OnInit {
             )
             .subscribe((profile) => {
                 this.regimentName = profile?.name?.trim() || DEFAULT_REGIMENT_NAME;
+                // Same rule and same order as the landing page and as the API's
+                // `renderRoster` (T-0297): the admin-set hero, then the regiment
+                // banner, then null — which `SeoService` turns into the shipped
+                // site banner, exactly as the shell's `cardImageFor` does.
+                this.cardBannerUrl =
+                    profile?.presentation?.heroBannerUrl?.trim() ||
+                    profile?.bannerUrl?.trim() ||
+                    null;
                 this.applySeo();
             });
 
@@ -325,11 +339,6 @@ export class RosterComponent implements OnInit {
         return row ? this.formatLastSeen(row.lastSeen) : null;
     }
 
-    /** The Discord tag never appears publicly — it is DM-able identity. */
-    discordTagFor(member: PublicMember): string | null {
-        return this.enriched(member)?.discordTag || null;
-    }
-
     // ── Admin actions (signed-in staff only) ─────────────────────────────────
 
     /**
@@ -403,6 +412,12 @@ export class RosterComponent implements OnInit {
      * holds — which is why it is gated on the session and not merely on the role.
      * A row we hold no enrichment for exports blank in those columns rather than
      * inventing a value.
+     *
+     * The Discord tag is exported although the table no longer shows it: this is
+     * an Owner's operational ledger, and "who do I DM about the muster" is the
+     * question it exists to answer. The attendance count is NOT — it was dropped
+     * from the table as a number nobody acts on, and a column nobody reads is
+     * worth no more in a spreadsheet than it was in the page.
      */
     exportLedger(): void {
         if (!this.canExport) return;
@@ -417,7 +432,6 @@ export class RosterComponent implements OnInit {
             'Role',
             'Status',
             'Joined',
-            'Events attended',
             'Last seen',
         ];
         const rows = this.members.map((m) => {
@@ -431,7 +445,6 @@ export class RosterComponent implements OnInit {
                 // Export the derived status so the CSV matches the visible pill.
                 row ? deriveMemberStatus(row) : '',
                 m.joinedAt ?? '',
-                String(m.eventsAttended),
                 row ? this.formatLastSeen(row.lastSeen) : '',
             ];
         });
@@ -534,6 +547,14 @@ export class RosterComponent implements OnInit {
         this.seo.apply({
             title: this.page > 1 ? `Regimental Roster (page ${this.page})` : 'Regimental Roster',
             description: rosterDescription(this.regimentName, this.total),
+            // The regiment's own banner, not the shipped brand asset (T-0297).
+            // Every list page on the site was unfurling with the identical stock
+            // picture, so a shared roster and a shared gallery were the same card
+            // with different words. Null falls through to that stock asset in
+            // `SeoService`, which is the shell's fallback too.
+            imageUrl: this.cardBannerUrl
+                ? { url: this.cardBannerUrl, alt: `${this.regimentName} roster` }
+                : null,
             // Page 2 used to declare itself canonical to page 1 — the same URL
             // for every page of the list, which asks Google to drop every
             // profile that is only linked from page 2 onwards.

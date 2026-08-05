@@ -49,6 +49,46 @@ export type ProfileError = 'not-found' | 'gone' | 'unavailable';
 const DEFAULT_REGIMENT_NAME = 'Lords Regiment';
 
 /**
+ * Where a member's bio is cut for the meta description (T-0297).
+ *
+ * ⚠️ Mirrors `PROFILE_DESCRIPTION_LIMIT` in the backend's `seo/seo.service.ts`.
+ * The crawler shell and this second rendering pass describe the SAME URL, and a
+ * different cut point would give it two different descriptions.
+ */
+const BIO_SNIPPET_LIMIT = 160;
+
+/**
+ * ⚠️ Mirrors `GAME_NAME` in the backend's `seo/seo.service.ts`. It is in the
+ * description rather than the title because Google rewrites a `<title>` it reads
+ * as boilerplate, and the same eleven characters on every profile is exactly
+ * that.
+ */
+const GAME_NAME = 'Holdfast: Nations at War';
+
+/**
+ * Cut a bio to `limit` characters for the meta description, appending `…`.
+ *
+ * ── WHY NOT `slice` (T-0297) ────────────────────────────────────────────────
+ * `String.slice` cuts on UTF-16 CODE UNITS and an emoji is two of them, so a bio
+ * whose 159th and 160th units are the halves of one astral character left a lone
+ * high surrogate before the ellipsis — serialised as U+FFFD, so the card read
+ * "…the left flank holds �…". A bio is exactly the field people put emoji in.
+ * Spreading iterates by code point, so a pair is one element and cannot split.
+ *
+ * ⚠️ Mirrors `cutForSnippet` in the API's `seo/seo.service.ts`. Both surfaces
+ * build the same description for the same URL, so fixing one side alone would
+ * introduce a divergence rather than remove a bug.
+ */
+function cutForSnippet(value: string, limit: number): string {
+    const points = [...value];
+    if (points.length <= limit) return value;
+    return `${points
+        .slice(0, limit - 1)
+        .join('')
+        .trimEnd()}…`;
+}
+
+/**
  * The PUBLIC member profile (T-0287), at `/u/:handle` and at `/me`.
  *
  * ── ANONYMOUS BODY, SIGNED-IN ENRICHMENT ────────────────────────────────────
@@ -404,49 +444,87 @@ export class ProfileComponent implements OnInit {
             canonicalPath: member.canonicalPath,
             imageUrl: this.cardImage(member, name),
             type: 'profile',
-            jsonLd: {
-                '@context': 'https://schema.org',
-                '@type': 'ProfilePage',
-                url: canonicalUrl,
-                ...(member.joinedAt ? { dateCreated: member.joinedAt } : {}),
-                mainEntity: {
-                    '@type': 'Person',
-                    name,
-                    alternateName: handleLabel ?? member.inGameName,
-                    identifier: member.id,
+            profileUsername: member.username,
+            jsonLd: [
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'ProfilePage',
                     url: canonicalUrl,
-                    ...(member.bio?.trim() ? { description: member.bio.trim() } : {}),
-                    ...(image ? { image } : {}),
-                    ...(member.rank ? { jobTitle: member.rank } : {}),
-                    memberOf: {
-                        '@type': 'Organization',
-                        name: this.regimentName,
-                        url: this.absolute('/'),
+                    ...(member.joinedAt ? { dateCreated: member.joinedAt } : {}),
+                    mainEntity: {
+                        '@type': 'Person',
+                        name,
+                        alternateName: handleLabel ?? member.inGameName,
+                        identifier: member.id,
+                        url: canonicalUrl,
+                        mainEntityOfPage: canonicalUrl,
+                        ...(member.bio?.trim() ? { description: member.bio.trim() } : {}),
+                        ...(image ? { image } : {}),
+                        ...(member.rank ? { jobTitle: member.rank } : {}),
+                        // The `@id` the landing page defines the node under, so
+                        // the graph holds ONE regiment with N members rather
+                        // than N organisations that share a name — plus enough
+                        // of the node to mean something to a consumer holding
+                        // only this document, because a JSON-LD `@id` resolves
+                        // within a document's own graph and that node lives in
+                        // a different one. Built the same way the API's
+                        // `organizationRef()` builds it, so the two match.
+                        memberOf: {
+                            '@type': 'Organization',
+                            '@id': `${this.absolute('/')}#organization`,
+                            name: this.regimentName,
+                            url: this.absolute('/')?.replace(/\/$/, ''),
+                        },
+                        ...(member.medals.length
+                            ? { award: member.medals.map((medal) => medal.title) }
+                            : {}),
                     },
-                    ...(member.medals.length
-                        ? { award: member.medals.map((medal) => medal.title) }
-                        : {}),
                 },
-            },
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'BreadcrumbList',
+                    itemListElement: [
+                        {
+                            '@type': 'ListItem',
+                            position: 1,
+                            name: 'Home',
+                            item: this.absolute('/home'),
+                        },
+                        {
+                            '@type': 'ListItem',
+                            position: 2,
+                            name: 'Regimental Roster',
+                            item: this.absolute('/roster'),
+                        },
+                        { '@type': 'ListItem', position: 3, name, item: canonicalUrl },
+                    ],
+                },
+            ],
         });
     }
 
     /**
-     * The image a shared profile link previews as (T-0293).
+     * The image a shared profile link previews as: the AVATAR (T-0297).
      *
-     * The BANNER when the member has set one — it is landscape, so it fills the
-     * wide card. Otherwise the avatar, declared `square` so the card degrades
-     * deliberately to the thumbnail-beside-the-text layout instead of being
-     * demoted into it: Discord inspects the real file and demotes a square image
-     * whatever the tag claims, and a card that asked for the wide layout and did
-     * not get it looks broken in a way the thumbnail does not.
+     * This preferred the banner, on the reasoning that a landscape image fills
+     * the wide card and a square one does not. True, and it optimised the card's
+     * SIZE at the cost of what the card is about — half the roster shared their
+     * profile and got a picture of a battlefield with a name under it,
+     * indistinguishable from the event page they shared an hour before.
      *
-     * The same choice, in the same order, as `SeoService.profileCardImage` in
-     * the API — this is the tag a crawler compares against the shell's.
+     * `shape: 'square'` makes the shell pick `twitter:card: summary`, the small
+     * portrait beside the text. Declaring it is the only way to get that layout
+     * cleanly: Discord inspects the real file and demotes a square image
+     * regardless, so a page that asked for the wide card and lost renders as
+     * something broken rather than as something small.
+     *
+     * ⚠️ The same choice, in the same order, as `profileCardImage` in the API's
+     * `seo/seo.service.ts` — this is the tag a crawler compares against the
+     * shell's.
      */
     private cardImage(member: PublicMember, name: string): SeoImage | null {
-        if (member.bannerUrl) return { url: member.bannerUrl, alt: name };
         if (member.avatarUrl) return { url: member.avatarUrl, alt: name, shape: 'square' };
+        if (member.bannerUrl) return { url: member.bannerUrl, alt: name };
         return null;
     }
 
@@ -455,18 +533,40 @@ export class ProfileComponent implements OnInit {
         return member.username ? `${member.inGameName} (@${member.username})` : member.inGameName;
     }
 
+    /**
+     * The meta description for a profile — the member's own words first.
+     *
+     * ⚠️ BYTE-IDENTICAL to `describeProfile` in the backend's
+     * `seo/seo.service.ts` (T-0297): the same limit, the same `…`, the same em
+     * dash, the same trailing clause. That shell is what a crawler receives on
+     * the first pass and this is what Googlebot renders on the second, and one
+     * URL with two different descriptions is the unambiguous single-string diff
+     * that reads as cloaking. Neither side moves without the other, in one
+     * deploy.
+     *
+     * The attendance count that used to sit in the middle of this string is gone
+     * from both surfaces (T-0297) — it was "0 events attended" on most of the
+     * roster, in the one line a Discord card is guaranteed to show.
+     */
     private describe(member: PublicMember): string {
+        const standing = member.rank
+            ? `${member.rank} in ${this.regimentName}`
+            : `Member of ${this.regimentName}`;
+
+        const bio = (member.bio || '').replace(/\s+/g, ' ').trim();
+        if (bio) {
+            const cut = cutForSnippet(bio, BIO_SNIPPET_LIMIT);
+            return `${cut} — ${standing}, a ${GAME_NAME} regiment.`;
+        }
+
         const parts = [
-            member.rank
-                ? `${member.rank} in ${this.regimentName}`
-                : `Member of ${this.regimentName}`,
+            standing,
             member.medals.length === 1 ? '1 decoration' : `${member.medals.length} decorations`,
-            `${member.eventsAttended} events attended`,
         ];
         if (member.joinedAt) {
             parts.push(`serving since ${this.longDate(member.joinedAt)}`);
         }
-        return `${parts.join(' · ')}.`;
+        return `${parts.join(' · ')}. A ${GAME_NAME} regiment.`;
     }
 
     /** en-GB long form in UTC — byte-identical to the crawler shell's dates. */

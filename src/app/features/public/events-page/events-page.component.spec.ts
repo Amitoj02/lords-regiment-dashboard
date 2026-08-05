@@ -314,10 +314,11 @@ describe('EventsPageComponent', () => {
             expect(textIn('.ongoing-meta-row')).not.toContain('—');
         });
 
-        it('renders the Server field when the event HAS a server, even redacted', () => {
-            setup([event({ status: 'ongoing', hasServerName: true, serverName: null })]);
+        it('names the server on an ongoing row, for anyone (T-0298)', () => {
+            setup([event({ status: 'ongoing', hasServerName: true, serverName: 'LORDS-1' })]);
             fixture.detectChanges();
             expect(textIn('.ongoing-meta-row')).toContain('Server');
+            expect(textIn('.ongoing-meta-row')).toContain('LORDS-1');
         });
 
         it('drops the server line from an upcoming row with no server', () => {

@@ -72,14 +72,14 @@
                     </div>
                 </div>
                 <!-- Omitted entirely — not blank, not an em dash — when the event
-                     has no server bound (T-0236). The public projection carries the
-                     presence flag but never the name itself. -->
+                     has no server bound (T-0236). The `|| 'Members only'` that
+                     used to guard this is gone: the public projection carries the
+                     real name now (T-0298), so the fallback was a string nothing
+                     could reach. -->
                 @if (ongoingEvent.hasServerName) {
                 <div>
                     <div class="field-label">Server</div>
-                    <div class="mono ongoing-server">
-                        {{ ongoingEvent.serverName || 'Members only' }}
-                    </div>
+                    <div class="mono ongoing-server">{{ ongoingEvent.serverName }}</div>
                 </div>
                 }
                 <div>
@@ -119,9 +119,7 @@
                             <span class="event-zone">{{ event.zoneLabel }}</span>
                         </span>
                         @if (event.hasServerName) {
-                        <span class="mono event-server">
-                            {{ event.serverName || 'Members only' }}
-                        </span>
+                        <span class="mono event-server"> {{ event.serverName }} </span>
                         } @if (!signedIn && event.hasServerPassword) {
                         <span class="badge parch">Password protected</span>
                         }
@@ -161,7 +159,7 @@
                     <div class="previous-title">{{ event.title }}</div>
                     <div class="mono previous-date">{{ event.date | date:'MMMM d, yyyy' }}</div>
                     @if (event.hasServerName) {
-                    <div class="previous-server">{{ event.serverName || 'Members only' }}</div>
+                    <div class="previous-server">{{ event.serverName }}</div>
                     }
                     <div class="row previous-tags">
                         @for (tag of event.tags; track tag) {

@@ -38,6 +38,12 @@ export interface SeoTags {
     imageUrl?: string | SeoImage | null;
     video?: SeoVideo | null;
     type?: 'website' | 'profile' | 'article' | 'video.other';
+    /**
+     * The handle behind an `og:type: profile` page, emitted as
+     * `profile:username` (T-0297). Mirrors `ShellPage.profileUsername` in the
+     * API's `page-shell.ts`.
+     */
+    profileUsername?: string | null;
     /** Keep this page out of the index (a members-only or transient page). */
     noIndex?: boolean;
     /** `rel=prev`/`rel=next`, for a page of a paginated list. */
@@ -114,11 +120,28 @@ export class SeoService {
         const video = tags.video ? this.sizeForDiscord(tags.video) : null;
 
         this.setName('description', tags.description);
+        // ── `theme-color` IS DELIBERATELY NOT SET HERE ───────────────────────
+        // It was, briefly. The reasoning was parity: the crawler shell paints
+        // the brass embed stripe and this document did not, so the two
+        // disagreed. But `theme-color` has exactly two consumers and they want
+        // opposite things — Discord reads it as the embed stripe, and a mobile
+        // browser reads it as the colour of its own chrome. Discord never
+        // executes JavaScript, so it only ever sees the SHELL, which already
+        // emits the accent. Setting it here therefore changed nothing for the
+        // consumer it was aimed at and repainted every phone's address bar from
+        // `--ink-900` (chosen in index.html to match the page background) to
+        // brass. The disagreement is correct: two documents, two audiences.
         this.setProperty('og:site_name', SITE_NAME);
         this.setProperty('og:type', tags.type ?? 'website');
         this.setProperty('og:locale', 'en_GB');
         this.setProperty('og:title', fullTitle);
         this.setProperty('og:description', tags.description);
+        // Only meaningful on the profile vertical, and cleared everywhere else
+        // so a handle cannot survive a navigation off a profile.
+        this.setProperty(
+            'profile:username',
+            tags.type === 'profile' ? (tags.profileUsername ?? null) : null,
+        );
         this.setName('twitter:card', this.twitterCard(image, video));
         this.setName('twitter:title', fullTitle);
         this.setName('twitter:description', tags.description);
