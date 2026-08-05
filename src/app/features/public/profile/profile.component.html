@@ -155,10 +155,6 @@
                             {{ member.joinedAt ? (member.joinedAt | date: 'MMM d, yyyy') : '—' }}
                         </span>
                     </div>
-                    <div class="particulars-row">
-                        <span class="field-label particulars-label">Events Attended</span>
-                        <span class="particulars-value">{{ member.eventsAttended }}</span>
-                    </div>
                     @if (enriched) {
                     <div class="particulars-row">
                         <span class="field-label particulars-label">

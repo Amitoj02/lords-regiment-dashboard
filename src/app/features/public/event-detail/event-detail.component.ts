@@ -311,6 +311,12 @@ export class EventDetailComponent implements OnInit {
      * Whether the Server Details panel has anything to show (T-0236). Each row in
      * it is now conditional, so without this the panel could render as an empty
      * box — worse than the blank field it replaced.
+     *
+     * `notifyBefore` is counted only for a signed-in reader (T-0298): it is a
+     * member-projection field and is always absent anonymously, so counting it
+     * would have made no difference — but the panel is public now, and a
+     * predicate that reads a field the caller cannot have is a bug waiting for
+     * the projection to change.
      */
     get hasServerDetails(): boolean {
         if (!this.event) {
@@ -318,8 +324,9 @@ export class EventDetailComponent implements OnInit {
         }
         return (
             !!this.event.hasServerName ||
+            !!this.event.serverRegion ||
             !!this.event.hasServerPassword ||
-            !!this.event.notifyBefore?.length
+            (this.signedIn && !!this.event.notifyBefore?.length)
         );
     }
 

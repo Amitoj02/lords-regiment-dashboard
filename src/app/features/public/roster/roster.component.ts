@@ -325,11 +325,6 @@ export class RosterComponent implements OnInit {
         return row ? this.formatLastSeen(row.lastSeen) : null;
     }
 
-    /** The Discord tag never appears publicly — it is DM-able identity. */
-    discordTagFor(member: PublicMember): string | null {
-        return this.enriched(member)?.discordTag || null;
-    }
-
     // ── Admin actions (signed-in staff only) ─────────────────────────────────
 
     /**
@@ -403,6 +398,12 @@ export class RosterComponent implements OnInit {
      * holds — which is why it is gated on the session and not merely on the role.
      * A row we hold no enrichment for exports blank in those columns rather than
      * inventing a value.
+     *
+     * The Discord tag is exported although the table no longer shows it: this is
+     * an Owner's operational ledger, and "who do I DM about the muster" is the
+     * question it exists to answer. The attendance count is NOT — it was dropped
+     * from the table as a number nobody acts on, and a column nobody reads is
+     * worth no more in a spreadsheet than it was in the page.
      */
     exportLedger(): void {
         if (!this.canExport) return;
@@ -417,7 +418,6 @@ export class RosterComponent implements OnInit {
             'Role',
             'Status',
             'Joined',
-            'Events attended',
             'Last seen',
         ];
         const rows = this.members.map((m) => {
@@ -431,7 +431,6 @@ export class RosterComponent implements OnInit {
                 // Export the derived status so the CSV matches the visible pill.
                 row ? deriveMemberStatus(row) : '',
                 m.joinedAt ?? '',
-                String(m.eventsAttended),
                 row ? this.formatLastSeen(row.lastSeen) : '',
             ];
         });

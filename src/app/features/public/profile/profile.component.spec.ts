@@ -341,20 +341,57 @@ describe('ProfileComponent as an anonymous visitor (T-0287)', () => {
         expect(tags().title).toBe('Jameson Nolt (@panda)');
         expect(tags().canonicalPath).toBe('/u/@panda');
         expect(tags().type).toBe('profile');
-        // The same sentence the crawler shell emits (backend renderProfile).
+        expect(tags().profileUsername).toBe('panda');
+        // The same sentence the crawler shell emits (backend describeProfile).
         expect(tags().description).toContain('Sergeant in Lords Regiment');
         expect(tags().description).toContain('0 decorations');
-        expect(tags().description).toContain('7 events attended');
-        const jsonLd = tags().jsonLd as { '@type': string; mainEntity: Record<string, unknown> };
-        expect(jsonLd['@type']).toBe('ProfilePage');
-        expect(jsonLd.mainEntity['@type']).toBe('Person');
-        expect(jsonLd.mainEntity['alternateName']).toBe('@panda');
-        expect(jsonLd.mainEntity['jobTitle']).toBe('Sergeant');
-        expect(jsonLd.mainEntity['memberOf']).toEqual(
-            jasmine.objectContaining({ '@type': 'Organization', name: 'Lords Regiment' }),
+        expect(tags().description).toContain('Holdfast: Nations at War');
+        // Attendance left BOTH surfaces in T-0297 — it read "0 events attended"
+        // for most of the roster, in the one line a Discord card always shows.
+        expect(tags().description).not.toContain('events attended');
+        const profilePage = profileNode(tags().jsonLd);
+        expect(profilePage['@type']).toBe('ProfilePage');
+        const person = profilePage['mainEntity'] as Record<string, unknown>;
+        expect(person['@type']).toBe('Person');
+        expect(person['alternateName']).toBe('@panda');
+        expect(person['jobTitle']).toBe('Sergeant');
+        // A REFERENCE to the node the landing page defines, not a second inline
+        // copy — otherwise the graph holds one unlinked organisation per member.
+        expect(person['memberOf']).toEqual({ '@id': `${location.origin}/#organization` });
+    });
+
+    it('leads the description with the bio when the member wrote one (T-0297)', () => {
+        const { tags } = setup({ member: publicMember({ bio: 'I mostly play the drum.' }) });
+        // Byte-identical to the API's `describeProfile`. One URL rendered twice,
+        // and a description is where a diff between the two is unambiguous.
+        expect(tags().description).toBe(
+            'I mostly play the drum. — Sergeant in Lords Regiment, ' +
+                'a Holdfast: Nations at War regiment.',
         );
     });
+
+    it('previews as the AVATAR, not the banner, even when both exist (T-0297)', () => {
+        const { tags } = setup({
+            member: publicMember({
+                avatarUrl: '/api/public/members/m1/avatar',
+                bannerUrl: 'https://cdn.example/banner.png',
+            }),
+        });
+        expect(tags().imageUrl).toEqual({
+            url: '/api/public/members/m1/avatar',
+            alt: 'Jameson Nolt (@panda)',
+            shape: 'square',
+        });
+    });
 });
+
+/** The `ProfilePage` node out of the JSON-LD array the component now emits. */
+function profileNode(payload: unknown): Record<string, unknown> {
+    const nodes = (Array.isArray(payload) ? payload : [payload]) as Record<string, unknown>[];
+    const node = nodes.find((entry) => entry['@type'] === 'ProfilePage');
+    if (!node) throw new Error('no ProfilePage node in the emitted JSON-LD');
+    return node;
+}
 
 describe('ProfileComponent canonical URL (T-0287)', () => {
     it('rewrites a short-id URL to the handle URL, replacing history', () => {
@@ -666,7 +703,7 @@ describe('ProfileComponent Honours & Decorations (T-0286)', () => {
 
     it('lists the decorations in the JSON-LD award array', () => {
         const { tags } = setup({ member: publicMember({ medals: [award()] }) });
-        const jsonLd = tags().jsonLd as { mainEntity: { award: string[] } };
-        expect(jsonLd.mainEntity.award).toEqual(['Marksman']);
+        const person = profileNode(tags().jsonLd)['mainEntity'] as { award: string[] };
+        expect(person.award).toEqual(['Marksman']);
     });
 });

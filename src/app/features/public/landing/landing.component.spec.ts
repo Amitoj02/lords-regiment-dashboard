@@ -432,11 +432,14 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
             expect(server()!.textContent).toContain('EU_Official_2');
         });
 
-        it('labels a bound-but-redacted server rather than printing an empty field', () => {
-            // The public projection carries the flag but withholds the name.
-            events = [makeEvent({ hasServerName: true, serverName: '' })];
+        it('names the server for an anonymous visitor (T-0298)', () => {
+            // The public projection carries the real name now, so there is no
+            // "bound but redacted" state left to label. Withholding it had the
+            // landing page advertising a muster while hiding how to attend it.
+            events = [makeEvent({ hasServerName: true, serverName: 'EU_Official_2' })];
             fixture.detectChanges();
-            expect(server()!.textContent!.trim()).toBe('Server details on sign-in');
+            expect(server()!.textContent!.trim()).toBe('EU_Official_2');
+            expect(server()!.textContent).not.toContain('sign-in');
         });
     });
 });

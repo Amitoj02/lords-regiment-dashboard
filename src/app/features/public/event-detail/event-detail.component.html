@@ -65,10 +65,18 @@
                     </div>
                 </div>
 
-                <!-- Server Details. Signed-in only: the binding, the password and
-                     the reminder offsets are all member-projection fields, and an
-                     anonymous reader would get a panel of empty rows. -->
-                @if (signedIn) {
+                <!-- Server Details (T-0298).
+                     The panel itself is PUBLIC now. The name and the region are
+                     how somebody actually turns up, and this page's job is to
+                     advertise a muster to people who are not in the regiment yet
+                     — withholding the one detail that lets them come made the
+                     page argue against itself.
+                     The gate moved from the panel to the rows: the password and
+                     the reminder offsets are still member-only, and the password
+                     row is now SHOWN to a signed-out reader as a locked row
+                     rather than hidden, so the sign-in prompt appears where the
+                     thing it unlocks is. -->
+                @if (hasServerDetails || signedIn) {
                 <div class="panel">
                     <div class="panel-header">
                         <span class="panel-title">Server Details</span>
@@ -81,9 +89,15 @@
                             <div class="field-label">Server name</div>
                             <div class="mono">{{ event.serverName }}</div>
                         </div>
-                        } @if (event.hasServerPassword && can('reveal_event_passwords')) {
+                        } @if (event.serverRegion) {
+                        <div class="field-group">
+                            <div class="field-label">Region</div>
+                            <div class="mono">{{ event.serverRegion }}</div>
+                        </div>
+                        } @if (event.hasServerPassword) {
                         <div class="field-group">
                             <div class="field-label">Password</div>
+                            @if (signedIn && can('reveal_event_passwords')) {
                             <div class="detail-inline gap-8">
                                 <span class="mono"
                                     >{{ showPassword && revealedPassword !== null ? revealedPassword
@@ -98,8 +112,22 @@
                                     {{ revealing ? '…' : showPassword ? 'Hide' : 'Reveal' }}
                                 </button>
                             </div>
+                            } @else {
+                            <!-- Signed out, or signed in without the capability.
+                                 Either way the answer is the same shape: the
+                                 password exists and this reader cannot see it.
+                                 The dots are shown rather than the row hidden so
+                                 the reason is legible instead of the field
+                                 simply being absent. -->
+                            <div class="detail-inline gap-8">
+                                <span class="mono">••••••••</span>
+                                <span class="field-hint">
+                                    {{ signedIn ? 'Members only' : 'Sign in to see the password' }}
+                                </span>
+                            </div>
+                            }
                         </div>
-                        } @if (event.notifyBefore?.length) {
+                        } @if (signedIn && event.notifyBefore?.length) {
                         <div class="field-group">
                             <div class="field-label">Notify before</div>
                             <div class="detail-inline field-row-tight">

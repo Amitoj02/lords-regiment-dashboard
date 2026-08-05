@@ -133,7 +133,6 @@
                         <th scope="col">Status</th>
                         }
                         <th scope="col">Joined</th>
-                        <th scope="col">Events</th>
                         <!-- Last seen is a live activity trail, so it is for
                              signed-in members only — never on the public page. -->
                         @if (auth.isMember()) {
@@ -164,12 +163,21 @@
                                 ></hf-avatar>
                                 <span class="roster-member-text">
                                     <span class="roster-member-name">{{ member.inGameName }}</span>
+                                    <!-- The site handle a member chose, and only
+                                         that. The Discord tag used to sit here
+                                         for signed-in viewers, which made the
+                                         roster the one surface where a member's
+                                         Discord identity was on display without
+                                         them having put it there — and made the
+                                         signed-in table disagree with both the
+                                         public table and the crawler shell about
+                                         what a row says. A member who wants to be
+                                         findable on Discord links it themselves
+                                         from their profile. -->
                                     @if (member.username) {
                                     <span class="mono roster-member-handle"
                                         >&#64;{{ member.username }}</span
                                     >
-                                    } @if (discordTagFor(member); as tag) {
-                                    <span class="mono roster-member-tag">{{ tag }}</span>
                                     }
                                 </span>
                             </a>
@@ -222,9 +230,6 @@
                         }
                         <td data-label="Joined">
                             <span class="roster-joined">{{ formatJoined(member.joinedAt) }}</span>
-                        </td>
-                        <td data-label="Events">
-                            <span class="mono roster-events">{{ member.eventsAttended }}</span>
                         </td>
                         @if (auth.isMember()) {
                         <td data-label="Last Seen">

@@ -171,13 +171,6 @@
     color: var(--brass-300);
 }
 
-// The Discord tag is signed-in only — it resolves an in-game handle to a real,
-// DM-able account — so this only ever renders for an authenticated viewer.
-.roster-member-tag {
-    font-size: 11px;
-    color: var(--t-400);
-}
-
 .roster-rank-cell {
     gap: 6px;
     align-items: center;
@@ -199,14 +192,9 @@
 }
 
 .roster-lastseen,
-.roster-joined,
-.roster-events {
+.roster-joined {
     font-size: 12px;
     color: var(--t-400);
-}
-
-.roster-events {
-    font-variant-numeric: tabular-nums;
 }
 
 // ───────── Pagination ─────────
