@@ -14,5 +14,8 @@ export const moderateGalleryGuard: CanActivateFn = (): boolean | UrlTree => {
     if (auth.isAuthenticated() && auth.hasCapability('moderate_gallery')) {
         return true;
     }
-    return router.createUrlTree(['/app/dashboard']);
+    // T-0287: /app/dashboard was where every member landed; it is now the
+    // staff console, which would refuse them a second time. Send them to
+    // the public gallery — the queue is the only part they lack.
+    return router.createUrlTree(['/gallery']);
 };

@@ -1,147 +1,177 @@
-<div class="events-page">
-    <hf-public-nav [activeLink]="'/events'"></hf-public-nav>
-
-    <div class="page page-wrap">
-        <!-- Page Head -->
-        <div class="page-head">
-            <div>
-                <div class="admin-label brass page-head-label">Field Orders</div>
-                <h1 class="page-title">Events &amp; Orders</h1>
-                <div class="page-sub">
-                    All current, upcoming, and recent operations of the Lord Regiment. Sign in to
-                    RSVP, access server passwords, and receive notifications.
-                </div>
+<!-- The nav and footer are rendered once by PublicLayoutComponent (T-0287);
+     a page that pastes its own gets two of each. -->
+<div class="page public-page">
+    <!-- Page Head -->
+    <div class="page-head">
+        <div>
+            <div class="admin-label brass page-head-label">Field Orders</div>
+            <h1 class="page-title">Events &amp; Orders</h1>
+            <div class="page-sub">
+                All current, upcoming, and recent operations of the Lord Regiment. Sign in to RSVP,
+                access server passwords, and receive notifications.
             </div>
         </div>
+    </div>
 
-        <div class="divider"></div>
+    <div class="divider"></div>
 
-        <!-- Pinned Ongoing Event -->
-        @if (ongoingEvent) {
-        <section class="panel ongoing-panel ongoing-section">
-            <div class="ongoing-cover ongoing-cover-bg">
-                <div class="ongoing-cover-overlay"></div>
-                <div class="ongoing-cover-inner">
-                    <span class="badge ox ongoing-badge">
-                        <span class="status-dot ongoing-status-dot"></span>
-                        In Progress
-                    </span>
-                    <h2 class="serif ongoing-title">{{ ongoingEvent.title }}</h2>
-                    <p class="ongoing-desc">{{ ongoingEvent.description }}</p>
-                </div>
+    @if (loading) {
+    <div class="empty events-state">
+        <div class="e-title">Mustering the calendar…</div>
+        <div class="e-body">Fetching the regiment's current and upcoming operations.</div>
+    </div>
+    } @else if (loadFailed) {
+    <hf-notice variant="err" title="The calendar could not be loaded">
+        <div class="events-error-body">
+            <span>Something went wrong reaching the regiment's events.</span>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="load()">
+                Try again
+            </button>
+        </div>
+    </hf-notice>
+    } @else if (isEmpty) {
+    <div class="empty events-state">
+        <div class="e-title">No operations on the books</div>
+        <div class="e-body">
+            Nothing is scheduled, and nothing has run in the last 90 days. Check back before the
+            next campaign night.
+        </div>
+    </div>
+    } @else {
+    <!-- Pinned Ongoing Event -->
+    @if (ongoingEvent) {
+    <section class="panel ongoing-panel ongoing-section">
+        <!-- The event's own banner when it has one; the static cover is the
+             fallback and lives in the stylesheet (T-0287). -->
+        <div
+            class="ongoing-cover ongoing-cover-bg"
+            [style.background-image]="
+                ongoingEvent.bannerUrl ? 'url(' + ongoingEvent.bannerUrl + ')' : null
+            "
+        >
+            <div class="ongoing-cover-overlay"></div>
+            <div class="ongoing-cover-inner">
+                <span class="badge ox ongoing-badge">
+                    <span class="status-dot ongoing-status-dot"></span>
+                    In Progress
+                </span>
+                <h2 class="serif ongoing-title">{{ ongoingEvent.title }}</h2>
+                <p class="ongoing-desc">{{ ongoingEvent.description }}</p>
             </div>
-            <div class="panel-body">
-                <div class="row ongoing-meta-row">
-                    <div>
-                        <div class="field-label">Date &amp; Time</div>
-                        <!-- Times are converted to the VIEWER's zone (T-0237), so the
-                             label has to name that zone, not the authored one. -->
-                        <div class="ongoing-datetime">
-                            {{ ongoingEvent.date | date:'MMMM d, yyyy' }} · {{
-                            ongoingEvent.startTime }} – {{ ongoingEvent.endTime }}
-                            <span class="event-zone">{{ ongoingEvent.zoneLabel }}</span>
-                        </div>
+        </div>
+        <div class="panel-body">
+            <div class="row ongoing-meta-row">
+                <div>
+                    <div class="field-label">Date &amp; Time</div>
+                    <!-- Times are converted to the VIEWER's zone (T-0237), so the
+                         label has to name that zone, not the authored one. -->
+                    <div class="ongoing-datetime">
+                        {{ ongoingEvent.date | date:'MMMM d, yyyy' }} · {{ ongoingEvent.startTime }}
+                        – {{ ongoingEvent.endTime }}
+                        <span class="event-zone">{{ ongoingEvent.zoneLabel }}</span>
                     </div>
-                    <!-- Omitted entirely — not blank, not an em dash — when the event
-                         has no server bound (T-0236). The public projection carries the
-                         presence flag but never the name itself. -->
-                    @if (ongoingEvent.hasServerName) {
-                    <div>
-                        <div class="field-label">Server</div>
-                        <div class="mono ongoing-server">
-                            {{ ongoingEvent.serverName || 'Members only' }}
-                        </div>
+                </div>
+                <!-- Omitted entirely — not blank, not an em dash — when the event
+                     has no server bound (T-0236). The public projection carries the
+                     presence flag but never the name itself. -->
+                @if (ongoingEvent.hasServerName) {
+                <div>
+                    <div class="field-label">Server</div>
+                    <div class="mono ongoing-server">
+                        {{ ongoingEvent.serverName || 'Members only' }}
                     </div>
+                </div>
+                }
+                <div>
+                    <div class="field-label">Platforms</div>
+                    <hf-platform-badges [platforms]="ongoingEvent.platforms"></hf-platform-badges>
+                </div>
+                <span class="sp"></span>
+                <!-- A password hint only where there IS a password, and never for a
+                     signed-in visitor — they follow the CTA through and reveal it on
+                     the event page (T-0235/T-0236). -->
+                @if (!signedIn && ongoingEvent.hasServerPassword) {
+                <span class="badge parch ongoing-password-note">Password protected</span>
+                }
+                <a [routerLink]="['/events', ongoingEvent.id]" class="btn btn-secondary btn-sm"
+                    >View details</a
+                >
+            </div>
+        </div>
+    </section>
+    }
+
+    <!-- Upcoming Events -->
+    <section>
+        <h2 class="serif upcoming-heading">Upcoming</h2>
+        <div class="panel upcoming-panel">
+            @for (event of upcomingEvents; track event.id) {
+            <div class="event-list-row">
+                <div class="event-date-block">
+                    <div class="serif event-date-day">{{ event.date | date:'d' }}</div>
+                    <div class="event-date-month">{{ event.date | date:'MMM' }}</div>
+                </div>
+                <div class="event-list-body">
+                    <div class="event-title">{{ event.title }}</div>
+                    <div class="row event-time-row">
+                        <span class="mono event-time">
+                            {{ event.startTime }} – {{ event.endTime }}
+                            <span class="event-zone">{{ event.zoneLabel }}</span>
+                        </span>
+                        @if (event.hasServerName) {
+                        <span class="mono event-server">
+                            {{ event.serverName || 'Members only' }}
+                        </span>
+                        } @if (!signedIn && event.hasServerPassword) {
+                        <span class="badge parch">Password protected</span>
+                        }
+                    </div>
+                    <hf-platform-badges
+                        [platforms]="event.platforms"
+                        class="event-platforms"
+                    ></hf-platform-badges>
+                </div>
+                <div class="event-list-meta event-list-meta-align">
+                    <!-- Turnout is member-only on the wire now, so this renders
+                         only when a tally actually arrived — never as a "0 RSVPs"
+                         standing in for a field that was simply not sent. -->
+                    @let total = rsvpTotal(event); @if (signedIn && total !== null) {
+                    <div class="event-rsvps">{{ total }} RSVPs</div>
                     }
-                    <div>
-                        <div class="field-label">Platforms</div>
-                        <hf-platform-badges
-                            [platforms]="ongoingEvent.platforms"
-                        ></hf-platform-badges>
-                    </div>
-                    <span class="sp"></span>
-                    <!-- A password hint only where there IS a password, and never for a
-                         signed-in visitor — they follow the CTA through and reveal it on
-                         the event page (T-0235/T-0236). -->
-                    @if (!signedIn && ongoingEvent.hasServerPassword) {
-                    <span class="badge parch ongoing-password-note">Password protected</span>
-                    }
-                    <a [routerLink]="detailLink(ongoingEvent)" class="btn btn-secondary btn-sm"
-                        >{{ ctaLabel }}</a
+                    <a [routerLink]="['/events', event.id]" class="btn btn-secondary btn-sm"
+                        >View details</a
                     >
                 </div>
             </div>
-        </section>
-        }
+            } @if (upcomingEvents.length === 0) {
+            <div class="events-empty">No upcoming events scheduled.</div>
+            }
+        </div>
+    </section>
 
-        <!-- Upcoming Events -->
-        <section>
-            <h2 class="serif upcoming-heading">Upcoming</h2>
-            <div class="panel upcoming-panel">
-                @for (event of upcomingEvents; track event) {
-                <div class="event-list-row">
-                    <div class="event-date-block">
-                        <div class="serif event-date-day">{{ event.date | date:'d' }}</div>
-                        <div class="event-date-month">{{ event.date | date:'MMM' }}</div>
-                    </div>
-                    <div class="event-list-body">
-                        <div class="event-title">{{ event.title }}</div>
-                        <div class="row event-time-row">
-                            <span class="mono event-time">
-                                {{ event.startTime }} – {{ event.endTime }}
-                                <span class="event-zone">{{ event.zoneLabel }}</span>
-                            </span>
-                            @if (event.hasServerName) {
-                            <span class="mono event-server">
-                                {{ event.serverName || 'Members only' }}
-                            </span>
-                            } @if (!signedIn && event.hasServerPassword) {
-                            <span class="badge parch">Password protected</span>
-                            }
-                        </div>
-                        <hf-platform-badges
-                            [platforms]="event.platforms"
-                            class="event-platforms"
-                        ></hf-platform-badges>
-                    </div>
-                    <div class="event-list-meta event-list-meta-align">
-                        <div class="event-rsvps">{{ totalRsvps(event) }} RSVPs</div>
-                        <a [routerLink]="detailLink(event)" class="btn btn-secondary btn-sm"
-                            >{{ ctaLabel }}</a
-                        >
-                    </div>
-                </div>
-                } @if (upcomingEvents.length === 0) {
-                <div class="events-empty">No upcoming events scheduled.</div>
-                }
-            </div>
-        </section>
-
-        <!-- Previous Events -->
-        @if (previousEvents.length > 0) {
-        <section class="previous-section">
-            <h2 class="serif previous-heading">Previous · Last 30 days</h2>
-            <div class="grid-2 previous-grid">
-                @for (event of previousEvents; track event) {
-                <div class="panel previous-card">
-                    <div class="panel-body">
-                        <div class="previous-title">{{ event.title }}</div>
-                        <div class="mono previous-date">{{ event.date | date:'MMMM d, yyyy' }}</div>
-                        @if (event.hasServerName) {
-                        <div class="previous-server">{{ event.serverName || 'Members only' }}</div>
+    <!-- Previous Events -->
+    @if (previousEvents.length > 0) {
+    <section class="previous-section">
+        <!-- The window the API actually serves an anonymous caller (T-0215). -->
+        <h2 class="serif previous-heading">Previous · Last 90 days</h2>
+        <div class="grid-2 previous-grid">
+            @for (event of previousEvents; track event.id) {
+            <a class="panel previous-card" [routerLink]="['/events', event.id]">
+                <div class="panel-body">
+                    <div class="previous-title">{{ event.title }}</div>
+                    <div class="mono previous-date">{{ event.date | date:'MMMM d, yyyy' }}</div>
+                    @if (event.hasServerName) {
+                    <div class="previous-server">{{ event.serverName || 'Members only' }}</div>
+                    }
+                    <div class="row previous-tags">
+                        @for (tag of event.tags; track tag) {
+                        <span class="badge parch">{{ tag }}</span>
                         }
-                        <div class="row previous-tags">
-                            @for (tag of event.tags; track tag) {
-                            <span class="badge parch">{{ tag }}</span>
-                            }
-                        </div>
                     </div>
                 </div>
-                }
-            </div>
-        </section>
-        }
-    </div>
-
-    <hf-public-footer></hf-public-footer>
+            </a>
+            }
+        </div>
+    </section>
+    } }
 </div>

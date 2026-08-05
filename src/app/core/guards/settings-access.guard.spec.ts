@@ -42,17 +42,17 @@ describe('settingsAccessGuard (T-0265)', () => {
         expect(result).toBe(true);
     });
 
-    it('redirects a signed-in caller holding neither capability to /app/dashboard', () => {
+    it('redirects a signed-in caller holding neither capability to /app/overview', () => {
         // The bug this guard exists for: a Moderator passes `adminGuard` on role
         // alone and would otherwise reach a panel the API 403s end to end.
         const result = runGuard({ isAuthenticated: () => true, hasCapability: () => false });
         expect(result).not.toBe(true);
-        expect(redirect(result)).toBe('/app/dashboard');
+        expect(redirect(result)).toBe('/app/overview');
     });
 
     it('redirects an anonymous caller even when capabilities somehow report true', () => {
         const result = runGuard({ isAuthenticated: () => false, hasCapability: () => true });
         expect(result).not.toBe(true);
-        expect(redirect(result)).toBe('/app/dashboard');
+        expect(redirect(result)).toBe('/app/overview');
     });
 });

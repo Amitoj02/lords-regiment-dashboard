@@ -1,102 +1,117 @@
-<div class="gallery-page">
-    <hf-public-nav [activeLink]="'/gallery'"></hf-public-nav>
-
-    <div class="page gallery-page-wrap">
-        <!-- Page Head -->
-        <div class="page-head">
-            <div>
-                <div class="admin-label brass gallery-eyebrow">Gallery Dispatches</div>
-                <h1 class="page-title">The Regiment's Archive</h1>
-                <div class="page-sub">
-                    Approved photographs, clips, and dispatches submitted by members. Sign in to
-                    submit your own.
-                </div>
-            </div>
-            <div class="row">
-                @if (canSubmit) {
-                <a routerLink="/app/gallery/submit" class="btn btn-primary btn-sm">Submit</a>
-                } @else {
-                <a routerLink="/login" class="btn btn-ghost btn-sm">Sign in to submit</a>
-                }
+<div class="page gallery-page-wrap">
+    <!-- Page Head -->
+    <div class="page-head">
+        <div>
+            <div class="admin-label brass gallery-eyebrow">Gallery Dispatches</div>
+            <h1 class="page-title">The Regiment's Archive</h1>
+            <div class="page-sub">
+                Approved photographs, clips, and dispatches submitted by members. Sign in to submit
+                your own.
             </div>
         </div>
-
-        <!-- Filter Tabs & Tags -->
-        <div class="row between gallery-filter-bar">
-            <div class="hf-tabs gallery-tabs">
-                @for (tab of tabs; track tab) {
-                <button
-                    type="button"
-                    class="hf-tab"
-                    [ngClass]="{ 'active': activeTab === tab.key }"
-                    (click)="setTab(tab.key)"
-                >
-                    {{ tab.label }}
-                </button>
-                }
-            </div>
-
-            <div class="row gallery-tag-list">
-                <button
-                    type="button"
-                    class="badge gallery-tag"
-                    [ngClass]="{ 'brass': activeTag === null }"
-                    (click)="setTag(null)"
-                >
-                    #all
-                </button>
-                @for (tag of visibleTags; track tag) {
-                <button
-                    type="button"
-                    class="badge gallery-tag"
-                    [ngClass]="{ 'brass': activeTag === tag }"
-                    (click)="setTag(tag)"
-                >
-                    #{{ tag }}
-                </button>
-                } @if (hasOverflowTags) {
-                <button
-                    type="button"
-                    class="badge gallery-tag gallery-tag-toggle"
-                    [attr.aria-expanded]="tagsExpanded"
-                    (click)="toggleTags()"
-                >
-                    {{ tagsExpanded ? 'Less' : 'More' }}
-                </button>
-
-                <div
-                    class="gallery-tag-overflow"
-                    [class.expanded]="tagsExpanded"
-                    [attr.aria-hidden]="!tagsExpanded"
-                >
-                    <div class="gallery-tag-overflow-inner">
-                        @for (tag of overflowTags; track tag) {
-                        <button
-                            type="button"
-                            class="badge gallery-tag"
-                            [ngClass]="{ 'brass': activeTag === tag }"
-                            (click)="setTag(tag)"
-                        >
-                            #{{ tag }}
-                        </button>
-                        }
-                    </div>
-                </div>
-                }
-            </div>
-        </div>
-
-        <!-- Gallery Masonry -->
-        @if (filteredItems.length > 0) {
-        <div class="gallery-masonry">
-            @for (item of filteredItems; track item; let i = $index) {
-            <hf-gallery-card [item]="item" [aspectIndex]="i % 3"></hf-gallery-card>
+        <div class="row">
+            @if (canSubmit) {
+            <a routerLink="/gallery/submit" class="btn btn-primary btn-sm">Submit</a>
+            } @else {
+            <a routerLink="/login" class="btn btn-ghost btn-sm">Sign in to submit</a>
             }
         </div>
-        } @if (filteredItems.length === 0) {
-        <div class="notice info gallery-empty">No items match the selected filter.</div>
-        }
     </div>
 
-    <hf-public-footer></hf-public-footer>
+    <!-- Filter Tabs & Tags -->
+    <div class="row between gallery-filter-bar">
+        <div class="hf-tabs gallery-tabs">
+            @for (tab of tabs; track tab) {
+            <button
+                type="button"
+                class="hf-tab"
+                [ngClass]="{ 'active': activeTab === tab.key }"
+                (click)="setTab(tab.key)"
+            >
+                {{ tab.label }}
+            </button>
+            }
+        </div>
+
+        <div class="row gallery-tag-list">
+            <button
+                type="button"
+                class="badge gallery-tag"
+                [ngClass]="{ 'brass': activeTag === null }"
+                (click)="setTag(null)"
+            >
+                #all
+            </button>
+            @for (tag of visibleTags; track tag) {
+            <button
+                type="button"
+                class="badge gallery-tag"
+                [ngClass]="{ 'brass': activeTag === tag }"
+                (click)="setTag(tag)"
+            >
+                #{{ tag }}
+            </button>
+            } @if (hasOverflowTags) {
+            <button
+                type="button"
+                class="badge gallery-tag gallery-tag-toggle"
+                [attr.aria-expanded]="tagsExpanded"
+                (click)="toggleTags()"
+            >
+                {{ tagsExpanded ? 'Less' : 'More' }}
+            </button>
+
+            <div
+                class="gallery-tag-overflow"
+                [class.expanded]="tagsExpanded"
+                [attr.aria-hidden]="!tagsExpanded"
+            >
+                <div class="gallery-tag-overflow-inner">
+                    @for (tag of overflowTags; track tag) {
+                    <button
+                        type="button"
+                        class="badge gallery-tag"
+                        [ngClass]="{ 'brass': activeTag === tag }"
+                        (click)="setTag(tag)"
+                    >
+                        #{{ tag }}
+                    </button>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Gallery Masonry -->
+    @if (filteredItems.length > 0) {
+    <div class="gallery-masonry">
+        @for (item of filteredItems; track item; let i = $index) {
+        <hf-gallery-card [item]="item" [aspectIndex]="i % 3"></hf-gallery-card>
+        }
+    </div>
+    } @if (loading) {
+    <div class="empty gallery-empty" role="status" aria-live="polite">Opening the archive…</div>
+    } @else if (loadFailed) {
+    <div class="notice err gallery-empty">
+        <div class="n-content">
+            <div class="n-title">The archive could not be loaded</div>
+            <div class="n-body">Something went wrong reaching the regiment's gallery.</div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Try again</button>
+    </div>
+    } @else if (filteredItems.length === 0) {
+    <!-- Three states, not one. A pending fetch, a genuinely empty archive and a
+         filter that matches nothing used to share the sentence "No items match
+         the selected filter" — shown to readers who had touched no filter. -->
+    @if (hasActiveFilter) {
+    <div class="notice info gallery-empty">No items match the selected filter.</div>
+    } @else {
+    <div class="empty gallery-empty">
+        <div class="e-title">The archive is empty</div>
+        <div class="e-body">
+            Nothing has been approved yet. Dispatches appear here once an officer clears them.
+        </div>
+    </div>
+    } }
 </div>

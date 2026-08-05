@@ -30,6 +30,14 @@
     }
 }
 
+// The exit link is not another console screen, so a rule separates it from the
+// last nav group rather than letting it read as one more destination.
+.nav-group-exit {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+}
+
 .footer-user {
     display: flex;
     align-items: center;

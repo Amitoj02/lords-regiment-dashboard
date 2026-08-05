@@ -9,10 +9,13 @@ import { RegimentService } from '../../../core/services/regiment.service';
 import { PublicNavComponent } from './public-nav.component';
 
 /**
- * The public topbar CTA is auth-aware (T-004x): a member is offered the
- * dashboard, an applicant their status page, and an anonymous visitor the
+ * The public topbar CTA is auth-aware (T-004x): a member is offered their own
+ * profile, an applicant their status page, and an anonymous visitor the
  * original Join Discord + Sign in pair. These specs flip the mocked
  * AuthService.currentUser signal and assert the CTA labels + targets follow.
+ *
+ * The Dashboard button is STAFF-only since T-0287: `/app` is behind staffGuard,
+ * so offering it to an ordinary member would be a button that bounces them.
  *
  * The Join Discord CTA is also profile-driven (T-0234): it points at the
  * regiment's configured invite, and disappears when there isn't one.
@@ -20,18 +23,29 @@ import { PublicNavComponent } from './public-nav.component';
 class MockAuthService {
     readonly currentUser = signal<CurrentUser | null>(null);
     readonly logout = jasmine.createSpy('logout');
+    /** Flipped per-spec — staff is a capability verdict, not a role (T-0287). */
+    staff = false;
     isAuthenticated(): boolean {
         return this.currentUser() !== null;
     }
     isMember(): boolean {
         return this.currentUser()?.isMember ?? false;
     }
+    isStaff(): boolean {
+        return this.staff;
+    }
+    myProfilePath(): string {
+        const user = this.currentUser();
+        if (!user) return '/roster';
+        return user.username ? `/u/@${user.username}` : `/u/${user.id}`;
+    }
 }
 
-function makeUser(isMember: boolean): CurrentUser {
+function makeUser(isMember: boolean, username: string | null = null): CurrentUser {
     return {
         id: 'u1',
         inGameName: 'Test User',
+        username,
         rank: null,
         role: isMember ? 'Member' : 'Applicant',
         discordTag: null,
@@ -101,6 +115,10 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
     function discordLink(): HTMLAnchorElement | null {
         return cta().querySelector('.public-nav-discord');
     }
+    /** The primary destination links, in render order. */
+    function navAnchors(): HTMLAnchorElement[] {
+        return Array.from(fixture.nativeElement.querySelectorAll('.public-nav-links > a.nav-link'));
+    }
 
     it('shows Join Discord + Sign in for an anonymous visitor', () => {
         fixture.detectChanges();
@@ -108,15 +126,6 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
         expect(ctaText()).toContain('Sign in');
         expect(ctaText()).not.toContain('Sign out');
         expect(hrefs()).toContain('/login');
-    });
-
-    it('offers the Dashboard + Sign out for a signed-in member', () => {
-        auth.currentUser.set(makeUser(true));
-        fixture.detectChanges();
-        expect(ctaText()).toContain('Dashboard');
-        expect(ctaText()).toContain('Sign out');
-        expect(ctaText()).not.toContain('Sign in');
-        expect(hrefs()).toContain('/app/dashboard');
     });
 
     it('routes a signed-in applicant to their status page (not /login)', () => {
@@ -134,6 +143,94 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
         fixture.componentInstance.signOut();
         expect(auth.logout).toHaveBeenCalled();
         expect(fixture.componentInstance.menuOpen).toBe(false);
+    });
+
+    /**
+     * The roster is the flagship public page — and Home points at `/home`, not
+     * `/`, because the root route redirects there and a `/` link would light up
+     * for nobody once the redirect has rewritten the URL.
+     */
+    describe('destinations (T-0287)', () => {
+        it('offers Roster between Home and Events', () => {
+            fixture.detectChanges();
+            expect(navAnchors().map((a) => (a.textContent ?? '').trim())).toEqual([
+                'Home',
+                'Roster',
+                'Events',
+                'Gallery',
+            ]);
+            expect(navAnchors().map((a) => a.getAttribute('href'))).toEqual([
+                '/home',
+                '/roster',
+                '/events',
+                '/gallery',
+            ]);
+        });
+
+        it('matches Home exactly and every other entry as a prefix', () => {
+            // `/events/:id` and `/gallery/:id` must keep their parent lit; Home
+            // would otherwise be lit on every page in the site.
+            const byLabel = new Map(
+                fixture.componentInstance.navLinks.map((l) => [l.label, l] as const),
+            );
+            expect(byLabel.get('Home')!.exact).toBeTrue();
+            expect(byLabel.get('Roster')!.exact).toBeFalse();
+            expect(byLabel.get('Events')!.exact).toBeFalse();
+            expect(byLabel.get('Gallery')!.exact).toBeFalse();
+        });
+
+        it('keeps every destination and CTA inside the collapsible drawer', () => {
+            // On mobile `.public-nav-links` IS the drawer, so anything actionable
+            // rendered outside it would be unreachable behind the closed burger.
+            auth.currentUser.set(makeUser(true));
+            auth.staff = true;
+            fixture.detectChanges();
+            const panel = fixture.nativeElement.querySelector('.public-nav-links') as HTMLElement;
+            expect(panel.contains(cta())).toBeTrue();
+            const outside = Array.from<HTMLElement>(
+                fixture.nativeElement.querySelectorAll('a, button'),
+            ).filter((el) => !panel.contains(el));
+            expect(outside.map((el) => el.className)).toEqual(['public-nav-burger']);
+        });
+    });
+
+    /**
+     * `/app` is staff-only (T-0287). The Dashboard button must therefore track
+     * `isStaff()` — the same verdict staffGuard reads — and every enrolled
+     * member gets a link to their own PUBLIC profile regardless.
+     */
+    describe('Dashboard vs My profile (T-0287)', () => {
+        it('offers a plain member their profile and no Dashboard', () => {
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            expect(ctaText()).toContain('My profile');
+            expect(ctaText()).not.toContain('Dashboard');
+            expect(hrefs()).toContain('/u/u1');
+            expect(hrefs()).not.toContain('/app');
+        });
+
+        it('offers a staff member BOTH the Dashboard and their profile', () => {
+            auth.currentUser.set(makeUser(true));
+            auth.staff = true;
+            fixture.detectChanges();
+            expect(ctaText()).toContain('Dashboard');
+            expect(ctaText()).toContain('My profile');
+            expect(hrefs()).toContain('/app');
+            expect(hrefs()).toContain('/u/u1');
+        });
+
+        it('prefers the vanity handle for the profile link', () => {
+            auth.currentUser.set(makeUser(true, 'lordy'));
+            fixture.detectChanges();
+            expect(hrefs()).toContain('/u/@lordy');
+        });
+
+        it('never offers a non-member the Dashboard or a profile link', () => {
+            auth.currentUser.set(makeUser(false));
+            fixture.detectChanges();
+            expect(ctaText()).not.toContain('Dashboard');
+            expect(ctaText()).not.toContain('My profile');
+        });
     });
 
     describe('Join Discord CTA (T-0234)', () => {

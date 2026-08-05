@@ -1,0 +1,332 @@
+<!-- No app shell: this is a public page, and PublicLayoutComponent already
+     renders the nav and the footer around it (T-0287). -->
+<div class="page public-page">
+    @if (loading) {
+    <div class="empty event-state" role="status" aria-live="polite">
+        <div class="e-title">Reading the orders…</div>
+        <div class="e-body">Fetching this event.</div>
+    </div>
+    } @else if (event) {
+    <div class="event-detail">
+        <!-- The console's breadcrumb went with the app shell; this is the way back. -->
+        <a routerLink="/events" class="btn btn-ghost btn-sm event-back">&larr; All events</a>
+
+        <!-- Banner (uploaded image if present, else the gradient fallback — T-0098) -->
+        <div
+            class="event-banner"
+            [style.background-image]="event.bannerUrl ? 'url(' + event.bannerUrl + ')' : null"
+        >
+            <div class="event-banner__overlay">
+                <div class="event-banner__badges">
+                    <hf-event-status [status]="event.status"></hf-event-status>
+                    <hf-platform-badges [platforms]="event.platforms"></hf-platform-badges>
+                    @if (event.recurrenceCadence) {
+                    <span class="badge">Repeats {{ event.recurrenceCadence }}</span>
+                    }
+                    <!-- Tags are public metadata and read here for everyone. They
+                         used to sit in Server Details, which is signed-in only now
+                         — leaving them there would have hidden the one part of
+                         that panel an anonymous visitor is allowed to see. -->
+                    @for (tag of event.tags; track tag) {
+                    <span class="badge brass">{{ tag }}</span>
+                    }
+                </div>
+                <h1 class="event-banner__title serif-display">{{ event.title }}</h1>
+                <!-- The times are converted to the VIEWER's zone (T-0237), so this
+                     labels the viewer's zone — printing event.timezone here is what
+                     made a UTC instant look like an Eastern one. -->
+                <div class="event-banner__meta">
+                    <span
+                        >{{ event.date }} &middot; {{ event.startTime }} &ndash; {{ event.endTime }}
+                        {{ event.zoneLabel }}</span
+                    >
+                    @if (event.hasServerName && event.serverName) {
+                    <span>&middot; {{ event.serverName }}</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-column body -->
+        <div class="event-body">
+            <!-- Left column -->
+            <div class="event-left">
+                <!-- Event description -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Event description</span>
+                    </div>
+                    <div class="panel-body">
+                        @for (para of (event.description || '').split('\n\n'); track para) {
+                        <p class="serif event-orders">{{ para }}</p>
+                        } @if (!event.description) {
+                        <span class="field-hint">No description provided.</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Server Details. Signed-in only: the binding, the password and
+                     the reminder offsets are all member-projection fields, and an
+                     anonymous reader would get a panel of empty rows. -->
+                @if (signedIn) {
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Server Details</span>
+                    </div>
+                    <div class="panel-body server-details">
+                        <!-- Dropped entirely when no server is bound (T-0236) — an em
+                             dash reads as "we lost it", not "there isn't one". -->
+                        @if (event.hasServerName) {
+                        <div class="field-group">
+                            <div class="field-label">Server name</div>
+                            <div class="mono">{{ event.serverName }}</div>
+                        </div>
+                        } @if (event.hasServerPassword && can('reveal_event_passwords')) {
+                        <div class="field-group">
+                            <div class="field-label">Password</div>
+                            <div class="detail-inline gap-8">
+                                <span class="mono"
+                                    >{{ showPassword && revealedPassword !== null ? revealedPassword
+                                    || '—' : '••••••••' }}</span
+                                >
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm"
+                                    [disabled]="revealing"
+                                    (click)="togglePassword()"
+                                >
+                                    {{ revealing ? '…' : showPassword ? 'Hide' : 'Reveal' }}
+                                </button>
+                            </div>
+                        </div>
+                        } @if (event.notifyBefore?.length) {
+                        <div class="field-group">
+                            <div class="field-label">Notify before</div>
+                            <div class="detail-inline field-row-tight">
+                                @for (n of event.notifyBefore; track n) {
+                                <span class="badge">{{ n }}</span>
+                                }
+                            </div>
+                        </div>
+                        } @if (!hasServerDetails) {
+                        <span class="field-hint">No server or reminders set.</span>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Attendees. The roster comes from a capability-gated endpoint,
+                     so without the capability there is no list to show — and an
+                     empty one would read as "nobody came", not "not your business". -->
+                @if (can('view_members_directory')) {
+                <div class="panel">
+                    <div class="panel-header between">
+                        <span class="panel-title">Attendees</span>
+                        <span class="badge">{{ attendees.length }}</span>
+                    </div>
+                    <div class="panel-body">
+                        @if (attendees.length) {
+                        <div class="attendees-grid">
+                            @for (a of attendees; track a) {
+                            <div class="attendee-item">
+                                <hf-avatar
+                                    [name]="a.name"
+                                    [avatarUrl]="a.avatarUrl"
+                                    [size]="26"
+                                ></hf-avatar>
+                                <span class="attendee-name">{{ a.name }}</span>
+                                <span class="badge attendee-status attendee-status--{{ a.status }}"
+                                    >{{ a.status }}</span
+                                >
+                            </div>
+                            }
+                        </div>
+                        } @else {
+                        <span class="field-hint">Nobody has RSVP'd yet.</span>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- Right column -->
+            <div class="event-right">
+                <!-- RSVP -->
+                @if (can('rsvp_to_events')) { @let counts = rsvpCounts;
+                <div class="panel rsvp-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Your RSVP</span>
+                    </div>
+                    <div class="panel-body rsvp-options">
+                        <button
+                            type="button"
+                            class="btn btn-block rsvp-btn rsvp-btn--interested"
+                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'interested' }"
+                            (click)="setRsvp('interested')"
+                        >
+                            <span>Interested</span>
+                            @if (counts) {
+                            <span class="badge">{{ counts.interested }}</span>
+                            }
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-block rsvp-btn rsvp-btn--tentative"
+                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'tentative' }"
+                            (click)="setRsvp('tentative')"
+                        >
+                            <span>Tentative</span>
+                            @if (counts) {
+                            <span class="badge">{{ counts.tentative }}</span>
+                            }
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-block rsvp-btn rsvp-btn--declined"
+                            [ngClass]="{ 'rsvp-btn--active': selectedRsvp === 'declined' }"
+                            (click)="setRsvp('declined')"
+                        >
+                            <span>Declined</span>
+                            @if (counts) {
+                            <span class="badge">{{ counts.declined }}</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+                } @else if (!signedIn) {
+                <!-- The one action an anonymous reader has on this page. It is the
+                     same sticky bar on a phone, so the primary call to action is
+                     never below the fold. -->
+                <div class="panel rsvp-panel rsvp-panel--signin">
+                    <div class="panel-header">
+                        <span class="panel-title">RSVP</span>
+                    </div>
+                    <div class="panel-body rsvp-signin">
+                        <p class="field-hint rsvp-signin-hint">
+                            Members sign up here and get the server details before the muster.
+                        </p>
+                        <a
+                            routerLink="/login"
+                            class="btn btn-primary btn-block"
+                            (click)="rememberReturn()"
+                            >Sign in to RSVP</a
+                        >
+                    </div>
+                </div>
+                } @else {
+                <!-- Signed in, but without rsvp_to_events — an Applicant whose
+                     enlistment is still with the officers. They followed "Sign in
+                     to RSVP" and would otherwise arrive back here to find the
+                     whole panel gone, with nothing saying why. -->
+                <div class="panel rsvp-panel rsvp-panel--signin">
+                    <div class="panel-header">
+                        <span class="panel-title">RSVP</span>
+                    </div>
+                    <div class="panel-body rsvp-signin">
+                        <p class="field-hint rsvp-signin-hint">
+                            Signing up for musters opens once you are on the roster.
+                        </p>
+                        <a routerLink="/onboarding/status" class="btn btn-secondary btn-block"
+                            >Check my application</a
+                        >
+                    </div>
+                </div>
+                }
+
+                <!-- Roll-up. Turnout is member-only on the wire now, so this panel
+                     exists only where the tallies actually arrived — never as three
+                     zeroes standing in for fields that were not sent. -->
+                @if (rsvpCounts; as counts) {
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Roll-up</span>
+                    </div>
+                    <div class="panel-body rollup">
+                        <div class="rollup-row">
+                            <span class="rollup-label">Interested</span>
+                            <span class="rollup-count ok">{{ counts.interested }}</span>
+                        </div>
+                        <div class="rollup-row">
+                            <span class="rollup-label">Tentative</span>
+                            <span class="rollup-count warn">{{ counts.tentative }}</span>
+                        </div>
+                        <div class="rollup-row">
+                            <span class="rollup-label">Declined</span>
+                            <span class="rollup-count err">{{ counts.declined }}</span>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Moderator actions (moderator+; each confirms before acting) -->
+                @if (can('manage_events')) {
+                <div class="panel mod-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Moderator actions</span>
+                    </div>
+                    <div class="panel-body event-actions">
+                        <!-- Authoring stayed in the staff console when browsing
+                             went public (T-0287). -->
+                        <a
+                            [routerLink]="['/app/events', event.id, 'edit']"
+                            class="btn btn-ghost btn-sm btn-block"
+                        >
+                            Edit event
+                        </a>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="toggleArchive()"
+                        >
+                            {{ event.isArchived ? 'Unarchive' : 'Archive' }}
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="complete()"
+                        >
+                            Mark complete
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="remove()"
+                        >
+                            Delete
+                        </button>
+                        @if (isSeries) {
+                        <button
+                            type="button"
+                            class="btn btn-destructive btn-sm btn-block"
+                            [disabled]="working"
+                            (click)="removeSeries()"
+                        >
+                            Delete all recurring events
+                        </button>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    } @else {
+    <div class="empty event-state">
+        <div class="e-title">This event is not available</div>
+        <div class="e-body">
+            It may have been removed or archived, or the orders board could not be reached.
+        </div>
+        <div class="event-state-actions">
+            @if (eventId) {
+            <button type="button" class="btn btn-secondary btn-sm" (click)="retry()">
+                Try again
+            </button>
+            }
+            <a routerLink="/events" class="btn btn-ghost btn-sm">All events</a>
+        </div>
+    </div>
+    }
+</div>

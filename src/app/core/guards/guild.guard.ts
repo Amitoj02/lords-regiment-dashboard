@@ -5,12 +5,18 @@ import { AuthService } from '../services/auth.service';
 
 /**
  * The URLs a gated user may still reach inside `/app` (CONTRACT decision #4).
- * `/app/account-deletion` is not a courtesy: Discord's Developer ToS requires the
- * account-deletion path to stay reachable, and a gate that hid it would put the
- * regiment in breach. `/app/profile` is the user's own record — matched exactly,
- * so `/app/profile/:id` (somebody else's) stays gated.
+ *
+ * EMPTY SINCE T-0287, and deliberately kept rather than deleted. It used to hold
+ * `/app/profile` and `/app/account-deletion`; both moved OUT of `/app` to `/me`
+ * and `/account/deletion`, which live in the public tree where this guard never
+ * runs at all. So the two exemptions still hold — more strongly than before —
+ * they are simply no longer this guard's business.
+ *
+ * The account-deletion one in particular is not a courtesy: Discord's Developer
+ * ToS requires that path to stay reachable, and a gate that hid it would put the
+ * regiment in breach. If anything is ever moved back under `/app`, check here.
  */
-const GATE_ALLOWED_URLS = ['/app/profile', '/app/account-deletion'];
+export const GATE_ALLOWED_URLS: string[] = [];
 
 /**
  * Longest a navigation may wait on the guild re-check. Past it we decide on the

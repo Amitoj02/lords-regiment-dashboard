@@ -6,7 +6,7 @@ import {
     inject,
     ChangeDetectionStrategy,
 } from '@angular/core';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 
 interface BottomNavItem {
     label: string;
@@ -15,12 +15,40 @@ interface BottomNavItem {
     /** Router URL to navigate to. Must resolve to a real configured route. */
     route: string;
     icon: string;
+    /** Capability required to see the tab; absent = every staff viewer gets it. */
+    capability?: string;
 }
 
 /**
- * Mobile bottom navigation bar. Mirrors the `.bnav` pattern from
- * design-reference/screens-mobile.jsx. Hidden above the mobile breakpoint
- * via CSS; visible only on phones/small tablets where the sidebar collapses.
+ * Declared at module scope so the object identities never change: `items` hands
+ * back a filtered slice of this list and the template tracks by identity.
+ */
+const BOTTOM_NAV_ITEMS: readonly BottomNavItem[] = [
+    { label: 'Overview', key: 'overview', route: '/app/overview', icon: 'home' },
+    {
+        label: 'Applications',
+        key: 'apps',
+        route: '/app/applications',
+        icon: 'scroll',
+        capability: 'manage_applications',
+    },
+    {
+        label: 'Queue',
+        key: 'gallery',
+        route: '/app/gallery/moderation',
+        icon: 'image',
+        capability: 'moderate_gallery',
+    },
+];
+
+/**
+ * Mobile bottom navigation bar for the STAFF console. Mirrors the `.bnav`
+ * pattern from design-reference/screens-mobile.jsx. Hidden above the mobile
+ * breakpoint via CSS; visible only on phones/small tablets where the sidebar
+ * collapses.
+ *
+ * The old Board/Roster/Me trio is gone (T-0287): two thirds of it were public
+ * pages, and `/app` is staff-only now.
  */
 @Component({
     standalone: false,
@@ -36,25 +64,26 @@ export class BottomNavComponent {
 
     @Output() navigate = new EventEmitter<string>();
 
-    // Memoized so the array identity stays stable across change-detection cycles
-    // (the template tracks items by object identity) — it only rebuilds when the
-    // signed-in uid changes, which repoints the "Me" tab at the user's own profile.
-    private cachedUid: string | null | undefined;
+    // Memoized so the array identity stays stable across change-detection
+    // cycles. Keyed on the whole session object rather than the uid, because the
+    // tabs now depend on capabilities — which a permission change can alter
+    // without the uid moving.
+    private cachedUser: CurrentUser | null | undefined;
     private cachedItems: BottomNavItem[] = [];
 
-    // Events/Gallery are MVP-deferred (T-0026); omitted until wired.
+    /**
+     * The tabs this viewer can actually open. `staffGuard` admits anyone holding
+     * ANY one staff capability, so a Moderator with only `moderate_gallery`
+     * would otherwise get an Applications tab that bounces them straight back.
+     */
     get items(): BottomNavItem[] {
-        const uid = this.auth.currentUser()?.id ?? null;
-        if (uid !== this.cachedUid) {
-            this.cachedUid = uid;
-            // "Me" routes to the signed-in member's own profile (T-0139); falls
-            // back to the id-less alias until the user has hydrated.
-            const profileRoute = uid ? `/app/profile/${uid}` : '/app/profile';
-            this.cachedItems = [
-                { label: 'Board', key: 'dashboard', route: '/app/dashboard', icon: 'home' },
-                { label: 'Roster', key: 'roster', route: '/app/roster', icon: 'users' },
-                { label: 'Me', key: 'profile', route: profileRoute, icon: 'profile' },
-            ];
+        const user = this.auth.currentUser();
+        if (user !== this.cachedUser) {
+            this.cachedUser = user;
+            const capabilities = user?.capabilities ?? [];
+            this.cachedItems = BOTTOM_NAV_ITEMS.filter(
+                (item) => !item.capability || capabilities.includes(item.capability),
+            );
         }
         return this.cachedItems;
     }

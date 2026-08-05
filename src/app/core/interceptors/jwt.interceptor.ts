@@ -23,8 +23,19 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
         catchError((error: HttpErrorResponse) => {
             if (error.status === 401 && isApi) {
                 auth.handleUnauthorized();
-                // Don't redirect on the /auth/me probe (hydration handles it) to
-                // avoid bouncing a public visitor to /login.
+                // Only bounce to /login from INSIDE the dashboard (T-0287).
+                //
+                // This used to redirect on every 401 except the /auth/me probe,
+                // which was safe while every page behind a session was under
+                // /app. It is not safe now: the roster, profiles, events and the
+                // gallery are public pages that a signed-out visitor reads
+                // normally, and any one stale-token call from them would have
+                // ejected an anonymous reader to a sign-in form they never asked
+                // for. Dropping the session (above) is still right everywhere —
+                // it is the NAVIGATION that has to be scoped.
+                if (!router.url.startsWith('/app')) {
+                    return throwError(() => error);
+                }
                 if (!req.url.endsWith('/auth/me')) {
                     void router.navigateByUrl('/login');
                 }

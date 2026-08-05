@@ -19,6 +19,11 @@ import { BottomNavComponent } from './components/bottom-nav/bottom-nav.component
 import { ComingSoonComponent } from './components/coming-soon/coming-soon.component';
 import { GalleryCardComponent } from './components/gallery-card/gallery-card.component';
 import { ToastComponent } from './components/toast/toast.component';
+// Moved out of the (deleted) MemberModule so the PUBLIC profile and roster can
+// still open it for a staff viewer (T-0287). It is the one piece of admin UI
+// that legitimately lives on a public page — gated, per action, by the server's
+// own `permittedActions` block.
+import { AdminActionModalComponent } from './components/admin-action-modal/admin-action-modal.component';
 
 const SHARED_COMPONENTS = [
     AvatarComponent,
@@ -37,6 +42,7 @@ const SHARED_COMPONENTS = [
     ComingSoonComponent,
     GalleryCardComponent,
     ToastComponent,
+    AdminActionModalComponent,
 ];
 
 @NgModule({

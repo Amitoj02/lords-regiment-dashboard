@@ -16,9 +16,7 @@
                 >
                     {{ includeArchived ? 'Hide archived' : 'View archived' }}
                 </button>
-                <a routerLink="/app/dashboard/events/create" class="btn btn-primary btn-sm"
-                    >+ New event</a
-                >
+                <a routerLink="/app/events/create" class="btn btn-primary btn-sm">+ New event</a>
             </div>
             }
         </div>
@@ -68,9 +66,13 @@
                                     <hf-event-status [status]="event.status"></hf-event-status>
                                 </td>
                                 <td>{{ totalRsvps(event) }}</td>
+                                <!-- There is no staff-only event page any more
+                                     (T-0287) — the detail view is public, and it
+                                     is where the Edit action lives for whoever
+                                     holds manage_events. -->
                                 <td class="col-action">
                                     <a
-                                        [routerLink]="['/app/dashboard/events', event.id]"
+                                        [routerLink]="['/events', event.id]"
                                         class="btn btn-ghost btn-sm"
                                         >Manage</a
                                     >

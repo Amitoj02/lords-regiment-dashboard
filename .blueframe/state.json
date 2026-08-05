@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "618f038b30ca49f27111eb9707abbe803bf39cbf",
-  "lastSyncedAt": "2026-07-29T22:20:00Z",
-  "notesForNextSession": "T-0286 is the live thread, paired with lords-dashboard-backend T-0212 \u2014 feat/medal-precedence-ordering in both repos. Medals now render in cabinet order on the roster, the profile and the dashboard, and the profile's Honours & Decorations panel shows the medal's CATALOGUE description (the /admin/ranks text) instead of the per-award citation, vertically centred against its tile. Three things to know: (1) NOTHING on the client sorts medals and `precedence` is deliberately absent from MemberMedalAward \u2014 the server decides the order once and four render sites (roster, profile, dashboard, admin dialog chips) inherit it; adding a client sort is the regression to watch for. (2) `mapMedalAward` in api.model.ts is a WHITELIST copy \u2014 a new backend field vanishes there with no type error, which is exactly what a members.service spec now pins. (3) `description` and `detail` both live on MemberMedalAward and both sound like 'the description'; `detail` is the citation and is rendered nowhere in the app now. profile.component.scss was already over its 6 kB style budget before this change (a pre-existing warning, now ~492 bytes over) \u2014 trim it before anything substantial lands there. Still open from last session: T-0285's note that profile.component.spec has no admin-action coverage, so the modal's second mount point is still verified only through the roster.",
-  "nextIdCounter": 287,
+  "lastSyncedCommit": "3b7d056bc0123328d99a5e0542a5c42829ea65ed",
+  "lastSyncedAt": "2026-08-04T23:55:00Z",
+  "notesForNextSession": "T-0288 (design-sync) is deployed: the design-reference React kit is live in the claude.ai/design project \"Lords Regiment\" (cedcda48-26c7-4a4c-ba22-cabd49522908). Re-sync is one command \u2014 see .design-sync/NOTES.md, which carries the non-obvious pins (React 18.3.1 for the UMD vendor path, playwright 1.61.0 to match the cached chromium 1228, --node-modules must be ./.ds-sync/node_modules, srcDir must stay design-reference or the converter scans the Angular app). Read its \"Re-sync risks\" section before touching design-reference/components.jsx: the prop contracts there are hand-written and cannot rot loudly.\n\nT-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. All four viewer states (guest, ordinary member, staff, identity-only applicant) have now been walked in a browser, and profile / event detail / account / events / gallery were checked at 390px with no horizontal scroll on any. What is NOT done is listed in skippedByClaude \u2014 the biggest is that a member still cannot see their own PENDING gallery submission anywhere. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
+  "nextIdCounter": 289,
   "connections": [],
   "tasks": [
     {
@@ -18847,6 +18847,231 @@
           "to": "review",
           "by": "claude",
           "note": "cabinet-order medals + catalogue description + centred Honours rows; PR into dev. PRs open into dev: this repo #60, backend [lords-dashboard-backend #70](https://github.com/Amitoj02/lords-dashboard-backend/pull/70). Merge the backend FIRST \u2014 the Honours panel renders a blank description until the API sends it."
+        }
+      ]
+    },
+    {
+      "id": "T-0287",
+      "title": "Split the site: public roster/profiles/events/gallery, staff-only dashboard",
+      "summary": "Moved everything a visitor or ordinary member uses out of /app to the root as indexable public pages (roster, /u/:handle profiles, events + RSVP, gallery + submit, account settings), left /app as a staff-only console gated on capabilities, replaced the soft-404 wildcard with a real 404, added SeoService + robots.txt, and built the account page hosting the new vanity handle.",
+      "status": "review",
+      "type": "feature",
+      "size": "XL",
+      "sizeWeight": 8,
+      "area": "public",
+      "feature": "public-site",
+      "subfeature": "roster-and-profiles",
+      "repo": "",
+      "paths": [
+        "src/app/app-routing.module.ts",
+        "src/app/features/public/",
+        "src/app/features/admin/admin.module.ts",
+        "src/app/core/guards/staff.guard.ts",
+        "src/app/core/services/seo.service.ts",
+        "src/app/core/services/public-members.service.ts",
+        "src/app/core/models/public-member.model.ts",
+        "public/robots.txt"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0215"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "roster: anonymous render hides Last Seen/Status; signed-in shows them",
+          "status": "passed"
+        },
+        {
+          "desc": "roster: server-side paging, debounced search, real anchors per row",
+          "status": "passed"
+        },
+        {
+          "desc": "profile: short-id URL canonicalises to /u/@handle with replaceUrl",
+          "status": "passed"
+        },
+        {
+          "desc": "account: availability probe reasons, invalid blocks save, 409 surfaces",
+          "status": "passed"
+        },
+        {
+          "desc": "guards: staffGuard, authGuard return-URL capture, interceptor scoped to /app",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER, guest: home hero stats, roster, profile, locked tabs, gallery, login, 404",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER, ordinary member: nav CTAs, own profile, /account, handle claim end to end",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: handle rename writes the cooldown reservation and the old URL 404s",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: 390px pass on home + roster (nav drawer, table-to-cards)",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER as staff: /app reachable, capability-gated sidebar, admin modal from the PUBLIC roster",
+          "status": "passed"
+        },
+        {
+          "desc": "390px pass on profile, event detail, account, events list and gallery \u2014 no horizontal scroll on any",
+          "status": "passed"
+        },
+        {
+          "desc": "Applicant (identity-only): locked tabs stay locked, no signed-in roster columns, /account explains itself",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "jwtInterceptor no longer navigates to /login on a 401 outside /app. It still drops the session, but a stale-token 401 raised by a page under /app that somehow escapes the check would now fail silently instead of bouncing to sign-in.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "MemberModule was deleted and its components redistributed across PublicModule/AdminModule/SharedModule. Any deep import of features/member/* from outside the repo (or a stale branch) breaks.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "AdminActionModalComponent moved into SharedModule, so it is now in every lazy chunk that imports SharedModule rather than only the member one. Bundle impact is small but it is loaded on public pages.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "The public EventDto lost rsvpCounts/attendeesCount/expectedAttendance/attendanceGoal. Templates must render those only when signed in; a missed one shows a blank or 0 to anonymous readers.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "anyComponentStyle budget raised 6kB -> 8kB (warning) / 8 -> 10kB (error) for the profile page. It now hides genuine style growth up to the new ceiling.",
+          "status": "open",
+          "notedAt": "2026-08-04T22:10:00Z"
+        },
+        {
+          "desc": "PublicLayoutComponent shipped as OnPush and froze change detection for the entire public tree \u2014 every page rendered once with its pre-fetch state. Fixed, but the same trap exists for any future layout route, and nothing in the build or the test suite catches it (the specs instantiate pages directly, without the layout).",
+          "status": "resolved",
+          "notedAt": "2026-08-04T22:50:00Z",
+          "resolvedAt": "2026-08-04T22:50:00Z",
+          "resolvedBy": "claude",
+          "note": "Fixed in the same session; the file carries a comment explaining why it must stay Eager. A guard test would need a layout-route integration spec, which does not exist yet."
+        }
+      ],
+      "skippedByClaude": [
+        "hf-app-shell is still hand-pasted into every admin template rather than becoming a layout route. Only the public tree got PublicLayoutComponent. Converting the dashboard too would have meant touching every admin template inside a routing rewrite, for a much smaller win now that /app is a handful of screens.",
+        "The global Bootstrap .row gutter reset was written and then BACKED OUT: pages laid out against the -12px leak shift the moment it is removed, and re-tuning them does not belong in a routing change. _base.scss carries a comment explaining this; roster and profile keep their local patches.",
+        "No return-URL round trip for the guild gate + auth guard combined \u2014 they still stash separately, so a gated user who was also anonymous replays only one of the two.",
+        "Did not add a 'my submissions' view. A member still cannot see their own PENDING gallery item anywhere; the submit-success toast remains the only acknowledgement.",
+        "No visual regression screenshots were captured. The mobile passes are reasoned from the SCSS breakpoints, not observed in a browser.",
+        "Still no 'my submissions' view \u2014 after submitting, a member cannot see their own PENDING gallery item anywhere. The design review flagged it as high severity; it needs either a by-author endpoint that includes non-approved items for the author, or a 'Mine' tab, and both are new feature work rather than a fix to this change.",
+        "openRecruitment is not surfaced: the hero, footer and login page all invite an application even when the regiment has recruitment closed, and the API only refuses at submit time. Needs the flag on RegimentProfileDto first.",
+        "The nav brand and footer hard-code 'Lord Regiment' while the hero renders the admin-configured regiment name, so an install named anything else shows two names at once. Pre-existing, and a wider change than this task.",
+        "The roster's signed-in enrichment is still one MembersService.getAll() capped at ?limit=100, so past 100 members a staff viewer loses the row actions and the Status/Last Seen cells on later pages.",
+        "Service Record entries still print the backend's raw enum as a tag (ROLE, AWARD, ENLISTMENT), and two are actively misleading \u2014 a medal REMOVAL is typed 'award'."
+      ],
+      "lastTouchedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
+      "createdAt": "2026-08-04T22:10:00Z",
+      "updatedAt": "2026-08-04T23:05:00Z",
+      "history": [
+        {
+          "at": "2026-08-04T22:10:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "shipped on feat/public-site-redesign; 733 unit tests, production build, eslint and prettier all green"
+        }
+      ]
+    },
+    {
+      "id": "T-0288",
+      "title": "Sync the design-reference React kit to Claude Design",
+      "summary": "Imported the 17 primitives in design-reference/components.jsx into the claude.ai/design project \"Lords Regiment\" so the design agent builds with the same parts the Angular hf-* components port. Added a thin re-export adapter (.design-sync/entry/index.jsx) rather than reimplementing anything, hand-written prop contracts (the kit has no TypeScript, so cfg.dtsPropsFor IS the API the agent codes against), a validated conventions header, 17 authored preview cards, and the three brand faces vendored as OFL variable woff2s. Also fixed Crest, which rendered a relative assets/ path that only resolved on a page served from design-reference/.",
+      "status": "deployed",
+      "type": "chore",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "platform",
+      "feature": "design-system-sync",
+      "subfeature": "claude-design-export",
+      "repo": "",
+      "paths": [
+        ".design-sync/config.json",
+        ".design-sync/conventions.md",
+        ".design-sync/NOTES.md",
+        ".design-sync/entry/index.jsx",
+        ".design-sync/previews/",
+        ".design-sync/fonts/",
+        "design-reference/components.jsx",
+        ".gitignore"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "package-validate.mjs exits 0; render check 17/17 clean, 0 bad/thin/blank/grid-overflow",
+          "status": "passed"
+        },
+        {
+          "desc": "window.LordsRegiment exposes 60 exports (17 components + 43 Icon<Name> aliases)",
+          "status": "passed"
+        },
+        {
+          "desc": "every conventions.md class and token verifies against the built _ds_bundle.css (69 classes)",
+          "status": "passed"
+        },
+        {
+          "desc": "all 17 preview cards captured and graded good on the absolute rubric",
+          "status": "passed"
+        },
+        {
+          "desc": "Crest renders crisply at 20/34/48/60px from the inlined data URI",
+          "status": "passed"
+        },
+        {
+          "desc": "kit page design-reference/Holdfast Command.html still renders Crest after the data-URI change",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "cfg.dtsPropsFor in .design-sync/config.json is the ONLY source of the prop contracts the design agent codes against, and there is no TypeScript in the kit to check it. If a component signature changes in design-reference/components.jsx the emitted .d.ts keeps describing the old one, with no error anywhere.",
+          "status": "open",
+          "notedAt": "2026-08-04T23:55:00Z"
+        },
+        {
+          "desc": "The entry adapter export list (17 components plus 43 icon names) is hand-maintained. A component or icon added to the kit stays invisible to Claude Design until it is added to .design-sync/entry/index.jsx and componentSrcMap.",
+          "status": "open",
+          "notedAt": "2026-08-04T23:55:00Z"
+        },
+        {
+          "desc": "design-reference/components.jsx Crest now depends on the inlined CREST_SRC data URI. Reverting that hunk or swapping the logo asset silently returns the crest to a path that only resolves inside design-reference/.",
+          "status": "open",
+          "notedAt": "2026-08-04T23:55:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "The 21 screen compositions in design-reference/screens-*.jsx were left out \u2014 scope was primitives only. They are zero-prop templates with hardcoded demo data, and they still reference relative assets/bg-1.jpg and assets/banner.png, which must be solved the way Crest was before they can sync.",
+        "The Angular components in src/app/shared/components/ are NOT synced and cannot be: Claude Design renders React. Porting them to React would be a reimplementation, which the sync process explicitly forbids.",
+        "Hover, focus and drag states are absent from every preview card \u2014 they do not render statically.",
+        "Fonts are the latin subset only, so non-latin member names fall back to a system face.",
+        "OFL.txt has to be copied into ds-bundle/fonts/ by hand after each build; the converter does not carry it and a rebuild wipes the output dir."
+      ],
+      "lastTouchedCommit": "3b7d056bc0123328d99a5e0542a5c42829ea65ed",
+      "createdAt": "2026-08-04T23:55:00Z",
+      "updatedAt": "2026-08-04T23:55:00Z",
+      "history": [
+        {
+          "at": "2026-08-04T23:55:00Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "17 components uploaded to claude.ai/design project cedcda48-26c7-4a4c-ba22-cabd49522908; validate exits 0, all previews graded good"
         }
       ]
     }

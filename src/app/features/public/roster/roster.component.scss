@@ -1,0 +1,350 @@
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+// ───────── Page head ─────────
+.roster-page-head {
+    align-items: flex-start;
+}
+
+.roster-roll-call {
+    margin-bottom: 4px;
+}
+
+.roster-head-actions {
+    gap: 12px;
+    padding-top: 8px;
+}
+
+// ───────── Filter bar controls ─────────
+.roster-search {
+    max-width: 320px;
+}
+
+.roster-filter-rank {
+    width: 160px;
+}
+
+// The member count moved into the page head beside the export button: on a
+// public page it reads as a fact about the regiment rather than as a filter
+// result, and the filter bar no longer reports one because paging is server-side.
+.roster-total {
+    font-size: 13px;
+    color: var(--t-400);
+    font-variant-numeric: tabular-nums;
+}
+
+.roster-lede {
+    max-width: 52ch;
+}
+
+// ───────── Loading / error / empty ─────────
+// All three render inside the panel, so the page never collapses to nothing
+// while a fetch is in flight and the three states never look like each other.
+.roster-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 44px 20px;
+    color: var(--t-400);
+    font-size: 13px;
+}
+
+.roster-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--rule-3);
+    border-top-color: var(--brass-500);
+    border-radius: 50%;
+    animation: roster-spin 0.8s linear infinite;
+}
+
+@keyframes roster-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .roster-spinner {
+        animation: none;
+        border-top-color: var(--rule-3);
+    }
+}
+
+// `.empty` ships a dashed border and its own radius; inside the panel that
+// draws a second box around the first.
+.roster-state {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+}
+
+.roster-state-action {
+    margin-top: 14px;
+}
+
+// A refresh failed with rows still on screen — the warning sits above the
+// stale table rather than replacing it.
+.roster-error {
+    align-items: center;
+    margin-bottom: 12px;
+
+    .n-content {
+        flex: 1;
+    }
+}
+
+// ───────── Table ─────────
+.roster-panel {
+    overflow: hidden;
+    margin-top: 0;
+}
+
+.roster-table {
+    width: 100%;
+}
+
+.roster-th-actions {
+    width: 48px;
+}
+
+// Paging keeps the previous page up while the next one is in flight; dimming it
+// is what says "this is about to change" without the table disappearing.
+.table-scroll.is-refreshing {
+    opacity: 0.55;
+    transition: opacity 120ms ease-out;
+}
+
+// Whole rows are clickable → the member's profile. The real link lives in the
+// member cell (a crawler cannot follow a click handler); this is a convenience
+// for mouse users on the rest of the row.
+.roster-row {
+    cursor: pointer;
+}
+
+// The anchor is the whole nameplate — avatar, name, handle and (signed in) the
+// Discord tag. Its own flex box rather than the global `.row`, which carries
+// Bootstrap grid's negative margins (see the mobile note below).
+.roster-member-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover .roster-member-name {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    // Keyboard users reach the profile through this anchor and nothing else, so
+    // its focus ring is the page's only visible navigation affordance.
+    &:focus-visible {
+        outline: 2px solid var(--brass-500);
+        outline-offset: 3px;
+        border-radius: var(--r-1);
+    }
+}
+
+.roster-member-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.roster-member-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--t-100);
+}
+
+// The vanity handle. Public, and the thing a search for "Holdfast panda" is
+// actually looking for, so it sits directly under the name.
+.roster-member-handle {
+    font-size: 11px;
+    color: var(--brass-300);
+}
+
+// The Discord tag is signed-in only — it resolves an in-game handle to a real,
+// DM-able account — so this only ever renders for an authenticated viewer.
+.roster-member-tag {
+    font-size: 11px;
+    color: var(--t-400);
+}
+
+.roster-rank-cell {
+    gap: 6px;
+    align-items: center;
+}
+
+.roster-rank-label {
+    font-size: 12px;
+    color: var(--t-300);
+}
+
+.roster-medals-cell {
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.roster-medal-empty {
+    color: var(--t-500);
+    font-size: 12px;
+}
+
+.roster-lastseen,
+.roster-joined,
+.roster-events {
+    font-size: 12px;
+    color: var(--t-400);
+}
+
+.roster-events {
+    font-variant-numeric: tabular-nums;
+}
+
+// ───────── Pagination ─────────
+.roster-page-summary {
+    font-size: 13px;
+    color: var(--t-400);
+    font-variant-numeric: tabular-nums;
+}
+
+.roster-page-controls {
+    gap: 6px;
+}
+
+.roster-page-num {
+    min-width: 110px;
+    // Not a button: it reports position, it does not navigate. Styled as one so
+    // the control group reads as a unit.
+    cursor: default;
+    pointer-events: none;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-top: 1px solid var(--rule);
+    margin-top: 0;
+}
+
+// ───────── Mobile: roster table → cards (ref: MobileMembers) ─────────
+@media (max-width: 820px) {
+    // Cancel the global horizontal-scroll min-width; we go to cards instead
+    .table-scroll .hf-table {
+        min-width: 0;
+    }
+
+    .hf-table {
+        display: block;
+
+        thead {
+            display: none;
+        }
+        tbody {
+            display: block;
+        }
+
+        tr {
+            display: block;
+            background: var(--ink-800);
+            border: 1px solid var(--rule-2);
+            border-radius: var(--r-2);
+            padding: 12px 14px;
+            margin-bottom: 8px;
+        }
+
+        td {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 5px 0;
+            border: none;
+
+            &[data-label]::before {
+                content: attr(data-label);
+                color: var(--t-500);
+                font-size: 10.5px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                flex: none;
+            }
+        }
+
+        // Member cell becomes the card header (no label, full width)
+        td.col-member {
+            padding-bottom: 10px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid var(--rule);
+            justify-content: flex-start;
+        }
+
+        // The nameplate is an anchor now, so it must fill the header rather than
+        // shrink to its text — otherwise only the name is tappable and the rest
+        // of the header falls through to the row handler, which feels broken.
+        .roster-member-link {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        // ── Cancel Bootstrap's grid gutters on the two `.row` cells (T-0279) ──
+        //
+        // Every `td` in the card has `padding: 5px 0`, so the 14px inset comes
+        // from the `tr` alone and all the rows share one content box. Role,
+        // Status, Joined, Events and Last Seen hold a BARE span and therefore sit
+        // flush inside it — correct. The Rank and Medals cells wrap their
+        // contents in `<div class="row">`, and the app inherits Bootstrap grid's
+        // `margin-inline: -12px` on that class (the app's own `.row` rule
+        // overrides `flex-wrap` but never the margins).
+        //
+        // The 12px therefore escapes the card's inset: both are the last item in
+        // a `space-between` row, so their border boxes overhang 12px to the
+        // RIGHT — 2px from the card border, against the Role/Status badges
+        // ending correctly at the inset. Zeroing both sides aligns them all.
+        //
+        // The header no longer needs this: the nameplate became an anchor with
+        // its own flex box instead of a `.row`, so it never inherited the leak.
+        //
+        // Scoped to the card breakpoint on purpose: the same leak exists in the
+        // desktop TABLE, but there the columns read as intended and this change
+        // is not licence to shift them.
+        .roster-rank-cell,
+        .roster-medals-cell {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        // Drop the row-actions menu on mobile (the whole card is tappable)
+        td.col-actions {
+            display: none;
+        }
+    }
+
+    .roster-error {
+        flex-wrap: wrap;
+    }
+
+    .pagination-bar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        text-align: center;
+    }
+}

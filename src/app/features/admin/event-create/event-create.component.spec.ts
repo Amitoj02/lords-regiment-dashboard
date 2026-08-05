@@ -59,6 +59,7 @@ describe('EventCreateComponent', () => {
     let fixture: ComponentFixture<EventCreateComponent>;
     let component: EventCreateComponent;
     let eventsService: jasmine.SpyObj<EventsService>;
+    let router: { navigate: jasmine.Spy };
 
     /** The zone the specs pretend the ADMIN's browser is in (see events.service.spec). */
     let viewerZone = 'UTC';
@@ -92,6 +93,7 @@ describe('EventCreateComponent', () => {
             'upload',
         ]);
         storage.getPolicy.and.returnValue(of(DEFAULT_STORAGE_POLICY));
+        router = { navigate: jasmine.createSpy('navigate') };
 
         TestBed.configureTestingModule({
             imports: [CommonModule, FormsModule, ReactiveFormsModule],
@@ -100,7 +102,7 @@ describe('EventCreateComponent', () => {
                 { provide: EventsService, useValue: eventsService },
                 { provide: AuthService, useValue: auth },
                 { provide: StorageService, useValue: storage },
-                { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
+                { provide: Router, useValue: router },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -179,5 +181,14 @@ describe('EventCreateComponent', () => {
         expect(eventsService.update).not.toHaveBeenCalled();
         // The zone the admin picked rides along so the service can resolve it.
         expect(eventsService.create.calls.mostRecent().args[0].timezone).toBe('America/New_York');
+    });
+
+    // T-0287: authoring stayed under /app, the detail page did not — a save that
+    // still redirected into the console would land on a route that is gone.
+    it('reads a saved event back at its PUBLIC detail URL', () => {
+        setup(null);
+        component.form.patchValue({ title: 'Drill', date: '2026-08-01' });
+        component.save();
+        expect(router.navigate).toHaveBeenCalledWith(['/events', 'ev1']);
     });
 });

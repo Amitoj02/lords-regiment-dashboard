@@ -26,13 +26,11 @@ describe('submitGalleryGuard', () => {
         expect(result).toBe(true);
     });
 
-    it('redirects a caller lacking submit_to_gallery (e.g. a mercenary) to /app/dashboard', () => {
+    it('redirects a caller lacking submit_to_gallery (e.g. a mercenary) to /gallery', () => {
         const result = runGuard({ isAuthenticated: () => true, hasCapability: () => false });
         const router = TestBed.inject(Router);
         expect(result).not.toBe(true);
-        expect(router.serializeUrl(result as ReturnType<Router['createUrlTree']>)).toBe(
-            '/app/dashboard',
-        );
+        expect(router.serializeUrl(result as ReturnType<Router['createUrlTree']>)).toBe('/gallery');
     });
 
     it('redirects an anonymous caller', () => {

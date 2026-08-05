@@ -1,181 +1,181 @@
-<div class="landing-page">
-    <hf-public-nav [activeLink]="'/'"></hf-public-nav>
+<!-- Hero Section. Background and scrim come from the admin presentation
+     (T-0238) and fall back to the shipped image/density — `--hero-scrim` is
+     a custom property so the ::before layer inherits it too. -->
+<section
+    class="hero"
+    [style.background-image]="'url(' + heroBannerUrl + ')'"
+    [style.--hero-scrim]="heroScrim"
+>
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+        <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
+        <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
+        <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
+        <p class="hero-sub">{{ missionStatement }}</p>
 
-    <!-- Hero Section. Background and scrim come from the admin presentation
-         (T-0238) and fall back to the shipped image/density — `--hero-scrim` is
-         a custom property so the ::before layer inherits it too. -->
-    <section
-        class="hero"
-        [style.background-image]="'url(' + heroBannerUrl + ')'"
-        [style.--hero-scrim]="heroScrim"
-    >
-        <div class="hero-overlay"></div>
-        <div class="hero-inner">
-            <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
-            <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
-            <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
-            <p class="hero-sub">{{ missionStatement }}</p>
-
-            @if (statsVisible) {
-            <div class="hero-stats">
-                @if (establishedLabel) {
-                <div class="hero-stat">
-                    <div class="hero-stat-value serif">{{ establishedLabel }}</div>
-                    <div class="hero-stat-label">Since Established</div>
-                </div>
-                }
-                <div class="hero-stat">
-                    <div class="hero-stat-value serif">{{ memberCount }}</div>
-                    <div class="hero-stat-label">Members</div>
-                </div>
+        @if (statsVisible) {
+        <div class="hero-stats">
+            @if (establishedLabel) {
+            <div class="hero-stat">
+                <div class="hero-stat-value serif">{{ establishedLabel }}</div>
+                <div class="hero-stat-label">Since Established</div>
             </div>
             }
-
-            <div class="row gap-12 hero-actions">
-                <button type="button" (click)="applyToJoin()" class="btn btn-primary btn-lg">
-                    {{ applyLabel }}
-                </button>
-                <a routerLink="/events" class="btn btn-ghost btn-lg">View Orders</a>
+            <div class="hero-stat">
+                <div class="hero-stat-value serif">{{ memberCount }}</div>
+                <div class="hero-stat-label">Members</div>
             </div>
         </div>
-    </section>
+        }
 
-    <!-- Main Content -->
-    <div class="landing-content">
-        <div class="landing-grid">
-            <!-- Left Column -->
-            <div class="landing-main">
-                <!-- Upcoming Orders -->
-                <section class="panel">
-                    <div class="panel-header between">
-                        <span class="panel-title serif">Upcoming Orders</span>
-                        <a routerLink="/events" class="btn btn-ghost btn-sm">View all →</a>
-                    </div>
-                    <div class="panel-body panel-body-flush">
-                        @for (event of upcomingEvents; track event) {
-                        <div class="event-row">
-                            <div class="event-date-col">
-                                <div class="event-day serif">{{ event.date | date:'d' }}</div>
-                                <div class="event-month">{{ event.date | date:'MMM' }}</div>
-                            </div>
-                            <div class="event-details">
-                                <div class="event-title">{{ event.title }}</div>
-                                <!-- Times are the viewer's own clock (T-0237), and the
-                                     Server field is omitted entirely — divider and
-                                     all — when the event has no server bound
-                                     (T-0236). -->
-                                <div class="event-meta row gap-8">
-                                    <span class="mono event-meta-time">
-                                        {{ eventTimeRange(event) }}
-                                    </span>
-                                    @if (showsServer(event)) {
-                                    <span class="event-meta-divider"></span>
-                                    <span class="mono event-meta-server">
-                                        {{ event.serverName || 'Server details on sign-in' }}
-                                    </span>
-                                    }
-                                </div>
-                                <hf-platform-badges
-                                    [platforms]="event.platforms"
-                                    class="event-platforms"
-                                ></hf-platform-badges>
-                            </div>
-                            <div class="event-actions">
-                                <a routerLink="/events" class="btn btn-secondary btn-sm">Details</a>
-                            </div>
-                        </div>
-                        } @if (upcomingEvents.length === 0) {
-                        <div class="event-empty">No upcoming events scheduled.</div>
-                        }
-                    </div>
-                </section>
-
-                <!-- From the Gallery -->
-                <section class="panel gallery-panel">
-                    <div class="panel-header between">
-                        <span class="panel-title serif">From the Gallery</span>
-                        <a routerLink="/gallery" class="btn btn-ghost btn-sm">Full archive →</a>
-                    </div>
-                    <div class="panel-body">
-                        <div class="gallery-grid">
-                            @for (item of galleryItems; track item) {
-                            <div class="gallery-thumb">
-                                <img [src]="item.previewUrl" [alt]="item.title" />
-                                <div class="gallery-thumb-overlay">
-                                    <span class="gallery-thumb-title">{{ item.title }}</span>
-                                </div>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Right Aside -->
-            <aside class="landing-aside">
-                <!-- Parchment Charter Quote -->
-                <div class="panel parchment charter-panel">
-                    <div class="panel-body">
-                        <div class="rule-ornament charter-ornament-top"></div>
-                        <blockquote class="serif charter-quote">"{{ charterQuote }}"</blockquote>
-                        <div class="rule-ornament charter-ornament-bottom"></div>
-                        <!-- No attribution → no dash. An admin who writes their own
-                             quote and leaves the attribution blank gets a clean
-                             unattributed pull-quote, not a bare "—". -->
-                        @if (charterQuoteAttribution) {
-                        <div class="charter-attribution">
-                            <span class="admin-label charter-attribution-label"
-                                >— {{ charterQuoteAttribution }}</span
-                            >
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Discord Panel -->
-                <div class="panel discord-panel">
-                    <div class="panel-body">
-                        <div class="row gap-12 discord-head">
-                            <div class="discord-icon">
-                                <svg
-                                    width="22"
-                                    height="16"
-                                    viewBox="0 0 22 16"
-                                    fill="none"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M18.59 1.32A18.23 18.23 0 0 0 14.11 0c-.2.35-.43.83-.59 1.2a17 17 0 0 0-5.04 0C8.32.83 8.08.35 7.88 0A18.28 18.28 0 0 0 3.4 1.32C.49 5.55-.3 9.67.09 13.73a18.35 18.35 0 0 0 5.57 2.82c.45-.61.85-1.26 1.2-1.94a11.9 11.9 0 0 1-1.89-.91c.16-.11.31-.23.46-.35a13.1 13.1 0 0 0 11.14 0c.15.12.3.24.46.35-.6.35-1.23.65-1.9.91.35.68.75 1.33 1.2 1.94a18.3 18.3 0 0 0 5.58-2.82c.46-4.76-.78-8.88-3.32-12.41ZM7.35 11.25c-1.08 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.98.99 1.97 2.21c.01 1.22-.86 2.21-1.97 2.21Zm7.29 0c-1.09 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.97.99 1.97 2.21c0 1.22-.87 2.21-1.97 2.21Z"
-                                        fill="#5865F2"
-                                    />
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="discord-title">Join our Discord</div>
-                                <div class="discord-subtitle">Primary communication hub</div>
-                            </div>
-                        </div>
-                        <div class="notice info discord-notice">
-                            Discord is required for all regiment operations — voice comms, orders,
-                            and announcements.
-                        </div>
-                        <!-- Hidden entirely when no invite is configured (T-0234); the
-                             notice above still stands, since Discord is required
-                             either way. -->
-                        @if (discordInviteUrl) {
-                        <a
-                            [href]="discordInviteUrl"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="btn btn-discord btn-block discord-cta"
-                            >Join the Lord Regiment Server</a
-                        >
-                        }
-                    </div>
-                </div>
-            </aside>
+        <!-- `.row` is nowrap, and this is now three buttons wide — on a phone
+             the third would run off the hero rather than drop to a second
+             line. -->
+        <div class="row gap-12 hero-actions" style="flex-wrap: wrap">
+            <button type="button" (click)="applyToJoin()" class="btn btn-primary btn-lg">
+                {{ applyLabel }}
+            </button>
+            <a routerLink="/events" class="btn btn-ghost btn-lg">View Orders</a>
+            <a routerLink="/roster" class="btn btn-ghost btn-lg">Regimental Roster</a>
         </div>
     </div>
+</section>
 
-    <hf-public-footer></hf-public-footer>
+<!-- Main Content -->
+<div class="landing-content">
+    <div class="landing-grid">
+        <!-- Left Column -->
+        <div class="landing-main">
+            <!-- Upcoming Orders -->
+            <section class="panel">
+                <div class="panel-header between">
+                    <span class="panel-title serif">Upcoming Orders</span>
+                    <a routerLink="/events" class="btn btn-ghost btn-sm">View all →</a>
+                </div>
+                <div class="panel-body panel-body-flush">
+                    @for (event of upcomingEvents; track event) {
+                    <div class="event-row">
+                        <div class="event-date-col">
+                            <div class="event-day serif">{{ event.date | date:'d' }}</div>
+                            <div class="event-month">{{ event.date | date:'MMM' }}</div>
+                        </div>
+                        <div class="event-details">
+                            <div class="event-title">{{ event.title }}</div>
+                            <!-- Times are the viewer's own clock (T-0237), and the
+                                 Server field is omitted entirely — divider and
+                                 all — when the event has no server bound
+                                 (T-0236). -->
+                            <div class="event-meta row gap-8">
+                                <span class="mono event-meta-time">
+                                    {{ eventTimeRange(event) }}
+                                </span>
+                                @if (showsServer(event)) {
+                                <span class="event-meta-divider"></span>
+                                <span class="mono event-meta-server">
+                                    {{ event.serverName || 'Server details on sign-in' }}
+                                </span>
+                                }
+                            </div>
+                            <hf-platform-badges
+                                [platforms]="event.platforms"
+                                class="event-platforms"
+                            ></hf-platform-badges>
+                        </div>
+                        <div class="event-actions">
+                            <a [routerLink]="['/events', event.id]" class="btn btn-secondary btn-sm"
+                                >Details</a
+                            >
+                        </div>
+                    </div>
+                    } @if (upcomingEvents.length === 0) {
+                    <div class="event-empty">No upcoming events scheduled.</div>
+                    }
+                </div>
+            </section>
+
+            <!-- From the Gallery -->
+            <section class="panel gallery-panel">
+                <div class="panel-header between">
+                    <span class="panel-title serif">From the Gallery</span>
+                    <a routerLink="/gallery" class="btn btn-ghost btn-sm">Full archive →</a>
+                </div>
+                <div class="panel-body">
+                    <div class="gallery-grid">
+                        @for (item of galleryItems; track item) {
+                        <div class="gallery-thumb">
+                            <img [src]="item.previewUrl" [alt]="item.title" />
+                            <div class="gallery-thumb-overlay">
+                                <span class="gallery-thumb-title">{{ item.title }}</span>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Aside -->
+        <aside class="landing-aside">
+            <!-- Parchment Charter Quote -->
+            <div class="panel parchment charter-panel">
+                <div class="panel-body">
+                    <div class="rule-ornament charter-ornament-top"></div>
+                    <blockquote class="serif charter-quote">"{{ charterQuote }}"</blockquote>
+                    <div class="rule-ornament charter-ornament-bottom"></div>
+                    <!-- No attribution → no dash. An admin who writes their own
+                         quote and leaves the attribution blank gets a clean
+                         unattributed pull-quote, not a bare "—". -->
+                    @if (charterQuoteAttribution) {
+                    <div class="charter-attribution">
+                        <span class="admin-label charter-attribution-label"
+                            >— {{ charterQuoteAttribution }}</span
+                        >
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Discord Panel -->
+            <div class="panel discord-panel">
+                <div class="panel-body">
+                    <div class="row gap-12 discord-head">
+                        <div class="discord-icon">
+                            <svg
+                                width="22"
+                                height="16"
+                                viewBox="0 0 22 16"
+                                fill="none"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M18.59 1.32A18.23 18.23 0 0 0 14.11 0c-.2.35-.43.83-.59 1.2a17 17 0 0 0-5.04 0C8.32.83 8.08.35 7.88 0A18.28 18.28 0 0 0 3.4 1.32C.49 5.55-.3 9.67.09 13.73a18.35 18.35 0 0 0 5.57 2.82c.45-.61.85-1.26 1.2-1.94a11.9 11.9 0 0 1-1.89-.91c.16-.11.31-.23.46-.35a13.1 13.1 0 0 0 11.14 0c.15.12.3.24.46.35-.6.35-1.23.65-1.9.91.35.68.75 1.33 1.2 1.94a18.3 18.3 0 0 0 5.58-2.82c.46-4.76-.78-8.88-3.32-12.41ZM7.35 11.25c-1.08 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.98.99 1.97 2.21c.01 1.22-.86 2.21-1.97 2.21Zm7.29 0c-1.09 0-1.97-.99-1.97-2.21s.87-2.21 1.97-2.21 1.97.99 1.97 2.21c0 1.22-.87 2.21-1.97 2.21Z"
+                                    fill="#5865F2"
+                                />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="discord-title">Join our Discord</div>
+                            <div class="discord-subtitle">Primary communication hub</div>
+                        </div>
+                    </div>
+                    <div class="notice info discord-notice">
+                        Discord is required for all regiment operations — voice comms, orders, and
+                        announcements.
+                    </div>
+                    <!-- Hidden entirely when no invite is configured (T-0234); the
+                         notice above still stands, since Discord is required
+                         either way. -->
+                    @if (discordInviteUrl) {
+                    <a
+                        [href]="discordInviteUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-discord btn-block discord-cta"
+                        >Join the Lord Regiment Server</a
+                    >
+                    }
+                </div>
+            </div>
+        </aside>
+    </div>
 </div>

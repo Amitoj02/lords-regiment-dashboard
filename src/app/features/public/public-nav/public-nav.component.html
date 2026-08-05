@@ -13,40 +13,71 @@
         </div>
     </div>
 
+    <!-- Also the mobile drawer: everything below collapses behind the burger. -->
     <div class="public-nav-links">
-        @for (link of navLinks; track link) {
+        @for (link of navLinks; track link.path) {
+        <!-- The highlight comes from the router (T-0287). It used to be an
+             @Input each page set by hand, which the layout route has nobody
+             left to set. -->
         <a
+            class="nav-link"
             [routerLink]="link.path"
+            routerLinkActive="nav-link--active"
+            [routerLinkActiveOptions]="{ exact: link.exact }"
             (click)="closeMenu()"
-            [ngClass]="{ 'nav-link': true, 'nav-link--active': activeLink === link.path }"
             >{{ link.label }}</a
         >
         }
 
         <div class="public-nav-cta">
-            @if (auth.isAuthenticated()) { @if (auth.isMember()) {
-            <a routerLink="/app/dashboard" class="btn btn-primary" (click)="closeMenu()"
-                >Dashboard</a
+            @if (auth.isAuthenticated()) {
+            <!-- Staff only. `/app` is behind staffGuard now, so offering this to
+                 an ordinary member would be a button that bounces them. -->
+            @if (auth.isStaff()) {
+            <a routerLink="/app" class="btn btn-primary" (click)="closeMenu()">Dashboard</a>
+            } @if (auth.isMember()) {
+            <!-- Demoted to secondary only when it sits beside Dashboard, so a
+                 plain member's single destination is not a muted button. -->
+            <a
+                [routerLink]="auth.myProfilePath()"
+                class="btn"
+                [class.btn-primary]="!auth.isStaff()"
+                [class.btn-secondary]="auth.isStaff()"
+                (click)="closeMenu()"
+                >My profile</a
             >
+            <!-- /account holds the in-game name, the @handle, avatar/banner and
+                 "Delete my account", and was reachable from exactly one button
+                 on the member's own profile. A member who cannot find their own
+                 settings has, functionally, no settings (T-0287). -->
+            <a routerLink="/account" class="btn btn-ghost" (click)="closeMenu()">Account</a>
             } @else {
             <a routerLink="/onboarding/status" class="btn btn-primary" (click)="closeMenu()"
                 >My Application</a
             >
             }
             <button type="button" class="btn btn-ghost" (click)="signOut()">Sign out</button>
-            } @else {
+            } @else if (!onAuthPage) {
+            <!-- Nothing here on the sign-in page itself: a "Sign in" button in
+                 the topbar of the sign-in page is a dead control, and "Join
+                 Discord" beside "Continue with Discord" reads as the same
+                 button twice (T-0287). The footer keeps the invite. -->
             <!-- Hidden entirely when no invite is configured (T-0234). -->
             @if (discordInviteUrl) {
             <a
                 [href]="discordInviteUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="btn btn-ghost public-nav-discord"
+                class="btn btn-discord public-nav-discord"
                 (click)="closeMenu()"
                 >Join Discord</a
             >
             }
-            <a routerLink="/login" class="btn btn-discord" (click)="closeMenu()">Sign in</a>
+            <!-- The blurple belongs on the button that actually goes to Discord.
+                 It used to sit on "Sign in" while the invite was a muted ghost,
+                 so the one control that LOOKED like Discord was the one that
+                 was not (T-0287). -->
+            <a routerLink="/login" class="btn btn-primary" (click)="closeMenu()">Sign in</a>
             }
         </div>
     </div>

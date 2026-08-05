@@ -1,4 +1,11 @@
-<div class="login-layout">
+<!--
+    `min-height` is overridden inline because this page is now a CHILD of
+    PublicLayoutComponent: the nav and the footer are rendered above and below
+    it, so the stylesheet's `100vh` would guarantee a scrollbar on a page that
+    fits — the two panels are the only thing that used to own the viewport, and
+    they no longer do. 70vh matches the sibling auth-callback page.
+-->
+<div class="login-layout" style="min-height: 70vh">
     <!-- Left panel: branding. Image, scrim and quote come from the ANONYMOUS
          regiment profile (T-0239) and fall back to the shipped panel. -->
     <div
@@ -33,10 +40,11 @@
     <div class="login-right">
         <div class="login-right-inner">
             <div class="login-header">
-                <div class="admin-label login-eyebrow">Regiment Dashboard</div>
+                <div class="admin-label login-eyebrow">Lords Regiment</div>
                 <h2 class="serif login-signin-title">Sign In</h2>
                 <p class="login-signin-desc">
-                    Use your Discord account to access the regimental dashboard.
+                    Sign in with Discord. If you are not on the roster yet, you will be taken
+                    straight to the enlistment form.
                 </p>
             </div>
 

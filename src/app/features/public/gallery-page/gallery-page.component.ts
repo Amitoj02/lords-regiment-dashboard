@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GalleryItem, GalleryItemType } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SeoService } from '../../../core/services/seo.service';
 
 @Component({
     selector: 'hf-gallery-page',
@@ -13,6 +14,11 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class GalleryPageComponent implements OnInit {
     allItems: GalleryItem[] = [];
+    /** In flight. The page had ONE non-grid state, so a pending fetch, an empty
+     *  archive and a failed request all showed "No items match the selected
+     *  filter" — to a reader who had touched no filter. */
+    loading = true;
+    loadFailed = false;
     filteredItems: GalleryItem[] = [];
     activeTab: 'all' | GalleryItemType = 'all';
     activeTag: string | null = null;
@@ -32,6 +38,7 @@ export class GalleryPageComponent implements OnInit {
     readonly topTagCount = 5;
 
     private readonly destroyRef = inject(DestroyRef);
+    private readonly seo = inject(SeoService);
 
     constructor(
         private galleryService: GalleryService,
@@ -88,24 +95,54 @@ export class GalleryPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // Not deferred until the items land: the archive describes itself the
+        // same way whether it holds three dispatches or three hundred, and a
+        // crawler that gives up on the fetch should still get the description.
+        this.seo.apply({
+            title: 'Gallery',
+            description:
+                "Photographs, clips and dispatches from the regiment's campaigns, submitted by members and approved by its officers.",
+            canonicalPath: '/gallery',
+        });
+
+        this.load();
+    }
+
+    /** Fetch (or re-fetch, from the error state's retry) the public archive. */
+    load(): void {
+        this.loading = true;
+        this.loadFailed = false;
         this.galleryService
             .getAll()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((items) => {
-                this.allItems = items.filter((i) => i.status === 'approved');
-                // Rank tags by how often they appear across approved items, with an
-                // alphabetical tiebreak so ties are stable (T-0176).
-                const counts = new Map<string, number>();
-                this.allItems.forEach((i) =>
-                    i.tags.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)),
-                );
-                this.allTags = Array.from(counts.keys()).sort((a, b) => {
-                    const diff = (counts.get(b) ?? 0) - (counts.get(a) ?? 0);
-                    return diff !== 0 ? diff : a.localeCompare(b);
-                });
-                this.tagsExpanded = false;
-                this.applyFilter();
+            .subscribe({
+                next: (items) => {
+                    this.loading = false;
+                    this.allItems = items.filter((i) => i.status === 'approved');
+                    // Rank tags by how often they appear across approved items, with
+                    // an alphabetical tiebreak so ties are stable (T-0176).
+                    const counts = new Map<string, number>();
+                    this.allItems.forEach((i) =>
+                        i.tags.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)),
+                    );
+                    this.allTags = Array.from(counts.keys()).sort((a, b) => {
+                        const diff = (counts.get(b) ?? 0) - (counts.get(a) ?? 0);
+                        return diff !== 0 ? diff : a.localeCompare(b);
+                    });
+                    this.tagsExpanded = false;
+                    this.applyFilter();
+                },
+                error: (err: unknown) => {
+                    this.loading = false;
+                    this.loadFailed = true;
+                    console.error('Failed to load the gallery', err);
+                },
             });
+    }
+
+    /** True when a tab or tag is narrowing the archive. */
+    get hasActiveFilter(): boolean {
+        return this.activeTab !== 'all' || !!this.activeTag;
     }
 
     setTab(tab: 'all' | GalleryItemType): void {

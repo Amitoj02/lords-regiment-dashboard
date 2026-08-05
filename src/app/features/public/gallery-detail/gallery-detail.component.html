@@ -1,202 +1,189 @@
-<div class="gallery-detail-page">
-    <hf-public-nav [activeLink]="'/gallery'"></hf-public-nav>
+<div class="page gallery-detail-wrap">
+    <a routerLink="/gallery" class="btn btn-ghost btn-sm back-link"
+        ><span class="back-arrow" aria-hidden="true">&larr;</span> Back to gallery</a
+    >
 
-    <div class="page gallery-detail-wrap">
-        <a routerLink="/gallery" class="btn btn-ghost btn-sm back-link"
-            ><span class="back-arrow" aria-hidden="true">&larr;</span> Back to gallery</a
-        >
-
-        @if (loading) {
-        <div class="notice info">Loading…</div>
-        } @else if (notFound || !item) {
-        <div class="notice err">This dispatch could not be found.</div>
-        } @else {
-        <article class="detail">
-            <!-- Media-first hero (auto-embed: medal.tv / YouTube iframe, inline image/video, else link) -->
-            <div class="detail-media">
-                @if (embed?.kind === 'youtube' || embed?.kind === 'medaltv') {
-                <div class="detail-embed">
-                    <iframe
-                        [src]="embed!.safeUrl"
-                        title="Embedded clip"
-                        frameborder="0"
-                        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                        allowfullscreen
-                    ></iframe>
-                </div>
-                } @else if (embed?.kind === 'video') {
-                <video [src]="embed!.rawUrl" controls playsinline class="detail-media-el"></video>
-                } @else if (embed?.kind === 'image') {
-                <img [src]="embed!.rawUrl" [alt]="item.title" class="detail-media-el" />
-                } @else if (embed?.kind === 'link') {
-                <a
-                    [href]="embed!.rawUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="detail-link-card"
-                >
-                    @if (item.thumbnailUrl) {
-                    <img [src]="item.thumbnailUrl" [alt]="item.title" class="detail-media-el" />
-                    } @else {
-                    <div class="detail-media-placeholder"></div>
-                    }
-                    <span class="badge brass detail-vod">Open external link &rarr;</span>
-                </a>
+    @if (loading) {
+    <div class="notice info">Loading…</div>
+    } @else if (notFound || !item) {
+    <div class="notice err">This dispatch could not be found.</div>
+    } @else {
+    <article class="detail">
+        <!-- Media-first hero (auto-embed: medal.tv / YouTube iframe, inline image/video, else link) -->
+        <div class="detail-media">
+            @if (embed?.kind === 'youtube' || embed?.kind === 'medaltv') {
+            <div class="detail-embed">
+                <iframe
+                    [src]="embed!.safeUrl"
+                    title="Embedded clip"
+                    frameborder="0"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowfullscreen
+                ></iframe>
+            </div>
+            } @else if (embed?.kind === 'video') {
+            <video [src]="embed!.rawUrl" controls playsinline class="detail-media-el"></video>
+            } @else if (embed?.kind === 'image') {
+            <img [src]="embed!.rawUrl" [alt]="item.title" class="detail-media-el" />
+            } @else if (embed?.kind === 'link') {
+            <a
+                [href]="embed!.rawUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="detail-link-card"
+            >
+                @if (item.thumbnailUrl) {
+                <img [src]="item.thumbnailUrl" [alt]="item.title" class="detail-media-el" />
                 } @else {
                 <div class="detail-media-placeholder"></div>
                 }
-            </div>
+                <span class="badge brass detail-vod">Open external link &rarr;</span>
+            </a>
+            } @else {
+            <div class="detail-media-placeholder"></div>
+            }
+        </div>
 
-            <!-- Info -->
-            <div class="detail-body">
-                <div class="detail-eyebrow">Field Dispatch</div>
-                <h1 class="detail-title serif-display">{{ item.title }}</h1>
+        <!-- Info -->
+        <div class="detail-body">
+            <div class="detail-eyebrow">Field Dispatch</div>
+            <h1 class="detail-title serif-display">{{ item.title }}</h1>
 
-                <div class="row detail-byline">
-                    <hf-avatar
-                        [name]="item.submittedBy"
-                        [avatarUrl]="item.submittedByAvatarUrl"
-                        [size]="30"
-                    ></hf-avatar>
-                    <div class="detail-byline-text">
-                        @if (item.submittedByMemberId) {
-                        <a
-                            [routerLink]="['/app/profile', item.submittedByMemberId]"
-                            class="detail-submitter-link"
-                            >{{ item.submittedBy }}</a
-                        >
-                        } @else {
-                        <div class="detail-submitter-name">{{ item.submittedBy }}</div>
-                        }
-                        <div class="detail-date">{{ item.submittedAt }}</div>
-                        <!--
-                            Staff-only. `approvedBy` is absent, not null, unless
-                            the API decided this caller holds `moderate_gallery`,
-                            so the field's presence is the gate; `can()` beside
-                            it is a second, local one.
-                        -->
-                        @if (item.approvedBy && can('moderate_gallery')) {
-                        <div class="detail-approver">
-                            Approved by {{ item.approvedBy.name }}@if (item.approvedAt) {<span>
-                                on {{ item.approvedAt | date: 'MMM d, y' }}</span
-                            >}
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                @if (item.caption) {
-                <p class="serif detail-caption">{{ item.caption }}</p>
-                } @if (item.tags.length) {
-                <div class="row detail-tags">
-                    @for (tag of item.tags; track tag) {
-                    <span class="badge brass">#{{ tag }}</span>
-                    }
-                </div>
-                }
-
-                <!-- Moderator edit / author-or-moderator delete (T-0183 / T-0191).
-                     Media itself is not editable. -->
-                @if (canEditDetails || canDelete) {
-                <div class="detail-mod">
-                    @if (!editing) {
-                    <div class="detail-mod-actions">
-                        @if (canEditDetails) {
-                        <button
-                            type="button"
-                            class="btn btn-secondary btn-sm"
-                            (click)="startEdit()"
-                        >
-                            Edit details
-                        </button>
-                        } @if (canDelete) {
-                        <button
-                            type="button"
-                            class="btn btn-destructive btn-sm"
-                            [disabled]="deleting"
-                            (click)="deleteItem()"
-                        >
-                            {{ deleting ? 'Deleting…' : 'Delete' }}
-                        </button>
-                        }
-                    </div>
+            <div class="row detail-byline">
+                <hf-avatar
+                    [name]="item.submittedBy"
+                    [avatarUrl]="item.submittedByAvatarUrl"
+                    [size]="30"
+                ></hf-avatar>
+                <div class="detail-byline-text">
+                    @if (item.submittedByMemberId) {
+                    <!-- The PUBLIC profile. A byline on an anonymously
+                         readable page must not point into the staff tree,
+                         where the guard would bounce the reader. -->
+                    <a [routerLink]="['/u', item.submittedByMemberId]" class="detail-submitter-link"
+                        >{{ item.submittedBy }}</a
+                    >
                     } @else {
-                    <div class="detail-edit-form">
-                        <label class="detail-edit-label" for="gd-title">Title</label>
-                        <input
-                            id="gd-title"
-                            class="hf-input"
-                            type="text"
-                            maxlength="160"
-                            required
-                            [(ngModel)]="editTitle"
-                            [ngModelOptions]="{ standalone: true }"
-                        />
-
-                        <label class="detail-edit-label" for="gd-caption">Caption</label>
-                        <textarea
-                            id="gd-caption"
-                            class="hf-textarea"
-                            rows="3"
-                            maxlength="512"
-                            [(ngModel)]="editCaption"
-                            [ngModelOptions]="{ standalone: true }"
-                        ></textarea>
-
-                        <label class="detail-edit-label" for="gd-tags">Tags</label>
-                        @if (editTags.length) {
-                        <div class="tag-chips">
-                            @for (tag of editTags; track tag) {
-                            <span class="badge brass tag-chip">
-                                {{ tag }}
-                                <button
-                                    type="button"
-                                    class="tag-remove"
-                                    [attr.aria-label]="'Remove tag ' + tag"
-                                    (click)="removeTag(tag)"
-                                >
-                                    &times;
-                                </button>
-                            </span>
-                            }
-                        </div>
-                        }
-                        <input
-                            id="gd-tags"
-                            class="hf-input tag-input"
-                            type="text"
-                            [placeholder]="tagsAtLimit ? 'Tag limit reached' : 'Add a tag…'"
-                            [disabled]="tagsAtLimit"
-                            [(ngModel)]="tagInput"
-                            [ngModelOptions]="{ standalone: true }"
-                            (keydown.enter)="addTag(); $event.preventDefault()"
-                        />
-
-                        <div class="detail-edit-actions">
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-sm"
-                                [disabled]="saving || !editTitle.trim()"
-                                (click)="save()"
-                            >
-                                {{ saving ? 'Saving…' : 'Save' }}
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-ghost btn-sm"
-                                (click)="cancelEdit()"
-                            >
-                                Cancel
-                            </button>
-                        </div>
+                    <div class="detail-submitter-name">{{ item.submittedBy }}</div>
+                    }
+                    <div class="detail-date">{{ item.submittedAt | date: 'MMM d, y' }}</div>
+                    <!--
+                        Staff-only. `approvedBy` is absent, not null, unless
+                        the API decided this caller holds `moderate_gallery`,
+                        so the field's presence is the gate; `can()` beside
+                        it is a second, local one.
+                    -->
+                    @if (item.approvedBy && can('moderate_gallery')) {
+                    <div class="detail-approver">
+                        Approved by {{ item.approvedBy.name }}@if (item.approvedAt) {<span>
+                            on {{ item.approvedAt | date: 'MMM d, y' }}</span
+                        >}
                     </div>
                     }
                 </div>
+            </div>
+
+            @if (item.caption) {
+            <p class="serif detail-caption">{{ item.caption }}</p>
+            } @if (item.tags.length) {
+            <div class="row detail-tags">
+                @for (tag of item.tags; track tag) {
+                <span class="badge brass">#{{ tag }}</span>
                 }
             </div>
-        </article>
-        }
-    </div>
+            }
 
-    <hf-public-footer></hf-public-footer>
+            <!-- Moderator edit / author-or-moderator delete (T-0183 / T-0191).
+                 Media itself is not editable. -->
+            @if (canEditDetails || canDelete) {
+            <div class="detail-mod">
+                @if (!editing) {
+                <div class="detail-mod-actions">
+                    @if (canEditDetails) {
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="startEdit()">
+                        Edit details
+                    </button>
+                    } @if (canDelete) {
+                    <button
+                        type="button"
+                        class="btn btn-destructive btn-sm"
+                        [disabled]="deleting"
+                        (click)="deleteItem()"
+                    >
+                        {{ deleting ? 'Deleting…' : 'Delete' }}
+                    </button>
+                    }
+                </div>
+                } @else {
+                <div class="detail-edit-form">
+                    <label class="detail-edit-label" for="gd-title">Title</label>
+                    <input
+                        id="gd-title"
+                        class="hf-input"
+                        type="text"
+                        maxlength="160"
+                        required
+                        [(ngModel)]="editTitle"
+                        [ngModelOptions]="{ standalone: true }"
+                    />
+
+                    <label class="detail-edit-label" for="gd-caption">Caption</label>
+                    <textarea
+                        id="gd-caption"
+                        class="hf-textarea"
+                        rows="3"
+                        maxlength="512"
+                        [(ngModel)]="editCaption"
+                        [ngModelOptions]="{ standalone: true }"
+                    ></textarea>
+
+                    <label class="detail-edit-label" for="gd-tags">Tags</label>
+                    @if (editTags.length) {
+                    <div class="tag-chips">
+                        @for (tag of editTags; track tag) {
+                        <span class="badge brass tag-chip">
+                            {{ tag }}
+                            <button
+                                type="button"
+                                class="tag-remove"
+                                [attr.aria-label]="'Remove tag ' + tag"
+                                (click)="removeTag(tag)"
+                            >
+                                &times;
+                            </button>
+                        </span>
+                        }
+                    </div>
+                    }
+                    <input
+                        id="gd-tags"
+                        class="hf-input tag-input"
+                        type="text"
+                        [placeholder]="tagsAtLimit ? 'Tag limit reached' : 'Add a tag…'"
+                        [disabled]="tagsAtLimit"
+                        [(ngModel)]="tagInput"
+                        [ngModelOptions]="{ standalone: true }"
+                        (keydown.enter)="addTag(); $event.preventDefault()"
+                    />
+
+                    <div class="detail-edit-actions">
+                        <button
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            [disabled]="saving || !editTitle.trim()"
+                            (click)="save()"
+                        >
+                            {{ saving ? 'Saving…' : 'Save' }}
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" (click)="cancelEdit()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </article>
+    }
 </div>

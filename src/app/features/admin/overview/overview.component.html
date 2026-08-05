@@ -1,0 +1,174 @@
+<hf-app-shell [activeRoute]="'overview'" [crumbs]="['Overview']">
+    <!-- Two-column layout -->
+    <div class="dashboard-grid" [class.dashboard-grid--full]="!hasAside">
+        <!-- Left Column -->
+        <div class="dashboard-main">
+            <!-- Upcoming Events (next 5) -->
+            <div class="panel panel--spaced">
+                <div class="panel-header between">
+                    <span class="panel-title serif">Upcoming Events</span>
+                    <a routerLink="/app/events" class="btn btn-ghost btn-sm">View all</a>
+                </div>
+                <div class="panel-body panel-body--flush">
+                    @for (event of upcomingEvents; track event.id) {
+                    <!-- The detail page is public now, so a staff preview row
+                         goes to the same URL a member would follow. -->
+                    <a class="event-row event-row--link" [routerLink]="['/events', event.id]">
+                        <div class="event-date-col">
+                            <div class="serif event-day">{{ event.date | date: 'd' }}</div>
+                            <div class="event-month">{{ event.date | date: 'MMM' }}</div>
+                        </div>
+                        <div class="event-main">
+                            <div class="event-title">{{ event.title }}</div>
+                            <div class="mono event-meta">
+                                {{ event.startTime }}{{ event.serverName ? ' · ' + event.serverName
+                                : '' }}
+                            </div>
+                        </div>
+                        <div class="event-actions">
+                            <span class="badge brass">{{ rsvpTotal(event) }} RSVPs</span>
+                        </div>
+                    </a>
+                    } @empty {
+                    <div class="empty-state empty-state--lg">No upcoming events.</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent activity (ViewAuditLog holders; head of the ledger) -->
+            @if (canViewAudit) {
+            <div class="panel">
+                <div class="panel-header between">
+                    <span class="panel-title serif">Recent Activity</span>
+                    <a routerLink="/app/audit" class="btn btn-ghost btn-sm">Open ledger</a>
+                </div>
+                <div class="panel-body panel-body--flush">
+                    @for (log of recentActivity; track log.id) {
+                    <div class="dispatch-item">
+                        <div class="dispatch-body">
+                            <div class="dispatch-title">
+                                {{ log.action }} @if (log.severity === 'err') {
+                                <span class="badge ox">Error</span>
+                                }
+                            </div>
+                            <div class="dispatch-text">{{ log.detail }}</div>
+                            <div class="dispatch-time">
+                                {{ log.actor }} · {{ log.timestamp | date: 'MMM d, HH:mm' }}
+                            </div>
+                        </div>
+                    </div>
+                    } @empty {
+                    <div class="empty-state empty-state--lg">Nothing recorded yet.</div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Right Column (capability-gated; omitted entirely when the caller holds
+             none of its capabilities so the main column spans full width — T-0168) -->
+        @if (hasAside) {
+        <div class="dashboard-aside">
+            <!-- Awaiting Review (read-only preview → the full review screen) -->
+            @if (canReviewApplications) {
+            <div class="panel panel--spaced">
+                <div class="panel-header between">
+                    <span class="panel-title serif">Awaiting Review</span>
+                    <span class="badge ox">{{ pendingApplications.length }}</span>
+                </div>
+                <div class="panel-body panel-body--flush">
+                    @for (app of pendingApplications; track app.id) {
+                    <a class="applicant-row applicant-row--link" routerLink="/app/applications">
+                        <hf-avatar [name]="app.applicantName" [size]="32"></hf-avatar>
+                        <div class="applicant-main">
+                            <div class="applicant-name">{{ app.applicantName }}</div>
+                            <div class="mono applicant-type">{{ app.inGameName }}</div>
+                        </div>
+                    </a>
+                    } @empty {
+                    <div class="empty-state empty-state--md">No pending applications.</div>
+                    }
+                </div>
+                @if (pendingApplications.length > 0) {
+                <div class="panel-foot">
+                    <a routerLink="/app/applications" class="btn btn-ghost btn-sm btn-block"
+                        >Review all applications</a
+                    >
+                </div>
+                }
+            </div>
+            }
+
+            <!-- Gallery submissions (ManageEvents holders; pending queue preview) -->
+            @if (canManageEvents) {
+            <div class="panel panel--spaced">
+                <div class="panel-header between">
+                    <span class="panel-title serif">Gallery submissions</span>
+                    <span class="badge ox">{{ gallerySubmissions.length }}</span>
+                </div>
+                <div class="panel-body panel-body--flush">
+                    @for (sub of gallerySubmissions; track sub.id) {
+                    <a class="dispatch-item gallery-sub-item" routerLink="/app/gallery/moderation">
+                        <div class="dispatch-body">
+                            <div class="dispatch-title">{{ sub.title }}</div>
+                            <div class="dispatch-text">
+                                by {{ sub.submitterUsername ?? 'Unknown' }}
+                            </div>
+                        </div>
+                    </a>
+                    } @empty {
+                    <div class="panel-empty">No submissions awaiting review.</div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Lord Adjutant bot — live status + metrics (T-0081) -->
+            @if (canViewBotStatus) {
+            <div class="panel qm-panel">
+                <div class="panel-header between">
+                    <span class="panel-title serif">Lord Adjutant</span>
+                    @if (botStatus) {
+                    <span class="badge" [ngClass]="botStatus.connected ? 'laurel' : 'ox'"
+                        >{{ botStatus.connected ? 'Online' : 'Offline' }}</span
+                    >
+                    }
+                </div>
+                <div class="panel-body">
+                    @if (botStatusError) {
+                    <div class="empty-state empty-state--md">Bot status unavailable.</div>
+                    } @else if (!botStatus) {
+                    <div class="empty-state empty-state--md">Loading…</div>
+                    } @else {
+                    <div class="qm-row">
+                        <span class="qm-label">WS latency</span>
+                        <span class="mono qm-date"
+                            >{{ botStatus.wsPing !== null ? botStatus.wsPing + ' ms' : '—' }}</span
+                        >
+                    </div>
+                    <div class="qm-row">
+                        <span class="qm-label">Uptime</span>
+                        <span class="mono qm-date">{{ formatUptime(botStatus.uptimeMs) }}</span>
+                    </div>
+                    <div class="qm-row">
+                        <span class="qm-label">Memory</span>
+                        <span class="mono qm-date">{{ formatMemory(botStatus.memoryBytes) }}</span>
+                    </div>
+                    <div class="qm-row">
+                        <span class="qm-label">CPU</span>
+                        <span class="mono qm-date"
+                            >{{ botStatus.cpu !== null ? botStatus.cpu + '%' : '—' }}</span
+                        >
+                    </div>
+                    <div class="qm-row">
+                        <span class="qm-label">Members visible</span>
+                        <span class="mono qm-date">{{ botStatus.membersVisible ?? '—' }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+</hf-app-shell>
