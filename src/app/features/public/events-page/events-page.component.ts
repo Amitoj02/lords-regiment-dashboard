@@ -1,15 +1,15 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { DEFAULT_REGIMENT_NAME, eventsDescription } from '../../../core/seo/seo-copy';
 
 const PAGE_TITLE = 'Events & Orders';
-const PAGE_DESCRIPTION =
-    'Line battles, drills and campaign nights run by the Lords Regiment — what is running now, ' +
-    'what is scheduled next, and what has just been fought.';
 
 /**
  * The public events calendar (T-0287). It is the same page it was inside the
@@ -34,6 +34,14 @@ export class EventsPageComponent implements OnInit {
     private readonly auth = inject(AuthService);
     private readonly seo = inject(SeoService);
     private readonly document = inject(DOCUMENT);
+    private readonly regiment = inject(RegimentService);
+
+    /**
+     * The live regiment name (T-0293). The description used to hardcode "the
+     * Lords Regiment" while the crawler shell built the same sentence from the
+     * editable field, so the two would have disagreed after any rename.
+     */
+    private regimentName = DEFAULT_REGIMENT_NAME;
 
     constructor(private eventsService: EventsService) {}
 
@@ -42,6 +50,16 @@ export class EventsPageComponent implements OnInit {
         // URL and the share card have to be right for a visitor whose request
         // fails as much as for one whose request lands.
         this.applySeo();
+        this.regiment
+            .getProfile()
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((profile) => {
+                this.regimentName = profile?.name?.trim() || DEFAULT_REGIMENT_NAME;
+                this.applySeo();
+            });
         this.load();
     }
 
@@ -114,10 +132,20 @@ export class EventsPageComponent implements OnInit {
     private applySeo(): void {
         this.seo.apply({
             title: PAGE_TITLE,
-            description: PAGE_DESCRIPTION,
+            description: eventsDescription(this.regimentName),
             canonicalPath: '/events',
+            // The NEXT event's banner, because that is what a shared calendar
+            // link is actually advertising; a quiet week falls through to the
+            // site banner in `SeoService`. Same order as the API's shell.
+            imageUrl: this.cardImage(),
             jsonLd: this.upcomingJsonLd(),
         });
+    }
+
+    /** The banner of whatever is running or scheduled next, if it has one. */
+    private cardImage(): string | null {
+        const next = [this.ongoingEvent, ...this.upcomingEvents].find((event) => event?.bannerUrl);
+        return next?.bannerUrl ?? null;
     }
 
     /**

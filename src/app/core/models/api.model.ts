@@ -698,6 +698,8 @@ export function mapGalleryItem(g: ApiGalleryItem): GalleryItem {
         // which is what left uploaded videos thumbnail-less on iOS (T-0242).
         thumbnailUrl: g.thumbnailUrl ?? '',
         mediaUrl: g.files?.[0]?.url ?? g.linkUrl ?? undefined,
+        mediaWidth: g.files?.[0]?.width ?? null,
+        mediaHeight: g.files?.[0]?.height ?? null,
         submittedBy: g.author?.name ?? '',
         submittedByMemberId: g.author?.memberId,
         submittedByAvatarUrl: g.author?.avatarUrl ?? null,
