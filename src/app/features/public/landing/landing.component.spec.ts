@@ -90,7 +90,7 @@ function makeProfile(
     };
 }
 
-/** The two figures the hero plinth prints, plus the rest of the projection. */
+/** The two figures the hero prints, plus the rest of the projection. */
 function makeStats(establishedAt: string | null, enrolled: number): RegimentStats {
     return {
         totalMembers: enrolled,
@@ -139,7 +139,7 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
     /**
      * Likewise swappable. `of(null)` is the "statistics visibility off" case the
      * component reaches via a swallowed 403, and it is the default here so every
-     * spec that is not about the plinth renders the hero without one.
+     * spec that is not about the figures renders the hero without them.
      */
     let stats$: Observable<RegimentStats | null>;
     /** Swappable by a spec before the first change detection. */
@@ -319,63 +319,71 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
     });
 
     /**
-     * T-0296. The hero carries one command and one plinth. The two invariants
-     * worth pinning are that the CTA has no rivals inside the hero — the whole
-     * point of the change was that Orders and Roster are already in the nav —
-     * and that the plinth degrades a figure at a time rather than rendering a
-     * dangling separator.
+     * T-0296. The hero carries one COMMAND — Orders and Roster are already in
+     * the nav, which is why the other two buttons went — plus the two figures,
+     * which degrade one at a time rather than leaving an empty column.
      */
-    describe('hero plinth (T-0296)', () => {
-        function plinth(): HTMLElement | null {
-            return fixture.nativeElement.querySelector('.hero-plinth');
+    describe('hero stats (T-0296)', () => {
+        function stats(): HTMLElement | null {
+            return fixture.nativeElement.querySelector('.hero-stats');
         }
         /**
-         * One string per figure, NOT the plinth's whole textContent — the items
-         * are separated by a flex gap and a decorative pip, so concatenating
-         * them runs "2026" straight into "36".
+         * `[value, label]` per figure, read element by element rather than off
+         * textContent — value and label are separate block-level divs, so the
+         * concatenated text has no separator between them (or between tiles).
          */
-        function figures(): string[] {
-            return Array.from(plinth()?.querySelectorAll('.hero-plinth-item') ?? []).map((el) =>
-                (el.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        function figures(): string[][] {
+            return Array.from(stats()?.querySelectorAll('.hero-stat') ?? []).map((el) =>
+                ['.hero-stat-value', '.hero-stat-label'].map((sel) =>
+                    (el.querySelector(sel)?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+                ),
             );
         }
 
-        it('leaves the hero exactly one call to action', () => {
+        it('leaves the hero exactly one button, and it is the CTA', () => {
+            stats$ = of(makeStats('2026-07-01', 36));
             fixture.detectChanges();
-            const controls = fixture.nativeElement.querySelectorAll(
-                '.hero button, .hero a[routerLink], .hero a[href]',
-            );
-            expect(controls.length).toBe(1);
-            expect(controls[0].tagName).toBe('BUTTON');
+            // The roster link is a figure, not a rival command — the two
+            // btn-lg anchors are what had to go.
+            expect(fixture.nativeElement.querySelectorAll('.hero button').length).toBe(1);
+            expect(fixture.nativeElement.querySelectorAll('.hero .btn').length).toBe(1);
         });
 
-        it('hides the plinth entirely when statistics visibility is off', () => {
+        it('hides the figures entirely when statistics visibility is off', () => {
             // getStats() → 403, swallowed to null by the component.
             stats$ = of(null);
             fixture.detectChanges();
-            expect(plinth()).toBeNull();
+            expect(stats()).toBeNull();
         });
 
-        it('sets both figures on the plinth', () => {
+        it('sets both figures', () => {
             stats$ = of(makeStats('2026-07-01', 36));
             fixture.detectChanges();
-            // Spaced slash: the plinth tracks the label out in uppercase mono,
-            // where an unspaced one collides with the digits either side.
-            expect(figures()).toEqual(['Established 07 / 2026', '36 Effectives on the roll']);
+            expect(figures()).toEqual([
+                ['07 / 2026', 'Since Established'],
+                ['36', 'Members →'],
+            ]);
         });
 
-        it('drops the established figure AND its separator when the date is unset', () => {
+        it('points the roll at the roster it summarises', () => {
+            stats$ = of(makeStats('2026-07-01', 36));
+            fixture.detectChanges();
+            const link = stats()!.querySelector('a.hero-stat-link');
+            expect(link).not.toBeNull();
+            expect(link!.getAttribute('routerLink')).toBe('/roster');
+        });
+
+        it('drops the established figure alone when the date is unset', () => {
             stats$ = of(makeStats(null, 36));
             fixture.detectChanges();
-            expect(figures()).toEqual(['36 Effectives on the roll']);
-            // The failure this pins is a leading pip with nothing before it.
-            expect(plinth()!.querySelector('.hero-plinth-pip')).toBeNull();
+            // The failure this pins is an orphaned column with no value in it.
+            expect(figures()).toEqual([['36', 'Members →']]);
         });
 
-        it('still shows the roll at zero rather than blanking the plinth', () => {
+        it('still shows the count at zero rather than blanking the block', () => {
             stats$ = of(makeStats(null, 0));
             fixture.detectChanges();
-            expect(figures()).toEqual(['0 Effectives on the roll']);
+            expect(figures()).toEqual([['0', 'Members →']]);
         });
     });
 

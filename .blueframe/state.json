@@ -3,7 +3,7 @@
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "d49dc486fb1fc98f5050a6d9d1c4fde44a060e02",
   "lastSyncedAt": "2026-08-05T15:20:00Z",
-  "notesForNextSession": "T-0296 (landing hero rebuilt around one command + a stats plinth) is in REVIEW on feat/hero-one-command, frontend-only - no API change, nothing to coordinate with the backend. Two browser passes are still PENDING and both need an admin session, not an anonymous one: overlay density 0/100 against the NEW radial vignette (the stops were re-derived, so the old density verification does not carry over), and a regiment with statistics visibility OFF, where the plinth must vanish without leaving an empty strip. The one thing worth not relitigating: the seam layer (.hero-overlay) is deliberately only HALF parameterised on --hero-scrim - its top stop follows the density but its fade to --ink-900 does not, because that fade is what joins the hero to the content band and dropping it at density 0 trades a bare photograph for a hard horizontal seam. Also note bg-1.jpg is still 500x280 and the new vignette makes the frame MORE visible, so the upscaling shows more than it used to; that needs a real photograph.\n\nT-0293..T-0295 (share cards + SEO for every public URL) are in REVIEW, coupled to backend T-0217..T-0219 on the same work. DEPLOY ORDER MATTERS AND THE EDGE IS MANUAL. Ship the API first, then this web image, then hand-sync the Caddyfile: its @crawler matcher now lists /u/* /roster /roster/* /events /events/* /gallery /gallery/* /home, and a path listed there with no route under /api/seo/* returns a JSON 404, which an unfurler renders as a broken preview. deploy/README.md step 4 in the backend repo carries the exact verification loop.\n\nNon-obvious decisions worth not relitigating. (1) `/` is deliberately NOT in the crawler matcher and `/home` is there instead - `/` is the one path a Cloudflare Cache Rule covers, Cloudflare honours Vary only for Accept-Encoding, so a UA-varying `/` would put the crawler document in the edge cache and serve it to humans. The sitemap lists /home for the same reason. (2) A profile with no banner declares twitter:card=summary ON PURPOSE: Discord inspects the real file and demotes a square avatar to a thumbnail whatever the tag says, so asking for the wide card and not getting it looks broken. (3) Titles are `<page> | <Regiment>` on BOTH surfaces now - the shells used an em dash, so every crawlable URL had two different titles. documentTitle() in the API's html/brand.ts and SeoService.apply() here are the same rule. (4) core/seo/seo-copy.ts is a contract with the backend: changing a function there without its twin in the API's SeoService desyncs the two surfaces for as long as the versions are split. (5) RegimentService.getProfile() is cached for the tab now, because five components need the live regiment name for their description.\n\nVerification state: 794 frontend tests green, ng lint clean, prettier clean; 1270 backend tests green, eslint + prettier clean. The routing was exercised for real against a throwaway Caddy on :8899 in front of the dev stack - every path returns the shell to a Discordbot UA and <app-root> to a browser UA, and the honest 404s (/u/@nobody, a missing event) still come through. All seven URLs were diffed live in the browser: title and description MATCH the shell on every one. NOT done: no video gallery item exists in the dev DB, so the og:video path is covered by unit tests only and has never been pasted into a real Discord channel.\n\nStill true from T-0289..T-0292: those remain in review on feat/member-bio-and-socials, and the browser passes in their testPlans are still pending.",
+  "notesForNextSession": "T-0296 (landing hero: one command, restored stat tiles) is in REVIEW on feat/hero-one-command, frontend-only - no API change, nothing to coordinate with the backend. The design concept put the two figures on a hairline plinth at the hero's bottom edge; that was built, then reverted to the old stat-tile treatment at the user's request. Only the PLACEMENT survives from the concept - the figures sit below the command, not between it and the copy it acts on. Three browser passes are still PENDING: a real click-through on the members figure (it resolves to href=/roster in the DOM but SPA nav was never exercised), and two that need an admin session - overlay density 0/100 against the NEW radial vignette (the stops were re-derived, so the old density verification does not carry over) and a regiment with statistics visibility OFF, where the whole block including its divider rule must vanish. Two things worth not relitigating: (1) the seam layer (.hero-overlay) is deliberately only HALF parameterised on --hero-scrim - its top stop follows the density but its fade to --ink-900 does not, because that fade is what joins the hero to the content band and dropping it at density 0 trades a bare photograph for a hard horizontal seam; (2) .hero-stat uses flex:1 1 0 equal columns rather than shrink-to-fit, because '11 / 2023' is three times the width of '2' and a centred pair of unequal tiles reads as hanging off to one side. Also note bg-1.jpg is still 500x280 and the new vignette makes the frame MORE visible, so the upscaling shows more than it used to; that needs a real photograph.\n\nT-0293..T-0295 (share cards + SEO for every public URL) are in REVIEW, coupled to backend T-0217..T-0219 on the same work. DEPLOY ORDER MATTERS AND THE EDGE IS MANUAL. Ship the API first, then this web image, then hand-sync the Caddyfile: its @crawler matcher now lists /u/* /roster /roster/* /events /events/* /gallery /gallery/* /home, and a path listed there with no route under /api/seo/* returns a JSON 404, which an unfurler renders as a broken preview. deploy/README.md step 4 in the backend repo carries the exact verification loop.\n\nNon-obvious decisions worth not relitigating. (1) `/` is deliberately NOT in the crawler matcher and `/home` is there instead - `/` is the one path a Cloudflare Cache Rule covers, Cloudflare honours Vary only for Accept-Encoding, so a UA-varying `/` would put the crawler document in the edge cache and serve it to humans. The sitemap lists /home for the same reason. (2) A profile with no banner declares twitter:card=summary ON PURPOSE: Discord inspects the real file and demotes a square avatar to a thumbnail whatever the tag says, so asking for the wide card and not getting it looks broken. (3) Titles are `<page> | <Regiment>` on BOTH surfaces now - the shells used an em dash, so every crawlable URL had two different titles. documentTitle() in the API's html/brand.ts and SeoService.apply() here are the same rule. (4) core/seo/seo-copy.ts is a contract with the backend: changing a function there without its twin in the API's SeoService desyncs the two surfaces for as long as the versions are split. (5) RegimentService.getProfile() is cached for the tab now, because five components need the live regiment name for their description.\n\nVerification state: 794 frontend tests green, ng lint clean, prettier clean; 1270 backend tests green, eslint + prettier clean. The routing was exercised for real against a throwaway Caddy on :8899 in front of the dev stack - every path returns the shell to a Discordbot UA and <app-root> to a browser UA, and the honest 404s (/u/@nobody, a missing event) still come through. All seven URLs were diffed live in the browser: title and description MATCH the shell on every one. NOT done: no video gallery item exists in the dev DB, so the og:video path is covered by unit tests only and has never been pasted into a real Discord channel.\n\nStill true from T-0289..T-0292: those remain in review on feat/member-bio-and-socials, and the browser passes in their testPlans are still pending.",
   "nextIdCounter": 297,
   "connections": [],
   "tasks": [
@@ -19598,7 +19598,7 @@
     {
       "id": "T-0296",
       "title": "Rebuild the landing hero around one command and a stats plinth",
-      "summary": "The hero carried three equal btn-lg buttons, two of which (Orders, Roster) are already in the public nav two rows above, so its one decisive moment was spent on links the visitor already had. Down to one CTA. The flat top-to-bottom scrim becomes a radial vignette that stays dark behind the type and lets the photograph read at the frame, and the two figures move out of the centre column onto a hairline plinth on the hero's bottom edge. Fixed while in there: .hero-crest's ring was NEVER DRAWN - rgba(var(--brass-300), .3) cannot resolve (the token is a hex, not an r,g,b triple), which invalidated the whole border shorthand and left border-style:none. Both scrim layers stay parameterised on --hero-scrim so the admin's overlay density (T-0238) still works, and formatEstablished now spaces the slash because the plinth sets it in tracked-out uppercase mono.",
+      "summary": "The hero carried three equal btn-lg buttons, two of which (Orders, Roster) are already in the public nav two rows above, so its one decisive moment was spent on links the visitor already had. Down to one CTA. The flat top-to-bottom scrim becomes a radial vignette that stays dark behind the type and lets the photograph read at the frame. The two figures KEEP the old stat-tile treatment (big brass serif value over an uppercase label) but move BELOW the command rather than between it and the copy it acts on, under a contained hairline rule, as equal columns - '11 / 2023' is three times the width of '2', so packing the pair around the centre left the block visibly hanging to one side. The roll is now a link to /roster, with a persistent arrow cue rather than a hover-only one. Fixed while in there: .hero-crest's ring was NEVER DRAWN - rgba(var(--brass-300), .3) cannot resolve (the token is a hex, not an r,g,b triple), which invalidated the whole border shorthand and left border-style:none. Both scrim layers stay parameterised on --hero-scrim so the admin's overlay density (T-0238) still works.",
       "status": "review",
       "type": "feature",
       "size": "M",
@@ -19618,43 +19618,48 @@
       "questions": [],
       "testPlan": [
         {
-          "desc": "799 unit tests green, ng lint + contrast guard clean, prettier clean, production build succeeds",
+          "desc": "800 unit tests green, ng lint + contrast guard clean, prettier clean, production build succeeds",
           "status": "passed"
         },
         {
-          "desc": "browser: /home at 1180px and 1920px against the live dev stack - crest ring drawn, single CTA, vignette lets the banner read at the edges, plinth prints 'ESTABLISHED 11 / 2023 * 2 EFFECTIVES ON THE ROLL'",
+          "desc": "browser: /home at 1180px and 1920px against the live dev stack - crest ring drawn, single CTA, vignette lets the banner read at the edges, both stat columns balanced under the rule",
           "status": "passed"
         },
         {
-          "desc": "browser: /home at 390px - crest 76px, full-bleed CTA, plinth on one line with the 'on the roll' tail dropped",
+          "desc": "browser: /home at 390px - crest 76px, full-bleed CTA, stat columns still balanced and labels still on one line",
           "status": "passed"
+        },
+        {
+          "desc": "browser: the members figure resolves to href=/roster in the real DOM (confirmed via --dump-dom) - still needs a real click-through to confirm SPA nav rather than a full reload",
+          "status": "pending"
         },
         {
           "desc": "browser: admin overlay density 0 and 100 on the new radial vignette - 0 really is a bare photograph and 100 does not black out the type",
           "status": "pending"
         },
         {
-          "desc": "browser: a regiment with statistics visibility OFF - the hero ends at the CTA with no empty plinth strip and no seam above the content band",
+          "desc": "browser: a regiment with statistics visibility OFF - the hero ends at the CTA with no orphaned divider rule",
           "status": "pending"
         }
       ],
       "regressionRisk": [
         {
-          "desc": "landing.component.spec.ts's RegimentService mock now reads a swappable stats$ instead of a hardcoded of(null). The default is still of(null), so every pre-existing spec sees exactly the behaviour it saw before, but a future spec that forgets to reset it would leak a plinth into an unrelated assertion.",
+          "desc": "landing.component.spec.ts's RegimentService mock now reads a swappable stats$ instead of a hardcoded of(null). The default is still of(null), so every pre-existing spec sees exactly the behaviour it saw before, but a future spec that forgets to reset it would leak the figures into an unrelated assertion.",
           "status": "open"
         },
         {
-          "desc": "formatEstablished() now returns 'MM / YYYY' rather than 'MM/YYYY'. Only the hero plinth consumes it today; any future reader that parses the string rather than printing it would break on the spaces.",
+          "desc": "formatEstablished() now returns 'MM / YYYY' rather than 'MM/YYYY'. Only the hero consumes it today; any future reader that parses the string rather than printing it would break on the spaces.",
           "status": "open"
         }
       ],
       "skippedByClaude": [
-        "Did NOT replace src/assets/images/bg-1.jpg. The design note flags it as 500x280, so it upscales roughly 3x on a desktop hero and visibly softer than that on a 1920 one - the new vignette makes the edges MORE visible, not less, so this matters more than it did. Needs a real photograph, not a code change.",
-        "Did NOT touch the login hero, which still uses the old flat scrim - the import covered the homepage hero only, and the two now differ."
+        "Did NOT replace src/assets/images/bg-1.jpg. The design note flags it as 500x280, so it upscales roughly 3x on a desktop hero - the new vignette makes the edges MORE visible, not less, so this matters more than it did. Needs a real photograph, not a code change.",
+        "Did NOT touch the login hero, which still uses the old flat scrim - the import covered the homepage hero only, and the two now differ.",
+        "The design's own concept moved the figures onto a hairline plinth on the hero's bottom edge; that was built and then reverted to the stat-tile treatment at the user's request. Only the placement (below the command, not between it and the copy) survives from the concept."
       ],
       "lastTouchedCommit": "d49dc486fb1fc98f5050a6d9d1c4fde44a060e02",
       "createdAt": "2026-08-05T15:15:00Z",
-      "updatedAt": "2026-08-05T15:15:00Z",
+      "updatedAt": "2026-08-05T15:32:00Z",
       "history": [
         {
           "at": "2026-08-05T15:15:00Z",

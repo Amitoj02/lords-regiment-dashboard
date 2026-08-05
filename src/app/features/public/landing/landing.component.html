@@ -8,55 +8,53 @@
 >
     <div class="hero-overlay"></div>
 
-    <div class="hero-body">
-        <div class="hero-inner">
-            <div class="hero-crest">
-                <img src="assets/images/regiment-logo.png" alt="Regiment crest" />
-            </div>
-            <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
-            <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
-            <p class="hero-sub">{{ missionStatement }}</p>
-
-            <!-- One command, not three (T-0296). Orders and Roster are two rows
-                 above in the public nav; repeating them here spent the hero's
-                 only decisive moment on links the visitor already has. -->
-            <div class="hero-actions">
-                <button type="button" (click)="applyToJoin()" class="btn btn-primary hero-cta">
-                    {{ applyLabel }}
-                    <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                        <path
-                            d="M3.6 2.4 7.5 6l-3.9 3.6"
-                            stroke="currentColor"
-                            stroke-width="1.6"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                    </svg>
-                </button>
-            </div>
+    <div class="hero-inner">
+        <div class="hero-crest">
+            <img src="assets/images/regiment-logo.png" alt="Regiment crest" />
         </div>
-    </div>
+        <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
+        <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
+        <p class="hero-sub">{{ missionStatement }}</p>
 
-    <!-- The two figures, off the centre column and onto a hairline plinth at
-         the hero's bottom edge — still present, no longer competing with the
-         button for the same vertical run. -->
-    @if (statsVisible) {
-    <div class="hero-plinth">
-        @if (establishedLabel) {
-        <span class="mono hero-plinth-item">
-            Established <span class="hero-plinth-figure">{{ establishedLabel }}</span>
-        </span>
-        <span class="hero-plinth-pip" aria-hidden="true"></span>
+        <!-- One command, not three (T-0296). Orders and Roster are two rows
+             above in the public nav; repeating them here spent the hero's
+             only decisive moment on links the visitor already has. -->
+        <div class="hero-actions">
+            <button type="button" (click)="applyToJoin()" class="btn btn-primary hero-cta">
+                {{ applyLabel }}
+                <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                        d="M3.6 2.4 7.5 6l-3.9 3.6"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </button>
+        </div>
+
+        <!-- The figures sit BELOW the command, not between it and the copy it
+             acts on. Each is independently droppable: a regiment with no
+             established date shows the roll alone rather than an empty column. -->
+        @if (statsVisible) {
+        <div class="hero-stats">
+            @if (establishedLabel) {
+            <div class="hero-stat">
+                <div class="hero-stat-value serif">{{ establishedLabel }}</div>
+                <div class="hero-stat-label">Since Established</div>
+            </div>
+            }
+            <!-- The count is the roster's own summary, so it links there. -->
+            <a routerLink="/roster" class="hero-stat hero-stat-link">
+                <div class="hero-stat-value serif">{{ memberCount }}</div>
+                <div class="hero-stat-label">
+                    Members <span class="hero-stat-cue" aria-hidden="true">→</span>
+                </div>
+            </a>
+        </div>
         }
-        <span class="mono hero-plinth-item">
-            <span class="hero-plinth-figure">{{ memberCount }}</span> Effectives<span
-                class="hero-plinth-tail"
-            >
-                on the roll</span
-            >
-        </span>
     </div>
-    }
 </section>
 
 <!-- Main Content -->

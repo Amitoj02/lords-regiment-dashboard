@@ -284,8 +284,8 @@ export class LandingComponent implements OnInit {
 
     /**
      * 'YYYY-MM-DD' → 'MM / YYYY' (timezone-safe: no Date parsing). Spaced, because
-     * the plinth sets it in tracked-out uppercase mono where an unspaced slash
-     * collides with the digits either side of it.
+     * the hero sets this at 34px in the display serif, where an unspaced slash
+     * runs into the digits either side of it.
      */
     private formatEstablished(dateStr: string | null): string | null {
         if (!dateStr) return null;

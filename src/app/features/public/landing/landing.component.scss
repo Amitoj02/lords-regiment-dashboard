@@ -21,7 +21,8 @@
     position: relative;
     min-height: 580px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     background-image: url(/assets/images/bg-1.jpg);
     background-size: cover;
     // Off-centre: the shipped banner's horizon sits high, and dead-centre
@@ -62,16 +63,9 @@
     );
 }
 
-.hero-body {
+.hero-inner {
     position: relative;
     z-index: 1;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hero-inner {
     text-align: center;
     padding: 78px 24px 64px;
     max-width: 700px;
@@ -134,38 +128,86 @@
         0 10px 30px -14px color-mix(in srgb, var(--brass-400) 55%, transparent);
 }
 
-/* Stats plinth — a hairline shelf on the hero's bottom edge. */
-.hero-plinth {
-    position: relative;
-    z-index: 1;
+/* The two figures, under the command rather than between it and the copy.
+ *
+ * The rule is deliberately narrower than `.hero-inner` — a hairline spanning all
+ * 700px under a ~200px button reads as a stray edge rather than as a divider. */
+.hero-stats {
     display: flex;
-    align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 18px;
-    min-height: 52px;
-    padding: 0 20px;
-    border-top: 1px solid rgba(239, 233, 216, 0.1);
-    background: rgba(7, 9, 13, 0.5);
+    gap: 8px;
+    width: min(100%, 440px);
+    margin: 38px auto 0;
+    padding-top: 30px;
+    border-top: 1px solid rgba(239, 233, 216, 0.13);
 }
 
-.hero-plinth-item {
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--t-300);
+/* Equal columns rather than shrink-to-fit. "11 / 2023" is three times the width
+ * of "2", so packing the pair around the centre leaves the whole block visibly
+ * hanging to one side even though it is, strictly, centred. */
+.hero-stat {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    // Absorbs the link variant's padding so both figures share a baseline.
+    padding: 6px 12px;
+    margin: -6px 0;
+    border-radius: var(--r-2);
 }
 
-.hero-plinth-figure {
+.hero-stat-value {
+    font-size: 34px;
+    font-weight: 700;
     color: var(--brass-300);
+    line-height: 1;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.55);
+    transition: color 0.12s;
 }
 
-.hero-plinth-pip {
-    width: 5px;
-    height: 5px;
-    transform: rotate(45deg);
-    background: var(--brass-500);
+.hero-stat-label {
+    font-size: 11px;
+    // `--t-300`, not the `--t-400` this used before the vignette: the new scrim
+    // is lighter at the frame, and the dimmer grey silted up against the
+    // photograph at the sizes this text is set in.
+    color: var(--t-300);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+    white-space: nowrap;
+}
+
+/* The roll links to the roster it summarises. The cue is PERSISTENT, not
+ * hover-only — on a touch screen a hover affordance never appears at all. */
+.hero-stat-link {
     display: block;
+    text-decoration: none;
+    transition: background 0.12s;
+
+    &:hover {
+        background: rgba(239, 233, 216, 0.06);
+
+        .hero-stat-value {
+            color: var(--brass-100);
+        }
+
+        .hero-stat-cue {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+    }
+
+    &:focus-visible {
+        outline: 1.5px solid var(--brass-400);
+        outline-offset: 2px;
+    }
+}
+
+.hero-stat-cue {
+    display: inline-block;
+    opacity: 0.55;
+    transition:
+        opacity 0.12s,
+        transform 0.12s;
 }
 
 /* Content Layout */
@@ -437,21 +479,23 @@
         padding: 0 24px;
     }
 
-    .hero-plinth {
-        gap: 12px;
-        min-height: 48px;
-        padding: 0 14px;
+    .hero-stats {
+        gap: 20px;
+        margin-top: 30px;
+        padding-top: 24px;
     }
 
-    .hero-plinth-item {
-        font-size: 9.5px;
-        letter-spacing: 0.13em;
+    .hero-stat {
+        padding: 6px 10px;
     }
 
-    // "36 Effectives" alone — the qualifier is what pushes the plinth onto a
-    // second line on a 390px screen.
-    .hero-plinth-tail {
-        display: none;
+    .hero-stat-value {
+        font-size: 27px;
+    }
+
+    .hero-stat-label {
+        font-size: 10px;
+        letter-spacing: 0.06em;
     }
 
     .landing-content {
@@ -477,7 +521,7 @@
         font-size: 27px;
     }
 
-    .hero-plinth {
-        gap: 10px;
+    .hero-stats {
+        gap: 12px;
     }
 }
