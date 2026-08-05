@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "c90388a780d4fcc1b9e0f8901a5e5c1b1066be3d",
-  "lastSyncedAt": "2026-08-05T19:45:00Z",
-  "notesForNextSession": "T-0301 is in REVIEW as PR 73, coupled to backend PR #86. T-0297..T-0300 are merged into DEV (PR 71) but NOT on main.\n\n⚠️ NOTHING IS IN PRODUCTION YET. main is the production branch. Promoting dev to main and redeploying the WEB image is what makes link previews start working, because the crawler routing now lives in THIS repo's nginx.conf. The API half has been correct and deployed since T-0293 - it was never the problem.\n\nVERIFY AFTER DEPLOY: fetch a crawler path with a Discordbot UA and read the headers. `Vary: Accept-Encoding` + `Cache-Control: no-store` means the nginx SPA answered (old build); `Vary: User-Agent` + `max-age=600` means the API shell did (new build). Production still returned the former at last check.\n\nTHE LESSON WORTH KEEPING: the review's sharpest finding here was that seo-copy.ts is coupled to the backend by a COMMENT, and the comment did not work - the same PR that added three warnings about byte-identical descriptions changed describeEvents on one side only. There is no CI check for it in either repo. That is the open regressionRisk on T-0301.\n\nOWNER DECISIONS, do not relitigate: the profile card image is the AVATAR always (so twitter:card is `summary` by design); attendance is dead on every surface; the Discord tag is gone from the roster row but kept in the Owner-only CSV.\n\nSTILL NOT DONE: nothing pasted into a real Discord channel (Discord caches an unfurl ~30min with no purge - use a throwaway query string when re-testing). event-detail.component has no spec file. The profile.component.scss budget warning (8.91kB vs 8kB) is pre-existing.\n\nFrontend verification runs in a container - the host is on Node 22.22.2 and the Angular CLI needs >=22.22.3. `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` matches CI; karma needs chromium plus a --no-sandbox wrapper on CHROME_BIN (a wrapper script, so the repo stays clean).",
-  "nextIdCounter": 302,
+  "lastSyncedCommit": "cb76f9f6f1ad0878b9085478bcb1ac2752152a71",
+  "lastSyncedAt": "2026-08-05T21:30:00Z",
+  "notesForNextSession": "T-0302 is in REVIEW as a PR against dev: the static site description is now \"Discipline, honour, and the line. A Holdfast: Nations at War regiment of standing.\" in index.html (meta/og/twitter) and manifest.json. T-0301 merged to dev as PR #73.\n\n⚠️ STILL NOTHING IN PRODUCTION. main is the production branch and dev has not been promoted. Everything from T-0297 onward - crawler routing in the web image, shell parity, and now this description - reaches users only when dev goes to main AND the web image is rebuilt.\n\nTHE ONE THING TO DECIDE NEXT: this repo now holds two different site-level descriptions. The static shell says the tagline; DEFAULT_MISSION in core/seo/seo-copy.ts and the hardcoded twin in SeoService.reset() still say \"Roster, events and gallery for a Holdfast: Nations at War regiment.\" The owner asked only for the first string, so the second was left alone - it is byte-coupled to the API's seo.service.ts (:411, :799) and gallery-share.service.ts (:181) and changing it means a coupled release. If the answer is \"make them all the tagline\", it is a four-line change across two repos in one release, not a one-line change here. Note SeoService.reset() duplicates the literal rather than importing DEFAULT_MISSION - fix that in the same pass.\n\nVERIFY AFTER DEPLOY: fetch a crawler path with a Discordbot UA and read the headers. `Vary: Accept-Encoding` + `Cache-Control: no-store` means the nginx SPA answered (old build); `Vary: User-Agent` + `max-age=600` means the API shell did (new build). Production still returned the former at last check.\n\nSTATE.JSON FORMATTING: the committed file is `json.dump(indent=2, ensure_ascii=False)` with a trailing newline - raw em-dashes, NOT \\u escapes. Round-trip against `git show HEAD:.blueframe/state.json` before writing. Also: `type` has no `fix` member (T-0301 had one and it would have zeroed the repo in the Blueframe UI); valid types are feature|bug|chore|infra|question|spike.\n\nOWNER DECISIONS, do not relitigate: the profile card image is the AVATAR always (so twitter:card is `summary` by design); attendance is dead on every surface; the Discord tag is gone from the roster row but kept in the Owner-only CSV.\n\nSTILL NOT DONE: nothing pasted into a real Discord channel (Discord caches an unfurl ~30min with no purge - use a throwaway query string when re-testing). event-detail.component has no spec file. The profile.component.scss budget warning (8.91kB vs 8kB) is pre-existing.\n\nFrontend verification runs in a container - the host is on Node 22.22.2 and the Angular CLI needs >=22.22.3. `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` matches CI; karma needs chromium plus a --no-sandbox wrapper on CHROME_BIN (a wrapper script, so the repo stays clean).",
+  "nextIdCounter": 303,
   "connections": [],
   "tasks": [
     {
@@ -19955,8 +19955,8 @@
       "id": "T-0301",
       "title": "Close the divergences an adversarial review of #71 found",
       "summary": "Four review lenses over the merged diff, every finding adversarially verified. Three landed here, two of them divergences introduced by the very PR whose comments warn about divergence. (1) describeEvents was rewritten in the API without its twin eventsDescription in core/seo/seo-copy.ts - a file whose docblock says CHANGING ANY FUNCTION HERE IS A COUPLED DEPLOY - so /events served one description to the crawler shell and another to the render pass. It takes the next muster now, with the date pre-formatted in the EVENT's zone by the caller and the selection rule pinned to the API's in a comment. Same class: the roster shell advertised the regiment banner while this side passed no image. (2) theme-color reverted - its two consumers want opposite things, Discord never runs JS so it only ever sees the shell, and setting it here repainted every phone's address bar for zero benefit. (3) memberOf referenced an @id no document in this app defined; LandingComponent declares it now and the reference carries name+url so it means something in isolation. Plus the bio cut splitting UTF-16 surrogate pairs.",
-      "status": "review",
-      "type": "fix",
+      "status": "deployed",
+      "type": "bug",
       "size": "S",
       "sizeWeight": 2,
       "area": "public",
@@ -20006,9 +20006,9 @@
         "Did not add a CI check that seo-copy.ts and the API describe*() functions produce identical strings - it needs a shared fixture across two repos, so the coupling is still enforced by a reviewer noticing.",
         "event-detail.component still has no spec file, and it is the component T-0298 changed most."
       ],
-      "lastTouchedCommit": "c90388a780d4fcc1b9e0f8901a5e5c1b1066be3d",
+      "lastTouchedCommit": "cb76f9f",
       "createdAt": "2026-08-05T19:45:00Z",
-      "updatedAt": "2026-08-05T19:45:00Z",
+      "updatedAt": "2026-08-05T21:30:00Z",
       "history": [
         {
           "at": "2026-08-05T19:45:00Z",
@@ -20016,6 +20016,65 @@
           "to": "review",
           "by": "claude",
           "note": "raised and fixed from the adversarial review; PR 73"
+        },
+        {
+          "at": "2026-08-05T21:30:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "PR #73 merged to dev (cb76f9f). Also corrected type 'fix' -> 'bug': 'fix' is not in the schema's type enum and a single invalid value zeroes the whole repo in the Blueframe UI."
+        }
+      ]
+    },
+    {
+      "id": "T-0302",
+      "title": "Swap the static site description for the regiment's tagline",
+      "summary": "Replaced 'Roster, events, gallery and command tools for a Holdfast: Nations at War regiment.' with 'Discipline, honour, and the line. A Holdfast: Nations at War regiment of standing.' in all four places it existed: the meta description, og:description and twitter:description defaults in index.html, and the PWA manifest description. That sentence is already the seeded regiment description in the API (database/seeds/regiment.seed.ts), so this aligns the static shell with what the record says. Pure copy change - no backend twin, so unlike everything in core/seo/seo-copy.ts it is NOT a coupled deploy.",
+      "status": "review",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "public",
+      "feature": "seo",
+      "subfeature": "site-defaults",
+      "repo": "",
+      "paths": [
+        "src/index.html",
+        "public/manifest.json"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "manifest.json still parses and the PWA install prompt shows the new description",
+          "status": "pending"
+        },
+        {
+          "desc": "cold-share of / unfurls with the new og:description before SeoService boots",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "There are now TWO site-level descriptions in this repo and they no longer agree: index.html/manifest carry the tagline, while DEFAULT_MISSION in core/seo/seo-copy.ts and the literal in SeoService.reset() still read 'Roster, events and gallery for a Holdfast: Nations at War regiment.' Left alone on purpose - that string is byte-coupled to the API (seo.service.ts and gallery-share.service.ts) and changing it is a coupled deploy the owner did not ask for. A human's browser sees the tagline pre-boot and the old sentence after SeoService.reset() runs on a route with nothing specific to say.",
+          "status": "open"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not touch DEFAULT_MISSION in core/seo/seo-copy.ts or the duplicated literal in SeoService.reset() - a different sentence, byte-coupled to the API, and out of scope for the requested string swap.",
+        "Did not run the containerized build or the 802-spec suite; the change is text-only in two static files, prettier --check passes and the manifest still parses."
+      ],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-05T21:30:00Z",
+      "updatedAt": "2026-08-05T21:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-05T21:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
         }
       ]
     }
@@ -20030,6 +20089,11 @@
       "at": "2026-08-05T19:45:00Z",
       "by": "claude",
       "note": "T-0301 created from the adversarial review of #71; T-0297..T-0300 merged to dev"
+    },
+    {
+      "at": "2026-08-05T21:30:00Z",
+      "by": "claude",
+      "note": "T-0302 created (site description -> regiment tagline); T-0301 merged to dev and its invalid type corrected"
     }
   ]
 }
