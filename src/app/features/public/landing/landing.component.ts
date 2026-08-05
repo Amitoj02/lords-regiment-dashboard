@@ -206,6 +206,15 @@ export class LandingComponent implements OnInit {
                 {
                     '@context': 'https://schema.org',
                     '@type': 'Organization',
+                    // ── THE NODE EVERY PROFILE POINTS AT (T-0297) ────────────
+                    // A profile's `memberOf` is now `{"@id": "<origin>/#organization"}`,
+                    // and this is the only place that id is DEFINED. Without it
+                    // the reference dangles — a consumer reading a profile finds
+                    // an id with no node behind it, which is worse than the
+                    // inline copy it replaced. Built from `origin` exactly as the
+                    // API's `organizationId()` builds it from `siteUrl()`, so the
+                    // two strings match character for character.
+                    '@id': `${origin}/#organization`,
                     name: this.regimentName,
                     description: this.missionStatement,
                     url: origin || undefined,

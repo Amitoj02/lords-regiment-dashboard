@@ -65,17 +65,6 @@ const SITE_NAME = 'Lords Regiment';
 const JSON_LD_ID = 'hf-json-ld';
 
 /**
- * `--brass-400`, the colour Discord paints an embed's left edge in (T-0297).
- *
- * ⚠️ Mirrors `BRAND_ACCENT` in the API's `seo/html/brand.ts`. Every crawler
- * shell has carried it since T-0293; this service never set one, so the SPA's
- * own document for the same URL fell back to `index.html`'s `--ink-900` — which
- * as an embed stripe is indistinguishable from Discord's default grey, i.e.
- * from having set nothing at all.
- */
-const BRAND_ACCENT = '#c69a45';
-
-/**
  * The card image for a page with nothing of its own to show.
  *
  * The same asset, the same dimensions and the same rule as `DEFAULT_CARD_IMAGE`
@@ -131,11 +120,17 @@ export class SeoService {
         const video = tags.video ? this.sizeForDiscord(tags.video) : null;
 
         this.setName('description', tags.description);
-        // A site constant, not a per-page choice — but it has to be set HERE and
-        // not only in index.html, because that document's `theme-color` is
-        // `--ink-900` (chosen to tint mobile browser chrome) and this one is the
-        // brand accent the crawler shell already emits for the same URL.
-        this.setName('theme-color', BRAND_ACCENT);
+        // ── `theme-color` IS DELIBERATELY NOT SET HERE ───────────────────────
+        // It was, briefly. The reasoning was parity: the crawler shell paints
+        // the brass embed stripe and this document did not, so the two
+        // disagreed. But `theme-color` has exactly two consumers and they want
+        // opposite things — Discord reads it as the embed stripe, and a mobile
+        // browser reads it as the colour of its own chrome. Discord never
+        // executes JavaScript, so it only ever sees the SHELL, which already
+        // emits the accent. Setting it here therefore changed nothing for the
+        // consumer it was aimed at and repainted every phone's address bar from
+        // `--ink-900` (chosen in index.html to match the page background) to
+        // brass. The disagreement is correct: two documents, two audiences.
         this.setProperty('og:site_name', SITE_NAME);
         this.setProperty('og:type', tags.type ?? 'website');
         this.setProperty('og:locale', 'en_GB');

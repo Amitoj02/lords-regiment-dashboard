@@ -39,11 +39,30 @@ export function rosterDescription(regimentName: string, total: number): string {
     );
 }
 
-/** `SeoService.describeEvents` */
-export function eventsDescription(regimentName: string): string {
+/**
+ * `SeoService.describeEvents`.
+ *
+ * ── WHY THIS TAKES A SECOND ARGUMENT NOW (T-0297) ───────────────────────────
+ * It was one frozen sentence, so a link to the calendar unfurled with the same
+ * words in January and in June. The whole reason somebody pastes `/events` into
+ * a channel is to say "look what is coming up", and the card answered a
+ * different question. Naming the next muster is what makes this a live document
+ * instead of a slogan.
+ *
+ * `next.date` arrives already formatted, exactly as `eventDescription` takes
+ * `fallbackDate` and for the same reason: it has to be the date in the EVENT's
+ * own timezone, which only the caller can compute from `startsAt` + `timezone`.
+ * A browser-local date could never match the server-rendered one.
+ */
+export function eventsDescription(
+    regimentName: string,
+    next?: { title: string; date: string } | null,
+): string {
+    const lead = next ? ` Next up: ${next.title} on ${next.date}.` : '';
     return (
-        `Line battles, drills and campaign nights run by ${regimentName} — ` +
-        'what is running now, what is scheduled next, and what has just been fought.'
+        `Line battles, drills and campaign nights run by ${regimentName}, a Holdfast: ` +
+        `Nations at War regiment — what is running now, what is scheduled next, and ` +
+        `what has just been fought.${lead}`
     );
 }
 

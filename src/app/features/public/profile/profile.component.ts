@@ -66,6 +66,29 @@ const BIO_SNIPPET_LIMIT = 160;
 const GAME_NAME = 'Holdfast: Nations at War';
 
 /**
+ * Cut a bio to `limit` characters for the meta description, appending `…`.
+ *
+ * ── WHY NOT `slice` (T-0297) ────────────────────────────────────────────────
+ * `String.slice` cuts on UTF-16 CODE UNITS and an emoji is two of them, so a bio
+ * whose 159th and 160th units are the halves of one astral character left a lone
+ * high surrogate before the ellipsis — serialised as U+FFFD, so the card read
+ * "…the left flank holds �…". A bio is exactly the field people put emoji in.
+ * Spreading iterates by code point, so a pair is one element and cannot split.
+ *
+ * ⚠️ Mirrors `cutForSnippet` in the API's `seo/seo.service.ts`. Both surfaces
+ * build the same description for the same URL, so fixing one side alone would
+ * introduce a divergence rather than remove a bug.
+ */
+function cutForSnippet(value: string, limit: number): string {
+    const points = [...value];
+    if (points.length <= limit) return value;
+    return `${points
+        .slice(0, limit - 1)
+        .join('')
+        .trimEnd()}…`;
+}
+
+/**
  * The PUBLIC member profile (T-0287), at `/u/:handle` and at `/me`.
  *
  * ── ANONYMOUS BODY, SIGNED-IN ENRICHMENT ────────────────────────────────────
@@ -438,12 +461,20 @@ export class ProfileComponent implements OnInit {
                         ...(member.bio?.trim() ? { description: member.bio.trim() } : {}),
                         ...(image ? { image } : {}),
                         ...(member.rank ? { jobTitle: member.rank } : {}),
-                        // A REFERENCE to the node the landing page defines, not a
-                        // fourth inline copy (T-0297). The two surfaces have to
-                        // agree on the string, so this is built the same way the
-                        // API's `organizationId()` builds it — origin + the
-                        // `#organization` fragment, no trailing slash.
-                        memberOf: { '@id': `${this.absolute('/')}#organization` },
+                        // The `@id` the landing page defines the node under, so
+                        // the graph holds ONE regiment with N members rather
+                        // than N organisations that share a name — plus enough
+                        // of the node to mean something to a consumer holding
+                        // only this document, because a JSON-LD `@id` resolves
+                        // within a document's own graph and that node lives in
+                        // a different one. Built the same way the API's
+                        // `organizationRef()` builds it, so the two match.
+                        memberOf: {
+                            '@type': 'Organization',
+                            '@id': `${this.absolute('/')}#organization`,
+                            name: this.regimentName,
+                            url: this.absolute('/')?.replace(/\/$/, ''),
+                        },
                         ...(member.medals.length
                             ? { award: member.medals.map((medal) => medal.title) }
                             : {}),
@@ -524,10 +555,7 @@ export class ProfileComponent implements OnInit {
 
         const bio = (member.bio || '').replace(/\s+/g, ' ').trim();
         if (bio) {
-            const cut =
-                bio.length > BIO_SNIPPET_LIMIT
-                    ? `${bio.slice(0, BIO_SNIPPET_LIMIT - 1).trimEnd()}…`
-                    : bio;
+            const cut = cutForSnippet(bio, BIO_SNIPPET_LIMIT);
             return `${cut} — ${standing}, a ${GAME_NAME} regiment.`;
         }
 

@@ -355,9 +355,16 @@ describe('ProfileComponent as an anonymous visitor (T-0287)', () => {
         expect(person['@type']).toBe('Person');
         expect(person['alternateName']).toBe('@panda');
         expect(person['jobTitle']).toBe('Sergeant');
-        // A REFERENCE to the node the landing page defines, not a second inline
-        // copy — otherwise the graph holds one unlinked organisation per member.
-        expect(person['memberOf']).toEqual({ '@id': `${location.origin}/#organization` });
+        // The `@id` the landing page defines the node under, so the graph holds
+        // ONE regiment rather than an unlinked organisation per member — plus
+        // enough of the node to stand alone, because a JSON-LD `@id` resolves
+        // within a document's OWN graph and that node lives in another one.
+        expect(person['memberOf']).toEqual({
+            '@type': 'Organization',
+            '@id': `${location.origin}/#organization`,
+            name: 'Lords Regiment',
+            url: location.origin,
+        });
     });
 
     it('leads the description with the bio when the member wrote one (T-0297)', () => {
