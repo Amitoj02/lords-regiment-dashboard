@@ -2,23 +2,27 @@ import { CommonModule } from '@angular/common';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
-import { of } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
+import { SeoService, SeoTags } from '../../../core/services/seo.service';
 import { EventsPageComponent } from './events-page.component';
 
 /**
- * Two things are under test on this page, and they are both about what an
- * ANONYMOUS visitor can be told:
+ * This page left the dashboard in T-0287 and is now an indexed, anonymous URL.
+ * What is under test is everything that assumption changed:
  *
- * - T-0235: the CTAs are auth-aware. A signed-in visitor gets the real dashboard
- *   action; a signed-out one is sent to sign in. The mocked AuthService signal is
- *   flipped between specs, matching the public-nav specs' pattern.
- * - T-0236: the server + password blocks branch on the PRESENCE FLAGS, which the
- *   API sends on every projection including the public one. The public feed never
- *   carries `serverName` itself, so branching on it (as the page used to) cannot
- *   tell a password-protected event from a plain one.
+ * - the CTAs no longer fork on the session. Every event links to `/events/:id`,
+ *   for a visitor and a member alike, because that page now serves both.
+ * - turnout went member-only on the wire, so `rsvpCounts` is simply ABSENT from
+ *   the public feed. The page must not turn that absence into "0 RSVPs".
+ * - a failed fetch has to look like a failure. It used to render as a regiment
+ *   with nothing scheduled.
+ * - the ongoing hero shows the EVENT's banner; the stock cover is only a
+ *   fallback (it used to be hardcoded in the stylesheet).
+ *
+ * The presence-flag behaviour from T-0236 is unchanged and still covered.
  */
 class MockAuthService {
     readonly currentUser = signal<CurrentUser | null>(null);
@@ -30,10 +34,24 @@ class MockAuthService {
     }
 }
 
+class MockSeoService {
+    readonly applied: SeoTags[] = [];
+    apply(tags: SeoTags): void {
+        this.applied.push(tags);
+    }
+    reset(): void {
+        /* nothing to undo in a test double */
+    }
+    get last(): SeoTags | undefined {
+        return this.applied[this.applied.length - 1];
+    }
+}
+
 function makeUser(isMember: boolean): CurrentUser {
     return {
         id: 'u1',
         inGameName: 'Test User',
+        username: null,
         rank: null,
         role: isMember ? 'Member' : 'Applicant',
         discordTag: null,
@@ -50,9 +68,14 @@ function makeUser(isMember: boolean): CurrentUser {
     };
 }
 
-/** A PUBLIC-projection event: presence flags, but no server binding. */
+/**
+ * A PUBLIC-projection event: presence flags, no server binding, and NO
+ * `rsvpCounts` — the type still declares that field required, but the wire no
+ * longer carries it and `mapEvent` copies straight off the wire. The assertion
+ * is what makes the omission expressible.
+ */
 function event(overrides: Partial<RegimentEvent> = {}): RegimentEvent {
-    return {
+    const base = {
         id: 'ev1',
         title: 'Line Battle',
         description: 'Fall in.',
@@ -60,25 +83,37 @@ function event(overrides: Partial<RegimentEvent> = {}): RegimentEvent {
         date: '2026-06-07',
         startTime: '19:30',
         endTime: '22:00',
+        startsAt: '2026-06-07T17:30:00.000Z',
+        endsAt: '2026-06-07T20:00:00.000Z',
         timezone: 'America/New_York',
         zoneLabel: 'GMT+2',
         platforms: ['steam'],
         status: 'upcoming',
         tags: ['line-battle'],
-        rsvpCounts: { interested: 2, tentative: 1, declined: 0, neutral: 0 },
         hasServerName: false,
         hasServerPassword: false,
+    } as RegimentEvent;
+    return { ...base, ...overrides };
+}
+
+/** The MEMBER projection of the same event — turnout included. */
+function memberEvent(overrides: Partial<RegimentEvent> = {}): RegimentEvent {
+    return event({
+        rsvpCounts: { interested: 2, tentative: 1, declined: 0, neutral: 0 },
         ...overrides,
-    };
+    });
 }
 
 describe('EventsPageComponent', () => {
     let fixture: ComponentFixture<EventsPageComponent>;
     let auth: MockAuthService;
+    let seo: MockSeoService;
+    let eventsService: jasmine.SpyObj<EventsService>;
 
     function setup(events: RegimentEvent[]): void {
         auth = new MockAuthService();
-        const eventsService = jasmine.createSpyObj<EventsService>('EventsService', ['getAll']);
+        seo = new MockSeoService();
+        eventsService = jasmine.createSpyObj<EventsService>('EventsService', ['getAll']);
         eventsService.getAll.and.returnValue(of(events));
 
         TestBed.configureTestingModule({
@@ -87,6 +122,7 @@ describe('EventsPageComponent', () => {
             providers: [
                 { provide: EventsService, useValue: eventsService },
                 { provide: AuthService, useValue: auth },
+                { provide: SeoService, useValue: seo },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         });
@@ -110,35 +146,140 @@ describe('EventsPageComponent', () => {
         return Array.from(root.querySelectorAll('a')).map((a) => a.getAttribute('href') ?? '');
     }
 
-    describe('auth-aware CTAs (T-0235)', () => {
-        it('sends an anonymous visitor to sign in, worded as the RSVP they want', () => {
+    describe('public CTAs (T-0287)', () => {
+        it('links an anonymous visitor straight at the public event page', () => {
             setup([event({ status: 'ongoing' }), event({ id: 'ev2', status: 'upcoming' })]);
             fixture.detectChanges();
-            expect(text()).toContain('Login to RSVP');
-            expect(hrefs()).toContain('/login');
-            expect(hrefs()).not.toContain('/app/dashboard/events/ev2');
+            expect(hrefs()).toContain('/events/ev1');
+            expect(hrefs()).toContain('/events/ev2');
+            // The old auth fork is gone: no sign-in bounce, no dashboard URL.
+            expect(hrefs()).not.toContain('/login');
+            expect(text()).not.toContain('Login to RSVP');
+            expect(text()).not.toContain('Open in dashboard');
         });
 
-        it('sends a signed-in member to the in-shell event page', () => {
+        it('gives a signed-in member exactly the same links', () => {
             setup([event({ status: 'ongoing' }), event({ id: 'ev2', status: 'upcoming' })]);
             auth.currentUser.set(makeUser(true));
             fixture.detectChanges();
-            expect(text()).toContain('Open in dashboard');
-            expect(text()).not.toContain('Login to RSVP');
-            expect(hrefs()).toContain('/app/dashboard/events/ev1');
-            expect(hrefs()).toContain('/app/dashboard/events/ev2');
-            expect(hrefs()).not.toContain('/login');
+            expect(hrefs()).toContain('/events/ev1');
+            expect(hrefs()).toContain('/events/ev2');
+            expect(hrefs()).not.toContain('/app/dashboard/events/ev1');
         });
 
-        it('sends a signed-in APPLICANT to the same place, not a special case', () => {
-            // /app/dashboard/events/:id carries only authGuard — no capability gate
-            // — and the API answers a non-enrolled caller with a redacted 200, not
-            // a 403. There is deliberately no fork here for non-members.
-            setup([event({ id: 'ev2', status: 'upcoming' })]);
-            auth.currentUser.set(makeUser(false));
+        it('links a concluded event from the Previous grid', () => {
+            setup([event({ id: 'ev9', status: 'previous' })]);
             fixture.detectChanges();
-            expect(hrefs()).toContain('/app/dashboard/events/ev2');
-            expect(hrefs()).not.toContain('/login');
+            expect(hrefs()).toContain('/events/ev9');
+        });
+    });
+
+    describe('the ongoing hero cover', () => {
+        function coverStyle(): string {
+            const el = fixture.nativeElement.querySelector('.ongoing-cover') as HTMLElement;
+            return el.style.backgroundImage;
+        }
+
+        it("uses the event's own banner", () => {
+            setup([event({ status: 'ongoing', bannerUrl: 'https://cdn.example/ev1.jpg' })]);
+            fixture.detectChanges();
+            expect(coverStyle()).toContain('https://cdn.example/ev1.jpg');
+        });
+
+        it('leaves the stylesheet fallback in place when there is no banner', () => {
+            // No inline background-image at all — that is what lets the static
+            // cover in the stylesheet show through.
+            setup([event({ status: 'ongoing', bannerUrl: undefined })]);
+            fixture.detectChanges();
+            expect(coverStyle()).toBe('');
+            expect(fixture.nativeElement.querySelector('.ongoing-cover').classList).toContain(
+                'ongoing-cover-bg',
+            );
+        });
+    });
+
+    describe('turnout is member-only on the wire', () => {
+        it('prints no RSVP tally at all on the public projection', () => {
+            setup([event({ id: 'ev2', status: 'upcoming' })]);
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            // Absent must not read as zero.
+            expect(text()).not.toContain('RSVPs');
+            expect(text()).not.toContain('0 RSVPs');
+        });
+
+        it('prints the tally when a member projection actually carries one', () => {
+            setup([memberEvent({ id: 'ev2', status: 'upcoming' })]);
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            expect(textIn('.event-rsvps')).toBe('3 RSVPs');
+        });
+
+        it('never prints a tally to an anonymous visitor', () => {
+            setup([memberEvent({ id: 'ev2', status: 'upcoming' })]);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.event-rsvps')).toBeNull();
+        });
+
+        it('rsvpTotal() distinguishes absent from zero', () => {
+            setup([]);
+            fixture.detectChanges();
+            expect(fixture.componentInstance.rsvpTotal(event())).toBeNull();
+            expect(
+                fixture.componentInstance.rsvpTotal(
+                    memberEvent({
+                        rsvpCounts: { interested: 2, tentative: 1, declined: 3, neutral: 4 },
+                    }),
+                ),
+            ).toBe(10);
+        });
+    });
+
+    describe('load states', () => {
+        it('says so while the calendar is in flight', () => {
+            setup([]);
+            // NEVER emits, so the page is held in its loading state.
+            eventsService.getAll.and.returnValue(NEVER);
+            fixture.detectChanges();
+            expect(text()).toContain('Mustering the calendar');
+        });
+
+        it('renders a failure as a failure, not as an empty calendar', () => {
+            setup([]);
+            eventsService.getAll.and.returnValue(throwError(() => new Error('boom')));
+            fixture.detectChanges();
+
+            // Asserted on the PROJECTED body, not on the notice's `title` input:
+            // this suite stubs components with NO_ERRORS_SCHEMA, so `hf-notice`
+            // renders as an unknown element and an @Input never reaches the DOM.
+            // Its <ng-content> does, which is why the retry test below can find
+            // the button.
+            expect(text()).toContain("Something went wrong reaching the regiment's events");
+            expect(fixture.nativeElement.querySelector('hf-notice')).not.toBeNull();
+            // The distinction that matters: a failed fetch must never be
+            // presented as "there are no events".
+            expect(text()).not.toContain('No operations on the books');
+        });
+
+        it('retries the fetch from the error state', () => {
+            setup([]);
+            eventsService.getAll.and.returnValue(throwError(() => new Error('boom')));
+            fixture.detectChanges();
+
+            eventsService.getAll.and.returnValue(of([event({ id: 'ev2', status: 'upcoming' })]));
+            (
+                fixture.nativeElement.querySelector('.events-error-body button') as HTMLElement
+            ).click();
+            fixture.detectChanges();
+
+            expect(text()).not.toContain('could not be loaded');
+            expect(hrefs()).toContain('/events/ev2');
+        });
+
+        it('says the calendar is empty when the fetch succeeds with nothing', () => {
+            setup([]);
+            fixture.detectChanges();
+            expect(text()).toContain('No operations on the books');
         });
     });
 
@@ -195,13 +336,46 @@ describe('EventsPageComponent', () => {
         expect(text()).not.toContain('America/New_York');
     });
 
-    it('totalRsvps() sums every RSVP bucket', () => {
-        setup([]);
+    it('heads the archive with the window the API actually serves', () => {
+        // The heading said "Last 30 days" while the backend served everything;
+        // the backend now windows it at 90 (T-0215) and the heading has to agree.
+        setup([event({ id: 'ev9', status: 'previous' })]);
         fixture.detectChanges();
-        expect(
-            fixture.componentInstance.totalRsvps(
-                event({ rsvpCounts: { interested: 2, tentative: 1, declined: 3, neutral: 4 } }),
-            ),
-        ).toBe(10);
+        expect(textIn('.previous-heading')).toBe('Previous · Last 90 days');
+    });
+
+    describe('SEO (T-0287)', () => {
+        it('claims /events as its canonical URL before the fetch resolves', () => {
+            setup([]);
+            eventsService.getAll.and.returnValue(throwError(() => new Error('boom')));
+            fixture.detectChanges();
+            expect(seo.last?.canonicalPath).toBe('/events');
+            expect(seo.last?.title).toContain('Events');
+        });
+
+        it('publishes upcoming events as an ItemList of schema.org Events', () => {
+            setup([
+                event({ id: 'ev2', status: 'upcoming', title: 'Drill Night' }),
+                event({ id: 'ev9', status: 'previous', title: 'Old Battle' }),
+            ]);
+            fixture.detectChanges();
+
+            const jsonLd = seo.last?.jsonLd as {
+                '@type': string;
+                itemListElement: { position: number; item: Record<string, string> }[];
+            };
+            expect(jsonLd['@type']).toBe('ItemList');
+            expect(jsonLd.itemListElement.length).toBe(1);
+            expect(jsonLd.itemListElement[0].item['name']).toBe('Drill Night');
+            expect(jsonLd.itemListElement[0].item['url']).toContain('/events/ev2');
+            // The absolute instant, not the viewer-local wall clock.
+            expect(jsonLd.itemListElement[0].item['startDate']).toBe('2026-06-07T17:30:00.000Z');
+        });
+
+        it('publishes no list when nothing is upcoming', () => {
+            setup([event({ id: 'ev9', status: 'previous' })]);
+            fixture.detectChanges();
+            expect(seo.last?.jsonLd).toBeNull();
+        });
     });
 });

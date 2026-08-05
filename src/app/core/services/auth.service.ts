@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, catchError, finalize, of, shareReplay, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Member } from '../models/member.model';
+import { isStaff } from '../guards/staff.guard';
 import { ApplicationsService } from './applications.service';
 
 /**
@@ -15,6 +16,11 @@ export interface CurrentUser {
     id: string;
     /** In-game name (member) or Discord display name (identity-only). */
     inGameName: string;
+    /**
+     * The caller's vanity handle backing `/u/@handle`, or null when unclaimed.
+     * Always null for an identity-only (non-member) session (T-0287).
+     */
+    username: string | null;
     rank: string | null;
     role: Member['role'];
     discordTag: string | null;
@@ -88,6 +94,8 @@ export class AuthService {
     private gateReturnUrl: string | null = null;
     /** Post-login `isMember` hint the gate interrupted, replayed the same way. */
     private gateReturnIsMemberHint: boolean | null = null;
+    /** URL an anonymous visitor was refused, replayed after sign-in (T-0287). */
+    private returnUrl: string | null = null;
 
     // ── Token storage (the JWT handed off by the OAuth callback) ─────────────
     getToken(): string | null {
@@ -122,7 +130,11 @@ export class AuthService {
             return;
         }
         if (this.isMember()) {
-            this.router.navigateByUrl('/app/dashboard');
+            // Already enrolled — there is nothing to apply for. Staff go to the
+            // console; everyone else to their own profile, because /app is
+            // staff-only now and would bounce them (T-0287). This branch has to
+            // agree with LandingComponent.applyLabel, which renders the button.
+            this.router.navigateByUrl(this.isStaff() ? '/app' : this.myProfilePath());
             return;
         }
         this.routeAfterLogin(this.currentUser(), false);
@@ -140,8 +152,10 @@ export class AuthService {
     /**
      * Decide where a freshly-authenticated caller lands:
      *  - a gated caller → the guild gate, whichever projection they carry (T-0263);
-     *  - every enrolled member → the dashboard (T-0129) — Owners no longer detour
-     *    to first-run setup;
+     *  - anyone who was refused a specific URL → back to that URL (T-0287);
+     *  - an enrolled STAFF member → the dashboard;
+     *  - any other enrolled member → their own public profile, because the
+     *    dashboard is staff-only now and would bounce them straight back;
      *  - non-member who already has an application → their status page (T-0030);
      *  - brand-new non-member → the blank application form.
      */
@@ -159,8 +173,26 @@ export class AuthService {
             this.router.navigateByUrl('/guild-required');
             return;
         }
+        // An explicitly attempted URL beats every default below (T-0287). This is
+        // what makes "Sign in to RSVP" land back on the event rather than on a
+        // dashboard the member may not even be able to open.
+        const attempted = this.returnUrl;
+        this.returnUrl = null;
+        // Replayed for ANY caller, not just an enrolled one. The locked panels on
+        // a public profile and an event page show "Sign in" to whoever is
+        // reading, and most of them are not on the roster yet — gating the
+        // replay on enrolment sent exactly those people to the application form
+        // instead of back to the page they asked for. Every stashed URL is
+        // either public or behind a guard that handles a non-member itself.
+        if (attempted) {
+            this.router.navigateByUrl(attempted);
+            return;
+        }
         if (enrolled) {
-            this.router.navigateByUrl('/app/dashboard');
+            // The dashboard is STAFF-ONLY now (T-0287), so sending every member
+            // there would bounce most of them straight back off staffGuard.
+            // Ordinary members belong on their own public profile.
+            this.router.navigateByUrl(this.isStaff() ? '/app' : this.myProfilePath());
             return;
         }
         this.applications
@@ -211,7 +243,12 @@ export class AuthService {
                 this.clearToken();
                 this.currentUser.set(null);
                 this.resetGuildState();
-                this.router.navigateByUrl('/login');
+                // Home, not /login (T-0287). Signing out from a public page used
+                // to drop the reader on "Continue with Discord" one click after
+                // they asked to LEAVE, which reads as the sign-out having failed.
+                // The whole site is readable signed-out now, so there is
+                // somewhere sensible to land.
+                this.router.navigateByUrl('/home');
             });
     }
 
@@ -291,6 +328,18 @@ export class AuthService {
     }
 
     /**
+     * Called by authGuard before it diverts an ANONYMOUS caller to /login, so
+     * sign-in returns them to what they were trying to reach (T-0287).
+     *
+     * `/login` itself is filtered out: it is reachable directly from the public
+     * nav, and stashing it would make a successful sign-in navigate back to the
+     * sign-in page.
+     */
+    stashReturnUrl(url: string): void {
+        this.returnUrl = url.startsWith('/login') ? null : url;
+    }
+
+    /**
      * Issue the request. The timestamp is stamped up front, not on success: a bot
      * outage must not turn every navigation into a doomed retry.
      */
@@ -363,5 +412,27 @@ export class AuthService {
     /** Capability-based gate — prefer this over role checks for admin UI. */
     hasCapability(capability: string): boolean {
         return this.currentUser()?.capabilities?.includes(capability) ?? false;
+    }
+
+    /**
+     * True when the caller has any reason to open the dashboard (T-0287).
+     * Shares its definition with `staffGuard` so the nav and the router cannot
+     * disagree about who sees a "Dashboard" link that then bounces them.
+     */
+    isStaff(): boolean {
+        return isStaff(this);
+    }
+
+    /**
+     * The caller's own public profile path.
+     *
+     * Prefers the vanity handle, exactly as the API's `canonicalPath` does — so
+     * a member with a handle is never sent to their short-id URL only to be
+     * redirected off it a moment later.
+     */
+    myProfilePath(): string {
+        const user = this.currentUser();
+        if (!user) return '/roster';
+        return user.username ? `/u/@${user.username}` : `/u/${user.id}`;
     }
 }

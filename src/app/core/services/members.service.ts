@@ -4,7 +4,42 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, ApiMember, PaginatedResponse, mapEvent, mapMember } from '../models/api.model';
 import { Member, MemberRole } from '../models/member.model';
+import { SocialPlatform } from '../models/social-link.model';
 import { RegimentEvent } from '../models/event.model';
+
+/** One linked account on the way OUT — a handle, never a URL (T-0289). */
+export interface MemberSocialLinkEdit {
+    platform: SocialPlatform;
+    handle: string;
+}
+
+/** The fields a member may change about themselves (PATCH /members/:id). */
+export interface MemberSelfEdit {
+    inGameName?: string;
+    avatarKey?: string;
+    bannerKey?: string;
+    /** The vanity handle, without the @. `null` releases it. */
+    username?: string | null;
+    /** Short prose for the profile. `null` clears it. */
+    bio?: string | null;
+    /**
+     * Linked accounts. WHOLESALE REPLACE, matching the server: omit the key to
+     * leave them untouched, send `[]` to remove every one. There is no
+     * per-platform endpoint, so an edit that drops one link sends the rest.
+     */
+    socialLinks?: MemberSocialLinkEdit[];
+}
+
+/** Why a vanity handle cannot be claimed (GET /members/me/username-available). */
+export type UsernameRejection =
+    'invalid' | 'reserved' | 'taken' | 'cooldown_target' | 'cooldown_actor';
+
+export interface UsernameAvailability {
+    available: boolean;
+    reason?: UsernameRejection;
+    /** For `cooldown_actor`: ISO timestamp of when the caller may next rename. */
+    retryAfter?: string;
+}
 
 /** A member's service-record timeline entry (GET /members/:id/service-record). */
 export interface ServiceRecordEntry {
@@ -60,12 +95,30 @@ export class MembersService {
      * self-edit DTO accepts: inGameName (the sole display identity) and the
      * storage KEYS of freshly-uploaded avatar/banner images (avatarKey/bannerKey).
      */
-    update(id: string, changes: Partial<Member>): Observable<Member> {
+    update(id: string, changes: MemberSelfEdit): Observable<Member> {
         const body: Record<string, unknown> = {};
         if (changes.inGameName !== undefined) body['inGameName'] = changes.inGameName;
         if (changes.avatarKey !== undefined) body['avatarKey'] = changes.avatarKey;
         if (changes.bannerKey !== undefined) body['bannerKey'] = changes.bannerKey;
+        // `null` is a MEANINGFUL value here — it releases the vanity handle — so
+        // this tests for `undefined` rather than truthiness (T-0287).
+        if (changes.username !== undefined) body['username'] = changes.username;
+        // Same rule for both: `null` clears the bio, `[]` clears every link, and
+        // an absent key leaves the server's copy alone.
+        if (changes.bio !== undefined) body['bio'] = changes.bio;
+        if (changes.socialLinks !== undefined) body['socialLinks'] = changes.socialLinks;
         return this.http.patch<ApiMember>(`${this.base}/${id}`, body).pipe(map(mapMember));
+    }
+
+    /**
+     * Advisory availability probe for the account form (T-0287). The UNIQUE index
+     * is what actually decides, so a PATCH can still 409 after this says yes —
+     * two members can claim the same handle in the same instant.
+     */
+    checkUsername(username: string): Observable<UsernameAvailability> {
+        return this.http.get<UsernameAvailability>(`${this.base}/me/username-available`, {
+            params: { username },
+        });
     }
 
     /** A member's attended events (profile Event History tab, T-0142). */

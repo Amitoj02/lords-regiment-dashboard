@@ -1,111 +1,104 @@
-<div class="legal-page">
-    <hf-public-nav></hf-public-nav>
+<div class="page legal-wrap">
+    <a routerLink="/" class="btn btn-ghost btn-sm back-link">&larr; Home</a>
 
-    <div class="page legal-wrap">
-        <a routerLink="/" class="btn btn-ghost btn-sm back-link">&larr; Home</a>
-
-        <!-- Admin-authored body, when there is one. Bound with plain [innerHTML]
-             — never bypassSecurityTrustHtml — so Angular's sanitiser runs as a
-             second layer over MarkdownService's escape-first rendering. -->
-        @if (documentHtml) {
-        <article class="legal-doc legal-doc--authored">
-            <h1 class="serif-display legal-title">{{ title }}</h1>
-            @if (updatedAt) {
-            <p class="legal-updated">Last updated {{ updatedAt | date:'longDate' }}</p>
-            }
-            <div class="legal-body" [innerHTML]="documentHtml"></div>
-        </article>
-        } @else if (doc === 'terms') {
-        <!-- Shipped fallback: used when the document has never been edited, has
-             been cleared, or the request failed. A blank legal page must never
-             ship — the privacy policy in particular is a Discord Developer ToS
-             obligation, so this copy is what keeps the site compliant when the
-             API is unreachable. -->
-        <article class="legal-doc">
-            <h1 class="serif-display legal-title">Terms &amp; Conditions</h1>
-            <p class="legal-updated">A community project — provided as-is.</p>
-            <p>
-                This dashboard is a volunteer-run companion tool for the Lord Regiment community in
-                <em>Holdfast: Nations at War</em>. It is offered free of charge, as-is and
-                as-available, with no warranties of any kind. Use it at your own discretion.
-            </p>
-            <h2>Use of the site</h2>
-            <p>
-                Access is a courtesy extended to regiment members and applicants. The operators may
-                change, suspend, or discontinue any part of the site at any time, without notice and
-                without liability.
-            </p>
-            <h2>Your account</h2>
-            <p>
-                Sign-in uses your Discord account solely to identify you within the regiment. You
-                are responsible for your own Discord account and for the content you submit here.
-            </p>
-            <h2>No warranty &amp; no liability</h2>
-            <p>
-                The site is provided without any warranty, express or implied. To the fullest extent
-                permitted, the operators accept no liability for any loss or damage arising from its
-                use or unavailability.
-            </p>
-            <h2>Trademarks</h2>
-            <p>
-                <em>Holdfast: Nations at War</em> and all related marks belong to their respective
-                owners. This project is unofficial and not affiliated with them.
-            </p>
-        </article>
-        } @else if (doc === 'privacy') {
-        <article class="legal-doc">
-            <h1 class="serif-display legal-title">Privacy Policy</h1>
-            <p class="legal-updated">A community project — minimal by design.</p>
-            <p>
-                This is a hobby project for a gaming community. It is not a commercial service and
-                does not seek to collect personal information beyond what the regiment needs to run
-                its roster.
-            </p>
-            <h2>What the site works with</h2>
-            <p>
-                To sign you in, the site uses your Discord identity (such as your username and
-                avatar) as provided by Discord's own login. Anything you choose to add — for example
-                a display name or a gallery submission — is visible within the regiment.
-            </p>
-            <h2>No promises, no sale of data</h2>
-            <p>
-                Nothing here should be read as a commitment about how information is stored,
-                retained, or processed. Information is never sold. If you would like your regiment
-                records removed, contact a regiment administrator on Discord.
-            </p>
-            <h2>Third parties</h2>
-            <p>
-                Sign-in is handled by Discord under Discord's own terms and privacy policy. Embedded
-                clips (e.g. medal.tv, YouTube) are served by those providers under their own terms.
-            </p>
-        </article>
-        } @else {
-        <article class="legal-doc">
-            <h1 class="serif-display legal-title">Community Guidelines</h1>
-            <p class="legal-updated">Keep it a good place to be.</p>
-            <p>
-                These guidelines describe the spirit we expect from members using the dashboard and
-                its gallery. They are community expectations, not a contract.
-            </p>
-            <h2>Be respectful</h2>
-            <p>
-                Treat other members with courtesy. Harassment, hate speech, and personal attacks are
-                not welcome.
-            </p>
-            <h2>Submit in good faith</h2>
-            <p>
-                Gallery submissions should be your own captures or content you are allowed to share,
-                and should relate to the regiment and the game. Keep it appropriate for a general
-                audience.
-            </p>
-            <h2>Moderation</h2>
-            <p>
-                Moderators may decline or remove submissions at their discretion. Decisions are made
-                to keep the archive on-topic and welcoming.
-            </p>
-        </article>
+    <!-- Admin-authored body, when there is one. Bound with plain [innerHTML]
+         — never bypassSecurityTrustHtml — so Angular's sanitiser runs as a
+         second layer over MarkdownService's escape-first rendering. -->
+    @if (documentHtml) {
+    <article class="legal-doc legal-doc--authored">
+        <h1 class="serif-display legal-title">{{ title }}</h1>
+        @if (updatedAt) {
+        <p class="legal-updated">Last updated {{ updatedAt | date:'longDate' }}</p>
         }
-    </div>
-
-    <hf-public-footer></hf-public-footer>
+        <div class="legal-body" [innerHTML]="documentHtml"></div>
+    </article>
+    } @else if (doc === 'terms') {
+    <!-- Shipped fallback: used when the document has never been edited, has
+         been cleared, or the request failed. A blank legal page must never
+         ship — the privacy policy in particular is a Discord Developer ToS
+         obligation, so this copy is what keeps the site compliant when the
+         API is unreachable. -->
+    <article class="legal-doc">
+        <h1 class="serif-display legal-title">Terms &amp; Conditions</h1>
+        <p class="legal-updated">A community project — provided as-is.</p>
+        <p>
+            This dashboard is a volunteer-run companion tool for the Lord Regiment community in
+            <em>Holdfast: Nations at War</em>. It is offered free of charge, as-is and as-available,
+            with no warranties of any kind. Use it at your own discretion.
+        </p>
+        <h2>Use of the site</h2>
+        <p>
+            Access is a courtesy extended to regiment members and applicants. The operators may
+            change, suspend, or discontinue any part of the site at any time, without notice and
+            without liability.
+        </p>
+        <h2>Your account</h2>
+        <p>
+            Sign-in uses your Discord account solely to identify you within the regiment. You are
+            responsible for your own Discord account and for the content you submit here.
+        </p>
+        <h2>No warranty &amp; no liability</h2>
+        <p>
+            The site is provided without any warranty, express or implied. To the fullest extent
+            permitted, the operators accept no liability for any loss or damage arising from its use
+            or unavailability.
+        </p>
+        <h2>Trademarks</h2>
+        <p>
+            <em>Holdfast: Nations at War</em> and all related marks belong to their respective
+            owners. This project is unofficial and not affiliated with them.
+        </p>
+    </article>
+    } @else if (doc === 'privacy') {
+    <article class="legal-doc">
+        <h1 class="serif-display legal-title">Privacy Policy</h1>
+        <p class="legal-updated">A community project — minimal by design.</p>
+        <p>
+            This is a hobby project for a gaming community. It is not a commercial service and does
+            not seek to collect personal information beyond what the regiment needs to run its
+            roster.
+        </p>
+        <h2>What the site works with</h2>
+        <p>
+            To sign you in, the site uses your Discord identity (such as your username and avatar)
+            as provided by Discord's own login. Anything you choose to add — for example a display
+            name or a gallery submission — is visible within the regiment.
+        </p>
+        <h2>No promises, no sale of data</h2>
+        <p>
+            Nothing here should be read as a commitment about how information is stored, retained,
+            or processed. Information is never sold. If you would like your regiment records
+            removed, contact a regiment administrator on Discord.
+        </p>
+        <h2>Third parties</h2>
+        <p>
+            Sign-in is handled by Discord under Discord's own terms and privacy policy. Embedded
+            clips (e.g. medal.tv, YouTube) are served by those providers under their own terms.
+        </p>
+    </article>
+    } @else {
+    <article class="legal-doc">
+        <h1 class="serif-display legal-title">Community Guidelines</h1>
+        <p class="legal-updated">Keep it a good place to be.</p>
+        <p>
+            These guidelines describe the spirit we expect from members using the dashboard and its
+            gallery. They are community expectations, not a contract.
+        </p>
+        <h2>Be respectful</h2>
+        <p>
+            Treat other members with courtesy. Harassment, hate speech, and personal attacks are not
+            welcome.
+        </p>
+        <h2>Submit in good faith</h2>
+        <p>
+            Gallery submissions should be your own captures or content you are allowed to share, and
+            should relate to the regiment and the game. Keep it appropriate for a general audience.
+        </p>
+        <h2>Moderation</h2>
+        <p>
+            Moderators may decline or remove submissions at their discretion. Decisions are made to
+            keep the archive on-topic and welcoming.
+        </p>
+    </article>
+    }
 </div>

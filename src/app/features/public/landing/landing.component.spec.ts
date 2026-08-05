@@ -2,7 +2,11 @@ import { CommonModule } from '@angular/common';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
-import { RegimentPresentation, RegimentProfile } from '../../../core/models/api.model';
+import {
+    RegimentPresentation,
+    RegimentProfile,
+    RegimentStats,
+} from '../../../core/models/api.model';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
@@ -25,12 +29,17 @@ class MockAuthService {
     isMember(): boolean {
         return this.currentUser()?.isMember ?? false;
     }
+    /** Staff, not merely enrolled — the hero CTA branches on this (T-0287). */
+    isStaff(): boolean {
+        return (this.currentUser()?.capabilities?.length ?? 0) > 0;
+    }
 }
 
 function makeUser(isMember: boolean): CurrentUser {
     return {
         id: 'u1',
         inGameName: 'Test User',
+        username: null,
         rank: null,
         role: isMember ? 'Member' : 'Applicant',
         discordTag: null,
@@ -81,6 +90,28 @@ function makeProfile(
     };
 }
 
+/** The two figures the hero prints, plus the rest of the projection. */
+function makeStats(establishedAt: string | null, enrolled: number): RegimentStats {
+    return {
+        totalMembers: enrolled,
+        enrolledExcludingMercenaries: enrolled,
+        activeMembers: enrolled,
+        membersByRole: {
+            Owner: 1,
+            Admin: 0,
+            Moderator: 0,
+            Member: 0,
+            Mercenary: 0,
+            Applicant: 0,
+        },
+        totalEvents: 0,
+        upcomingEvents: 0,
+        previousEvents: 0,
+        establishedYear: establishedAt ? Number(establishedAt.slice(0, 4)) : null,
+        establishedAt,
+    };
+}
+
 /** A minimal upcoming event carrying the instants and the server presence flag. */
 function makeEvent(overrides: Partial<RegimentEvent> = {}): RegimentEvent {
     return {
@@ -105,12 +136,19 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
     let auth: MockAuthService;
     /** Read lazily by the mock, so a spec can swap it before the first CD. */
     let profile$: Observable<RegimentProfile | null>;
+    /**
+     * Likewise swappable. `of(null)` is the "statistics visibility off" case the
+     * component reaches via a swallowed 403, and it is the default here so every
+     * spec that is not about the figures renders the hero without them.
+     */
+    let stats$: Observable<RegimentStats | null>;
     /** Swappable by a spec before the first change detection. */
     let events: RegimentEvent[];
 
     beforeEach(async () => {
         auth = new MockAuthService();
         profile$ = of(null);
+        stats$ = of(null);
         events = [];
         await TestBed.configureTestingModule({
             imports: [CommonModule],
@@ -121,7 +159,7 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
                 { provide: GalleryService, useValue: { getAll: () => of([]) } },
                 {
                     provide: RegimentService,
-                    useValue: { getProfile: () => profile$, getStats: () => of(null) },
+                    useValue: { getProfile: () => profile$, getStats: () => stats$ },
                 },
             ],
             schemas: [NO_ERRORS_SCHEMA],
@@ -140,8 +178,16 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
         expect(heroLabel()).toBe('Apply to Join');
     });
 
-    it('labels the CTA "Go to Dashboard" for a signed-in member', () => {
+    // T-0287: the dashboard is staff-only, so naming it to an ordinary member
+    // promised a place staffGuard would refuse them.
+    it('labels the CTA "View My Profile" for a signed-in ordinary member', () => {
         auth.currentUser.set(makeUser(true));
+        fixture.detectChanges();
+        expect(heroLabel()).toBe('View My Profile');
+    });
+
+    it('labels the CTA "Go to Dashboard" only for staff', () => {
+        auth.currentUser.set({ ...makeUser(true), capabilities: ['manage_events'] });
         fixture.detectChanges();
         expect(heroLabel()).toBe('Go to Dashboard');
     });
@@ -269,6 +315,75 @@ describe('LandingComponent (auth-aware hero CTA)', () => {
             expect(hero().style.getPropertyValue('--hero-scrim')).toBe(
                 String(LANDING_DEFAULTS.heroOverlayDensity / 100),
             );
+        });
+    });
+
+    /**
+     * T-0296. The hero carries one COMMAND — Orders and Roster are already in
+     * the nav, which is why the other two buttons went — plus the two figures,
+     * which degrade one at a time rather than leaving an empty column.
+     */
+    describe('hero stats (T-0296)', () => {
+        function stats(): HTMLElement | null {
+            return fixture.nativeElement.querySelector('.hero-stats');
+        }
+        /**
+         * `[value, label]` per figure, read element by element rather than off
+         * textContent — value and label are separate block-level divs, so the
+         * concatenated text has no separator between them (or between tiles).
+         */
+        function figures(): string[][] {
+            return Array.from(stats()?.querySelectorAll('.hero-stat') ?? []).map((el) =>
+                ['.hero-stat-value', '.hero-stat-label'].map((sel) =>
+                    (el.querySelector(sel)?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+                ),
+            );
+        }
+
+        it('leaves the hero exactly one button, and it is the CTA', () => {
+            stats$ = of(makeStats('2026-07-01', 36));
+            fixture.detectChanges();
+            // The roster link is a figure, not a rival command — the two
+            // btn-lg anchors are what had to go.
+            expect(fixture.nativeElement.querySelectorAll('.hero button').length).toBe(1);
+            expect(fixture.nativeElement.querySelectorAll('.hero .btn').length).toBe(1);
+        });
+
+        it('hides the figures entirely when statistics visibility is off', () => {
+            // getStats() → 403, swallowed to null by the component.
+            stats$ = of(null);
+            fixture.detectChanges();
+            expect(stats()).toBeNull();
+        });
+
+        it('sets both figures', () => {
+            stats$ = of(makeStats('2026-07-01', 36));
+            fixture.detectChanges();
+            expect(figures()).toEqual([
+                ['07 / 2026', 'Since Established'],
+                ['36', 'Members →'],
+            ]);
+        });
+
+        it('points the roll at the roster it summarises', () => {
+            stats$ = of(makeStats('2026-07-01', 36));
+            fixture.detectChanges();
+            const link = stats()!.querySelector('a.hero-stat-link');
+            expect(link).not.toBeNull();
+            expect(link!.getAttribute('routerLink')).toBe('/roster');
+        });
+
+        it('drops the established figure alone when the date is unset', () => {
+            stats$ = of(makeStats(null, 36));
+            fixture.detectChanges();
+            // The failure this pins is an orphaned column with no value in it.
+            expect(figures()).toEqual([['36', 'Members →']]);
+        });
+
+        it('still shows the count at zero rather than blanking the block', () => {
+            stats$ = of(makeStats(null, 0));
+            fixture.detectChanges();
+            expect(figures()).toEqual([['0', 'Members →']]);
         });
     });
 

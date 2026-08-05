@@ -1,5 +1,11 @@
 import { SidebarComponent } from './sidebar.component';
 
+/**
+ * The sidebar is the staff console's nav (T-0287). Its entries are almost all
+ * capability-gated rather than role-gated, because `staffGuard` lets in anyone
+ * holding ANY one staff capability — so a Moderator with only `moderate_gallery`
+ * is legitimately in this shell and must not be offered links the API 403s.
+ */
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
 
@@ -7,63 +13,116 @@ describe('SidebarComponent', () => {
         component = new SidebarComponent();
     });
 
+    /** Visible keys for a caller with the given role flag + capability set. */
+    function keysFor(isAdmin: boolean, capabilities: string[]): string[] {
+        component.isAdmin = isAdmin;
+        component.capabilities = capabilities;
+        return component.visibleItems.map((i) => i.key);
+    }
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('routes Events to the in-shell member surface and is member-visible', () => {
-        const events = component.navItems.find((i) => i.key === 'events');
-        expect(events?.route).toBe('/app/dashboard/events');
-        expect(events?.adminOnly).toBe(false);
+    describe('destinations (T-0287)', () => {
+        it('points every entry at a live /app route', () => {
+            expect(component.navItems.map((i) => ({ key: i.key, route: i.route }))).toEqual([
+                { key: 'overview', route: '/app/overview' },
+                { key: 'events', route: '/app/events' },
+                { key: 'gallery', route: '/app/gallery/moderation' },
+                { key: 'apps', route: '/app/applications' },
+                { key: 'ranks', route: '/app/ranks' },
+                { key: 'audit', route: '/app/audit' },
+                { key: 'settings', route: '/app/settings' },
+                { key: 'bot', route: '/app/bot' },
+            ]);
+        });
+
+        it('drops the member-facing surfaces that moved to the public site', () => {
+            // Roster, profiles and the gallery ARCHIVE are public pages now;
+            // linking them from here would send a moderator back out of /app
+            // through a URL that no longer exists.
+            const keys = component.navItems.map((i) => i.key);
+            expect(keys).not.toContain('roster');
+            expect(keys).not.toContain('profile');
+            expect(component.navItems.every((i) => i.route.startsWith('/app/'))).toBeTrue();
+        });
+
+        it('sends the footer user card to the public profile the shell resolved', () => {
+            component.user = {
+                id: 'u1',
+                name: 'Test',
+                rank: 'Private',
+                profilePath: '/u/@lordy',
+            };
+            expect(component.profileRoute).toBe('/u/@lordy');
+        });
+
+        it('falls back to the roster when there is no resolved profile path', () => {
+            expect(component.profileRoute).toBe('/roster');
+        });
     });
 
-    it('routes Gallery to /app/gallery and makes it member-visible (T-0110)', () => {
-        const gallery = component.navItems.find((i) => i.key === 'gallery');
-        expect(gallery?.route).toBe('/app/gallery');
-        expect(gallery?.adminOnly).toBe(false);
-    });
+    describe('capability gating', () => {
+        it('shows a full-capability admin everything', () => {
+            const keys = keysFor(true, [
+                'manage_events',
+                'moderate_gallery',
+                'manage_applications',
+                'edit_ranks_medals',
+                'view_audit_log',
+                'manage_settings',
+            ]);
+            expect(keys).toEqual([
+                'overview',
+                'events',
+                'gallery',
+                'apps',
+                'ranks',
+                'audit',
+                'settings',
+                'bot',
+            ]);
+        });
 
-    it('hides admin-only items from non-admins but keeps member-visible Events + Gallery', () => {
-        component.isAdmin = false;
-        const keys = component.visibleItems.map((i) => i.key);
-        expect(keys).toContain('dashboard');
-        expect(keys).toContain('roster');
-        // Events + Gallery are now member-visible (T-0086/T-0110).
-        expect(keys).toContain('events');
-        expect(keys).toContain('gallery');
-        expect(keys).not.toContain('apps');
-        expect(keys).not.toContain('audit');
-    });
+        it('gives a gallery-only Moderator the queue and nothing else to click', () => {
+            expect(keysFor(false, ['moderate_gallery'])).toEqual(['overview', 'gallery']);
+        });
 
-    it('shows admin-only items to admins', () => {
-        component.isAdmin = true;
-        const keys = component.visibleItems.map((i) => i.key);
-        expect(keys).toContain('events');
-        expect(keys).toContain('gallery');
-        expect(keys).toContain('apps');
-        expect(keys).toContain('audit');
+        it('gives an events-only Moderator the events screen and nothing else', () => {
+            expect(keysFor(false, ['manage_events'])).toEqual(['overview', 'events']);
+        });
+
+        it('hides Applications, Ranks and Audit from an admin lacking their capabilities', () => {
+            // The role flag alone is not enough for a capability-gated entry:
+            // the routes behind them are enforced per capability by the API.
+            const keys = keysFor(true, []);
+            expect(keys).not.toContain('apps');
+            expect(keys).not.toContain('ranks');
+            expect(keys).not.toContain('audit');
+            expect(keys).not.toContain('settings');
+            // Discord Bot has no capability of its own, so it keeps the role gate.
+            expect(keys).toContain('bot');
+        });
+
+        it('keeps Discord Bot off a non-admin', () => {
+            expect(keysFor(false, ['moderate_gallery'])).not.toContain('bot');
+        });
+
+        it('drops the Administrative heading when nothing in it survives', () => {
+            component.isAdmin = false;
+            component.capabilities = ['moderate_gallery'];
+            expect(component.visibleSections.map((s) => s.id)).toEqual(['general']);
+        });
     });
 
     /**
-     * The Settings entry is the one administrative link driven by capabilities
-     * rather than the coarse `isAdmin` role flag: `settingsAccessGuard` owns the
-     * route, so a role-only link would send a Moderator holding neither
-     * capability into a panel the API 403s end to end.
+     * Settings stays driven by the guard's own capability list rather than a
+     * restated copy, so the link and the route can never disagree (T-0265).
      */
     describe('Settings entry — capability-gated (T-0265)', () => {
-        function keysFor(isAdmin: boolean, capabilities: string[]): string[] {
-            component.isAdmin = isAdmin;
-            component.capabilities = capabilities;
-            return component.visibleItems.map((i) => i.key);
-        }
-
         it('hides Settings from an admin holding neither settings capability', () => {
-            const keys = keysFor(true, ['manage_events', 'view_audit_log']);
-            expect(keys).not.toContain('settings');
-            // The other administrative entries are untouched by this change.
-            expect(keys).toContain('apps');
-            expect(keys).toContain('ranks');
-            expect(keys).toContain('audit');
+            expect(keysFor(true, ['view_audit_log'])).not.toContain('settings');
         });
 
         it('shows Settings to a caller holding manage_settings', () => {
@@ -80,25 +139,12 @@ describe('SidebarComponent', () => {
             expect(keysFor(false, ['manage_settings'])).toContain('settings');
             expect(keysFor(true, [])).not.toContain('settings');
         });
-
-        it('drops the Administrative heading when nothing in it survives', () => {
-            component.isAdmin = false;
-            component.capabilities = [];
-            expect(component.visibleSections.map((s) => s.id)).not.toContain('administrative');
-        });
-
-        it('keeps the Administrative heading for an admin without settings capabilities', () => {
-            component.isAdmin = true;
-            component.capabilities = [];
-            const admin = component.visibleSections.find((s) => s.id === 'administrative');
-            expect(admin?.items.map((i) => i.key)).toEqual(['apps', 'ranks', 'audit']);
-        });
     });
 
     it('emits the route on navigation', () => {
         const emitted: string[] = [];
         component.navigate.subscribe((r) => emitted.push(r));
-        component.onNavigate('/app/admin/events');
-        expect(emitted).toEqual(['/app/admin/events']);
+        component.onNavigate('/app/events');
+        expect(emitted).toEqual(['/app/events']);
     });
 });

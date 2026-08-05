@@ -4,7 +4,7 @@
 
     <!-- Sidebar — becomes an off-canvas drawer on mobile -->
     <hf-sidebar
-        [active]="activeRoute"
+        [active]="activeKey"
         [user]="navUser"
         [isAdmin]="isAdmin()"
         [capabilities]="capabilities()"
@@ -47,6 +47,6 @@
         </div>
 
         <!-- Mobile bottom navigation -->
-        <hf-bottom-nav [active]="activeRoute" (navigate)="onNavigate($event)"></hf-bottom-nav>
+        <hf-bottom-nav [active]="activeKey" (navigate)="onNavigate($event)"></hf-bottom-nav>
     </div>
 </div>

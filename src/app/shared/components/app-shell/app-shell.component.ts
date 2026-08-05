@@ -1,6 +1,17 @@
 import { Component, Input, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { NavUser } from '../sidebar/sidebar.component';
+
+/**
+ * Active-nav keys pages hand to the shell by hand. `/app/dashboard` became
+ * `/app/overview` in T-0287 and the page templates still say "dashboard";
+ * translating here keeps the sidebar and the bottom bar highlighting instead of
+ * silently matching nothing.
+ */
+const LEGACY_ACTIVE_KEYS: Readonly<Record<string, string | undefined>> = {
+    dashboard: 'overview',
+};
 
 @Component({
     standalone: false,
@@ -29,6 +40,11 @@ export class AppShellComponent {
     /** Mobile off-canvas sidebar drawer state. Ignored on desktop (CSS). */
     drawerOpen = false;
 
+    /** `activeRoute`, with pre-T-0287 keys translated. Fed to both nav bars. */
+    get activeKey(): string {
+        return LEGACY_ACTIVE_KEYS[this.activeRoute] ?? this.activeRoute;
+    }
+
     toggleDrawer(): void {
         this.drawerOpen = !this.drawerOpen;
     }
@@ -37,7 +53,7 @@ export class AppShellComponent {
         this.drawerOpen = false;
     }
 
-    get navUser(): { id: string; name: string; rank: string; avatarUrl: string | null } {
+    get navUser(): NavUser {
         const user = this.currentUser();
         return {
             id: user?.id ?? '',
@@ -46,6 +62,10 @@ export class AppShellComponent {
             name: user?.inGameName ?? '',
             rank: user?.rank ?? '',
             avatarUrl: user?.avatarUrl ?? null,
+            // Resolved here rather than in the sidebar: profiles are public URLs
+            // now (T-0287) and the shell is the piece holding the session that
+            // knows whether this member has claimed a handle.
+            profilePath: this.auth.myProfilePath(),
         };
     }
 

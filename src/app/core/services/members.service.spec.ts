@@ -33,6 +33,8 @@ function apiMember(overrides: Partial<ApiMember> = {}): ApiMember {
         publicProfile: true,
         avatarUrl: null,
         bannerUrl: null,
+        bio: null,
+        socialLinks: [],
         standing: null,
         joinedAt: '2026-01-01T00:00:00Z',
         lastSeenAt: '2026-07-01T00:00:00Z',

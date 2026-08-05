@@ -50,6 +50,7 @@ describe('AuthService post-login routing', () => {
         const user: CurrentUser = {
             id: 'u',
             inGameName: 'U',
+            username: null,
             rank: null,
             role: 'Member',
             discordTag: null,
@@ -73,20 +74,36 @@ describe('AuthService post-login routing', () => {
         blocked: false,
     });
 
-    it('routes an enrolled member to /app/dashboard', () => {
+    // T-0287: the dashboard is staff-only, so an ordinary member sent there
+    // would be bounced straight back off staffGuard. They land on their own
+    // public profile instead — at the SHORT-ID path, because this member has no
+    // vanity handle to prefer.
+    it('routes an enrolled member with no handle to their short-id profile', () => {
         service.completeLogin('t', true);
-        flushMe({ isMember: true, role: 'Member' });
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        flushMe({ isMember: true, role: 'Member', id: 'aB3x9KqLm2Zt' });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/aB3x9KqLm2Zt');
     });
 
-    it('routes an enrolled Owner straight to /app/dashboard (no first-run setup detour, T-0129)', () => {
+    it('prefers the vanity handle when the member has claimed one', () => {
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, role: 'Member', username: 'panda' });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/@panda');
+    });
+
+    it('routes a STAFF member to the console instead', () => {
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, role: 'Moderator', capabilities: ['manage_applications'] });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app');
+    });
+
+    it('routes an enrolled Owner straight to the console (no first-run setup detour, T-0129)', () => {
         // Even with an incomplete-setup profile available, Owners are not detoured.
         regiment.getProfile.and.returnValue(of(profile(false)));
         service.completeLogin('t', true);
-        flushMe({ isMember: true, role: 'Owner' });
+        flushMe({ isMember: true, role: 'Owner', capabilities: ['manage_settings'] });
         // getProfile is no longer consulted on login (the setup detour was dropped).
         expect(regiment.getProfile).not.toHaveBeenCalled();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app');
     });
 
     it('routes a returning applicant (has an application) to /onboarding/status', () => {
@@ -105,10 +122,15 @@ describe('AuthService post-login routing', () => {
         expect(router.navigateByUrl).toHaveBeenCalledWith('/onboarding/apply');
     });
 
-    it('applyToJoin sends a signed-in member to /app/dashboard without hitting the API', () => {
-        service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
+    it('applyToJoin sends a signed-in member to their profile without hitting the API', () => {
+        service.currentUser.set({
+            isMember: true,
+            role: 'Member',
+            id: 'aB3x9KqLm2Zt',
+            username: null,
+        } as CurrentUser);
         service.applyToJoin();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/aB3x9KqLm2Zt');
     });
 
     it('applyToJoin routes a signed-in non-member through their onboarding status', () => {
@@ -126,7 +148,7 @@ describe('AuthService post-login routing', () => {
         service.completeLogin('t', true);
         flushMe({ isMember: true, guildGateEnabled: true, guildMember: false });
         expect(router.navigateByUrl).toHaveBeenCalledWith('/guild-required');
-        expect(router.navigateByUrl).not.toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).not.toHaveBeenCalledWith('/u/u');
     });
 
     it('routes a gated applicant to /guild-required without looking up their application', () => {
@@ -156,13 +178,13 @@ describe('AuthService post-login routing', () => {
             guildMember: false,
             guildGateExempt: true,
         });
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/u');
     });
 
     it('does not gate anyone while the feature flag is off, even outside the guild', () => {
         service.completeLogin('t', true);
         flushMe({ isMember: true, guildGateEnabled: false, guildMember: false });
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/u');
     });
 
     it('applyToJoin sends a gated non-member to the gate rather than the form', () => {
@@ -179,13 +201,13 @@ describe('AuthService post-login routing', () => {
 
     // ── T-0263: resuming the destination the gate interrupted ─────────────────
 
-    it('resumeAfterGate replays the dashboard a gated member was headed for', () => {
+    it('resumeAfterGate replays the destination a gated member was headed for', () => {
         service.completeLogin('t', true);
         flushMe({ isMember: true, guildGateEnabled: true, guildMember: false });
         // The user joins the server and the re-check flips the verdict.
         service.currentUser.update((u) => ({ ...u!, guildMember: true }));
         service.resumeAfterGate();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/u');
     });
 
     it('resumeAfterGate replays the applicant branch, status page and all', () => {
@@ -206,17 +228,38 @@ describe('AuthService post-login routing', () => {
 
     it('resumeAfterGate prefers the deep link the guard stashed over the login default', () => {
         service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
-        service.stashGateReturnUrl('/app/dashboard/events/42');
+        service.stashGateReturnUrl('/app/events/42');
         service.resumeAfterGate();
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/dashboard/events/42');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/events/42');
     });
 
     it('resumeAfterGate consumes the stash, so a second call does not replay it', () => {
-        service.currentUser.set({ isMember: true, role: 'Member' } as CurrentUser);
-        service.stashGateReturnUrl('/app/roster');
+        service.currentUser.set({
+            isMember: true,
+            role: 'Member',
+            id: 'u',
+            username: null,
+        } as CurrentUser);
+        service.stashGateReturnUrl('/roster');
         service.resumeAfterGate();
         service.resumeAfterGate();
-        expect(router.navigateByUrl.calls.allArgs()).toEqual([['/app/roster'], ['/app/dashboard']]);
+        expect(router.navigateByUrl.calls.allArgs()).toEqual([['/roster'], ['/u/u']]);
+    });
+
+    // ── T-0287: the anonymous return URL, separate from the gate's ────────────
+
+    it('replays the URL authGuard stashed, ahead of the post-login default', () => {
+        service.stashReturnUrl('/events/aB3x9KqLm2Zt');
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, role: 'Member' });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/events/aB3x9KqLm2Zt');
+    });
+
+    it('never stashes /login itself — that would loop the sign-in back on itself', () => {
+        service.stashReturnUrl('/login');
+        service.completeLogin('t', true);
+        flushMe({ isMember: true, role: 'Member' });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/u/u');
     });
 });
 
@@ -267,6 +310,7 @@ describe('AuthService guild-membership gate (T-0261/T-0262)', () => {
         service.currentUser.set({
             id: 'u',
             inGameName: 'U',
+            username: null,
             rank: null,
             role: 'Member',
             discordTag: null,

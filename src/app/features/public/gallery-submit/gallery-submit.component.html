@@ -1,0 +1,213 @@
+<!-- `public-page` because the app shell used to supply this page's gutters and
+     the public layout's <main> supplies none. -->
+<div class="page public-page">
+    <div class="page-head">
+        <h1 class="page-title serif-display">Submit to Gallery</h1>
+    </div>
+
+    @if (can('submit_to_gallery')) {
+    <div class="submit-layout">
+        <div class="submit-main">
+            <div class="hf-tabs">
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'files' }"
+                    (click)="activeTab = 'files'"
+                >
+                    Upload media
+                </button>
+                <button
+                    type="button"
+                    class="hf-tab"
+                    [ngClass]="{ active: activeTab === 'link' }"
+                    (click)="activeTab = 'link'"
+                >
+                    External link
+                </button>
+            </div>
+
+            @if (activeTab === 'files') {
+            <label class="drop-zone">
+                <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime"
+                    multiple
+                    hidden
+                    (change)="onFilesSelected($event)"
+                />
+                <div class="drop-zone__title">Choose images or videos</div>
+                <div class="drop-zone__hint">{{ galleryHint }}</div>
+            </label>
+
+            @for (f of uploadedFiles; track f.id) {
+            <div class="file-row">
+                <div
+                    class="file-thumb"
+                    [style.background-image]="'url(' + f.previewUrl + ')'"
+                ></div>
+                <div class="file-meta">
+                    <div class="file-name">{{ f.filename }}</div>
+                    <div class="file-status">
+                        @if (f.uploading) { Uploading… } @else if (f.error) {
+                        <span class="file-status--err">Upload failed</span>
+                        } @else { Ready }
+                    </div>
+                    <input
+                        class="hf-input file-caption"
+                        type="text"
+                        placeholder="Caption (optional)"
+                        [(ngModel)]="f.caption"
+                        [ngModelOptions]="{ standalone: true }"
+                    />
+                </div>
+                <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    (click)="removeFile(f.id)"
+                    aria-label="Remove file"
+                >
+                    Remove
+                </button>
+            </div>
+            } } @else {
+            <div class="field-row">
+                <label class="field-label" for="gs-link"
+                    >Link (medal.tv, YouTube, image/video URL)</label
+                >
+                <input
+                    id="gs-link"
+                    class="hf-input"
+                    type="url"
+                    placeholder="https://medal.tv/clips/…"
+                    [(ngModel)]="linkUrl"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onLinkChange()"
+                />
+            </div>
+
+            <!-- Live provider-detected preview (T-0164) -->
+            @if (linkPreview) {
+            <div class="link-preview">
+                <div class="link-preview-media">
+                    @if (linkPreview.kind === 'image') {
+                    <img [src]="linkPreview.rawUrl" alt="Link preview" />
+                    } @else if (linkPreview.kind === 'video') {
+                    <video [src]="linkPreview.rawUrl" preload="metadata" muted playsinline></video>
+                    } @else if (linkPreview.posterUrl && !linkPosterFailed) {
+                    <img
+                        [src]="linkPreview.posterUrl"
+                        alt="Link preview"
+                        (error)="linkPosterFailed = true"
+                    />
+                    <span class="link-preview-play">▶</span>
+                    } @else {
+                    <div class="link-preview-fallback">
+                        <span class="badge brass">{{ linkPreview.kind }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="link-preview-meta">
+                    <span class="link-preview-kind">Detected: {{ linkPreview.kind }}</span>
+                    <span class="link-preview-url mono">{{ linkPreview.rawUrl }}</span>
+                </div>
+            </div>
+            } }
+        </div>
+
+        <div class="submit-side">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Submission details</span>
+                </div>
+                <div class="panel-body">
+                    <div class="field-row">
+                        <label class="field-label" for="gs-title">Title</label>
+                        <input
+                            id="gs-title"
+                            class="hf-input"
+                            type="text"
+                            maxlength="160"
+                            placeholder="e.g. The charge at dawn"
+                            [(ngModel)]="submissionTitle"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+                    </div>
+
+                    <div class="field-row">
+                        <label class="field-label" for="gs-tag-input">Tags</label>
+                        @if (tags.length) {
+                        <div class="tag-chips">
+                            @for (tag of tags; track tag) {
+                            <span class="badge brass tag-chip">
+                                {{ tag }}
+                                <button
+                                    type="button"
+                                    class="tag-remove"
+                                    (click)="removeTag(tag)"
+                                    [attr.aria-label]="'Remove tag ' + tag"
+                                >
+                                    &times;
+                                </button>
+                            </span>
+                            }
+                        </div>
+                        }
+                        <input
+                            id="gs-tag-input"
+                            class="hf-input tag-input"
+                            type="text"
+                            [placeholder]="tagsAtLimit ? 'Tag limit reached' : 'Add a tag…'"
+                            [disabled]="tagsAtLimit"
+                            [(ngModel)]="tagInput"
+                            [ngModelOptions]="{ standalone: true }"
+                            (keydown.enter)="addTag(); $event.preventDefault()"
+                        />
+                        @if (availableQuickTags.length && !tagsAtLimit) {
+                        <div class="tag-suggestions">
+                            @for (q of availableQuickTags; track q) {
+                            <button type="button" class="chip chip--sm" (click)="addTag(q)">
+                                + {{ q }}
+                            </button>
+                            }
+                        </div>
+                        }
+                        <div class="field-hint">{{ tags.length }} / {{ maxTags }} tags</div>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                Said BEFORE the button, not after the fact. An approved
+                submission is published to the public gallery and to the
+                regiment's Discord — the member deserves to know that while
+                they can still change their mind, not once it is live.
+            -->
+            <hf-notice variant="info" class="submit-visibility-notice">
+                Once an officer approves it, this is <strong>public</strong> — anyone with the link
+                can see it, and it is posted to the regiment's Discord. Do not submit anything you
+                would not want seen outside the regiment.
+            </hf-notice>
+
+            <div class="submit-actions">
+                @if (submitError) {
+                <hf-notice variant="err">{{ submitError }}</hf-notice>
+                }
+                <button
+                    type="button"
+                    class="btn btn-primary btn-block"
+                    [disabled]="!canSubmit"
+                    (click)="submit()"
+                >
+                    {{ submitting ? 'Submitting…' : 'Submit for review' }}
+                </button>
+                <a routerLink="/gallery" class="btn btn-ghost btn-block">Cancel</a>
+            </div>
+        </div>
+    </div>
+    } @else {
+    <hf-notice variant="warn">
+        You need the “Submit to gallery” permission to add submissions.
+    </hf-notice>
+    }
+</div>

@@ -1,0 +1,13 @@
+<hf-public-nav></hf-public-nav>
+
+<!--
+  The one place a public page's body is mounted. `main` (not a div) because this
+  is the document's primary content and a public, indexed page should say so —
+  it is what a screen reader's "skip to content" and a crawler's main-content
+  extraction both look for.
+-->
+<main class="public-main" id="content">
+    <router-outlet></router-outlet>
+</main>
+
+<hf-public-footer></hf-public-footer>

@@ -124,6 +124,20 @@ body {
     gap: 10px;
     flex-wrap: nowrap;
 
+    // ⚠️ The Bootstrap `.row` gutter leak is NOT reset here, deliberately.
+    //
+    // Bootstrap's own `.row` is a grid row carrying `margin-inline: -12px`, and
+    // this `.row` is an unrelated flex utility that happens to share the name,
+    // so every element using it bleeds 12px past its container. Roster and
+    // profile each patch it locally, and the roster's patch is scoped to the
+    // mobile card breakpoint with a note that the desktop table has the same
+    // leak but "reads as intended".
+    //
+    // That note is why a global reset was tried here in T-0287 and then backed
+    // out: pages laid out AGAINST the leak shift 12px the moment it is removed,
+    // and re-tuning every one of them does not belong in a routing change. The
+    // fix is right; it needs its own task and its own screenshots.
+
     // Reset Bootstrap grid's .row > * overrides so this stays a flex utility
     > * {
         width: auto;

@@ -1,0 +1,131 @@
+:host {
+    display: block;
+}
+
+.social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.social-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--rule-2);
+    background: var(--ink-800);
+    color: var(--t-200);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    max-width: 100%;
+    transition:
+        background 0.12s,
+        border-color 0.12s,
+        color 0.12s;
+}
+
+.social-chip:hover,
+.social-chip:focus-visible {
+    filter: brightness(1.18);
+}
+
+.social-chip:focus-visible {
+    outline: 1.5px solid var(--brass-400);
+    outline-offset: 1px;
+}
+
+/* No hover lift on the Discord chip — it is not a link and must not offer one. */
+.social-chip--static {
+    cursor: default;
+}
+
+.social-chip--static:hover {
+    filter: none;
+}
+
+.social-chip-mark {
+    display: inline-flex;
+    flex: none;
+}
+
+.social-chip-mark svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+.social-chip-handle {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.social-links--marks-only .social-chip {
+    padding: 0;
+    width: 28px;
+    justify-content: center;
+}
+
+/*
+ * Other people's brands, tinted onto ink.
+ *
+ * These are the one place in the app where a literal is correct rather than
+ * tolerated: there is no --twitch token and there should not be one, because
+ * the palette describes the regiment and these describe Twitch. Each pair is
+ * the brand hue lightened until it clears 4.5:1 on the panel behind it, over a
+ * 10-17% wash of the same hue so the chip reads as belonging to the platform
+ * without competing with the single brass accent the page is allowed.
+ */
+.social-chip--twitch {
+    color: #c9a4ff;
+    background: rgba(145, 70, 255, 0.15);
+    border-color: rgba(145, 70, 255, 0.45);
+}
+
+.social-chip--youtube {
+    color: #ff9a9a;
+    background: rgba(255, 0, 51, 0.13);
+    border-color: rgba(255, 0, 51, 0.42);
+}
+
+.social-chip--instagram {
+    color: #f79ac4;
+    background: rgba(225, 48, 108, 0.15);
+    border-color: rgba(225, 48, 108, 0.45);
+}
+
+.social-chip--tiktok {
+    color: #e8eaef;
+    background: rgba(37, 244, 238, 0.1);
+    border-color: rgba(254, 44, 85, 0.5);
+}
+
+.social-chip--x {
+    color: #e8eaef;
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.social-chip--steam {
+    color: #9ed6f7;
+    background: rgba(102, 192, 244, 0.13);
+    border-color: rgba(102, 192, 244, 0.42);
+}
+
+.social-chip--medal {
+    color: #ffd766;
+    background: rgba(255, 196, 0, 0.12);
+    border-color: rgba(255, 196, 0, 0.4);
+}
+
+.social-chip--discord {
+    color: #a8b0ff;
+    background: rgba(88, 101, 242, 0.17);
+    border-color: rgba(88, 101, 242, 0.5);
+}

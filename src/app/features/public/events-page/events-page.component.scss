@@ -1,8 +1,3 @@
-.events-page {
-    min-height: 100vh;
-    background: var(--ink-900);
-}
-
 .ongoing-panel {
     overflow: hidden;
 }
@@ -60,19 +55,34 @@
     flex-shrink: 0;
 }
 
+// A whole-card link, so a concluded event is reachable from the grid the same
+// way as every other event on the page. Bootstrap styles a bare `a`, hence the
+// colour/underline reset.
 .previous-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
     transition: background 0.15s;
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
         background: var(--ink-850);
+        color: inherit;
     }
 }
 
-// Layout / spacing classes moved out of inline template styles
-.page-wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 32px;
+// Loading / empty panels sit where the three sections would be.
+.events-state {
+    margin-bottom: 32px;
+}
+
+// Keeps the retry control on the notice's own line rather than butted against
+// the sentence it follows.
+.events-error-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .page-head-label {
@@ -83,6 +93,9 @@
     margin-bottom: 32px;
 }
 
+// FALLBACK ONLY. The event's own `bannerUrl` is bound inline on the element and
+// wins over this; before T-0287 there was no binding at all, so every ongoing
+// event wore the same stock cover no matter what its author uploaded.
 .ongoing-cover-bg {
     background-image: url(/assets/images/bg-2.jpg);
 }
@@ -242,11 +255,10 @@
     flex-wrap: wrap;
 }
 
-/* The row CTA is now a sentence ("Login to RSVP" / "Open in dashboard") rather
-   than "Details", and a password note can sit beside the time (T-0235/T-0236).
-   On a phone the single un-wrapping flex row squeezed the title down to two
-   words a line and pushed the badge under the button, so stack the meta column
-   onto its own line instead. */
+/* A password note can sit beside the time (T-0236), and the row CTA carries a
+   phrase rather than a word. On a phone the single un-wrapping flex row squeezed
+   the title down to two words a line and pushed the badge under the button, so
+   stack the meta column onto its own line instead. */
 @media (max-width: 560px) {
     .event-list-row {
         flex-wrap: wrap;

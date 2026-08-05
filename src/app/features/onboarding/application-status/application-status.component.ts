@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MyApplication } from '../../../core/models/application.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { ApplicationsService } from '../../../core/services/applications.service';
 
 /**
@@ -33,6 +34,7 @@ import { ApplicationsService } from '../../../core/services/applications.service
 export class ApplicationStatusComponent implements OnInit {
     private readonly applications = inject(ApplicationsService);
     private readonly router = inject(Router);
+    private readonly auth = inject(AuthService);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly loading = signal(true);
@@ -48,7 +50,9 @@ export class ApplicationStatusComponent implements OnInit {
                     this.loading.set(false);
                     // Approved → the applicant is now a member; move them on.
                     if (mine.application?.status === 'approved') {
-                        this.router.navigateByUrl('/app/dashboard');
+                        // An approved applicant is a member now, and members belong on the public
+                        // site — the dashboard is staff-only (T-0287).
+                        this.router.navigateByUrl(this.auth.myProfilePath());
                         return;
                     }
                     // Nothing on record and not blocked → start the apply flow.

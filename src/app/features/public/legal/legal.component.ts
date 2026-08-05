@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { ApiRegimentDocument } from '../../../core/models/api.model';
+import { SeoService } from '../../../core/services/seo.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { MarkdownService } from '../../../shared/services/markdown.service';
 
@@ -13,6 +14,17 @@ const DOC_TITLES: Record<LegalDoc, string> = {
     terms: 'Terms & Conditions',
     privacy: 'Privacy Policy',
     guidelines: 'Community Guidelines',
+};
+
+/**
+ * Meta descriptions. Deliberately NOT derived from the admin-authored body: the
+ * body is markdown that may not have landed yet (or at all), and a legal page's
+ * one-line summary does not change when its clauses do.
+ */
+const DOC_DESCRIPTIONS: Record<LegalDoc, string> = {
+    terms: 'The terms this community dashboard is offered under.',
+    privacy: 'What this community dashboard does with your Discord identity, and what it does not.',
+    guidelines: 'What the regiment expects from members using the dashboard and its gallery.',
 };
 
 /**
@@ -43,6 +55,7 @@ export class LegalComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly settings = inject(SettingsService);
     private readonly markdown = inject(MarkdownService);
+    private readonly seo = inject(SeoService);
     private readonly destroyRef = inject(DestroyRef);
 
     /** Rendered HTML of the admin-authored body; '' means "use the shipped copy". */
@@ -59,6 +72,14 @@ export class LegalComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // One component serves three routes, so the slug is both the heading and
+        // the canonical path — /terms, /privacy, /guidelines.
+        this.seo.apply({
+            title: this.title,
+            description: DOC_DESCRIPTIONS[this.doc],
+            canonicalPath: `/${this.doc}`,
+        });
+
         this.settings
             .getPublicDocuments()
             .pipe(

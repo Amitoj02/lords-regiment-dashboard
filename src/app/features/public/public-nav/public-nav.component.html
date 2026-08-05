@@ -13,40 +13,133 @@
         </div>
     </div>
 
+    <!-- Also the mobile drawer: everything below collapses behind the burger. -->
     <div class="public-nav-links">
-        @for (link of navLinks; track link) {
+        @for (link of navLinks; track link.path) {
+        <!-- The highlight comes from the router (T-0287). It used to be an
+             @Input each page set by hand, which the layout route has nobody
+             left to set. -->
         <a
+            class="nav-link"
             [routerLink]="link.path"
+            routerLinkActive="nav-link--active"
+            [routerLinkActiveOptions]="{ exact: link.exact }"
             (click)="closeMenu()"
-            [ngClass]="{ 'nav-link': true, 'nav-link--active': activeLink === link.path }"
             >{{ link.label }}</a
         >
         }
 
         <div class="public-nav-cta">
-            @if (auth.isAuthenticated()) { @if (auth.isMember()) {
-            <a routerLink="/app/dashboard" class="btn btn-primary" (click)="closeMenu()"
-                >Dashboard</a
-            >
-            } @else {
+            @if (auth.isAuthenticated()) {
+            <!-- Staff only. `/app` is behind staffGuard now, so offering this to
+                 an ordinary member would be a button that bounces them. -->
+            @if (auth.isStaff()) {
+            <a routerLink="/app" class="btn btn-primary" (click)="closeMenu()">Dashboard</a>
+            } @if (!auth.isMember()) {
+            <!-- An applicant has no member row and therefore no profile to link
+                 to; their one destination is the application they are waiting on. -->
             <a routerLink="/onboarding/status" class="btn btn-primary" (click)="closeMenu()"
-                >My Application</a
+                >My application</a
             >
             }
-            <button type="button" class="btn btn-ghost" (click)="signOut()">Sign out</button>
-            } @else {
+
+            <!--
+                Everything that acts on YOUR account, behind your own face
+                (T-0289). At ≤820px the trigger is hidden and the panel becomes
+                a plain section of the burger drawer — see the stylesheet.
+            -->
+            <div class="account-menu-wrap">
+                <button
+                    type="button"
+                    class="account-trigger"
+                    [class.account-trigger--open]="accountMenuOpen"
+                    (click)="toggleAccountMenu()"
+                    [attr.aria-expanded]="accountMenuOpen"
+                    aria-haspopup="menu"
+                    aria-label="Account menu"
+                >
+                    <hf-avatar
+                        [name]="auth.currentUser()?.inGameName || ''"
+                        [avatarUrl]="auth.currentUser()?.avatarUrl"
+                        [size]="26"
+                    ></hf-avatar>
+                    <span class="account-trigger-name">{{ accountFirstName }}</span>
+                    <svg class="account-trigger-chevron" viewBox="0 0 12 12" aria-hidden="true">
+                        <path
+                            d="M2.6 4.3 6 7.7l3.4-3.4"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </button>
+
+                <div class="panel account-menu" [class.account-menu--open]="accountMenuOpen">
+                    <div class="account-menu-head">
+                        <hf-avatar
+                            [name]="auth.currentUser()?.inGameName || ''"
+                            [avatarUrl]="auth.currentUser()?.avatarUrl"
+                            [size]="32"
+                        ></hf-avatar>
+                        <div class="account-menu-id">
+                            <div class="account-menu-name">
+                                {{ auth.currentUser()?.inGameName }}
+                            </div>
+                            @if (accountHandle) {
+                            <div class="mono account-menu-handle">{{ accountHandle }}</div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (auth.isMember()) {
+                    <a
+                        [routerLink]="auth.myProfilePath()"
+                        class="account-menu-item"
+                        (click)="closeMenu()"
+                    >
+                        My profile
+                    </a>
+                    <!-- /account holds the in-game name, the @handle, the bio,
+                         linked accounts, avatar/banner and "Delete my account".
+                         It used to be a topbar button called "Account", which
+                         said nothing about what it did (T-0289). -->
+                    <a routerLink="/account" class="account-menu-item" (click)="closeMenu()">
+                        Edit profile
+                    </a>
+                    <div class="account-menu-rule"></div>
+                    }
+                    <button
+                        type="button"
+                        class="account-menu-item account-menu-item--danger"
+                        (click)="signOut()"
+                    >
+                        Sign out
+                    </button>
+                </div>
+            </div>
+            } @else if (!onAuthPage) {
+            <!-- Nothing here on the sign-in page itself: a "Sign in" button in
+                 the topbar of the sign-in page is a dead control, and "Join
+                 Discord" beside "Continue with Discord" reads as the same
+                 button twice (T-0287). The footer keeps the invite. -->
             <!-- Hidden entirely when no invite is configured (T-0234). -->
             @if (discordInviteUrl) {
             <a
                 [href]="discordInviteUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="btn btn-ghost public-nav-discord"
+                class="btn btn-discord public-nav-discord"
                 (click)="closeMenu()"
                 >Join Discord</a
             >
             }
-            <a routerLink="/login" class="btn btn-discord" (click)="closeMenu()">Sign in</a>
+            <!-- The blurple belongs on the button that actually goes to Discord.
+                 It used to sit on "Sign in" while the invite was a muted ghost,
+                 so the one control that LOOKED like Discord was the one that
+                 was not (T-0287). -->
+            <a routerLink="/login" class="btn btn-primary" (click)="closeMenu()">Sign in</a>
             }
         </div>
     </div>

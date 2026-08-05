@@ -354,7 +354,9 @@ export class EventCreateComponent implements OnInit {
         request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (event) => {
                 this.saving = false;
-                this.router.navigate(['/app/dashboard/events', event.id]);
+                // The detail page left the console with the rest of the member
+                // site (T-0287) — a saved event is read back at its public URL.
+                this.router.navigate(['/events', event.id]);
             },
             error: (err) => {
                 console.error(

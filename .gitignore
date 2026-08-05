@@ -46,3 +46,12 @@ task-dashboard/
 # Not tracked: third-party skills carry their own (often unstated) license terms,
 # and this repo is public.
 .claude/skills/
+
+# /design-sync — staged converter scripts and regenerated build output.
+# The durable inputs under .design-sync/ (config.json, NOTES.md, conventions.md,
+# entry/, docs/, previews/) ARE tracked; only machine state is ignored.
+/.ds-sync/
+/ds-bundle/
+/.design-sync/.cache/
+/.design-sync/learnings/
+/.design-sync/node_modules

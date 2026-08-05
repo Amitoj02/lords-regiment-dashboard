@@ -2,15 +2,22 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 import { SETTINGS_CAPABILITIES } from '../../../core/guards/settings-access.guard';
 
 export interface NavUser {
-    /** Signed-in member uid — used to link the footer/profile at their own record (T-0139). */
+    /** Signed-in member uid. */
     id: string;
     name: string;
     rank: string;
     avatarUrl?: string | null;
+    /**
+     * The member's own PUBLIC profile URL (`AuthService.myProfilePath()`).
+     * Profiles left the dashboard in T-0287, so the footer card now links OUT
+     * of `/app`; the shell resolves it because it is the piece holding the
+     * session.
+     */
+    profilePath?: string;
 }
 
 /** Labeled sidebar section a nav item belongs to (T-0131). */
-type NavGroup = 'general' | 'me' | 'administrative';
+type NavGroup = 'general' | 'administrative';
 
 interface NavItem {
     label: string;
@@ -63,100 +70,102 @@ export class SidebarComponent {
     /** Emitted when the footer Logout button is pressed (handled by the shell). */
     @Output() logout = new EventEmitter<void>();
 
+    /**
+     * The staff console's nav (T-0287). Everything member-facing — the roster,
+     * profiles, event BROWSING, the gallery archive — left `/app` for the public
+     * site, so what remains is the maintenance work.
+     *
+     * Nearly every entry is capability-gated rather than role-gated, because
+     * `staffGuard` admits anyone holding ANY one staff capability: a Moderator
+     * with only `moderate_gallery` is legitimately inside this shell and must
+     * not be shown six links the API 403s (T-0265).
+     */
     readonly navItems: NavItem[] = [
         // ── General ──────────────────────────────────────────────────────────
         {
-            label: 'Dashboard',
-            key: 'dashboard',
-            route: '/app/dashboard',
+            label: 'Overview',
+            key: 'overview',
+            route: '/app/overview',
             icon: 'home',
             group: 'general',
             adminOnly: false,
             enabled: true,
         },
-        // Events + Gallery are member-visible in-shell (T-0085/T-0086/T-0110):
-        // members read the calendar + gallery archive; authoring/moderation is
-        // gated behind capability guards + in-template capability checks.
+        // Event AUTHORING. Reading the calendar is public at `/events` now, so
+        // this entry only earns its place for someone who can write.
         {
             label: 'Events',
             key: 'events',
-            route: '/app/dashboard/events',
+            route: '/app/events',
             icon: 'calendar',
             group: 'general',
             adminOnly: false,
+            anyCapability: ['manage_events'],
             enabled: true,
         },
+        // Likewise: browsing and submitting are public; only the queue stayed.
         {
-            label: 'Gallery',
+            label: 'Gallery queue',
             key: 'gallery',
-            route: '/app/gallery',
+            route: '/app/gallery/moderation',
             icon: 'image',
             group: 'general',
             adminOnly: false,
+            anyCapability: ['moderate_gallery'],
             enabled: true,
         },
-        {
-            label: 'Members',
-            key: 'roster',
-            route: '/app/roster',
-            icon: 'users',
-            group: 'general',
-            adminOnly: false,
-            enabled: true,
-        },
-        // ── Me ───────────────────────────────────────────────────────────────
-        // Routes to the signed-in member's own profile — the concrete `/app/profile/:id`
-        // link is resolved at render time (routeFor) from the current user's uid (T-0139).
-        {
-            label: 'My profile',
-            key: 'profile',
-            route: '/app/profile',
-            icon: 'profile',
-            group: 'me',
-            adminOnly: false,
-            enabled: true,
-        },
-        // ── Administrative (admins only) ─────────────────────────────────────
+        // ── Administrative ───────────────────────────────────────────────────
         {
             label: 'Applications',
             key: 'apps',
-            route: '/app/admin/applications',
+            route: '/app/applications',
             icon: 'scroll',
             group: 'administrative',
             adminOnly: true,
+            anyCapability: ['manage_applications'],
             enabled: true,
         },
         {
             label: 'Ranks & Medals',
             key: 'ranks',
-            route: '/app/admin/ranks',
+            route: '/app/ranks',
             icon: 'award',
             group: 'administrative',
             adminOnly: true,
+            anyCapability: ['edit_ranks_medals'],
             enabled: true,
         },
-        // Audit + Settings are wired (T-0025 / T-0017 / T-0024).
         {
             label: 'Audit Ledger',
             key: 'audit',
-            route: '/app/admin/audit',
+            route: '/app/audit',
             icon: 'activity',
             group: 'administrative',
             adminOnly: true,
+            anyCapability: ['view_audit_log'],
             enabled: true,
         },
-        // Settings is capability-gated, not role-gated: `settingsAccessGuard`
-        // owns the route, and a Moderator holding neither settings capability
-        // would otherwise be linked into a panel of empty chrome (T-0265). The
-        // list is imported from the guard so link and route cannot drift.
+        // The list is imported from `settingsAccessGuard` rather than restated,
+        // so the link and the route it opens cannot drift apart (T-0265).
         {
             label: 'Settings',
             key: 'settings',
-            route: '/app/admin/settings',
+            route: '/app/settings',
             icon: 'settings',
             group: 'administrative',
             adminOnly: true,
             anyCapability: SETTINGS_CAPABILITIES,
+            enabled: true,
+        },
+        // No capability of its own — the bot page is read-only diagnostics, so
+        // it keeps the coarse role gate.
+        {
+            label: 'Discord Bot',
+            key: 'bot',
+            route: '/app/bot',
+            icon: 'bot',
+            group: 'administrative',
+            adminOnly: true,
             enabled: true,
         },
     ];
@@ -164,7 +173,6 @@ export class SidebarComponent {
     /** Ordered group headings; empty groups are dropped in `visibleSections`. */
     private readonly groupOrder: { id: NavGroup; label: string }[] = [
         { id: 'general', label: 'General' },
-        { id: 'me', label: 'Me' },
         { id: 'administrative', label: 'Administrative' },
     ];
 
@@ -181,8 +189,8 @@ export class SidebarComponent {
 
     /**
      * Nav items bucketed into their labeled groups, with admin/capability/MVP-flag
-     * filtering applied. The Administrative group falls away entirely for non-admins
-     * because all of its items are `adminOnly` (T-0131).
+     * filtering applied. A group whose every item is filtered away falls out
+     * heading and all (T-0131).
      */
     get visibleSections(): NavSection[] {
         return this.groupOrder
@@ -201,14 +209,13 @@ export class SidebarComponent {
         return this.visibleSections.flatMap((section) => section.items);
     }
 
-    /** The signed-in user's own profile route (falls back to the id-less alias). */
+    /**
+     * Where the footer user card points. A member's profile is a PUBLIC page now
+     * (T-0287), so this leaves `/app` entirely; `/roster` is the same fallback
+     * `AuthService.myProfilePath()` uses when there is no session to read.
+     */
     get profileRoute(): string {
-        return this.user.id ? `/app/profile/${this.user.id}` : '/app/profile';
-    }
-
-    /** Resolve an item's link — the "My profile" item points at the current user (T-0139). */
-    routeFor(item: NavItem): string {
-        return item.key === 'profile' ? this.profileRoute : item.route;
+        return this.user.profilePath || '/roster';
     }
 
     isActive(key: string): boolean {

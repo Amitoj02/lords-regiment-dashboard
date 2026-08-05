@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { RegimentService } from '../../../core/services/regiment.service';
 
 @Component({
@@ -12,6 +13,8 @@ import { RegimentService } from '../../../core/services/regiment.service';
 })
 export class PublicFooterComponent implements OnInit {
     private readonly regiment = inject(RegimentService);
+    /** Drives the Join column, which says different things to the signed-in. */
+    protected readonly auth = inject(AuthService);
     private readonly destroyRef = inject(DestroyRef);
 
     currentYear = new Date().getFullYear();

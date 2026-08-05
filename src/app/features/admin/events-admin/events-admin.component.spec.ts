@@ -32,10 +32,21 @@ describe('EventsAdminComponent', () => {
     let eventsService: jasmine.SpyObj<EventsService>;
 
     function setup(events: RegimentEvent[]): void {
+        render(events, () => true);
+    }
+
+    /** Same page, for a caller holding none of `denied`. */
+    function setupWithout(denied: string[], events: RegimentEvent[]): void {
+        render(events, (capability: string) => !denied.includes(capability));
+    }
+
+    function render(events: RegimentEvent[], can: (capability: string) => boolean): void {
+        TestBed.resetTestingModule();
+
         eventsService = jasmine.createSpyObj<EventsService>('EventsService', ['getAllMine']);
         eventsService.getAllMine.and.returnValue(of(events));
         const auth = jasmine.createSpyObj<AuthService>('AuthService', ['hasCapability']);
-        auth.hasCapability.and.returnValue(true);
+        auth.hasCapability.and.callFake(can);
 
         TestBed.configureTestingModule({
             imports: [CommonModule, RouterModule.forRoot([])],
@@ -64,11 +75,35 @@ describe('EventsAdminComponent', () => {
         expect(rows.length).toBe(3);
     });
 
-    it('renders a Manage link per event and the New event link', () => {
+    // T-0287: authoring stayed in the console, the detail page did not.
+    it('sends rows to the PUBLIC detail page and keeps authoring under /app', () => {
         setup([event({ id: 'ev1', status: 'upcoming' })]);
         const el: HTMLElement = fixture.nativeElement;
-        expect(el.querySelector('a[href="/app/dashboard/events/ev1"]')).toBeTruthy();
-        expect(el.querySelector('a[href="/app/dashboard/events/create"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/events/ev1"]')).toBeTruthy();
+        expect(el.querySelector('a[href="/app/events/create"]')).toBeTruthy();
+    });
+
+    it('gates the archived toggle and New event on manage_events', () => {
+        setup([event({ id: 'ev1', status: 'upcoming' })]);
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector('a[href="/app/events/create"]')).toBeTruthy();
+
+        const toggle = el.querySelector<HTMLButtonElement>('button[aria-pressed]')!;
+        expect(toggle.textContent).toContain('View archived');
+        toggle.click();
+        fixture.detectChanges();
+        expect(component.includeArchived).toBeTrue();
+        expect(eventsService.getAllMine).toHaveBeenCalledWith(undefined, true);
+        expect(toggle.textContent).toContain('Hide archived');
+    });
+
+    it('hides both authoring controls without manage_events', () => {
+        setupWithout(['manage_events'], [event({ id: 'ev1', status: 'upcoming' })]);
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector('a[href="/app/events/create"]')).toBeNull();
+        expect(el.querySelector('button[aria-pressed]')).toBeNull();
+        // The row link is not an authoring action — it stays.
+        expect(el.querySelector('a[href="/events/ev1"]')).toBeTruthy();
     });
 
     it('shows an empty state when there are no events', () => {
