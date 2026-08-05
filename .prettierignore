@@ -19,6 +19,13 @@
 #   - Blueframe state is machine-managed (protocol requires minimal diffs / preserved key order)
 #   - CLAUDE.md contains managed markers that must not be reformatted
 #   - .claude/ holds agent commands & vendored skills, not team-maintained source
+#   - .design-sync/ holds the /design-sync inputs for the design-reference kit
+#     (which is itself ignored above). Reformatting is not merely pointless here,
+#     it is destructive: the uploaded _ds_sync.json anchors content hashes of
+#     previews/*.tsx, so rewriting them invalidates all 17 verified previews and
+#     forces a full re-capture and re-grade on the next sync. fonts/ is vendored
+#     Google Fonts output.
 /.blueframe
 /.claude
 /CLAUDE.md
+/.design-sync
