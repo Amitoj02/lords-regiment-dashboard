@@ -408,9 +408,11 @@ describe('EventsService', () => {
     });
 
     /**
-     * The presence flags reach the view model unchanged (T-0236): every surface
-     * branches on THEM, not on the redacted `serverName`, because the public feed
-     * carries the flags but never the binding itself.
+     * The presence flags reach the view model unchanged (T-0236). They no longer
+     * stand in for a withheld name — the public feed carries the real binding
+     * since lords-dashboard-backend:T-0298 — but they still distinguish "nothing
+     * bound" from "bound to an empty string", and `hasServerPassword` remains the
+     * only signal a public caller gets about the one field still withheld.
      */
     describe('server presence flags (T-0236)', () => {
         it('keeps serverName null rather than coercing it to an empty string', () => {
@@ -418,24 +420,27 @@ describe('EventsService', () => {
             service.getById('ev1').subscribe((e) => (result = e));
             httpMock
                 .expectOne('/api/events/ev1')
-                .flush(apiEvent({ serverName: undefined, hasServerName: false }));
+                .flush(apiEvent({ serverName: null, hasServerName: false }));
             expect(result?.serverName).toBeNull();
             expect(result?.hasServerName).toBe(false);
         });
 
-        it('maps both flags through from a public projection that omits the binding', () => {
+        it('carries the real binding through the public projection (T-0298)', () => {
             let result: RegimentEvent | undefined;
             service.getById('ev1').subscribe((e) => (result = e));
             httpMock.expectOne('/api/events/ev1').flush(
                 apiEvent({
-                    serverName: undefined,
+                    serverName: 'LORDS-1',
+                    serverRegion: 'EU',
                     hasServerName: true,
                     hasServerPassword: true,
                 }),
             );
             expect(result?.hasServerName).toBe(true);
             expect(result?.hasServerPassword).toBe(true);
-            expect(result?.serverName).toBeNull();
+            expect(result?.serverName).toBe('LORDS-1');
+            // The password is on no projection at all — only the reveal endpoint.
+            expect(result?.serverPassword).toBeUndefined();
         });
     });
 });

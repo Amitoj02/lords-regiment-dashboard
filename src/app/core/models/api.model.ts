@@ -514,11 +514,20 @@ export interface ApiEvent {
      */
     hasServerName: boolean;
     hasServerPassword: boolean;
-    // Member-view-only fields (omitted entirely for public callers). `serverName`
-    // is `null` — never `''` — when unset, so templates can branch on it.
-    serverName?: string | null;
+    /**
+     * The bound server, on EVERY projection including the public one
+     * (lords-dashboard-backend:T-0298). It is how somebody turns up, and an
+     * event page that advertises a muster to people outside the regiment used to
+     * withhold the one detail that let them come.
+     *
+     * `null` — never `''` — when nothing is bound, so a template can branch on
+     * it directly. The PASSWORD is on no projection at all; it comes only from
+     * `POST /events/:id/reveal-password`.
+     */
+    serverName: string | null;
+    serverRegion: string | null;
+    // Member-view-only fields (omitted entirely for public callers).
     announceRoleId?: string | null;
-    serverRegion?: string | null;
     recurrenceRule?: string | null;
     recurrenceCadence?: 'daily' | 'weekly' | 'monthly' | null;
     recurrenceActive?: boolean;

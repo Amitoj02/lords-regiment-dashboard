@@ -46,7 +46,17 @@
             name="twitter:description"
             content="Roster, events, gallery and command tools for a Holdfast: Nations at War regiment."
         />
-        <link rel="canonical" href="https://lordsofholdfast.com/" />
+        <!-- `/home`, not `/` (T-0297). This is the ONE tag in this block that a
+             search engine acts on before SeoService boots, and it used to point
+             at `/` while the sitemap, every shell and SeoService itself all
+             declared `/home` canonical. `/` is deliberately outside the crawler
+             matcher (a Cloudflare Cache Rule covers it and Cloudflare ignores
+             `Vary: User-Agent`), so a non-JS crawler landing on the root — which
+             is where every external inbound link points — got an empty
+             <app-root> self-canonicalising to a URL nothing else agreed with.
+             Naming the redirect target here passes that equity onward instead of
+             stranding it. -->
+        <link rel="canonical" href="https://lordsofholdfast.com/home" />
 
         <base href="/" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -87,9 +87,7 @@
                                 </span>
                                 @if (showsServer(event)) {
                                 <span class="event-meta-divider"></span>
-                                <span class="mono event-meta-server">
-                                    {{ event.serverName || 'Server details on sign-in' }}
-                                </span>
+                                <span class="mono event-meta-server"> {{ event.serverName }} </span>
                                 }
                             </div>
                             <hf-platform-badges

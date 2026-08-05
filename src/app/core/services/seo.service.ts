@@ -38,6 +38,12 @@ export interface SeoTags {
     imageUrl?: string | SeoImage | null;
     video?: SeoVideo | null;
     type?: 'website' | 'profile' | 'article' | 'video.other';
+    /**
+     * The handle behind an `og:type: profile` page, emitted as
+     * `profile:username` (T-0297). Mirrors `ShellPage.profileUsername` in the
+     * API's `page-shell.ts`.
+     */
+    profileUsername?: string | null;
     /** Keep this page out of the index (a members-only or transient page). */
     noIndex?: boolean;
     /** `rel=prev`/`rel=next`, for a page of a paginated list. */
@@ -57,6 +63,17 @@ export interface SeoTags {
 
 const SITE_NAME = 'Lords Regiment';
 const JSON_LD_ID = 'hf-json-ld';
+
+/**
+ * `--brass-400`, the colour Discord paints an embed's left edge in (T-0297).
+ *
+ * ⚠️ Mirrors `BRAND_ACCENT` in the API's `seo/html/brand.ts`. Every crawler
+ * shell has carried it since T-0293; this service never set one, so the SPA's
+ * own document for the same URL fell back to `index.html`'s `--ink-900` — which
+ * as an embed stripe is indistinguishable from Discord's default grey, i.e.
+ * from having set nothing at all.
+ */
+const BRAND_ACCENT = '#c69a45';
 
 /**
  * The card image for a page with nothing of its own to show.
@@ -114,11 +131,22 @@ export class SeoService {
         const video = tags.video ? this.sizeForDiscord(tags.video) : null;
 
         this.setName('description', tags.description);
+        // A site constant, not a per-page choice — but it has to be set HERE and
+        // not only in index.html, because that document's `theme-color` is
+        // `--ink-900` (chosen to tint mobile browser chrome) and this one is the
+        // brand accent the crawler shell already emits for the same URL.
+        this.setName('theme-color', BRAND_ACCENT);
         this.setProperty('og:site_name', SITE_NAME);
         this.setProperty('og:type', tags.type ?? 'website');
         this.setProperty('og:locale', 'en_GB');
         this.setProperty('og:title', fullTitle);
         this.setProperty('og:description', tags.description);
+        // Only meaningful on the profile vertical, and cleared everywhere else
+        // so a handle cannot survive a navigation off a profile.
+        this.setProperty(
+            'profile:username',
+            tags.type === 'profile' ? (tags.profileUsername ?? null) : null,
+        );
         this.setName('twitter:card', this.twitterCard(image, video));
         this.setName('twitter:title', fullTitle);
         this.setName('twitter:description', tags.description);
