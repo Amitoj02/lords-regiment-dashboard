@@ -74,7 +74,7 @@ export class LandingComponent implements OnInit {
     // Hero stats, gated by the Regiment-statistics visibility toggle.
     // getStats() → 403 (visibility off) hides the whole block.
     statsVisible = false;
-    establishedLabel: string | null = null; // 'MM/YYYY'
+    establishedLabel: string | null = null; // 'MM / YYYY'
     memberCount = 0;
 
     private readonly auth = inject(AuthService);
@@ -282,11 +282,15 @@ export class LandingComponent implements OnInit {
         return event.hasServerName ?? !!event.serverName?.trim();
     }
 
-    /** 'YYYY-MM-DD' → 'MM/YYYY' (timezone-safe: no Date parsing). */
+    /**
+     * 'YYYY-MM-DD' → 'MM / YYYY' (timezone-safe: no Date parsing). Spaced, because
+     * the hero sets this at 34px in the display serif, where an unspaced slash
+     * runs into the digits either side of it.
+     */
     private formatEstablished(dateStr: string | null): string | null {
         if (!dateStr) return null;
         const [year, month] = dateStr.split('-');
-        return year && month ? `${month}/${year}` : null;
+        return year && month ? `${month} / ${year}` : null;
     }
 
     /** A still-image URL for a gallery item (image → itself, YouTube → poster; else ''). */

@@ -7,12 +7,36 @@
     [style.--hero-scrim]="heroScrim"
 >
     <div class="hero-overlay"></div>
+
     <div class="hero-inner">
-        <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
+        <div class="hero-crest">
+            <img src="assets/images/regiment-logo.png" alt="Regiment crest" />
+        </div>
         <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
         <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
         <p class="hero-sub">{{ missionStatement }}</p>
 
+        <!-- One command, not three (T-0296). Orders and Roster are two rows
+             above in the public nav; repeating them here spent the hero's
+             only decisive moment on links the visitor already has. -->
+        <div class="hero-actions">
+            <button type="button" (click)="applyToJoin()" class="btn btn-primary hero-cta">
+                {{ applyLabel }}
+                <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                        d="M3.6 2.4 7.5 6l-3.9 3.6"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </button>
+        </div>
+
+        <!-- The figures sit BELOW the command, not between it and the copy it
+             acts on. Each is independently droppable: a regiment with no
+             established date shows the roll alone rather than an empty column. -->
         @if (statsVisible) {
         <div class="hero-stats">
             @if (establishedLabel) {
@@ -21,23 +45,15 @@
                 <div class="hero-stat-label">Since Established</div>
             </div>
             }
-            <div class="hero-stat">
+            <!-- The count is the roster's own summary, so it links there. -->
+            <a routerLink="/roster" class="hero-stat hero-stat-link">
                 <div class="hero-stat-value serif">{{ memberCount }}</div>
-                <div class="hero-stat-label">Members</div>
-            </div>
+                <div class="hero-stat-label">
+                    Members <span class="hero-stat-cue" aria-hidden="true">→</span>
+                </div>
+            </a>
         </div>
         }
-
-        <!-- `.row` is nowrap, and this is now three buttons wide — on a phone
-             the third would run off the hero rather than drop to a second
-             line. -->
-        <div class="row gap-12 hero-actions" style="flex-wrap: wrap">
-            <button type="button" (click)="applyToJoin()" class="btn btn-primary btn-lg">
-                {{ applyLabel }}
-            </button>
-            <a routerLink="/events" class="btn btn-ghost btn-lg">View Orders</a>
-            <a routerLink="/roster" class="btn btn-ghost btn-lg">Regimental Roster</a>
-        </div>
     </div>
 </section>
 
