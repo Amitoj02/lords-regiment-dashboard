@@ -7,6 +7,18 @@ export interface GalleryItem {
     type: GalleryItemType;
     thumbnailUrl: string;
     mediaUrl?: string;
+    /**
+     * Intrinsic size of `mediaUrl`, when the API recorded one (T-0293).
+     *
+     * Only the share card reads these: an unfurler sizes its player purely from
+     * the declared `og:video:width/height`, and the crawler shell already emits
+     * them, so without these two fields the SPA's copy of the same tag set was
+     * the one thing about a playable dispatch the two documents disagreed on.
+     * Absent for a link item and for anything uploaded before the columns were
+     * populated.
+     */
+    mediaWidth?: number | null;
+    mediaHeight?: number | null;
     submittedBy: string;
     /** Author member id (used to scope a profile's gallery tab to its owner). */
     submittedByMemberId?: string;

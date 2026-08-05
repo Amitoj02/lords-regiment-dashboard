@@ -45,6 +45,16 @@ export class LandingComponent implements OnInit {
     discordInviteUrl: string | null = null;
 
     /**
+     * The regiment's crest and its share-card banner, straight off the profile
+     * (T-0293). Both are null until it lands and both stay null when unset —
+     * they feed the Organization `logo`/`image` and the card, never the layout,
+     * so an absent one must degrade to no claim rather than to a shipped asset
+     * the crawler shell has never heard of.
+     */
+    crestUrl: string | null = null;
+    cardBannerUrl: string | null = null;
+
+    /**
      * Admin-authored hero presentation (T-0238), read off the ANONYMOUS regiment
      * profile. Every field is independently nullable and null means "shipped
      * default" — hence `LANDING_DEFAULTS` below and `== null` everywhere. An API
@@ -132,6 +142,11 @@ export class LandingComponent implements OnInit {
                 if (profile?.name) this.regimentName = profile.name;
                 if (profile?.missionStatement) this.missionStatement = profile.missionStatement;
                 this.discordInviteUrl = profile?.discordInviteUrl?.trim() || null;
+                this.crestUrl = profile?.crestUrl?.trim() || null;
+                this.cardBannerUrl =
+                    profile?.presentation?.heroBannerUrl?.trim() ||
+                    profile?.bannerUrl?.trim() ||
+                    null;
                 this.applyPresentation(profile?.presentation);
                 this.applySeo();
             });
@@ -176,6 +191,17 @@ export class LandingComponent implements OnInit {
             title: this.regimentName,
             description: this.missionStatement,
             canonicalPath: '/home',
+            // `cardBannerUrl`, NOT `heroBannerUrl`: the latter falls back to a
+            // shipped background the API's `renderHome` knows nothing about, so
+            // using it here would make the two documents advertise different
+            // pictures for the same URL. Null falls through to the site banner
+            // in `SeoService`, which is the shell's fallback too. Until T-0293
+            // this page passed no image at all and `apply()` REMOVED the static
+            // default from index.html — so a cold share of the site's own front
+            // door unfurled with no picture whatsoever.
+            imageUrl: this.cardBannerUrl
+                ? { url: this.cardBannerUrl, alt: this.regimentName }
+                : null,
             jsonLd: [
                 {
                     '@context': 'https://schema.org',
@@ -183,6 +209,8 @@ export class LandingComponent implements OnInit {
                     name: this.regimentName,
                     description: this.missionStatement,
                     url: origin || undefined,
+                    ...(this.crestUrl ? { logo: this.crestUrl } : {}),
+                    ...(this.cardBannerUrl ? { image: this.cardBannerUrl } : {}),
                     sameAs: this.discordInviteUrl ? [this.discordInviteUrl] : undefined,
                 },
                 {

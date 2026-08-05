@@ -1,10 +1,14 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { GalleryService, UpdateGalleryPayload } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { SeoService } from '../../../core/services/seo.service';
+import { RegimentService } from '../../../core/services/regiment.service';
+import { SeoService, SeoVideo } from '../../../core/services/seo.service';
+import { DEFAULT_REGIMENT_NAME } from '../../../core/seo/seo-copy';
 import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 /** Matches the share shell's own trim, so the two descriptions cannot differ. */
@@ -46,6 +50,16 @@ export class GalleryDetailComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly mediaEmbed = inject(MediaEmbedService);
     private readonly seo = inject(SeoService);
+    private readonly document = inject(DOCUMENT);
+    private readonly regiment = inject(RegimentService);
+
+    /**
+     * The live regiment name (T-0293). It is in the description's author
+     * fallback and in the JSON-LD credit, and the shell builds both from the
+     * editable field — a hardcoded "Lords Regiment" here would have disagreed
+     * with it after any rename.
+     */
+    private regimentName = DEFAULT_REGIMENT_NAME;
 
     /** Capability gate for the moderator edit/delete panel (T-0183). */
     can(capability: string): boolean {
@@ -79,6 +93,19 @@ export class GalleryDetailComponent implements OnInit {
             this.applyMissingSeo();
             return;
         }
+
+        // Navigation-independent; folded into the metadata whenever it lands.
+        this.regiment
+            .getProfile()
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((profile) => {
+                this.regimentName = profile?.name?.trim() || DEFAULT_REGIMENT_NAME;
+                if (this.item) this.applySeo(this.item);
+            });
+
         this.gallery
             .getById(id)
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -110,20 +137,95 @@ export class GalleryDetailComponent implements OnInit {
      * the image choice below are all deliberately the same rules, in the same
      * order, as `GalleryShareService.cardFor`/`describe`.
      *
-     * `type` is 'article' because that is what the shell emits for everything
-     * that is not a playable video, and `SeoService` has no video type to offer
-     * for the ones that are — a video item is described as an article here and
-     * as `video.other` there, which is the one difference, and it is the shell's
-     * tags that reach the unfurler.
+     * The last divergence between the two closed in T-0293: `SeoTags` had no
+     * video member, so a playable dispatch called itself an `article` here and
+     * `video.other` in the shell. Both now emit the same `og:type`, the same
+     * `og:video` set and the same `VideoObject`/`ImageObject` payload.
      */
     private applySeo(item: GalleryItem): void {
+        const video = this.shareVideo(item);
         this.seo.apply({
             title: item.title,
             description: this.describe(item),
             canonicalPath: `/gallery/${item.id}`,
             imageUrl: this.shareImage(item),
-            type: 'article',
+            video,
+            type: video ? 'video.other' : 'article',
+            jsonLd: this.itemJsonLd(item, video),
         });
+    }
+
+    /**
+     * The playable clip, when this dispatch is one (T-0293).
+     *
+     * Only a DIRECT file — an uploaded `.mp4`/`.webm` that Discord can play from
+     * the URL. A YouTube or Medal.tv link resolves to an iframe page instead,
+     * and claiming `og:video` of an embed URL from a domain no unfurler has
+     * allowlisted produces a card that shows nothing rather than a poster.
+     */
+    private shareVideo(item: GalleryItem): SeoVideo | null {
+        if (this.embed?.kind !== 'video' || !this.embed.rawUrl) return null;
+        return {
+            url: this.embed.rawUrl,
+            type: this.embed.rawUrl.toLowerCase().split('?')[0].endsWith('.webm')
+                ? 'video/webm'
+                : 'video/mp4',
+            // The shell clamps these for Discord (halving anything over 1920);
+            // `SeoService` applies the identical rule, so the raw stored size is
+            // what both sides are handed.
+            width: item.mediaWidth,
+            height: item.mediaHeight,
+        };
+    }
+
+    /**
+     * `VideoObject` / `ImageObject` for the dispatch, mirroring
+     * `GalleryShareService.jsonLdFor`.
+     *
+     * A `VideoObject` is only claimed when there is a poster AND an upload date,
+     * because Google treats both as required and an incomplete one is a
+     * structured-data ERROR rather than a partial win. `ImageObject` needs
+     * `contentUrl` plus at least one of creator/creditText/copyrightNotice —
+     * hence the credit line even on an item with no named author.
+     */
+    private itemJsonLd(item: GalleryItem, video: SeoVideo | null): unknown {
+        const image = this.shareImage(item);
+        const author = item.submittedBy?.trim();
+        const common = {
+            '@context': 'https://schema.org',
+            name: item.title,
+            description: this.describe(item),
+            url: this.absolute(`/gallery/${item.id}`),
+            datePublished: item.approvedAt ?? item.submittedAt,
+            ...(author
+                ? {
+                      author: { '@type': 'Person', name: author },
+                      creator: { '@type': 'Person', name: author },
+                      creditText: `${author} · ${this.regimentName}`,
+                  }
+                : { creditText: this.regimentName }),
+            copyrightNotice: `© ${this.regimentName}`,
+            ...(item.tags.length ? { keywords: item.tags.join(', ') } : {}),
+        };
+
+        if (video && image) {
+            return {
+                ...common,
+                '@type': 'VideoObject',
+                thumbnailUrl: image,
+                uploadDate: item.approvedAt ?? item.submittedAt,
+                contentUrl: video.url,
+            };
+        }
+        if (image) {
+            return { ...common, '@type': 'ImageObject', contentUrl: image, thumbnailUrl: image };
+        }
+        return { ...common, '@type': 'CreativeWork' };
+    }
+
+    private absolute(path: string): string {
+        const origin = this.document.location?.origin ?? '';
+        return `${origin}${path}`;
     }
 
     /** A dispatch that did not resolve is not a page worth indexing. */
@@ -160,8 +262,8 @@ export class GalleryDetailComponent implements OnInit {
         }
         const author = item.submittedBy?.trim();
         return author
-            ? `Shared by ${author} in the Lords Regiment gallery.`
-            : 'From the Lords Regiment gallery.';
+            ? `Shared by ${author} in the ${this.regimentName} gallery.`
+            : `From the ${this.regimentName} gallery.`;
     }
 
     /** The link's origin, or null when it is not a parseable absolute URL. */

@@ -13,7 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MembersService, ServiceRecordEntry } from '../../../core/services/members.service';
 import { PublicMembersService } from '../../../core/services/public-members.service';
 import { RegimentService } from '../../../core/services/regiment.service';
-import { SeoService } from '../../../core/services/seo.service';
+import { SeoImage, SeoService } from '../../../core/services/seo.service';
 
 /**
  * The segments on the right-hand column (T-0289). Only `gallery` is public.
@@ -402,18 +402,20 @@ export class ProfileComponent implements OnInit {
             title: name,
             description: this.describe(member),
             canonicalPath: member.canonicalPath,
-            imageUrl: member.avatarUrl,
+            imageUrl: this.cardImage(member, name),
             type: 'profile',
             jsonLd: {
                 '@context': 'https://schema.org',
                 '@type': 'ProfilePage',
                 url: canonicalUrl,
+                ...(member.joinedAt ? { dateCreated: member.joinedAt } : {}),
                 mainEntity: {
                     '@type': 'Person',
                     name,
                     alternateName: handleLabel ?? member.inGameName,
                     identifier: member.id,
                     url: canonicalUrl,
+                    ...(member.bio?.trim() ? { description: member.bio.trim() } : {}),
                     ...(image ? { image } : {}),
                     ...(member.rank ? { jobTitle: member.rank } : {}),
                     memberOf: {
@@ -427,6 +429,25 @@ export class ProfileComponent implements OnInit {
                 },
             },
         });
+    }
+
+    /**
+     * The image a shared profile link previews as (T-0293).
+     *
+     * The BANNER when the member has set one — it is landscape, so it fills the
+     * wide card. Otherwise the avatar, declared `square` so the card degrades
+     * deliberately to the thumbnail-beside-the-text layout instead of being
+     * demoted into it: Discord inspects the real file and demotes a square image
+     * whatever the tag claims, and a card that asked for the wide layout and did
+     * not get it looks broken in a way the thumbnail does not.
+     *
+     * The same choice, in the same order, as `SeoService.profileCardImage` in
+     * the API — this is the tag a crawler compares against the shell's.
+     */
+    private cardImage(member: PublicMember, name: string): SeoImage | null {
+        if (member.bannerUrl) return { url: member.bannerUrl, alt: name };
+        if (member.avatarUrl) return { url: member.avatarUrl, alt: name, shape: 'square' };
+        return null;
     }
 
     /** "Jameson Nolt (@panda)" — the handle is what the URL says, so it leads. */

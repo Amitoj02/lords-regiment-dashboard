@@ -1,9 +1,14 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { GalleryItem, GalleryItemType } from '../../../core/models/gallery.model';
 import { GalleryService } from '../../../core/services/gallery.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { DEFAULT_REGIMENT_NAME, galleryDescription } from '../../../core/seo/seo-copy';
+import { MediaEmbedService } from '../../../shared/services/media-embed.service';
 
 @Component({
     selector: 'hf-gallery-page',
@@ -39,6 +44,12 @@ export class GalleryPageComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly seo = inject(SeoService);
+    private readonly document = inject(DOCUMENT);
+    private readonly regiment = inject(RegimentService);
+    private readonly mediaEmbed = inject(MediaEmbedService);
+
+    /** The live regiment name — the crawler shell builds the same sentence. */
+    private regimentName = DEFAULT_REGIMENT_NAME;
 
     constructor(
         private galleryService: GalleryService,
@@ -95,17 +106,72 @@ export class GalleryPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Not deferred until the items land: the archive describes itself the
-        // same way whether it holds three dispatches or three hundred, and a
-        // crawler that gives up on the fetch should still get the description.
-        this.seo.apply({
-            title: 'Gallery',
-            description:
-                "Photographs, clips and dispatches from the regiment's campaigns, submitted by members and approved by its officers.",
-            canonicalPath: '/gallery',
-        });
+        // Applied before the fetch, not only after it: a crawler whose request
+        // for the items fails should still get a described page rather than
+        // whatever the previous route left in the document.
+        this.applySeo();
+        this.regiment
+            .getProfile()
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((profile) => {
+                this.regimentName = profile?.name?.trim() || DEFAULT_REGIMENT_NAME;
+                this.applySeo();
+            });
 
         this.load();
+    }
+
+    /**
+     * The archive's own card (T-0293).
+     *
+     * It used to be applied once in `ngOnInit` and never again, with no image
+     * and no structured data — an image archive whose share link had no picture
+     * and whose contents were invisible to a crawler. The newest dispatch with a
+     * usable still is now the card, and the list is an `ImageGallery`, matching
+     * `GalleryShareService.renderIndex` in the API.
+     */
+    private applySeo(): void {
+        this.seo.apply({
+            title: 'Gallery',
+            description: galleryDescription(this.regimentName, this.allItems.length),
+            canonicalPath: '/gallery',
+            imageUrl: this.cardImage(),
+            jsonLd: this.galleryJsonLd(),
+        });
+    }
+
+    /** The newest approved item that resolves to a still, if there is one. */
+    private cardImage(): string | null {
+        for (const item of this.allItems) {
+            const preview = this.mediaEmbed.resolve(item.mediaUrl ?? item.thumbnailUrl);
+            const url = preview?.kind === 'image' ? preview.rawUrl : preview?.posterUrl;
+            if (url) return url;
+        }
+        return null;
+    }
+
+    private galleryJsonLd(): unknown {
+        if (this.allItems.length === 0) return null;
+        const origin = this.document.location?.origin ?? '';
+        return {
+            '@context': 'https://schema.org',
+            '@type': 'ImageGallery',
+            name: `${this.regimentName} gallery`,
+            url: `${origin}/gallery`,
+            numberOfItems: this.allItems.length,
+            mainEntity: {
+                '@type': 'ItemList',
+                itemListElement: this.allItems.map((item, index) => ({
+                    '@type': 'ListItem',
+                    position: index + 1,
+                    url: `${origin}/gallery/${item.id}`,
+                    name: item.title,
+                })),
+            },
+        };
     }
 
     /** Fetch (or re-fetch, from the error state's retry) the public archive. */
@@ -131,6 +197,10 @@ export class GalleryPageComponent implements OnInit {
                     });
                     this.tagsExpanded = false;
                     this.applyFilter();
+                    // Re-applied now there is an archive to describe: the count
+                    // is in the description, the newest still is the card and
+                    // the ItemList names what actually loaded.
+                    this.applySeo();
                 },
                 error: (err: unknown) => {
                     this.loading = false;

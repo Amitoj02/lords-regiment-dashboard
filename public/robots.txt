@@ -25,4 +25,34 @@ Disallow: /guild-required
 # would never see anything but the sign-in redirect.
 Disallow: /account
 
+# "My profile" — authGuard'd, and it resolves to the caller's own /u/@handle,
+# which IS indexable. Without this the two URLs compete for the same page and
+# a crawler spends its budget on the one that only ever redirects.
+Disallow: /me
+
+# ── Link unfurlers (T-0293) ─────────────────────────────────────────────────
+#
+# Whether Discordbot honours robots.txt is genuinely contested — its own issue
+# tracker carries reports of a too-restrictive robots.txt suppressing embeds,
+# and third-party UA registries claim the opposite. The `User-agent: *` block
+# above already allows everything these need, so this group changes nothing
+# today; it exists so that a future `Disallow:` added for human-facing reasons
+# cannot silently take every link preview on the site down with it.
+#
+# Slack is here for completeness, not necessity: it documents that it ignores
+# robots.txt outright, on the grounds that its fetch is made on behalf of a
+# person who just pasted the link.
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
 Sitemap: https://lordsofholdfast.com/sitemap.xml

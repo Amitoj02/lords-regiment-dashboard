@@ -2,22 +2,20 @@ import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { RegimentEvent, RsvpStatus } from '../../../core/models/event.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DEFAULT_REGIMENT_NAME, eventDate, eventDescription } from '../../../core/seo/seo-copy';
 
 interface AttendeeVM {
     name: string;
     avatarUrl: string | null;
     status: RsvpStatus;
 }
-
-const ORGANIZER = 'Lords Regiment';
-/** Meta descriptions are truncated by every consumer at ~160–200 chars anyway. */
-const DESCRIPTION_LIMIT = 200;
 
 /**
  * A single event, now a PUBLIC page at `/events/:id` (T-0287).
@@ -54,6 +52,14 @@ export class EventDetailComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
     private readonly seo = inject(SeoService);
     private readonly document = inject(DOCUMENT);
+    private readonly regiment = inject(RegimentService);
+
+    /**
+     * The live regiment name, used in the generated description and the JSON-LD
+     * `organizer` (T-0293) — both of which the crawler shell builds from the
+     * same editable field.
+     */
+    private regimentName = DEFAULT_REGIMENT_NAME;
 
     constructor(
         private route: ActivatedRoute,
@@ -91,6 +97,18 @@ export class EventDetailComponent implements OnInit {
             return;
         }
         this.load(this.eventId);
+
+        // Navigation-independent; folded into the metadata whenever it lands.
+        this.regiment
+            .getProfile()
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((profile) => {
+                this.regimentName = profile?.name?.trim() || DEFAULT_REGIMENT_NAME;
+                if (this.event) this.applySeo(this.event);
+            });
 
         if (this.can('view_members_directory')) {
             this.eventsService
@@ -368,15 +386,24 @@ export class EventDetailComponent implements OnInit {
         });
     }
 
-    /** The description, collapsed to one line and cut to a shareable length. */
+    /**
+     * The description, collapsed to one line and cut to a shareable length.
+     *
+     * ── WHY THE FALLBACK NO LONGER USES `event.date` (T-0293) ────────────────
+     * `date` is already converted to THIS reader's timezone, so a description
+     * built from it said a different day depending on who was looking — and it
+     * could never match the one the crawler shell renders, which has no reader
+     * to convert for. The rule now names the date in the EVENT's own zone on
+     * both surfaces, from the absolute instant. `eventDescription` in
+     * `core/seo/seo-copy.ts` is the shared implementation; its twin is
+     * `SeoService.describeEvent` in the API.
+     */
     private seoDescription(event: RegimentEvent): string {
-        const text = (event.description || '').replace(/\s+/g, ' ').trim();
-        if (!text) {
-            return `${event.title} — a ${ORGANIZER} operation on ${event.date}.`;
-        }
-        return text.length > DESCRIPTION_LIMIT
-            ? `${text.slice(0, DESCRIPTION_LIMIT - 1).trimEnd()}…`
-            : text;
+        return eventDescription(
+            event,
+            this.regimentName,
+            event.startsAt ? eventDate(event.startsAt, event.timezone ?? 'UTC') : event.date,
+        );
     }
 
     private eventJsonLd(event: RegimentEvent, path: string): unknown {
@@ -399,7 +426,11 @@ export class EventDetailComponent implements OnInit {
             // It happens on a game server whose binding is members-only, so the
             // location a crawler can be given is the page itself.
             location: { '@type': 'VirtualLocation', url },
-            organizer: { '@type': 'Organization', name: ORGANIZER, url: origin || undefined },
+            organizer: {
+                '@type': 'Organization',
+                name: this.regimentName,
+                url: origin || undefined,
+            },
             image: event.bannerUrl ?? undefined,
             url,
         };

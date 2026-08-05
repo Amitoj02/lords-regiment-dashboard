@@ -19,7 +19,9 @@ import {
     PublicRosterPage,
     PublicRosterQuery,
 } from '../../../core/services/public-members.service';
+import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { DEFAULT_REGIMENT_NAME, rosterDescription } from '../../../core/seo/seo-copy';
 
 /** One entry of the rank filter. The API filters on the ID, not the name. */
 export interface RosterRankOption {
@@ -103,6 +105,15 @@ export class RosterComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
     private readonly seo = inject(SeoService);
     private readonly document = inject(DOCUMENT);
+    private readonly regiment = inject(RegimentService);
+
+    /**
+     * The live regiment name, folded into the description and the ItemList as
+     * soon as it lands (T-0293). The crawler shell builds the same sentence from
+     * the same editable field, so hardcoding "Lords Regiment" here would have
+     * desynced the two surfaces the moment anyone renamed the regiment.
+     */
+    private regimentName = DEFAULT_REGIMENT_NAME;
 
     /** Signed-in-only enrichment, keyed by member id. Empty when signed out. */
     private enrichment = new Map<string, Member>();
@@ -165,6 +176,17 @@ export class RosterComponent implements OnInit {
                 }
                 this.appliedSearch = term;
                 this.load(1);
+            });
+
+        this.regiment
+            .getProfile()
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((profile) => {
+                this.regimentName = profile?.name?.trim() || DEFAULT_REGIMENT_NAME;
+                this.applySeo();
             });
 
         this.loadEnrichment();
@@ -510,22 +532,21 @@ export class RosterComponent implements OnInit {
      */
     private applySeo(): void {
         this.seo.apply({
-            title: 'Regimental Roster',
-            description: this.seoDescription(),
-            canonicalPath: '/roster',
+            title: this.page > 1 ? `Regimental Roster (page ${this.page})` : 'Regimental Roster',
+            description: rosterDescription(this.regimentName, this.total),
+            // Page 2 used to declare itself canonical to page 1 — the same URL
+            // for every page of the list, which asks Google to drop every
+            // profile that is only linked from page 2 onwards.
+            canonicalPath: this.rosterPath(this.page),
+            prevPath: this.hasPrev ? this.rosterPath(this.page - 1) : null,
+            nextPath: this.hasNext ? this.rosterPath(this.page + 1) : null,
             jsonLd: this.rosterJsonLd(),
         });
     }
 
-    private seoDescription(): string {
-        const roll =
-            this.total > 0
-                ? `All ${this.total} serving ${this.total === 1 ? 'member' : 'members'}`
-                : 'Every serving member';
-        return (
-            `${roll} of the Lords Regiment, a Holdfast: Nations at War regiment — ` +
-            `rank, decorations and service record for each.`
-        );
+    /** `?page=` only past the first, so `/roster` stays the canonical entry. */
+    private rosterPath(page: number): string {
+        return page <= 1 ? '/roster' : `/roster?page=${page}`;
     }
 
     /**
@@ -540,8 +561,8 @@ export class RosterComponent implements OnInit {
         return {
             '@context': 'https://schema.org',
             '@type': 'ItemList',
-            name: 'Lords Regiment roster',
-            description: this.seoDescription(),
+            name: `${this.regimentName} roster`,
+            description: rosterDescription(this.regimentName, this.total),
             numberOfItems: this.total,
             itemListOrder: 'https://schema.org/ItemListOrderAscending',
             itemListElement: this.members.map((member, index) => ({
