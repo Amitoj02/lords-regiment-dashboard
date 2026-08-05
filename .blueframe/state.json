@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "2ab2ad86f680c50f91bc5ff256fffc74e32b66ca",
-  "lastSyncedAt": "2026-08-05T18:30:00Z",
-  "notesForNextSession": "T-0297..T-0300 are in REVIEW as PR 71, coupled to backend PR 84 (T-0297..T-0299 there). MERGE BOTH or neither — the profile meta description is built in BOTH repos and must stay byte-identical.\n\nTHE ROOT CAUSE of 'every link unfurls the same card', so nobody re-diagnoses it: the shells were never wrong. /api/seo/* has served correct server-rendered HTML since T-0293 and does today. Production ran a Caddyfile predating even the T-0197 gallery unfurler, and that file lives in the BACKEND repo and is hand-scp'd — lords-deploy has no command that can write it. Cloudflare's certificate setup is NOT involved; that was the first guess and it was wrong (cf-cache-status was DYNAMIC throughout).\n\nSo nginx.conf in THIS repo now carries the same routing and ships inside the web image. `deploy web <tag>` is enough. If a crawler is ever added to the UA list, add it to the backend Caddyfile too — the two lists are duplicated across repos with nothing enforcing agreement, and whichever layer is live is the one that answers.\n\nOWNER DECISIONS, do not relitigate. (1) The profile card image is the AVATAR always, not the banner. That means twitter:card is `summary` — the small thumbnail — BY DESIGN, and shape:'square' declares it rather than letting Discord demote a square file into it. The banner renders in the page body instead. (2) Attendance is dead everywhere. (3) The Discord tag is gone from the roster row but kept in the Owner-only CSV; flagged in the PR as easily reversed.\n\nNOT DONE: nothing has been pasted into a real Discord channel (Discord caches an unfurl ~30min with no purge — append a throwaway query string when re-testing). event-detail.component still has no spec file and it is the component whose gating changed most in T-0298. The profile.component.scss budget warning (8.91kB vs 8kB) is pre-existing and untouched.\n\nFrontend verification runs in a container: the host is on Node 22.22.2 and the Angular CLI needs >=22.22.3. `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` matches CI; karma needs chromium plus a --no-sandbox wrapper on CHROME_BIN (a wrapper script, not a karma-config edit, so the repo stays clean).",
-  "nextIdCounter": 301,
+  "lastSyncedCommit": "c90388a780d4fcc1b9e0f8901a5e5c1b1066be3d",
+  "lastSyncedAt": "2026-08-05T19:45:00Z",
+  "notesForNextSession": "T-0301 is in REVIEW as PR 73, coupled to backend PR #86. T-0297..T-0300 are merged into DEV (PR 71) but NOT on main.\n\n⚠️ NOTHING IS IN PRODUCTION YET. main is the production branch. Promoting dev to main and redeploying the WEB image is what makes link previews start working, because the crawler routing now lives in THIS repo's nginx.conf. The API half has been correct and deployed since T-0293 - it was never the problem.\n\nVERIFY AFTER DEPLOY: fetch a crawler path with a Discordbot UA and read the headers. `Vary: Accept-Encoding` + `Cache-Control: no-store` means the nginx SPA answered (old build); `Vary: User-Agent` + `max-age=600` means the API shell did (new build). Production still returned the former at last check.\n\nTHE LESSON WORTH KEEPING: the review's sharpest finding here was that seo-copy.ts is coupled to the backend by a COMMENT, and the comment did not work - the same PR that added three warnings about byte-identical descriptions changed describeEvents on one side only. There is no CI check for it in either repo. That is the open regressionRisk on T-0301.\n\nOWNER DECISIONS, do not relitigate: the profile card image is the AVATAR always (so twitter:card is `summary` by design); attendance is dead on every surface; the Discord tag is gone from the roster row but kept in the Owner-only CSV.\n\nSTILL NOT DONE: nothing pasted into a real Discord channel (Discord caches an unfurl ~30min with no purge - use a throwaway query string when re-testing). event-detail.component has no spec file. The profile.component.scss budget warning (8.91kB vs 8kB) is pre-existing.\n\nFrontend verification runs in a container - the host is on Node 22.22.2 and the Angular CLI needs >=22.22.3. `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` matches CI; karma needs chromium plus a --no-sandbox wrapper on CHROME_BIN (a wrapper script, so the repo stays clean).",
+  "nextIdCounter": 302,
   "connections": [],
   "tasks": [
     {
@@ -19710,7 +19710,7 @@
       "id": "T-0297",
       "title": "Match the crawler shell: bio-led description, avatar card, theme-color",
       "summary": "describe() leads with the member's bio cut at 160 with rank and regiment behind it — byte-identical to the API's describeProfile, changed in the same deploy because one URL with two different descriptions is the unambiguous single-string diff that reads as cloaking. cardImage() prefers the avatar over the banner in the same order the shell now does. SeoService sets theme-color on every route (the shell has painted the brass embed stripe since T-0293 while the SPA fell back to index.html's --ink-900), plus profile:username, an @id-linked memberOf and a BreadcrumbList.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -19752,7 +19752,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "2ab2ad86f680c50f91bc5ff256fffc74e32b66ca",
       "createdAt": "2026-08-05T18:30:00Z",
-      "updatedAt": "2026-08-05T18:30:00Z",
+      "updatedAt": "2026-08-05T19:45:00Z",
       "history": [
         {
           "at": "2026-08-05T18:30:00Z",
@@ -19760,6 +19760,13 @@
           "to": "review",
           "by": "claude",
           "note": "built and pushed as PR #71"
+        },
+        {
+          "at": "2026-08-05T19:45:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged into dev as PR #71; NOT yet on main, so not in production"
         }
       ]
     },
@@ -19767,7 +19774,7 @@
       "id": "T-0298",
       "title": "Show an event’s server details publicly, lock only the password",
       "summary": "The Server Details panel is public. The gate moved from the panel to the rows: server name and region render for anyone, and the password row is SHOWN to a signed-out reader as a locked field reading 'Sign in to see the password' rather than the panel vanishing, so the prompt appears where the thing it unlocks is. notifyBefore stays behind the session, and hasServerDetails no longer counts it for an anonymous reader. The '|| Members only' and '|| Server details on sign-in' fallbacks on the calendar and landing page are deleted — the projection carries the real name now, so nothing could reach them.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -19812,7 +19819,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "2ab2ad86f680c50f91bc5ff256fffc74e32b66ca",
       "createdAt": "2026-08-05T18:30:00Z",
-      "updatedAt": "2026-08-05T18:30:00Z",
+      "updatedAt": "2026-08-05T19:45:00Z",
       "history": [
         {
           "at": "2026-08-05T18:30:00Z",
@@ -19820,6 +19827,13 @@
           "to": "review",
           "by": "claude",
           "note": "built and pushed as PR #71"
+        },
+        {
+          "at": "2026-08-05T19:45:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged into dev as PR #71; NOT yet on main, so not in production"
         }
       ]
     },
@@ -19883,7 +19897,7 @@
       "id": "T-0300",
       "title": "Trim the roster row: no Discord tag, no attendance column",
       "summary": "The Discord tag comes off the roster row — it made the roster the one surface where a member's Discord identity was displayed without them having put it there, and made the signed-in table disagree with both the public table and the crawler shell about what a row says. The Events column comes off the table, the profile particulars, the CSV export and the link-preview description; it read 0 for most of the roster. The Discord tag is kept in the Owner-only CSV as an operational ledger.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -19919,7 +19933,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "2ab2ad86f680c50f91bc5ff256fffc74e32b66ca",
       "createdAt": "2026-08-05T18:30:00Z",
-      "updatedAt": "2026-08-05T18:30:00Z",
+      "updatedAt": "2026-08-05T19:45:00Z",
       "history": [
         {
           "at": "2026-08-05T18:30:00Z",
@@ -19927,6 +19941,81 @@
           "to": "review",
           "by": "claude",
           "note": "built and pushed as PR #71"
+        },
+        {
+          "at": "2026-08-05T19:45:00Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "merged into dev as PR #71; NOT yet on main, so not in production"
+        }
+      ]
+    },
+    {
+      "id": "T-0301",
+      "title": "Close the divergences an adversarial review of #71 found",
+      "summary": "Four review lenses over the merged diff, every finding adversarially verified. Three landed here, two of them divergences introduced by the very PR whose comments warn about divergence. (1) describeEvents was rewritten in the API without its twin eventsDescription in core/seo/seo-copy.ts - a file whose docblock says CHANGING ANY FUNCTION HERE IS A COUPLED DEPLOY - so /events served one description to the crawler shell and another to the render pass. It takes the next muster now, with the date pre-formatted in the EVENT's zone by the caller and the selection rule pinned to the API's in a comment. Same class: the roster shell advertised the regiment banner while this side passed no image. (2) theme-color reverted - its two consumers want opposite things, Discord never runs JS so it only ever sees the shell, and setting it here repainted every phone's address bar for zero benefit. (3) memberOf referenced an @id no document in this app defined; LandingComponent declares it now and the reference carries name+url so it means something in isolation. Plus the bio cut splitting UTF-16 surrogate pairs.",
+      "status": "review",
+      "type": "fix",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "seo",
+      "subfeature": "shell-parity",
+      "repo": "",
+      "paths": [
+        "src/app/core/seo/seo-copy.ts",
+        "src/app/core/services/seo.service.ts",
+        "src/app/features/public/events-page/events-page.component.ts",
+        "src/app/features/public/landing/landing.component.ts",
+        "src/app/features/public/roster/roster.component.ts",
+        "src/app/features/public/profile/profile.component.ts"
+      ],
+      "dependsOn": [
+        "T-0297",
+        "lords-dashboard-backend:T-0301"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "profile memberOf carries @id plus name and url",
+          "status": "passed"
+        },
+        {
+          "desc": "build, lint, contrast guard and 802 specs green",
+          "status": "passed"
+        },
+        {
+          "desc": "diff /events meta description against the shell's on a live deploy",
+          "status": "pending"
+        },
+        {
+          "desc": "confirm mobile chrome is back to --ink-900 on a phone",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "seo-copy.ts is coupled to the API's seo.service.ts by COMMENT ONLY - this task exists because that comment was not enough, and nothing in either CI diffs the two implementations",
+          "status": "open",
+          "notedAt": "2026-08-05T19:45:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not add a CI check that seo-copy.ts and the API describe*() functions produce identical strings - it needs a shared fixture across two repos, so the coupling is still enforced by a reviewer noticing.",
+        "event-detail.component still has no spec file, and it is the component T-0298 changed most."
+      ],
+      "lastTouchedCommit": "c90388a780d4fcc1b9e0f8901a5e5c1b1066be3d",
+      "createdAt": "2026-08-05T19:45:00Z",
+      "updatedAt": "2026-08-05T19:45:00Z",
+      "history": [
+        {
+          "at": "2026-08-05T19:45:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "raised and fixed from the adversarial review; PR 73"
         }
       ]
     }
@@ -19936,6 +20025,11 @@
       "at": "2026-08-05T18:30:00Z",
       "by": "claude",
       "note": "T-0297..T-0300 created (shell parity, public server details, crawler routing in the web image, roster row trim); T-0293..T-0296 advanced review->deployed"
+    },
+    {
+      "at": "2026-08-05T19:45:00Z",
+      "by": "claude",
+      "note": "T-0301 created from the adversarial review of #71; T-0297..T-0300 merged to dev"
     }
   ]
 }

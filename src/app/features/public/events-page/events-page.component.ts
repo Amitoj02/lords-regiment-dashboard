@@ -7,7 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
 import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService } from '../../../core/services/seo.service';
-import { DEFAULT_REGIMENT_NAME, eventsDescription } from '../../../core/seo/seo-copy';
+import { DEFAULT_REGIMENT_NAME, eventDate, eventsDescription } from '../../../core/seo/seo-copy';
 
 const PAGE_TITLE = 'Events & Orders';
 
@@ -132,7 +132,7 @@ export class EventsPageComponent implements OnInit {
     private applySeo(): void {
         this.seo.apply({
             title: PAGE_TITLE,
-            description: eventsDescription(this.regimentName),
+            description: eventsDescription(this.regimentName, this.nextMuster()),
             canonicalPath: '/events',
             // The NEXT event's banner, because that is what a shared calendar
             // link is actually advertising; a quiet week falls through to the
@@ -140,6 +140,28 @@ export class EventsPageComponent implements OnInit {
             imageUrl: this.cardImage(),
             jsonLd: this.upcomingJsonLd(),
         });
+    }
+
+    /**
+     * The first thing on the calendar that has not happened yet, named for the
+     * meta description (T-0297).
+     *
+     * ⚠️ Must select the SAME event the API's `describeEvents` picks. That
+     * reads `result.data.filter(status !== 'previous')[0]` over a list ordered
+     * `startsAt ASC`, and an ongoing event started in the past — so it sorts
+     * first, which is why it leads here too. The date is rendered in the
+     * EVENT's own zone via `eventDate`, never the reader's, because a
+     * browser-local date could not match the server-rendered string.
+     */
+    private nextMuster(): { title: string; date: string } | null {
+        const next = [this.ongoingEvent, ...this.upcomingEvents].find(Boolean);
+        if (!next) return null;
+        return {
+            title: next.title,
+            date: next.startsAt
+                ? eventDate(next.startsAt, next.timezone ?? 'UTC')
+                : eventDate(`${next.date}T00:00:00Z`, 'UTC'),
+        };
     }
 
     /** The banner of whatever is running or scheduled next, if it has one. */
