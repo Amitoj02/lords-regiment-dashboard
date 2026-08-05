@@ -7,38 +7,56 @@
     [style.--hero-scrim]="heroScrim"
 >
     <div class="hero-overlay"></div>
-    <div class="hero-inner">
-        <img src="assets/images/regiment-logo.png" class="hero-crest" alt="Regiment crest" />
-        <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
-        <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
-        <p class="hero-sub">{{ missionStatement }}</p>
 
-        @if (statsVisible) {
-        <div class="hero-stats">
-            @if (establishedLabel) {
-            <div class="hero-stat">
-                <div class="hero-stat-value serif">{{ establishedLabel }}</div>
-                <div class="hero-stat-label">Since Established</div>
+    <div class="hero-body">
+        <div class="hero-inner">
+            <div class="hero-crest">
+                <img src="assets/images/regiment-logo.png" alt="Regiment crest" />
             </div>
-            }
-            <div class="hero-stat">
-                <div class="hero-stat-value serif">{{ memberCount }}</div>
-                <div class="hero-stat-label">Members</div>
-            </div>
-        </div>
-        }
+            <div class="admin-label brass hero-kicker">Holdfast: Nations at War</div>
+            <h1 class="serif-display hero-headline">{{ regimentName }}</h1>
+            <p class="hero-sub">{{ missionStatement }}</p>
 
-        <!-- `.row` is nowrap, and this is now three buttons wide — on a phone
-             the third would run off the hero rather than drop to a second
-             line. -->
-        <div class="row gap-12 hero-actions" style="flex-wrap: wrap">
-            <button type="button" (click)="applyToJoin()" class="btn btn-primary btn-lg">
-                {{ applyLabel }}
-            </button>
-            <a routerLink="/events" class="btn btn-ghost btn-lg">View Orders</a>
-            <a routerLink="/roster" class="btn btn-ghost btn-lg">Regimental Roster</a>
+            <!-- One command, not three (T-0296). Orders and Roster are two rows
+                 above in the public nav; repeating them here spent the hero's
+                 only decisive moment on links the visitor already has. -->
+            <div class="hero-actions">
+                <button type="button" (click)="applyToJoin()" class="btn btn-primary hero-cta">
+                    {{ applyLabel }}
+                    <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path
+                            d="M3.6 2.4 7.5 6l-3.9 3.6"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
+
+    <!-- The two figures, off the centre column and onto a hairline plinth at
+         the hero's bottom edge — still present, no longer competing with the
+         button for the same vertical run. -->
+    @if (statsVisible) {
+    <div class="hero-plinth">
+        @if (establishedLabel) {
+        <span class="mono hero-plinth-item">
+            Established <span class="hero-plinth-figure">{{ establishedLabel }}</span>
+        </span>
+        <span class="hero-plinth-pip" aria-hidden="true"></span>
+        }
+        <span class="mono hero-plinth-item">
+            <span class="hero-plinth-figure">{{ memberCount }}</span> Effectives<span
+                class="hero-plinth-tail"
+            >
+                on the roll</span
+            >
+        </span>
+    </div>
+    }
 </section>
 
 <!-- Main Content -->
