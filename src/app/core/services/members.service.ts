@@ -4,7 +4,14 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, ApiMember, PaginatedResponse, mapEvent, mapMember } from '../models/api.model';
 import { Member, MemberRole } from '../models/member.model';
+import { SocialPlatform } from '../models/social-link.model';
 import { RegimentEvent } from '../models/event.model';
+
+/** One linked account on the way OUT — a handle, never a URL (T-0289). */
+export interface MemberSocialLinkEdit {
+    platform: SocialPlatform;
+    handle: string;
+}
 
 /** The fields a member may change about themselves (PATCH /members/:id). */
 export interface MemberSelfEdit {
@@ -13,6 +20,14 @@ export interface MemberSelfEdit {
     bannerKey?: string;
     /** The vanity handle, without the @. `null` releases it. */
     username?: string | null;
+    /** Short prose for the profile. `null` clears it. */
+    bio?: string | null;
+    /**
+     * Linked accounts. WHOLESALE REPLACE, matching the server: omit the key to
+     * leave them untouched, send `[]` to remove every one. There is no
+     * per-platform endpoint, so an edit that drops one link sends the rest.
+     */
+    socialLinks?: MemberSocialLinkEdit[];
 }
 
 /** Why a vanity handle cannot be claimed (GET /members/me/username-available). */
@@ -88,6 +103,10 @@ export class MembersService {
         // `null` is a MEANINGFUL value here — it releases the vanity handle — so
         // this tests for `undefined` rather than truthiness (T-0287).
         if (changes.username !== undefined) body['username'] = changes.username;
+        // Same rule for both: `null` clears the bio, `[]` clears every link, and
+        // an absent key leaves the server's copy alone.
+        if (changes.bio !== undefined) body['bio'] = changes.bio;
+        if (changes.socialLinks !== undefined) body['socialLinks'] = changes.socialLinks;
         return this.http.patch<ApiMember>(`${this.base}/${id}`, body).pipe(map(mapMember));
     }
 

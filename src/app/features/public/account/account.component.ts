@@ -14,6 +14,11 @@ import {
 import { environment } from '../../../../environments/environment';
 import { ApiMember, mapMember } from '../../../core/models/api.model';
 import { Member } from '../../../core/models/member.model';
+import {
+    SOCIAL_PLATFORMS,
+    isValidSocialHandle,
+    normalizeSocialHandle,
+} from '../../../core/models/social-link.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { MembersService } from '../../../core/services/members.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -57,6 +62,36 @@ const REJECTION_COPY: Record<Exclude<UsernameRejection, 'cooldown_actor'>, strin
 
 /** What the line under the username field is currently saying. */
 type HandleVerdict = 'idle' | 'checking' | 'available' | 'unavailable' | 'current';
+
+/**
+ * Turn whatever a member typed into a bare handle.
+ *
+ * A pasted profile URL is reduced to its last path segment — which is the handle
+ * in every one of the seven platforms' URL shapes — and anything else is just
+ * normalised. Nothing here validates; that is {@link isValidSocialHandle}'s job,
+ * and the server's after it.
+ */
+export function extractHandle(raw: string): string {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+        return '';
+    }
+    // Strip a scheme, then the query/fragment, and see whether what is left
+    // starts with something host-shaped. `new URL()` is not used because it
+    // rejects the schemeless `twitch.tv/panda` that people paste most often.
+    const path = trimmed
+        .replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
+        .replace(/^\/\//, '')
+        .replace(/[?#].*$/, '');
+    const segments = path.split('/').filter(Boolean);
+    // A leading dotted segment is a hostname; anything after it is the path, and
+    // its LAST segment is the handle for all seven URL shapes (`/panda`,
+    // `/@panda`, `/id/panda`, `/u/panda`).
+    if (segments.length > 1 && segments[0].includes('.')) {
+        return normalizeSocialHandle(segments[segments.length - 1]);
+    }
+    return normalizeSocialHandle(trimmed);
+}
 
 /** One probe result, carrying the value it answers about so a race can be dropped. */
 interface ProbeResult {
@@ -107,6 +142,20 @@ export class AccountComponent implements OnInit {
     removeConfirming = false;
     removing = false;
     readonly cooldownDays = USERNAME_COOLDOWN_DAYS;
+
+    // ── Bio + linked accounts (T-0289) ───────────────────────────────────────
+    /** Optional prose for the public profile. Empty string means "no bio". */
+    bio = '';
+    /** Matches the server's `@MaxLength(280)`; the design caps it at a paragraph. */
+    readonly bioMaxLength = 280;
+
+    /** The platform rows, in the order they are stored and rendered. */
+    readonly socialPlatforms = SOCIAL_PLATFORMS;
+
+    /** Typed handle per platform, normalised on the way in. `''` means none. */
+    socialHandles: Record<string, string> = {};
+    /** What the server last told us, so `dirty` has something to compare with. */
+    private savedSocials: Record<string, string> = {};
 
     // ── Appearance (carried over from the old profile modal) ─────────────────
     avatarPreview: string | null = null;
@@ -165,6 +214,7 @@ export class AccountComponent implements OnInit {
                 next: (member) => {
                     this.member = member;
                     this.inGameName = member.inGameName ?? '';
+                    this.seedProfileFields(member);
                     this.loading = false;
                 },
                 error: () => {
@@ -373,6 +423,66 @@ export class AccountComponent implements OnInit {
             });
     }
 
+    // ── Bio + linked accounts (T-0289) ───────────────────────────────────────
+
+    /** Copy the server's bio and links onto the form. */
+    private seedProfileFields(member: Member): void {
+        this.bio = member.bio ?? '';
+        const handles: Record<string, string> = {};
+        for (const spec of SOCIAL_PLATFORMS) {
+            handles[spec.platform] = '';
+        }
+        for (const link of member.socialLinks ?? []) {
+            handles[link.platform] = link.handle;
+        }
+        this.socialHandles = handles;
+        this.savedSocials = { ...handles };
+    }
+
+    /**
+     * Normalise on the way in, exactly as the server will — and take a pasted
+     * URL apart rather than refusing it.
+     *
+     * The field asks for a handle and says so, but "paste your channel link" is
+     * what people actually do, and rejecting `https://twitch.tv/panda` with
+     * "letters, numbers and underscore only" is technically correct and
+     * completely useless. The last path segment of any URL a member pastes here
+     * IS the handle, in every one of the seven platforms' URL shapes.
+     */
+    onSocialInput(platform: string, raw: string): void {
+        this.socialHandles = { ...this.socialHandles, [platform]: extractHandle(raw) };
+        this.saveError = null;
+    }
+
+    /** The refusal under one platform's field, or null when it is fine. */
+    socialError(platform: string): string | null {
+        const handle = this.socialHandles[platform] ?? '';
+        if (!handle) {
+            return null;
+        }
+        return isValidSocialHandle(platform, handle) ? null : 'That does not look like a handle.';
+    }
+
+    /** True when any typed handle is unusable — the save is blocked on it. */
+    get socialsBlocked(): boolean {
+        return SOCIAL_PLATFORMS.some((spec) => !!this.socialError(spec.platform));
+    }
+
+    /** The links payload, in registry order, with the blank rows dropped. */
+    private socialLinksPayload(): { platform: string; handle: string }[] {
+        return SOCIAL_PLATFORMS.filter((spec) => !!this.socialHandles[spec.platform]).map(
+            (spec) => ({ platform: spec.platform, handle: this.socialHandles[spec.platform] }),
+        );
+    }
+
+    private get socialsDirty(): boolean {
+        return SOCIAL_PLATFORMS.some(
+            (spec) =>
+                (this.socialHandles[spec.platform] ?? '') !==
+                (this.savedSocials[spec.platform] ?? ''),
+        );
+    }
+
     // ── Appearance ───────────────────────────────────────────────────────────
 
     onAvatarSelected(event: Event): void {
@@ -443,6 +553,8 @@ export class AccountComponent implements OnInit {
         return (
             this.inGameName.trim() !== (this.member?.inGameName ?? '') ||
             this.username !== (this.currentUsername ?? '') ||
+            this.bio.trim() !== (this.member?.bio ?? '') ||
+            this.socialsDirty ||
             !!this.avatarKey ||
             !!this.bannerKey ||
             this.avatarUploading ||
@@ -459,6 +571,7 @@ export class AccountComponent implements OnInit {
             !this.bannerUploading &&
             !!this.inGameName.trim() &&
             !this.usernameBlocked &&
+            !this.socialsBlocked &&
             this.dirty
         );
     }
@@ -467,6 +580,8 @@ export class AccountComponent implements OnInit {
     revert(): void {
         this.inGameName = this.member?.inGameName ?? '';
         this.username = this.currentUsername ?? '';
+        this.bio = this.member?.bio ?? '';
+        this.socialHandles = { ...this.savedSocials };
         this.avatarPreview = null;
         this.avatarKey = null;
         this.bannerPreview = null;
@@ -496,6 +611,18 @@ export class AccountComponent implements OnInit {
         if (claiming) {
             body['username'] = claimed;
         }
+        // `null` clears the bio; an emptied box IS a removal here, unlike the
+        // handle — a bio costs nothing to write again, so it needs no confirm
+        // step and no 30-day hold.
+        const bio = this.bio.trim();
+        if (bio !== (this.member.bio ?? '')) {
+            body['bio'] = bio || null;
+        }
+        // Wholesale replace, so the whole set goes whenever any of it changed.
+        const socialsChanged = this.socialsDirty;
+        if (socialsChanged) {
+            body['socialLinks'] = this.socialLinksPayload();
+        }
 
         this.saving = true;
         this.saveError = null;
@@ -509,6 +636,11 @@ export class AccountComponent implements OnInit {
                     this.avatarKey = null;
                     this.bannerPreview = null;
                     this.bannerKey = null;
+                    // Re-seed from the response rather than from what was typed:
+                    // the server normalises handles and may have trimmed the bio,
+                    // and `dirty` compares against `member`, so a stale copy here
+                    // leaves the savebar lit with nothing left to save.
+                    this.seedProfileFields(updated);
                     if (claiming) {
                         this.currentUsername = claimed;
                         this.handleVerdict = 'current';

@@ -12,6 +12,8 @@
  * compile. A distinct type makes "is this field public?" a question the
  * compiler answers.
  */
+import { MemberSocialLink } from './social-link.model';
+
 export interface PublicMemberMedal {
     id: string;
     medalId: string;
@@ -27,6 +29,20 @@ export interface PublicMember {
     id: string;
     /** Vanity handle without the `@` sigil, or null when unclaimed. */
     username: string | null;
+    /**
+     * The member's own short prose, or null. PUBLIC on purpose, unlike the
+     * fields above: it is member-authored, self-published, blank by default,
+     * and it is the one part of the page that is not generated from records.
+     * The backend publishes it for the same reason (see `PublicMemberDto`).
+     */
+    bio: string | null;
+    /**
+     * Linked accounts elsewhere. Always an array — `[]` when none. Each `url`
+     * is BUILT BY THE SERVER from a validated handle, so nothing a member types
+     * can put an arbitrary outbound link on a crawlable page. Discord is not in
+     * here by design: it is signed-in-only and comes off the enriched member.
+     */
+    socialLinks: MemberSocialLink[];
     inGameName: string;
     /** Never `Applicant` — applicants have no public profile at all. */
     role: string;

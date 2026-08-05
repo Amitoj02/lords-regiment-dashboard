@@ -1,0 +1,82 @@
+<div class="social-links" [class.social-links--marks-only]="!showHandles">
+    @for (link of links; track link.platform) {
+    <!-- `nofollow ugc` because the destination is member-authored. The href
+         itself is server-built from a validated handle, so this is defence in
+         depth rather than the only thing standing between us and a spam farm. -->
+    <a
+        class="social-chip"
+        [ngClass]="'social-chip--' + link.platform"
+        [href]="link.url"
+        target="_blank"
+        rel="noopener noreferrer nofollow ugc"
+        [attr.title]="link.label + ' · ' + link.handle"
+    >
+        <span class="social-chip-mark" aria-hidden="true">
+            @if (link.platform === 'twitch') {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M4.3 0 1.6 4.9v16.4h5.6V24h3l2.7-2.7h4.5L23 15.7V0H4.3Zm16.8 14.7-3.3 3.3h-5.5l-2.7 2.7V18H4.9V2.2h16.2v12.5ZM17.4 6.2v6h-2.2v-6h2.2Zm-6 0v6H9.2v-6h2.2Z"
+                />
+            </svg>
+            } @else if (link.platform === 'youtube') {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M23.5 6.5a3 3 0 0 0-2.1-2.1C19.5 3.9 12 3.9 12 3.9s-7.5 0-9.4.5A3 3 0 0 0 .5 6.5C0 8.4 0 12 0 12s0 3.6.5 5.5a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.5.5-5.5s0-3.6-.5-5.5ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"
+                />
+            </svg>
+            } @else if (link.platform === 'instagram') {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.05 1.8.25 2.2.42.56.22.96.48 1.38.9.42.42.68.82.9 1.38.17.4.37 1 .42 2.2.06 1.3.07 1.7.07 4.9s0 3.6-.07 4.9c-.05 1.2-.25 1.8-.42 2.2-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.4.17-1 .37-2.2.42-1.3.06-1.7.07-4.9.07s-3.6 0-4.9-.07c-1.2-.05-1.8-.25-2.2-.42a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.17-.4-.37-1-.42-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.07-4.9c.05-1.2.25-1.8.42-2.2.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.4-.17 1-.37 2.2-.42C8.4 2.2 8.8 2.2 12 2.2ZM12 0C8.7 0 8.3 0 7 .07 5.7.13 4.8.34 4.1.62c-.76.3-1.4.7-2.03 1.33C1.44 2.58 1.04 3.22.74 3.98.46 4.7.25 5.6.19 6.9.12 8.2.12 8.6.12 12s0 3.8.07 5.1c.06 1.3.27 2.2.55 2.92.3.76.7 1.4 1.33 2.03.63.63 1.27 1.03 2.03 1.33.72.28 1.62.49 2.92.55 1.3.07 1.7.07 5.1.07s3.8 0 5.1-.07c1.3-.06 2.2-.27 2.92-.55.76-.3 1.4-.7 2.03-1.33.63-.63 1.03-1.27 1.33-2.03.28-.72.49-1.62.55-2.92.07-1.3.07-1.7.07-5.1s0-3.8-.07-5.1c-.06-1.3-.27-2.2-.55-2.92-.3-.76-.7-1.4-1.33-2.03A5.6 5.6 0 0 0 19.9.62C19.2.34 18.3.13 17 .07 15.7 0 15.3 0 12 0Zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32Zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm7.85-10.4a1.44 1.44 0 1 1-2.88 0 1.44 1.44 0 0 1 2.88 0Z"
+                />
+            </svg>
+            } @else if (link.platform === 'tiktok') {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M16.6 0h-3.4v14.6a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.15V8.4a6.4 6.4 0 0 0-.9-.06 6.3 6.3 0 1 0 6.3 6.3V7.3a7.5 7.5 0 0 0 4.4 1.4V5.3a4.4 4.4 0 0 1-4.4-4.4V0Z"
+                />
+            </svg>
+            } @else if (link.platform === 'x') {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M18.24 2h3.31l-7.23 8.26L22.82 22h-6.65l-5.21-6.82L4.99 22H1.68l7.73-8.84L1.29 2h6.82l4.71 6.23L18.24 2Zm-1.16 18.02h1.83L7.01 3.88H5.04l12.04 16.14Z"
+                />
+            </svg>
+            } @else if (link.platform === 'steam') {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.029 4.524 4.524s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0z"
+                />
+            </svg>
+            } @else if (link.platform === 'medal') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="14.6" r="5.9" />
+                <path d="M8.2 3.2l2.3 5.2M15.8 3.2l-2.3 5.2" stroke-linecap="round" />
+            </svg>
+            }
+        </span>
+        @if (showHandles) {
+        <span class="mono social-chip-handle">{{ link.handle }}</span>
+        }
+    </a>
+    }
+    <!-- Signed-in only, and not a link: a Discord tag names an account, it does
+         not address a page. -->
+    @if (discordTag) {
+    <span
+        class="social-chip social-chip--discord social-chip--static"
+        [attr.title]="'Discord · ' + discordTag"
+    >
+        <span class="social-chip-mark" aria-hidden="true">
+            <svg viewBox="0 0 20 15" fill="currentColor">
+                <path
+                    d="M16.93 1.24A16.56 16.56 0 0 0 12.83 0c-.18.32-.39.76-.53 1.1a15.36 15.36 0 0 0-4.6 0A11.4 11.4 0 0 0 7.16 0 16.64 16.64 0 0 0 3.07 1.25C.45 5.04-.27 8.79.08 12.49a16.72 16.72 0 0 0 5.07 2.57c.41-.56.77-1.15 1.08-1.77a10.84 10.84 0 0 1-1.71-.83c.14-.1.28-.21.42-.32a11.92 11.92 0 0 0 10.12 0c.14.11.28.22.42.32-.54.32-1.12.6-1.72.83.31.62.67 1.21 1.08 1.77a16.67 16.67 0 0 0 5.08-2.57c.41-4.33-.71-8.09-3.02-11.25ZM6.68 10.22c-.99 0-1.8-.9-1.8-2.01s.79-2.01 1.8-2.01c1 0 1.8.9 1.79 2.01C8.47 9.32 7.68 10.22 6.68 10.22Zm6.63 0c-.98 0-1.79-.9-1.79-2.01s.79-2.01 1.79-2.01 1.8.9 1.8 2.01c0 1.11-.79 2.01-1.8 2.01Z"
+                />
+            </svg>
+        </span>
+        @if (showHandles) {
+        <span class="mono social-chip-handle">{{ discordTag }}</span>
+        }
+    </span>
+    }
+</div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
@@ -96,6 +96,9 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
                 { provide: AuthService, useValue: auth },
                 { provide: RegimentService, useValue: { getProfile: () => profile$ } },
             ],
+            // hf-avatar is a SharedModule component; the bar under test is the
+            // markup around it, not the initials tile inside it.
+            schemas: [NO_ERRORS_SCHEMA],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PublicNavComponent);
@@ -131,7 +134,7 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
     it('routes a signed-in applicant to their status page (not /login)', () => {
         auth.currentUser.set(makeUser(false));
         fixture.detectChanges();
-        expect(ctaText()).toContain('My Application');
+        expect(ctaText()).toContain('My application');
         expect(ctaText()).toContain('Sign out');
         expect(hrefs()).toContain('/onboarding/status');
         expect(hrefs()).not.toContain('/login');
@@ -230,6 +233,114 @@ describe('PublicNavComponent (auth-aware CTA)', () => {
             fixture.detectChanges();
             expect(ctaText()).not.toContain('Dashboard');
             expect(ctaText()).not.toContain('My profile');
+        });
+    });
+
+    /**
+     * The topbar used to give a signed-in admin four peer buttons — Dashboard,
+     * My profile, Account and Sign out — of which two were the same destination
+     * under different names and one was destructive. Everything that acts on
+     * YOUR account now lives behind your own face (T-0289).
+     */
+    describe('account menu (T-0289)', () => {
+        function menuItems(): string[] {
+            return Array.from<HTMLElement>(
+                fixture.nativeElement.querySelectorAll('.account-menu-item'),
+            ).map((el) => (el.textContent ?? '').trim());
+        }
+
+        it('leaves exactly one topbar button beside the account trigger for staff', () => {
+            auth.currentUser.set(makeUser(true, 'lordy'));
+            auth.staff = true;
+            fixture.detectChanges();
+            const buttons = Array.from<HTMLElement>(
+                cta().querySelectorAll('a.btn, button.btn'),
+            ).map((el) => (el.textContent ?? '').trim());
+            expect(buttons).toEqual(['Dashboard']);
+            expect(cta().querySelector('.account-trigger')).not.toBeNull();
+        });
+
+        it('puts My profile, Edit profile and Sign out in the menu — and nothing else', () => {
+            auth.currentUser.set(makeUser(true, 'lordy'));
+            fixture.detectChanges();
+            expect(menuItems()).toEqual(['My profile', 'Edit profile', 'Sign out']);
+            expect(hrefs()).toContain('/u/@lordy');
+            expect(hrefs()).toContain('/account');
+        });
+
+        it('offers an applicant only Sign out — they have no profile to edit', () => {
+            // An applicant has no member row, so /u/:id would 404 and /account
+            // renders a notice instead of a form.
+            auth.currentUser.set(makeUser(false));
+            fixture.detectChanges();
+            expect(menuItems()).toEqual(['Sign out']);
+            expect(hrefs()).not.toContain('/account');
+        });
+
+        it('opens and closes on the trigger', () => {
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            const trigger = cta().querySelector('.account-trigger') as HTMLButtonElement;
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+            trigger.click();
+            fixture.detectChanges();
+            expect(fixture.componentInstance.accountMenuOpen).toBeTrue();
+            expect(trigger.getAttribute('aria-expanded')).toBe('true');
+            expect(
+                fixture.nativeElement
+                    .querySelector('.account-menu')
+                    .classList.contains('account-menu--open'),
+            ).toBeTrue();
+
+            trigger.click();
+            fixture.detectChanges();
+            expect(fixture.componentInstance.accountMenuOpen).toBeFalse();
+        });
+
+        it('closes on a click anywhere else on the page', () => {
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            fixture.componentInstance.accountMenuOpen = true;
+            document.body.click();
+            expect(fixture.componentInstance.accountMenuOpen).toBeFalse();
+        });
+
+        it('stays open for a click INSIDE it', () => {
+            // The header is not a control; clicking it must not dismiss the menu
+            // the way a click on the page behind would.
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            fixture.componentInstance.accountMenuOpen = true;
+            fixture.detectChanges();
+            (fixture.nativeElement.querySelector('.account-menu-head') as HTMLElement).click();
+            expect(fixture.componentInstance.accountMenuOpen).toBeTrue();
+        });
+
+        it('closes on Escape', () => {
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            fixture.componentInstance.accountMenuOpen = true;
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+            expect(fixture.componentInstance.accountMenuOpen).toBeFalse();
+        });
+
+        it('closes the account menu when the burger drawer closes', () => {
+            // Otherwise the panel is left expanded behind a closed drawer and
+            // reopening the burger shows it mid-flow.
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            fixture.componentInstance.menuOpen = true;
+            fixture.componentInstance.accountMenuOpen = true;
+            fixture.componentInstance.toggleMenu();
+            expect(fixture.componentInstance.accountMenuOpen).toBeFalse();
+        });
+
+        it('labels the trigger with one word, whatever the in-game name is', () => {
+            auth.currentUser.set(makeUser(true));
+            fixture.detectChanges();
+            // makeUser's name is "Test User".
+            expect(fixture.componentInstance.accountFirstName).toBe('Test');
         });
     });
 

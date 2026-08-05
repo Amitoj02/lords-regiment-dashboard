@@ -80,6 +80,8 @@ function publicMember(overrides: Partial<PublicMember> = {}): PublicMember {
         bannerUrl: null,
         joinedAt: '2025-03-04T00:00:00.000Z',
         eventsAttended: 12,
+        bio: null,
+        socialLinks: [],
         medals: [],
         canonicalPath: '/u/@nolt',
         ...overrides,

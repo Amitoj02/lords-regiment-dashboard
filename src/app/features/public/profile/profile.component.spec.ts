@@ -13,6 +13,7 @@ import { SeoService, SeoTags } from '../../../core/services/seo.service';
 import { AuthService, CurrentUser } from '../../../core/services/auth.service';
 import { Member } from '../../../core/models/member.model';
 import { PublicMember, PublicMemberMedal } from '../../../core/models/public-member.model';
+import { MemberSocialLink } from '../../../core/models/social-link.model';
 import { RegimentEvent } from '../../../core/models/event.model';
 import { MedalComponent } from '../../../shared/components/medal/medal.component';
 
@@ -32,8 +33,21 @@ function publicMember(overrides: Partial<PublicMember> = {}): PublicMember {
         bannerUrl: null,
         joinedAt: '2026-01-04T00:00:00.000Z',
         eventsAttended: 7,
+        bio: null,
+        socialLinks: [],
         medals: [],
         canonicalPath: '/u/@panda',
+        ...overrides,
+    };
+}
+
+/** One public linked account, as the API emits it (T-0289). */
+function socialLink(overrides: Partial<MemberSocialLink> = {}): MemberSocialLink {
+    return {
+        platform: 'twitch',
+        label: 'Twitch',
+        handle: 'jamesonnolt',
+        url: 'https://www.twitch.tv/jamesonnolt',
         ...overrides,
     };
 }
@@ -60,6 +74,16 @@ function attendedEvent(): RegimentEvent {
         date: '2026-06-14',
         startTime: '20:00',
         status: 'previous',
+    } as RegimentEvent;
+}
+
+function upcomingEvent(): RegimentEvent {
+    return {
+        id: 'e2',
+        title: 'Line Battle vs 1erRAC',
+        date: '2026-08-09',
+        startTime: '20:00',
+        status: 'upcoming',
     } as RegimentEvent;
 }
 
@@ -126,6 +150,7 @@ interface SetupOptions {
     user?: CurrentUser | null;
     serviceRecord?: ServiceRecordEntry[];
     events?: RegimentEvent[];
+    rsvps?: RegimentEvent[];
     /** Declare MedalComponent for real — the honours panel is measured, not read. */
     realMedals?: boolean;
 }
@@ -152,7 +177,7 @@ function setup(options: SetupOptions = {}): Harness {
                     : of(enrichedMember()),
             ),
         getEvents: jasmine.createSpy('getEvents').and.returnValue(of(options.events ?? [])),
-        getRsvps: jasmine.createSpy('getRsvps').and.returnValue(of([])),
+        getRsvps: jasmine.createSpy('getRsvps').and.returnValue(of(options.rsvps ?? [])),
         getServiceRecord: jasmine
             .createSpy('getServiceRecord')
             .and.returnValue(of(options.serviceRecord ?? [])),
@@ -232,31 +257,43 @@ describe('ProfileComponent as an anonymous visitor (T-0287)', () => {
 
     it('renders the public body — name, rank and handle', () => {
         const { el } = setup();
-        expect(el.querySelector('.profile-name')!.textContent!.trim()).toBe('Jameson Nolt');
-        expect(el.querySelector('.profile-rank')!.textContent!.trim()).toBe('Sergeant');
-        expect(el.querySelector('.profile-handle')!.textContent!.trim()).toBe('@panda');
+        expect(el.querySelector('.dossier-name')!.textContent!.trim()).toBe('Jameson Nolt');
+        expect(el.querySelector('.dossier-rank-name')!.textContent!.trim()).toBe('Sergeant');
+        expect(el.querySelector('.dossier-handle')!.textContent!.trim()).toBe('@panda');
     });
 
-    it('shows no Last Access row and no Discord tag', () => {
-        const { el } = setup();
+    it('shows no Last Access row and no Discord tag anywhere on the page', () => {
+        const { component, el } = setup();
         expect(labels(el).some((l) => l.startsWith('Last Access'))).toBeFalse();
-        expect(el.querySelector('.profile-discord')).toBeNull();
+        expect(labels(el).some((l) => l.startsWith('Discord'))).toBeFalse();
+        // The chip row is fed from the same enriched projection, so a guest is
+        // not merely not-shown the tag — there is no tag to show.
+        expect(component.discordTag).toBeNull();
     });
 
-    it('still renders the Event History and RSVP tabs, with a lock on them', () => {
-        // Hiding them outright would show a crawler a different set of controls
-        // than a member sees. A visibly locked tab says the same thing to both.
+    it('says WHICH particulars are behind the sign-in rather than just omitting them', () => {
+        // A shorter list with nothing said about it reads as "this member has no
+        // history", which is a different and wrong claim.
         const { el } = setup();
-        const tabs = Array.from(el.querySelectorAll('.hf-tab')).map((t) => t.textContent!.trim());
-        expect(tabs.length).toBe(3);
-        expect(tabs[1]).toContain('Event History');
-        expect(tabs[2]).toContain('RSVPs');
-        expect(el.querySelectorAll('.tab-lock').length).toBe(2);
+        expect(el.querySelector('.dossier-gated')!.textContent).toContain('need a sign-in');
     });
 
-    it('shows the sign-in panel instead of event rows when a locked tab is selected', () => {
+    it('still renders the Activity segment, with a lock on it', () => {
+        // Hiding it outright would show a crawler a different set of controls
+        // than a member sees. A visibly locked segment says the same to both.
+        const { el } = setup();
+        const tabs = Array.from(el.querySelectorAll('.profile-segment')).map((t) =>
+            t.textContent!.trim(),
+        );
+        expect(tabs.length).toBe(2);
+        expect(tabs[0]).toContain('Gallery');
+        expect(tabs[1]).toContain('Activity');
+        expect(el.querySelectorAll('.tab-lock').length).toBe(1);
+    });
+
+    it('shows the sign-in panel instead of event rows when Activity is selected', () => {
         const { component, fixture, el } = setup({ events: [attendedEvent()] });
-        component.setTab('events');
+        component.setTab('activity');
         fixture.detectChanges();
         expect(el.querySelector('.profile-locked')).not.toBeNull();
         expect(el.querySelector('.event-history-row')).toBeNull();
@@ -267,7 +304,36 @@ describe('ProfileComponent as an anonymous visitor (T-0287)', () => {
         const { component, el } = setup();
         expect(component.canViewPrivate).toBeFalse();
         expect(component.canAdminAct).toBeFalse();
-        expect(el.querySelector('.profile-service-record')).toBeNull();
+        // Not locked — absent. There is nothing behind a sign-in to promise a
+        // stranger here, so offering a padlock would be a lie.
+        expect(component.visibleTabs).not.toContain('record');
+        expect(el.querySelector('.timeline')).toBeNull();
+    });
+
+    it("publishes the bio and the linked accounts — they are the member's own", () => {
+        const { component, el } = setup({
+            member: publicMember({
+                bio: 'Runs the Tuesday drill.',
+                socialLinks: [socialLink()],
+            }),
+        });
+        expect(el.querySelector('.dossier-bio')!.textContent!.trim()).toBe(
+            'Runs the Tuesday drill.',
+        );
+        expect(component.socialLinks.length).toBe(1);
+        expect(el.querySelector('.dossier-elsewhere')).not.toBeNull();
+    });
+
+    it('draws no bio paragraph and no Elsewhere row when there is nothing in them', () => {
+        // An empty section is a section the reader has to decide to ignore.
+        const { el } = setup();
+        expect(el.querySelector('.dossier-bio')).toBeNull();
+        expect(el.querySelector('.dossier-elsewhere')).toBeNull();
+    });
+
+    it('treats a whitespace-only bio as no bio', () => {
+        const { component } = setup({ member: publicMember({ bio: '   \n ' }) });
+        expect(component.bio).toBeNull();
     });
 
     it('declares itself to crawlers as a ProfilePage, canonical to the handle URL', () => {
@@ -335,23 +401,47 @@ describe('ProfileComponent canonical URL (T-0287)', () => {
 
 describe('ProfileComponent as a signed-in member (T-0287)', () => {
     it('enriches the page with the authenticated projection', () => {
-        const { members, el } = setup({ user: currentUser({ id: 'someone-else' }) });
+        const { component, members, el } = setup({ user: currentUser({ id: 'someone-else' }) });
         expect(members.getById).toHaveBeenCalledWith(SHORT_ID);
         expect(members.getEvents).toHaveBeenCalledWith(SHORT_ID);
         expect(members.getRsvps).toHaveBeenCalledWith(SHORT_ID);
-        expect(el.querySelector('.profile-discord')!.textContent!.trim()).toBe('nolt#0001');
+        expect(component.discordTag).toBe('nolt#0001');
+        expect(labels(el).some((l) => l.startsWith('Discord'))).toBeTrue();
         expect(labels(el).some((l) => l.startsWith('Last Access'))).toBeTrue();
+        expect(el.querySelector('.dossier-gated')).toBeNull();
     });
 
-    it('unlocks the Event History tab', () => {
+    it('unlocks Activity', () => {
         const { component, fixture, el } = setup({
             user: currentUser({ id: 'someone-else' }),
             events: [attendedEvent()],
         });
-        component.setTab('events');
+        component.setTab('activity');
         fixture.detectChanges();
         expect(el.querySelector('.profile-locked')).toBeNull();
         expect(el.querySelector('.event-title')!.textContent!.trim()).toBe('Line Battle vs 84e');
+    });
+
+    it('merges RSVPs and attendances into one list, newest first', () => {
+        const { component } = setup({
+            user: currentUser({ id: 'someone-else' }),
+            events: [attendedEvent()],
+            rsvps: [upcomingEvent()],
+        });
+        expect(component.activity.map((e) => e.id)).toEqual(['e2', 'e1']);
+        expect(component.activity.map((e) => e.status)).toEqual(['Going', 'Attended']);
+    });
+
+    it('lists an event you RSVPd to AND attended once, as attended', () => {
+        // Two rows for one battle — a promise and then the fact — reads as two
+        // battles.
+        const { component } = setup({
+            user: currentUser({ id: 'someone-else' }),
+            events: [attendedEvent()],
+            rsvps: [attendedEvent()],
+        });
+        expect(component.activity.length).toBe(1);
+        expect(component.activity[0].status).toBe('Attended');
     });
 
     it('reads its own service record without holding view_audit_log', () => {
@@ -379,16 +469,20 @@ describe('ProfileComponent as a signed-in member (T-0287)', () => {
         // A signed-in applicant holds no view_members_directory, so GET
         // /members/:id 403s. The right answer to that is the page they would
         // have seen anyway — not an error, and certainly not a blank Last Access.
-        const { el } = setup({ user: currentUser({ id: 'someone-else' }), enrichmentFails: true });
-        expect(el.querySelector('.profile-name')).not.toBeNull();
-        expect(el.querySelector('.profile-discord')).toBeNull();
+        const { component, el } = setup({
+            user: currentUser({ id: 'someone-else' }),
+            enrichmentFails: true,
+        });
+        expect(el.querySelector('.dossier-name')).not.toBeNull();
+        expect(component.discordTag).toBeNull();
+        expect(labels(el).some((l) => l.startsWith('Discord'))).toBeFalse();
         expect(labels(el).some((l) => l.startsWith('Last Access'))).toBeFalse();
     });
 
     it('offers its own profile an edit link to /account, not an inline editor', () => {
         // The editor moved to /account with the rest of a member's settings.
         const { el } = setup({ user: currentUser() });
-        const edit = el.querySelector('.profile-actions a') as HTMLAnchorElement;
+        const edit = el.querySelector('.dossier-actions a') as HTMLAnchorElement;
         expect(edit.getAttribute('routerLink')).toBe('/account');
         expect(el.querySelector('.profile-edit-modal')).toBeNull();
     });
@@ -458,10 +552,14 @@ describe('ProfileComponent service record (T-0253)', () => {
     });
 
     it('applies the type class to the tag as well as the dot', () => {
-        const { el } = setup({
+        const { component, fixture, el } = setup({
             user: currentUser(),
             serviceRecord: [entry('demotion'), entry('enlistment')],
         });
+        // The record is a SEGMENT now, not a panel stacked under whichever tab
+        // happened to be open (T-0289).
+        component.setTab('record');
+        fixture.detectChanges();
         const tags = el.querySelectorAll('.timeline-type');
         const dots = el.querySelectorAll('.timeline-dot');
         expect(tags.length).toBe(2);
@@ -500,7 +598,7 @@ describe('ProfileComponent Honours & Decorations (T-0286)', () => {
         // outright (backend PublicMemberMedalDto), so the catalogue criteria —
         // what earning it takes — is the only thing that can appear here.
         const el = withMedals([award()]);
-        const desc = el.querySelector('.medal-desc') as HTMLElement;
+        const desc = el.querySelector('.honour-desc') as HTMLElement;
         expect(desc.textContent!.trim()).toBe('Top 5% accuracy across three or more events.');
     });
 
@@ -508,8 +606,8 @@ describe('ProfileComponent Honours & Decorations (T-0286)', () => {
         // Shape, not an exact date: DatePipe renders in the VIEWER's zone, so
         // pinning "Jan 1, 2026" would fail the suite anywhere west of UTC.
         const el = withMedals([award()]);
-        expect(el.querySelector('.medal-date')!.textContent!.trim()).toMatch(
-            /^Awarded [A-Z][a-z]{2} \d{1,2}, \d{4}$/,
+        expect(el.querySelector('.honour-date')!.textContent!.trim()).toMatch(
+            /^[A-Z][a-z]{2} \d{1,2}, \d{4}$/,
         );
     });
 
@@ -518,8 +616,8 @@ describe('ProfileComponent Honours & Decorations (T-0286)', () => {
         // `.medal-desc` would leave the title floating off-centre in a two-line
         // box, which is the very thing this panel was fixed for.
         const el = withMedals([award({ description: null })]);
-        expect(el.querySelector('.medal-desc')).toBeNull();
-        expect(el.querySelector('.medal-title')!.textContent!.trim()).toBe('Marksman');
+        expect(el.querySelector('.honour-desc')).toBeNull();
+        expect(el.querySelector('.honour-title')!.textContent!.trim()).toBe('Marksman');
     });
 
     it('renders the awards in the order the API delivered them', () => {
@@ -532,28 +630,34 @@ describe('ProfileComponent Honours & Decorations (T-0286)', () => {
             award({ id: 'a2', medalId: 'md2', title: 'Alpha Star', awardedAt: '2026-01-01' }),
             award({ id: 'a3', medalId: 'md3', title: 'Mike Ribbon', awardedAt: '2026-02-01' }),
         ]);
-        const titles = Array.from(el.querySelectorAll('.medal-title')).map((t) =>
+        const titles = Array.from(el.querySelectorAll('.honour-title')).map((t) =>
             t.textContent!.trim(),
         );
         expect(titles).toEqual(['Zulu Cross', 'Alpha Star', 'Mike Ribbon']);
     });
 
-    it('centres the title block against the medal tile rather than hanging it off the top', () => {
-        // The regression this replaces: `.medal-item { align-items: flex-start }`
-        // pinned a ~30px text block to the top of a 64px ribbon, so every entry
-        // read as top-aligned. Measured, not asserted from the stylesheet text —
-        // a rule can be present and still be overridden. The description is kept
-        // to one short line so the text block stays comfortably shorter than the
-        // tile; a block as tall as the tile makes "centred" indistinguishable
-        // from "top-aligned" and the assertion vacuous.
+    it('centres the medal against the title block rather than hanging one off the top', () => {
+        // The regression this guards: `align-items: flex-start` on the row pinned
+        // the ribbon to the top of a two-line text block, so every entry read as
+        // top-aligned. Measured, not asserted from the stylesheet text — a rule
+        // can be present and still be overridden.
+        //
+        // The redesign (T-0289) flipped which side is taller: the medal is now a
+        // 30px `md` tile beside a title-and-criteria block, where it used to be a
+        // 64px `lg` tile beside two short lines. The assertion is therefore on
+        // the two mid-lines coinciding, which holds whichever is taller and is
+        // exactly what `align-items: center` buys.
         const el = withMedals([award({ description: 'Marksmanship.' })]);
-        const item = el.querySelector('.medal-item') as HTMLElement;
+        const item = el.querySelector('.honour-row') as HTMLElement;
         const tile = item.querySelector('.hf-medal') as HTMLElement;
-        const info = item.querySelector('.medal-info') as HTMLElement;
+        const info = item.querySelector('.honour-body') as HTMLElement;
 
         const tileBox = tile.getBoundingClientRect();
         const infoBox = info.getBoundingClientRect();
-        expect(tileBox.height).toBeGreaterThan(infoBox.height);
+        // Both boxes must actually have been laid out, or the mid-line test below
+        // passes vacuously on two zero-height rects stacked at the same origin.
+        expect(tileBox.height).toBeGreaterThan(0);
+        expect(infoBox.height).toBeGreaterThan(0);
 
         const tileMid = tileBox.top + tileBox.height / 2;
         const infoMid = infoBox.top + infoBox.height / 2;
