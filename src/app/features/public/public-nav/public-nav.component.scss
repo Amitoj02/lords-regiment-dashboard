@@ -70,6 +70,146 @@
     }
 }
 
+/* ── Account menu (T-0289) ───────────────────────────────────────────────── */
+
+.account-menu-wrap {
+    position: relative;
+}
+
+.account-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 3px 8px 3px 3px;
+    border-radius: 999px;
+    background: var(--ink-800);
+    border: 1px solid var(--rule-2);
+    color: var(--t-200);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition:
+        background 0.12s,
+        border-color 0.12s;
+
+    &:hover,
+    &--open {
+        background: var(--ink-700);
+        border-color: var(--rule-3);
+    }
+
+    &:focus-visible {
+        outline: 1.5px solid var(--brass-400);
+        outline-offset: 1px;
+    }
+}
+
+.account-trigger-name {
+    max-width: 12ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-trigger-chevron {
+    width: 13px;
+    height: 13px;
+    flex: none;
+    color: var(--t-400);
+    transition: transform 0.15s;
+}
+
+.account-trigger--open .account-trigger-chevron {
+    transform: rotate(180deg);
+}
+
+.account-menu {
+    display: none;
+    position: absolute;
+    top: 44px;
+    right: 0;
+    width: 216px;
+    padding: 6px;
+    z-index: 60;
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.9);
+}
+
+.account-menu--open {
+    display: block;
+}
+
+.account-menu-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 10px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 6px;
+}
+
+.account-menu-id {
+    min-width: 0;
+}
+
+.account-menu-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--t-100);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-menu-handle {
+    font-size: 11px;
+    color: var(--t-400);
+}
+
+.account-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: var(--r-2);
+    background: none;
+    color: var(--t-200);
+    font-family: var(--sans);
+    font-size: 13px;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--ink-700);
+        color: var(--t-100);
+    }
+
+    &:focus-visible {
+        outline: 1.5px solid var(--brass-400);
+        outline-offset: -1px;
+    }
+}
+
+// Sign out is the one entry here that cannot be undone by clicking again, so it
+// carries the palette's warning colour rather than sitting as a peer of "My
+// profile". --oxblood-300 is 4.93:1 on the panel; --oxblood-400 would fail AA.
+.account-menu-item--danger {
+    color: var(--oxblood-300);
+
+    &:hover {
+        background: rgba(110, 42, 35, 0.22);
+        color: var(--oxblood-300);
+    }
+}
+
+.account-menu-rule {
+    height: 1px;
+    background: var(--rule);
+    margin: 6px 4px;
+}
+
 // Hamburger hidden on desktop
 .public-nav-burger {
     display: none;
@@ -141,6 +281,38 @@
             width: 100%;
             justify-content: center;
         }
+    }
+
+    // ── The drawer is already a vertical list ────────────────────────────────
+    // A dropdown inside a dropdown is a menu the reader has to open twice, and
+    // on a phone the second one would open off the bottom of the panel. So the
+    // trigger goes away and the panel becomes a plain section of the drawer:
+    // same markup, same items, no floating layer, no click-outside to guess at.
+    .account-menu-wrap {
+        position: static;
+    }
+
+    .account-trigger {
+        display: none;
+    }
+
+    .account-menu {
+        display: block;
+        position: static;
+        width: auto;
+        padding: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .account-menu-head {
+        padding: 4px 2px 10px;
+    }
+
+    .account-menu-item {
+        padding: 11px 10px;
+        font-size: 15px;
     }
 }
 

@@ -117,6 +117,67 @@
         </div>
     </section>
 
+    <!-- ── About you (T-0289) ──────────────────────────────────────────────── -->
+    <section class="panel account-panel">
+        <div class="panel-header">
+            <span class="panel-title">About you</span>
+        </div>
+        <div class="panel-body account-body">
+            <div class="account-field">
+                <label class="field-label" for="acct-bio">Bio</label>
+                <textarea
+                    id="acct-bio"
+                    class="hf-textarea"
+                    rows="4"
+                    [maxlength]="bioMaxLength"
+                    [(ngModel)]="bio"
+                    placeholder="A couple of lines about you — what you run, when you play, how to find you."
+                ></textarea>
+                <div class="field-hint">
+                    {{ bio.length }} / {{ bioMaxLength }} · Shown on your public profile. Optional —
+                    leave it blank and the section disappears.
+                </div>
+            </div>
+
+            <div class="account-field">
+                <span class="field-label">Linked accounts</span>
+                <div class="field-hint account-socials-hint">
+                    Your handle, not a link — we build the address. Pasting a profile URL works too;
+                    we will take the handle out of it. Blank rows are ignored.
+                </div>
+                <div class="account-socials">
+                    @for (spec of socialPlatforms; track spec.platform) {
+                    <div class="account-social-row">
+                        <label class="account-social-label" [attr.for]="'acct-s-' + spec.platform">
+                            {{ spec.label }}
+                        </label>
+                        <div class="account-social-input">
+                            <span class="account-social-prefix mono">{{ spec.urlHint }}</span>
+                            <input
+                                [id]="'acct-s-' + spec.platform"
+                                type="text"
+                                class="hf-input mono"
+                                autocomplete="off"
+                                spellcheck="false"
+                                [placeholder]="spec.example"
+                                [ngModel]="socialHandles[spec.platform]"
+                                (ngModelChange)="onSocialInput(spec.platform, $event)"
+                            />
+                        </div>
+                        @if (socialError(spec.platform); as socialProblem) {
+                        <div class="field-error account-social-error">{{ socialProblem }}</div>
+                        }
+                    </div>
+                    }
+                </div>
+                <div class="field-hint">
+                    Your Discord account is linked already and is shown to signed-in members only —
+                    it is not listed here.
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ── Appearance ──────────────────────────────────────────────────────── -->
     <section class="panel account-panel">
         <div class="panel-header">

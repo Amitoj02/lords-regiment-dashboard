@@ -62,7 +62,7 @@ describe('AccountComponent (T-0287)', () => {
     let toast: { success: jasmine.Spy; error: jasmine.Spy; info: jasmine.Spy };
     let loadCurrentUser: jasmine.Spy;
 
-    function setup(me: CurrentUser = currentUser()): HTMLElement {
+    function setup(me: CurrentUser = currentUser(), row: Partial<Member> = {}): HTMLElement {
         const user = signal<CurrentUser | null>(me);
         loadCurrentUser = jasmine.createSpy('loadCurrentUser').and.returnValue(of(me));
         const auth = {
@@ -71,7 +71,7 @@ describe('AccountComponent (T-0287)', () => {
             loadCurrentUser,
         } as unknown as AuthService;
         const members = {
-            getById: () => of(member({ id: me.id, inGameName: me.inGameName })),
+            getById: () => of(member({ id: me.id, inGameName: me.inGameName, ...row })),
         } as unknown as MembersService;
         const storage = {
             getPolicy: () => of(DEFAULT_STORAGE_POLICY),
@@ -375,5 +375,238 @@ describe('AccountComponent (T-0287)', () => {
 
         expect(el.querySelector('.account-savebar')).toBeNull();
         expect(el.querySelector('#acct-username')).toBeNull();
+        // The bio and the linked accounts are inside the same @else branch. An
+        // applicant has no member row, so a form here would 403 on save.
+        expect(el.querySelector('#acct-bio')).toBeNull();
+        expect(el.querySelector('#acct-s-twitch')).toBeNull();
+    });
+
+    /**
+     * Bio and linked accounts (T-0289). Both are optional, both are PUBLIC, and
+     * both are wholesale-replaced by the save rather than patched field by
+     * field — so the interesting cases are all about "what did the PATCH body
+     * actually contain".
+     */
+    describe('bio and linked accounts', () => {
+        /** Take the one pending PATCH and return its body. */
+        function flushSave(): Record<string, unknown> {
+            const req = httpMock.expectOne(
+                (r) => r.method === 'PATCH' && r.url === '/api/members/m1',
+            );
+            const body = req.request.body as Record<string, unknown>;
+            req.flush({
+                id: 'm1',
+                inGameName: 'Jameson Nolt',
+                role: 'Member',
+                status: 'Active',
+                rank: 'Sergeant',
+                rankId: 'r1',
+                rankImageUrl: null,
+                rankPrecedence: 5,
+                discordTag: 'nolt#0001',
+                discordLinked: true,
+                publicProfile: true,
+                avatarUrl: null,
+                bannerUrl: null,
+                bio: (body['bio'] as string | null) ?? null,
+                socialLinks: [],
+                standing: null,
+                joinedAt: null,
+                lastSeenAt: null,
+                eventsAttended: 0,
+                suspendedUntil: null,
+                bannedAt: null,
+                medals: [],
+            });
+            return body;
+        }
+
+        it('seeds both from the member the API returned', () => {
+            setup(currentUser(), {
+                bio: 'Runs the Tuesday drill.',
+                socialLinks: [
+                    {
+                        platform: 'twitch',
+                        label: 'Twitch',
+                        handle: 'jamesonnolt',
+                        url: 'https://www.twitch.tv/jamesonnolt',
+                    },
+                ],
+            });
+            expect(component.bio).toBe('Runs the Tuesday drill.');
+            expect(component.socialHandles['twitch']).toBe('jamesonnolt');
+            expect(component.socialHandles['youtube']).toBe('');
+            // Seeded, not edited — the savebar must not be lit on arrival.
+            expect(component.dirty).toBeFalse();
+        });
+
+        it('sends the bio only when it changed, and null to clear it', () => {
+            setup(currentUser(), { bio: 'Old.' });
+            component.bio = '';
+            component.save();
+            expect(flushSave()['bio']).toBeNull();
+        });
+
+        it('leaves the bio out of the body entirely when it was not touched', () => {
+            // A PATCH that resends an unchanged field is a PATCH that can lose a
+            // concurrent edit for no reason.
+            setup(currentUser(), { bio: 'Unchanged.' });
+            component.inGameName = 'Someone Else';
+            component.save();
+            expect('bio' in flushSave()).toBeFalse();
+        });
+
+        it('trims the bio before sending it', () => {
+            setup(currentUser());
+            component.bio = '   Runs the drill.  ';
+            component.save();
+            expect(flushSave()['bio']).toBe('Runs the drill.');
+        });
+
+        it('treats a whitespace-only bio as a clear, not as content', () => {
+            setup(currentUser(), { bio: 'Old.' });
+            component.bio = '    ';
+            component.save();
+            expect(flushSave()['bio']).toBeNull();
+        });
+
+        it('sends the WHOLE link set whenever any of it changed', () => {
+            // The server replaces wholesale, so a partial payload deletes the
+            // links it omits — dropping one link means resending the rest.
+            setup(currentUser(), {
+                socialLinks: [
+                    {
+                        platform: 'twitch',
+                        label: 'Twitch',
+                        handle: 'nolt',
+                        url: 'https://www.twitch.tv/nolt',
+                    },
+                    {
+                        platform: 'medal',
+                        label: 'Medal.tv',
+                        handle: 'panda',
+                        url: 'https://medal.tv/u/panda',
+                    },
+                ],
+            });
+            component.onSocialInput('medal', '');
+            component.save();
+            expect(flushSave()['socialLinks']).toEqual([{ platform: 'twitch', handle: 'nolt' }]);
+        });
+
+        it('sends an empty array when every link is cleared', () => {
+            setup(currentUser(), {
+                socialLinks: [
+                    {
+                        platform: 'twitch',
+                        label: 'Twitch',
+                        handle: 'nolt',
+                        url: 'https://www.twitch.tv/nolt',
+                    },
+                ],
+            });
+            component.onSocialInput('twitch', '');
+            component.save();
+            expect(flushSave()['socialLinks']).toEqual([]);
+        });
+
+        it('sends handles in the registry order, not the order they were typed', () => {
+            setup(currentUser());
+            component.onSocialInput('medal', 'panda');
+            component.onSocialInput('twitch', 'nolt');
+            component.save();
+            expect(flushSave()['socialLinks']).toEqual([
+                { platform: 'twitch', handle: 'nolt' },
+                { platform: 'medal', handle: 'panda' },
+            ]);
+        });
+
+        it('normalises a typed handle on the way in', () => {
+            setup(currentUser());
+            component.onSocialInput('twitch', ' @jamesonnolt/ ');
+            expect(component.socialHandles['twitch']).toBe('jamesonnolt');
+        });
+
+        it('takes the handle out of a pasted profile URL', () => {
+            // "Paste your channel link" is what people actually do, and refusing
+            // it with "letters and numbers only" is correct and useless.
+            setup(currentUser());
+            component.onSocialInput('twitch', 'https://www.twitch.tv/jamesonnolt');
+            expect(component.socialHandles['twitch']).toBe('jamesonnolt');
+
+            component.onSocialInput('youtube', 'https://youtube.com/@NoltPlays');
+            expect(component.socialHandles['youtube']).toBe('NoltPlays');
+
+            component.onSocialInput('steam', 'https://steamcommunity.com/id/jamesonnolt');
+            expect(component.socialHandles['steam']).toBe('jamesonnolt');
+
+            component.onSocialInput('medal', 'medal.tv/u/panda');
+            expect(component.socialHandles['medal']).toBe('panda');
+
+            component.onSocialInput('tiktok', 'https://www.tiktok.com/@noltplays?lang=en');
+            expect(component.socialHandles['tiktok']).toBe('noltplays');
+        });
+
+        it('does not mistake a dotted handle for a URL', () => {
+            setup(currentUser());
+            component.onSocialInput('instagram', 'jameson.nolt');
+            expect(component.socialHandles['instagram']).toBe('jameson.nolt');
+        });
+
+        it('blocks the save on a handle the platform would refuse', () => {
+            setup(currentUser());
+            component.onSocialInput('twitch', 'ab'); // Twitch needs 4+
+            expect(component.socialError('twitch')).not.toBeNull();
+            expect(component.socialsBlocked).toBeTrue();
+            expect(component.canSave).toBeFalse();
+        });
+
+        it('says nothing about an empty row — blank means "not linked"', () => {
+            setup(currentUser());
+            expect(component.socialError('twitch')).toBeNull();
+            expect(component.socialsBlocked).toBeFalse();
+        });
+
+        it('puts both back on Discard', () => {
+            setup(currentUser(), { bio: 'Original.' });
+            component.bio = 'Edited.';
+            component.onSocialInput('twitch', 'nolt');
+            expect(component.dirty).toBeTrue();
+
+            component.revert();
+            expect(component.bio).toBe('Original.');
+            expect(component.socialHandles['twitch']).toBe('');
+            expect(component.dirty).toBeFalse();
+        });
+
+        it('re-seeds from the response so the savebar goes quiet after a save', () => {
+            setup(currentUser());
+            component.bio = 'New bio.';
+            expect(component.dirty).toBeTrue();
+            component.save();
+            flushSave();
+            expect(component.dirty).toBeFalse();
+        });
+
+        it('renders a field for every platform, and none for Discord', () => {
+            // Discord is linked through OAuth and is signed-in-only; a handle box
+            // for it would imply both that it is editable and that it is public.
+            const el = setup();
+            expect(el.querySelector('#acct-s-twitch')).not.toBeNull();
+            expect(el.querySelector('#acct-s-youtube')).not.toBeNull();
+            expect(el.querySelector('#acct-s-instagram')).not.toBeNull();
+            expect(el.querySelector('#acct-s-tiktok')).not.toBeNull();
+            expect(el.querySelector('#acct-s-x')).not.toBeNull();
+            expect(el.querySelector('#acct-s-steam')).not.toBeNull();
+            expect(el.querySelector('#acct-s-medal')).not.toBeNull();
+            expect(el.querySelector('#acct-s-discord')).toBeNull();
+        });
+
+        it('caps the bio box at the length the server enforces', () => {
+            const el = setup();
+            const box = el.querySelector('#acct-bio') as HTMLTextAreaElement;
+            expect(box.getAttribute('maxlength')).toBe(String(component.bioMaxLength));
+            expect(component.bioMaxLength).toBe(280);
+        });
     });
 });

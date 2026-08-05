@@ -2,9 +2,9 @@
   "version": 1,
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "3b7d056bc0123328d99a5e0542a5c42829ea65ed",
-  "lastSyncedAt": "2026-08-04T23:55:00Z",
-  "notesForNextSession": "T-0288 (design-sync) is deployed: the design-reference React kit is live in the claude.ai/design project \"Lords Regiment\" (cedcda48-26c7-4a4c-ba22-cabd49522908). Re-sync is one command \u2014 see .design-sync/NOTES.md, which carries the non-obvious pins (React 18.3.1 for the UMD vendor path, playwright 1.61.0 to match the cached chromium 1228, --node-modules must be ./.ds-sync/node_modules, srcDir must stay design-reference or the converter scans the Angular app). Read its \"Re-sync risks\" section before touching design-reference/components.jsx: the prop contracts there are hand-written and cannot rot loudly.\n\nT-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. All four viewer states (guest, ordinary member, staff, identity-only applicant) have now been walked in a browser, and profile / event detail / account / events / gallery were checked at 390px with no horizontal scroll on any. What is NOT done is listed in skippedByClaude \u2014 the biggest is that a member still cannot see their own PENDING gallery submission anywhere. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
-  "nextIdCounter": 289,
+  "lastSyncedAt": "2026-08-05T04:10:00Z",
+  "notesForNextSession": "T-0289..T-0292 (public member profile redesign + bio + linked accounts + topbar collapse) are in REVIEW on branch feat/member-bio-and-socials, coupled to backend T-0216 on the same branch name. MERGE THE BACKEND FIRST: the profile reads member.bio and member.socialLinks, and the frontend treats both as absent-means-empty so a wrong deploy order is cosmetic rather than an outage.\n\nNon-obvious decisions worth not relitigating. (1) Linked accounts are stored as HANDLES and the server builds the URL - a free-text URL field on a crawlable, unmoderated profile is an open redirect with a person's name on it. The client regexes in src/app/core/models/social-link.model.ts MIRROR the server's in src/members/social-platforms.ts; changing one without the other tells a member \"that looks fine\" and then 400s them. (2) Discord is not one of the seven platforms: it lives on the signed-in projection and is rendered as a separate chip bound from `enriched`, which is what keeps it gated - the guest does not get a hidden field, they get no field. (3) Guest gating is exactly the three the user named (Discord tag, last access, RSVPs); joined date and events attended stay public because the SEO meta description is built from them on BOTH the SPA and the crawler shell, and the two must agree byte for byte or dynamic rendering reads as cloaking. (4) The old Event History and RSVP tabs are now one Activity list deduplicated by event id with the attendance winning. (5) The mobile profile leans on `display: contents` over .profile-rail/.profile-main/.dossier so Honours can sit between the identity block and Particulars; those three wrappers are plain divs on purpose, because an element that stops generating a box must not have been carrying an ARIA role.\n\nVerification state: 793 unit tests green, ng lint + the contrast guard + prettier all clean, production build compiles. Host node is v22.22.2 and the Angular CLI needs >=22.22.3, so everything ran in the ng-karma:node22 container: docker run --rm --security-opt seccomp=unconfined --cap-add=SYS_ADMIN -u $(id -u):$(id -g) -v $PWD:/app -w /app -e HOME=/tmp -e CHROME_BIN=/usr/bin/chromium ng-karma:node22 npx ng test --watch=false --browsers=ChromeHeadless. The seccomp/cap flags are what let Chrome's sandbox start; without them karma cannot launch a browser at all. NOT yet done: the BROWSER passes in every testPlan above - the page has not been walked against a live API at desktop or 390px.\n\nStill true from T-0287: PublicLayoutComponent must stay ChangeDetectionStrategy.Eager, and a member still cannot see their own PENDING gallery submission anywhere.",
+  "nextIdCounter": 293,
   "connections": [],
   "tasks": [
     {
@@ -19072,6 +19072,339 @@
           "to": "deployed",
           "by": "claude",
           "note": "17 components uploaded to claude.ai/design project cedcda48-26c7-4a4c-ba22-cabd49522908; validate exits 0, all previews graded good"
+        }
+      ]
+    },
+    {
+      "id": "T-0289",
+      "title": "Rebuild the public member profile around a dossier rail",
+      "summary": "Replaced the profile page layout with the Claude Design \"Member Profile - Final\" shape: a sticky 340px dossier rail (avatar over the banner, name, role badge, rank plaque, bio, actions, Elsewhere chips, particulars) beside a content column carrying Honours and a three-way segmented control. Merged the old Event History and RSVP tabs into one Activity list deduplicated by event id, and moved the Service Record from a stacked panel into a segment. At <=820px the rail comes apart via display:contents so Honours can sit between the identity block and Particulars, matching the mobile frame.",
+      "status": "review",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "public",
+      "feature": "public-site",
+      "subfeature": "roster-and-profiles",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/profile/profile.component.ts",
+        "src/app/features/public/profile/profile.component.html",
+        "src/app/features/public/profile/profile.component.scss",
+        "src/app/features/public/profile/profile.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0216"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "profile: guest sees no Discord tag, no Last Access, no RSVPs; the gated note says which",
+          "status": "passed"
+        },
+        {
+          "desc": "profile: Activity merges RSVPs and attendances, newest first, one row per event",
+          "status": "passed"
+        },
+        {
+          "desc": "profile: Service Record is a segment, offered only when canViewPrivate",
+          "status": "passed"
+        },
+        {
+          "desc": "profile: honours row centres the medal against the title block",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: desktop profile as guest, member, own profile and staff",
+          "status": "pending"
+        },
+        {
+          "desc": "BROWSER: 390px profile - rail comes apart, no horizontal scroll, segments fit",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "profile.component.scss drops .hf-tab/.hf-tabs in favour of a local .profile-segment control. Nothing else consumed the profile-scoped .hf-tab--active override, but the global .hf-tabs is still used by other pages and was not touched.",
+          "status": "open",
+          "notedAt": "2026-08-05T04:10:00Z"
+        },
+        {
+          "desc": "The mobile layout leans on `display: contents` for .profile-rail/.profile-main/.dossier. Those wrappers are deliberately plain divs with no ARIA role; adding a role or a landmark element to them later would be silently dropped at <=820px.",
+          "status": "open",
+          "notedAt": "2026-08-05T04:10:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not add the mock's \"Viewing as\" persona switcher - it is a design-canvas affordance, not a product feature.",
+        "Did not narrow the anonymous projection further (joined date and events attended stay public); the SEO meta description is built from them on both the SPA and the crawler shell."
+      ],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-08-05T04:10:00Z",
+      "history": [
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "planned",
+          "to": "in_progress",
+          "by": "claude",
+          "note": "implemented on feat/member-bio-and-socials"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "in_progress",
+          "to": "review",
+          "by": "claude",
+          "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean"
+        }
+      ]
+    },
+    {
+      "id": "T-0290",
+      "title": "Optional member bio, published on the public profile",
+      "summary": "Added an optional free-text bio (280 chars, trimmed server-side, whitespace-only stored as null) to the member model, the wire shape and the account editor, and rendered it in the dossier rail. It is PUBLIC by decision: member-authored, self-published and blank by default. Editing is reachable only from /account, which already refuses identity-only sessions, so an applicant cannot write one until their application is approved and a members row exists.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "bio",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/member.model.ts",
+        "src/app/core/models/public-member.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/members.service.ts",
+        "src/app/features/public/account/account.component.ts",
+        "src/app/features/public/account/account.component.html",
+        "src/app/features/public/account/account.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0216"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "account: bio is sent only when changed, null clears it, whitespace-only is a clear",
+          "status": "passed"
+        },
+        {
+          "desc": "account: Discard restores the bio and the savebar goes quiet after a save",
+          "status": "passed"
+        },
+        {
+          "desc": "profile: a whitespace-only bio renders no paragraph",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: write, edit and clear a bio end to end against the API",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-08-05T04:10:00Z",
+      "history": [
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "planned",
+          "to": "in_progress",
+          "by": "claude",
+          "note": "implemented on feat/member-bio-and-socials"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "in_progress",
+          "to": "review",
+          "by": "claude",
+          "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean"
+        }
+      ]
+    },
+    {
+      "id": "T-0291",
+      "title": "Linked accounts as handles, never URLs",
+      "summary": "Added seven optional linked accounts (Twitch, YouTube, Instagram, TikTok, X, Steam, Medal.tv) stored as bare HANDLES. The server owns the URL template, so nothing a member types can publish an arbitrary outbound link on a crawlable page. Shipped a shared registry (src/app/core/models/social-link.model.ts) mirroring the server's per-platform regexes, a new hf-social-links chip row with the brand marks, and an account editor that normalises input and takes the handle out of a pasted profile URL. Discord is deliberately NOT in the set: it stays on the signed-in projection and renders as a separate, gated chip.",
+      "status": "review",
+      "type": "feature",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "member",
+      "feature": "profile",
+      "subfeature": "linked-accounts",
+      "repo": "",
+      "paths": [
+        "src/app/core/models/social-link.model.ts",
+        "src/app/core/models/social-link.model.spec.ts",
+        "src/app/shared/components/social-links/",
+        "src/app/shared/shared.module.ts",
+        "src/app/features/public/account/account.component.ts",
+        "src/app/features/public/profile/profile.component.html"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0216"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "registry: every platform accepts its own placeholder example",
+          "status": "passed"
+        },
+        {
+          "desc": "registry: slash, scheme, whitespace and %2F are refused for every platform",
+          "status": "passed"
+        },
+        {
+          "desc": "chips: outbound links carry target=_blank and rel=\"noopener noreferrer nofollow ugc\"",
+          "status": "passed"
+        },
+        {
+          "desc": "chips: the Discord chip is a span, and absent when no tag was passed",
+          "status": "passed"
+        },
+        {
+          "desc": "account: a pasted profile URL is reduced to its handle for all seven shapes",
+          "status": "passed"
+        },
+        {
+          "desc": "account: links are sent wholesale, in registry order, [] when all cleared",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: add, edit and remove links; confirm a guest sees them and no Discord chip",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The client regexes in social-link.model.ts are a MIRROR of the server's in src/members/social-platforms.ts (backend T-0216). They exist to give a member an error before Save; if one side changes the other must follow or a member is told \"that looks fine\" and then gets a 400.",
+          "status": "open",
+          "notedAt": "2026-08-05T04:10:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-08-05T04:10:00Z",
+      "history": [
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "planned",
+          "to": "in_progress",
+          "by": "claude",
+          "note": "implemented on feat/member-bio-and-socials"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "in_progress",
+          "to": "review",
+          "by": "claude",
+          "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean"
+        }
+      ]
+    },
+    {
+      "id": "T-0292",
+      "title": "Collapse the signed-in topbar into Dashboard plus an account menu",
+      "summary": "The public topbar gave a signed-in admin four peer buttons - Dashboard, My profile, Account, Sign out - of which two were the same destination under different names and one was destructive and one slip from Roster. Dashboard keeps its button because it is a different product; My profile, Edit profile (formerly \"Account\") and Sign out moved behind the member's own avatar. Dismisses on outside click and Escape. At <=820px the trigger is dropped and the panel becomes a plain section of the existing burger drawer rather than a dropdown inside a dropdown.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "public",
+      "feature": "nav",
+      "subfeature": "account-menu",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/public-nav/public-nav.component.ts",
+        "src/app/features/public/public-nav/public-nav.component.html",
+        "src/app/features/public/public-nav/public-nav.component.scss",
+        "src/app/features/public/public-nav/public-nav.component.spec.ts"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "nav: staff get exactly one topbar button (Dashboard) plus the account trigger",
+          "status": "passed"
+        },
+        {
+          "desc": "nav: menu holds My profile, Edit profile, Sign out - and only Sign out for an applicant",
+          "status": "passed"
+        },
+        {
+          "desc": "nav: opens on the trigger, closes on outside click and Escape, stays open on an inside click",
+          "status": "passed"
+        },
+        {
+          "desc": "nav: everything actionable stays inside .public-nav-links so nothing is stranded behind the burger",
+          "status": "passed"
+        },
+        {
+          "desc": "BROWSER: 390px drawer with the account section inline, as guest / applicant / member / staff",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "The account menu panel is always in the DOM and shown/hidden with CSS so the <=820px rule can force it open inside the drawer. On desktop it is display:none, which does keep it out of the accessibility tree - but any future change to that rule would expose a closed menu to screen readers.",
+          "status": "open",
+          "notedAt": "2026-08-05T04:10:00Z"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-08-05T04:10:00Z",
+      "history": [
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "planned",
+          "to": "in_progress",
+          "by": "claude",
+          "note": "implemented on feat/member-bio-and-socials"
+        },
+        {
+          "at": "2026-08-05T04:10:00Z",
+          "from": "in_progress",
+          "to": "review",
+          "by": "claude",
+          "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean"
         }
       ]
     }

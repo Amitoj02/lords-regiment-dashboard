@@ -1,4 +1,12 @@
-import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    OnInit,
+    inject,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -44,6 +52,29 @@ export class PublicNavComponent implements OnInit {
     menuOpen = false;
 
     /**
+     * The account dropdown (T-0289).
+     *
+     * ── WHY THE TOPBAR LOST THREE BUTTONS ───────────────────────────────────
+     * A signed-in admin used to get Dashboard, My profile, Account and Sign out
+     * side by side — four peers, of which two were the same thing under
+     * different names ("Account" was Edit profile) and one was destructive.
+     * Four equal-weight buttons is not a menu, it is a row of buttons the reader
+     * has to rank themselves.
+     *
+     * Now: Dashboard keeps its button because it is a different product, and
+     * everything that acts on YOUR account moves behind your own face — which is
+     * both the smallest possible target and the clearest possible label for
+     * "these act on you". Sign out in particular stops sitting one slip of the
+     * mouse away from Roster.
+     *
+     * At ≤820px the panel is not a dropdown at all: the burger drawer is already
+     * a vertical list, so CSS drops the trigger and shows these items inline.
+     */
+    accountMenuOpen = false;
+
+    private readonly host = inject(ElementRef<HTMLElement>);
+
+    /**
      * True on the pages that ARE the sign-in flow (T-0287).
      *
      * Offering "Sign in" in the topbar of the sign-in page is the kind of dead
@@ -86,12 +117,54 @@ export class PublicNavComponent implements OnInit {
             });
     }
 
+    /** The name on the account trigger — one word, because the pill is small. */
+    get accountFirstName(): string {
+        const name = this.auth.currentUser()?.inGameName?.trim() ?? '';
+        return name.split(/\s+/)[0] || 'Account';
+    }
+
+    /** `@handle` for the menu header, or null when none is claimed. */
+    get accountHandle(): string | null {
+        const username = this.auth.currentUser()?.username;
+        return username ? `@${username}` : null;
+    }
+
     toggleMenu(): void {
         this.menuOpen = !this.menuOpen;
+        if (!this.menuOpen) {
+            this.accountMenuOpen = false;
+        }
     }
 
     closeMenu(): void {
         this.menuOpen = false;
+        this.accountMenuOpen = false;
+    }
+
+    toggleAccountMenu(): void {
+        this.accountMenuOpen = !this.accountMenuOpen;
+    }
+
+    /**
+     * A click anywhere else dismisses the dropdown. Bound on the document
+     * rather than a backdrop element: a backdrop that covers the page to catch
+     * one click also swallows the click the reader meant for whatever is under
+     * it, so dismissing a menu costs them two clicks instead of one.
+     */
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        if (!this.accountMenuOpen) {
+            return;
+        }
+        const target = event.target as Node | null;
+        if (target && !(this.host.nativeElement as HTMLElement).contains(target)) {
+            this.accountMenuOpen = false;
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscape(): void {
+        this.accountMenuOpen = false;
     }
 
     /** Drop the session (AuthService clears state + redirects to /login). */

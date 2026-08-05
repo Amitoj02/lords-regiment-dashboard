@@ -11,6 +11,7 @@ import {
     ApplicationStatus,
 } from './application.model';
 import { AuditLog, AuditSeverity, DiscordSyncStatus } from './audit-log.model';
+import { MemberSocialLink } from './social-link.model';
 import { instantToWallClock, viewerZoneLabel } from './event-time';
 import { EventStatus, RegimentEvent, RsvpStatus } from './event.model';
 import { GalleryItem, GalleryItemStatus, GalleryItemType } from './gallery.model';
@@ -66,6 +67,13 @@ export interface ApiMember {
     publicProfile: boolean;
     avatarUrl: string | null;
     bannerUrl: string | null;
+    bio: string | null;
+    /**
+     * Declared optional so a deploy that lands the SPA before the API — the
+     * order CONTRIBUTING warns about — degrades to "no links" rather than
+     * throwing on `.map` of undefined. {@link mapMember} normalises it.
+     */
+    socialLinks?: MemberSocialLink[];
     standing: string | null;
     joinedAt: string | null;
     lastSeenAt: string | null;
@@ -353,6 +361,8 @@ export function mapMember(m: ApiMember): Member {
         bannedAt: m.bannedAt,
         avatarUrl: m.avatarUrl,
         bannerUrl: m.bannerUrl,
+        bio: m.bio ?? null,
+        socialLinks: m.socialLinks ?? [],
         ...(permittedActions ? { permittedActions } : {}),
     };
 }

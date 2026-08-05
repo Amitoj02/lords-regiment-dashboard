@@ -13,107 +13,109 @@
         [style.background-image]="member.bannerUrl ? 'url(' + member.bannerUrl + ')' : null"
     >
         <div class="profile-banner-overlay"></div>
+        <div class="profile-banner-edge" aria-hidden="true"></div>
     </div>
-    <!-- Profile Header -->
-    <header class="profile-header">
-        <div class="profile-avatar-wrap">
-            <hf-avatar
-                [name]="member.inGameName"
-                [avatarUrl]="member.avatarUrl"
-                [size]="124"
-                [clickable]="canOpenViewer"
-                (avatarClick)="openViewer()"
-                class="profile-avatar"
-            ></hf-avatar>
-        </div>
-        <div class="profile-header-info">
-            <div class="row profile-name-row">
-                <h1 class="serif profile-name">{{ member.inGameName }}</h1>
-                <span class="badge" [ngClass]="getRoleClass(member.role)">{{ member.role }}</span>
-            </div>
-            @if (member.rank) {
-            <div class="row profile-rank-row">
-                <hf-rank-icon
-                    [imageUrl]="member.rankImageUrl"
-                    [name]="member.rank"
-                    [size]="24"
-                ></hf-rank-icon>
-                <span class="profile-rank">{{ member.rank }}</span>
-            </div>
-            } @if (handleLabel) {
-            <div class="mono profile-handle">{{ handleLabel }}</div>
-            }
-            <!-- The Discord tag resolves a member to a DM-able account, so it is
-                 signed-in only — it is absent from the public projection, not
-                 hidden by this template. -->
-            @if (enriched?.discordTag; as discordTag) {
-            <div class="mono profile-discord">{{ discordTag }}</div>
-            }
-        </div>
-        <div class="profile-actions row">
-            <!-- Same gate as the roster row's `···` — see canAdminAct (T-0266). -->
-            @if (canAdminAct) {
-            <button type="button" class="btn btn-secondary btn-sm" (click)="openAdminActions()">
-                Admin Actions ▾
-            </button>
-            } @if (isOwnProfile) {
-            <!-- Editing moved to /account with the rest of a member's own
-                 settings (T-0287); this page is what everyone else reads. -->
-            <a routerLink="/account" class="btn btn-primary btn-sm">Edit My Profile</a>
-            }
-        </div>
-    </header>
-    <!-- Main content layout -->
-    <div class="profile-grid">
-        <!-- Left panel -->
-        <aside class="profile-left">
-            <!-- Honours -->
-            <div class="panel profile-panel-mb">
-                <div class="panel-header">
-                    <span class="panel-title serif">Honours &amp; Decorations</span>
-                </div>
-                <div class="panel-body">
-                    @if (member.medals.length > 0) {
-                    <div class="medals-grid">
-                        @for (award of member.medals; track award.id) {
-                        <div class="medal-item">
-                            <hf-medal
-                                size="lg"
-                                [imageUrl]="award.imageUrl"
-                                [letter]="award.glyph"
-                                [title]="award.title"
-                            ></hf-medal>
-                            <!--
-                                The catalogue description, not this award's
-                                citation: a viewer reading someone else's
-                                honours wants to know what the medal TAKES,
-                                not the one-line reason it was handed over.
-                                The citation is not on the public projection
-                                at all.
-                            -->
-                            <div class="medal-info">
-                                <div class="medal-title">{{ award.title }}</div>
-                                @if (award.description) {
-                                <div class="medal-desc">{{ award.description }}</div>
-                                }
-                                <div class="mono medal-date">
-                                    Awarded {{ award.awardedAt | date: 'MMM d, yyyy' }}
-                                </div>
-                            </div>
+
+    <!--
+        The dossier rail and the content column. The wrappers are plain divs
+        rather than <aside>/<div> landmarks because at ≤820px they are dropped
+        to `display: contents` so the panels inside them can be interleaved into
+        one mobile column — a wrapper that vanishes must not have been carrying
+        a role.
+    -->
+    <div class="profile-layout">
+        <div class="profile-rail">
+            <div class="panel dossier">
+                <!-- Identity: avatar over the banner, name, rank, bio, actions -->
+                <div class="dossier-identity">
+                    <div class="dossier-avatar">
+                        <hf-avatar
+                            [name]="member.inGameName"
+                            [avatarUrl]="member.avatarUrl"
+                            [size]="112"
+                            [clickable]="canOpenViewer"
+                            (avatarClick)="openViewer()"
+                        ></hf-avatar>
+                    </div>
+
+                    <h1 class="serif dossier-name">{{ member.inGameName }}</h1>
+                    @if (handleLabel) {
+                    <div class="mono dossier-handle">{{ handleLabel }}</div>
+                    }
+
+                    <div class="dossier-badges">
+                        <span class="badge" [ngClass]="getRoleClass(member.role)">
+                            {{ member.role }}
+                        </span>
+                    </div>
+
+                    @if (member.rank) {
+                    <div class="dossier-rank">
+                        <div class="dossier-rank-icon">
+                            <hf-rank-icon
+                                [imageUrl]="member.rankImageUrl"
+                                [name]="member.rank"
+                                [size]="26"
+                            ></hf-rank-icon>
                         </div>
+                        <div class="dossier-rank-text">
+                            <div class="admin-label dossier-rank-label">Rank</div>
+                            <div class="serif dossier-rank-name">{{ member.rank }}</div>
+                        </div>
+                    </div>
+                    }
+
+                    <!-- Optional and member-authored; the one part of this page
+                         that is not generated from records (T-0289). -->
+                    @if (bio) {
+                    <p class="dossier-bio">{{ bio }}</p>
+                    }
+
+                    <div class="dossier-actions">
+                        <!-- Same gate as the roster row's `···` — see canAdminAct (T-0266). -->
+                        @if (canAdminAct) {
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm btn-block"
+                            (click)="openAdminActions()"
+                        >
+                            Admin actions
+                        </button>
+                        } @if (isOwnProfile) {
+                        <!-- Editing lives at /account with the rest of a member's
+                             own settings (T-0287); this page is what everyone
+                             else reads. -->
+                        <a routerLink="/account" class="btn btn-primary btn-sm btn-block">
+                            Edit profile
+                        </a>
+                        } @else if (!auth.isAuthenticated()) {
+                        <a
+                            routerLink="/login"
+                            class="btn btn-primary btn-sm btn-block"
+                            (click)="rememberReturn()"
+                        >
+                            Sign in to see more
+                        </a>
                         }
                     </div>
-                    } @else {
-                    <span class="field-hint">No decorations yet.</span>
-                    }
                 </div>
-            </div>
-            <!-- Particulars -->
-            <div class="panel profile-panel-mb">
-                <div class="panel-header">
-                    <span class="panel-title serif">Particulars</span>
+
+                <!-- Elsewhere. The Discord chip is bound from the ENRICHED
+                     member, so it is absent for a guest rather than hidden. -->
+                @if (socialLinks.length > 0 || discordTag) {
+                <div class="dossier-section dossier-elsewhere">
+                    <div class="admin-label dossier-section-label">Elsewhere</div>
+                    <hf-social-links
+                        [links]="socialLinks"
+                        [discordTag]="discordTag"
+                    ></hf-social-links>
                 </div>
-                <div class="panel-body panel-body--flush">
+                }
+
+                <div class="dossier-section dossier-particulars">
+                    <div class="panel-header dossier-particulars-header">
+                        <span class="panel-title serif">Particulars</span>
+                    </div>
                     <div class="particulars-row">
                         <span class="field-label particulars-label">In-Game Name</span>
                         <span class="mono particulars-value-mono">{{ member.inGameName }}</span>
@@ -122,6 +124,29 @@
                     <div class="particulars-row">
                         <span class="field-label particulars-label">Handle</span>
                         <span class="mono particulars-value-mono">{{ handleLabel }}</span>
+                    </div>
+                    } @if (member.rank) {
+                    <div class="particulars-row">
+                        <span class="field-label particulars-label">Rank</span>
+                        <span class="particulars-value">{{ member.rank }}</span>
+                    </div>
+                    }
+                    <div class="particulars-row">
+                        <span class="field-label particulars-label">Role</span>
+                        <span class="particulars-value">{{ member.role }}</span>
+                    </div>
+                    <!-- The Discord tag resolves a member to a DM-able account,
+                         so it is signed-in only — it is absent from the public
+                         projection, not hidden by this template. -->
+                    @if (discordTag) {
+                    <div class="particulars-row">
+                        <span class="field-label particulars-label">
+                            Discord
+                            <span class="privacy-hint" title="Visible to signed-in members only."
+                                >?</span
+                            >
+                        </span>
+                        <span class="mono particulars-value-mono">{{ discordTag }}</span>
                     </div>
                     }
                     <div class="particulars-row">
@@ -148,31 +173,11 @@
                         </span>
                     </div>
                     }
-                </div>
-            </div>
-        </aside>
-        <!-- Right panel -->
-        <div class="profile-right">
-            <!-- Tabs. The wrapper carries the mobile fade edge; it cannot live on
-                 the scroller itself, which would scroll away with the content. -->
-            <div class="profile-tabs-wrap">
-                <div class="hf-tabs profile-tabs">
-                    <button
-                        type="button"
-                        class="hf-tab"
-                        [ngClass]="{ 'hf-tab--active': activeTab === 'gallery' }"
-                        (click)="setTab('gallery')"
-                    >
-                        Gallery
-                    </button>
-                    <button
-                        type="button"
-                        class="hf-tab"
-                        [ngClass]="{ 'hf-tab--active': activeTab === 'events' }"
-                        (click)="setTab('events')"
-                    >
-                        Event History @if (tabLocked('events')) {
-                        <svg class="tab-lock" viewBox="0 0 12 12" aria-hidden="true">
+                    <!-- Say what is missing rather than leaving a shorter list
+                         that reads as "this member has no history". -->
+                    @if (!enriched) {
+                    <div class="dossier-gated">
+                        <svg class="dossier-gated-lock" viewBox="0 0 12 12" aria-hidden="true">
                             <path
                                 d="M3.6 5.2V3.6a2.4 2.4 0 0 1 4.8 0v1.6"
                                 fill="none"
@@ -188,53 +193,116 @@
                                 fill="currentColor"
                             />
                         </svg>
-                        <span class="visually-hidden">(sign in required)</span>
-                        }
-                    </button>
-                    <button
-                        type="button"
-                        class="hf-tab"
-                        [ngClass]="{ 'hf-tab--active': activeTab === 'rsvps' }"
-                        (click)="setTab('rsvps')"
-                    >
-                        RSVPs @if (tabLocked('rsvps')) {
-                        <svg class="tab-lock" viewBox="0 0 12 12" aria-hidden="true">
-                            <path
-                                d="M3.6 5.2V3.6a2.4 2.4 0 0 1 4.8 0v1.6"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.2"
-                            />
-                            <rect
-                                x="2.4"
-                                y="5.2"
-                                width="7.2"
-                                height="5.2"
-                                rx="1.2"
-                                fill="currentColor"
-                            />
-                        </svg>
-                        <span class="visually-hidden">(sign in required)</span>
-                        }
-                    </button>
+                        <span>Discord and last access need a sign-in.</span>
+                    </div>
+                    }
                 </div>
             </div>
-            @if (tabLocked(activeTab)) {
-            <!-- Locked, not hidden: the reader is told what is behind it. -->
-            <div class="panel profile-locked">
-                <div class="panel-body profile-locked-body">
-                    <div class="profile-locked-title">Sign in to see this</div>
-                    <p class="profile-locked-text">
-                        Attendance and RSVPs are shown to signed-in members of the regiment.
-                    </p>
-                    <a routerLink="/login" class="btn btn-primary btn-sm" (click)="rememberReturn()"
-                        >Sign in</a
-                    >
+        </div>
+
+        <div class="profile-main">
+            <!-- Honours -->
+            <div class="panel honours-panel">
+                <div class="panel-header">
+                    <span class="panel-title serif">Honours &amp; Decorations</span>
+                    @if (member.medals.length > 0) {
+                    <span class="mono honours-count"> {{ member.medals.length }} awarded </span>
+                    }
                 </div>
+                @if (member.medals.length > 0) {
+                <div class="panel-body panel-body--flush">
+                    @for (award of member.medals; track award.id) {
+                    <div class="honour-row">
+                        <div class="honour-medal">
+                            <hf-medal
+                                size="md"
+                                [imageUrl]="award.imageUrl"
+                                [letter]="award.glyph"
+                                [title]="award.title"
+                            ></hf-medal>
+                        </div>
+                        <!--
+                            The catalogue description, not this award's citation:
+                            a viewer reading someone else's honours wants to know
+                            what the medal TAKES, not the one-line reason it was
+                            handed over. The citation is not on the public
+                            projection at all.
+                        -->
+                        <div class="honour-body">
+                            <div class="serif honour-title">{{ award.title }}</div>
+                            @if (award.description) {
+                            <p class="honour-desc">{{ award.description }}</p>
+                            }
+                        </div>
+                        <div class="mono honour-date">
+                            {{ award.awardedAt | date: 'MMM d, yyyy' }}
+                        </div>
+                    </div>
+                    }
+                </div>
+                } @else {
+                <div class="panel-body">
+                    <span class="field-hint">No decorations yet.</span>
+                </div>
+                }
             </div>
-            } @else if (activeTab === 'gallery') {
-            <div>
-                @if (galleryItems.length > 0) {
+
+            <div class="profile-activity">
+                <!-- Segmented control. The wrapper carries the mobile fade edge;
+                     it cannot live on the scroller itself, which would scroll
+                     away with the content. -->
+                <div class="profile-segments-wrap">
+                    <div class="profile-segments" role="tablist">
+                        @for (tab of visibleTabs; track tab) {
+                        <button
+                            type="button"
+                            class="profile-segment"
+                            role="tab"
+                            [attr.aria-selected]="activeTab === tab"
+                            [class.profile-segment--active]="activeTab === tab"
+                            (click)="setTab(tab)"
+                        >
+                            {{ tabLabel(tab) }} @if (tabLocked(tab)) {
+                            <svg class="tab-lock" viewBox="0 0 12 12" aria-hidden="true">
+                                <path
+                                    d="M3.6 5.2V3.6a2.4 2.4 0 0 1 4.8 0v1.6"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.2"
+                                />
+                                <rect
+                                    x="2.4"
+                                    y="5.2"
+                                    width="7.2"
+                                    height="5.2"
+                                    rx="1.2"
+                                    fill="currentColor"
+                                />
+                            </svg>
+                            <span class="visually-hidden">(sign in required)</span>
+                            }
+                        </button>
+                        }
+                    </div>
+                </div>
+
+                @if (tabLocked(activeTab)) {
+                <!-- Locked, not hidden: the reader is told what is behind it. -->
+                <div class="panel profile-locked">
+                    <div class="panel-body profile-locked-body">
+                        <div class="profile-locked-title">Sign in to see this</div>
+                        <p class="profile-locked-text">
+                            Attendance and RSVPs are shown to signed-in members of the regiment.
+                        </p>
+                        <a
+                            routerLink="/login"
+                            class="btn btn-primary btn-sm"
+                            (click)="rememberReturn()"
+                            >Sign in</a
+                        >
+                    </div>
+                </div>
+                } @else if (activeTab === 'gallery') { @if (galleryItems.length > 0) {
                 <div class="profile-gallery-grid">
                     @for (item of galleryItems; track item.id; let i = $index) {
                     <hf-gallery-card [item]="item" [aspectIndex]="i % 3"></hf-gallery-card>
@@ -242,107 +310,78 @@
                 </div>
                 } @else {
                 <div class="notice info">No gallery submissions yet.</div>
-                }
-            </div>
-            } @else if (activeTab === 'events') {
-            <div class="panel">
-                <div class="panel-body panel-body--flush">
-                    @for (event of eventHistory; track event.id) {
-                    <div class="event-history-row">
-                        <div class="event-history-date">
-                            <div class="serif event-day">{{ event.date | date: 'd' }}</div>
-                            <div class="event-month">{{ event.date | date: 'MMM' }}</div>
-                        </div>
-                        <div class="event-main">
-                            <div class="event-title">{{ event.title }}</div>
-                            @if (event.hasServerName && event.serverName) {
-                            <div class="mono event-server">{{ event.serverName }}</div>
-                            }
-                        </div>
-                        <span
-                            class="badge"
-                            [ngClass]="event.status === 'previous' ? 'laurel' : 'brass'"
-                        >
-                            {{ event.status === 'previous' ? 'Attended' : event.status }}
-                        </span>
-                    </div>
-                    } @if (eventHistory.length === 0) {
-                    <div class="event-empty">No event history recorded.</div>
-                    }
-                </div>
-            </div>
-            } @else {
-            <div class="panel">
-                <div class="panel-body panel-body--flush">
-                    @for (event of rsvps; track event.id) {
-                    <div class="event-history-row">
-                        <div class="event-history-date">
-                            <div class="serif event-day">{{ event.date | date: 'd' }}</div>
-                            <div class="event-month">{{ event.date | date: 'MMM' }}</div>
-                        </div>
-                        <div class="event-main">
-                            <div class="event-title">{{ event.title }}</div>
-                            @if (event.hasServerName && event.serverName) {
-                            <div class="mono event-server">{{ event.serverName }}</div>
-                            }
-                        </div>
-                        <span class="badge brass">
-                            {{ event.status === 'previous' ? 'Past' : event.status }}
-                        </span>
-                    </div>
-                    } @if (rsvps.length === 0) {
-                    <div class="event-empty">No RSVPs recorded.</div>
-                    }
-                </div>
-            </div>
-            }
-            <!-- Service Record (privacy-gated: self or view_audit_log, T-0143) -->
-            @if (canViewPrivate) {
-            <div class="panel profile-service-record">
-                <div class="panel-header">
-                    <span class="panel-title serif">Service Record</span>
-                    <span class="privacy-hint" title="Only you and command staff can see this."
-                        >?</span
-                    >
-                </div>
-                <div class="panel-body panel-body--flush">
-                    @if (serviceRecord.length > 0) {
-                    <div class="timeline">
-                        @for (entry of serviceRecord; track entry.id) {
-                        <div class="timeline-item">
-                            <div
-                                class="timeline-dot"
-                                [ngClass]="serviceEntryClass(entry.type)"
-                            ></div>
-                            <div class="timeline-body">
-                                <div class="row timeline-head">
-                                    <div class="timeline-event">{{ entry.event }}</div>
-                                    @if (entry.type) {
-                                    <!-- One type class drives the dot AND the tag, so a
-                                         demotion is labelled as well as colour-coded. -->
-                                    <span
-                                        class="timeline-type"
-                                        [ngClass]="serviceEntryClass(entry.type)"
-                                        >{{ entry.type }}</span
-                                    >
-                                    }
-                                </div>
-                                <div class="mono timeline-date">
-                                    {{ entry.occurredAt | date: 'MMM d, yyyy' }}
-                                </div>
-                                @if (entry.note) {
-                                <div class="timeline-note">{{ entry.note }}</div>
+                } } @else if (activeTab === 'activity') {
+                <div class="panel">
+                    <div class="panel-body panel-body--flush">
+                        @for (entry of activity; track entry.id) {
+                        <div class="event-history-row">
+                            <div class="event-history-date">
+                                <div class="serif event-day">{{ entry.date | date: 'd' }}</div>
+                                <div class="event-month">{{ entry.date | date: 'MMM' }}</div>
+                            </div>
+                            <div class="event-main">
+                                <div class="event-title">{{ entry.title }}</div>
+                                @if (entry.serverName) {
+                                <div class="mono event-server">{{ entry.serverName }}</div>
                                 }
                             </div>
+                            <span class="badge" [ngClass]="entry.variant">{{ entry.status }}</span>
                         </div>
+                        } @empty {
+                        <div class="event-empty">No attendance or RSVPs recorded.</div>
                         }
                     </div>
-                    } @else {
-                    <div class="event-empty">No service record entries yet.</div>
-                    }
                 </div>
+                } @else {
+                <!-- Service Record (privacy-gated: self or view_audit_log, T-0143).
+                     The segment is only offered when canViewPrivate, so reaching
+                     here already means the reader is entitled to it. -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title serif">Service Record</span>
+                        <span class="privacy-hint" title="Only you and command staff can see this."
+                            >?</span
+                        >
+                    </div>
+                    <div class="panel-body panel-body--flush">
+                        @if (serviceRecord.length > 0) {
+                        <div class="timeline">
+                            @for (entry of serviceRecord; track entry.id) {
+                            <div class="timeline-item">
+                                <div
+                                    class="timeline-dot"
+                                    [ngClass]="serviceEntryClass(entry.type)"
+                                ></div>
+                                <div class="timeline-body">
+                                    <div class="row timeline-head">
+                                        <div class="timeline-event">{{ entry.event }}</div>
+                                        @if (entry.type) {
+                                        <!-- One type class drives the dot AND the tag, so a
+                                             demotion is labelled as well as colour-coded. -->
+                                        <span
+                                            class="timeline-type"
+                                            [ngClass]="serviceEntryClass(entry.type)"
+                                            >{{ entry.type }}</span
+                                        >
+                                        }
+                                    </div>
+                                    <div class="mono timeline-date">
+                                        {{ entry.occurredAt | date: 'MMM d, yyyy' }}
+                                    </div>
+                                    @if (entry.note) {
+                                    <div class="timeline-note">{{ entry.note }}</div>
+                                    }
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        } @else {
+                        <div class="event-empty">No service record entries yet.</div>
+                        }
+                    </div>
+                </div>
+                }
             </div>
-            }
         </div>
     </div>
 

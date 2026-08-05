@@ -1,3 +1,5 @@
+import { MemberSocialLink } from './social-link.model';
+
 export type MemberStatus = 'Active' | 'Inactive' | 'Pending';
 export type MemberRole = 'Owner' | 'Admin' | 'Moderator' | 'Member' | 'Mercenary' | 'Applicant';
 export type Platform = 'steam' | 'xbox' | 'ps';
@@ -292,6 +294,14 @@ export interface Member {
     avatarUrl?: string | null;
     /** Profile banner URL (null → default banner). */
     bannerUrl?: string | null;
+    /** The member's own short prose, or null. Optional so fixtures still type. */
+    bio?: string | null;
+    /**
+     * Linked accounts elsewhere, in display order. Optional for the same reason
+     * as {@link permittedActions}: an older API or a hand-built fixture must
+     * read as "none", and an absent array is exactly that.
+     */
+    socialLinks?: MemberSocialLink[];
     /** Write-only: storage key of a freshly-uploaded avatar (sent on self-edit). */
     avatarKey?: string;
     /** Write-only: storage key of a freshly-uploaded banner (sent on self-edit). */

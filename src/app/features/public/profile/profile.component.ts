@@ -8,14 +8,39 @@ import { RegimentEvent } from '../../../core/models/event.model';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { Member, canOpenAdminActions } from '../../../core/models/member.model';
 import { PublicMember, publicHandle } from '../../../core/models/public-member.model';
+import { MemberSocialLink } from '../../../core/models/social-link.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { MembersService, ServiceRecordEntry } from '../../../core/services/members.service';
 import { PublicMembersService } from '../../../core/services/public-members.service';
 import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService } from '../../../core/services/seo.service';
 
-/** The three tabs on the right-hand column. Only `gallery` is public. */
-export type ProfileTab = 'gallery' | 'events' | 'rsvps';
+/**
+ * The segments on the right-hand column (T-0289). Only `gallery` is public.
+ *
+ * `activity` replaced the old separate `events` and `rsvps` tabs. They were two
+ * controls over one question — "what has this member been to" — differing only
+ * in tense, and a member with three RSVPs and forty attendances got two tabs
+ * where one was almost always empty. `record` was a fourth panel stacked under
+ * whichever tab was open, so the column's length depended on a control that had
+ * nothing to do with it; it is a segment now.
+ */
+export type ProfileTab = 'gallery' | 'activity' | 'record';
+
+/**
+ * One row in the merged Activity list. An RSVP and an attendance are the same
+ * event seen from either side of its start time, so they share a shape and are
+ * told apart by `status` alone.
+ */
+export interface ProfileActivityEntry {
+    id: string;
+    date: string;
+    title: string;
+    serverName: string | null;
+    status: string;
+    /** Badge variant: brass for a commitment, laurel for a completed one. */
+    variant: 'brass' | 'laurel';
+}
 
 /** Why the page has no member to render. */
 export type ProfileError = 'not-found' | 'gone' | 'unavailable';
@@ -478,18 +503,98 @@ export class ProfileComponent implements OnInit {
     }
 
     /**
-     * Event History and RSVPs are signed-in surfaces, but the tabs still render
-     * for a signed-out reader with a lock on them. Hiding them outright would
-     * show a crawler a different set of controls than a member sees — a visibly
-     * locked tab says the same thing to both.
+     * Which segments to draw. `record` is the only one that can be absent
+     * outright: it is not "locked" for a reader who may not see it, it does not
+     * exist for them, because unlike attendance there is nothing to promise
+     * behind a sign-in — a stranger will never be shown someone's disciplinary
+     * timeline, so a padlock would be a lie about what signing in buys.
+     */
+    get visibleTabs(): ProfileTab[] {
+        return this.canViewPrivate ? ['gallery', 'activity', 'record'] : ['gallery', 'activity'];
+    }
+
+    tabLabel(tab: ProfileTab): string {
+        switch (tab) {
+            case 'activity':
+                return 'Activity';
+            case 'record':
+                return 'Service record';
+            default:
+                return 'Gallery';
+        }
+    }
+
+    /**
+     * Activity is a signed-in surface, but the segment still renders for a
+     * signed-out reader with a lock on it. Hiding it outright would show a
+     * crawler a different set of controls than a member sees — a visibly locked
+     * segment says the same thing to both.
      */
     tabLocked(tab: ProfileTab): boolean {
-        // Enrolment, not merely a session (T-0287). Both tabs are backed by
-        // endpoints carrying @RequireCapability(view_members_directory), which
-        // an Applicant does not hold — unlocking them for anyone signed in gave
-        // that person two tabs that 403 into a permanently empty list, with the
-        // "no events" copy implying the member has never attended anything.
-        return tab !== 'gallery' && !this.auth.isMember();
+        // Enrolment, not merely a session (T-0287). The events and RSVP
+        // endpoints behind this segment carry
+        // @RequireCapability(view_members_directory), which an Applicant does
+        // not hold — unlocking it for anyone signed in gave that person a
+        // segment that 403s into a permanently empty list, with the "nothing
+        // recorded" copy implying the member has never attended anything.
+        return tab === 'activity' && !this.auth.isMember();
+    }
+
+    /**
+     * RSVPs and attendances, merged and ordered as one timeline (T-0289).
+     *
+     * Deduplicated by event id with the attendance winning: RSVPing to a battle
+     * and then turning up to it is one event, and listing it twice — once as a
+     * promise, once as a fact — reads as two.
+     */
+    get activity(): ProfileActivityEntry[] {
+        const byId = new Map<string, ProfileActivityEntry>();
+
+        for (const event of this.rsvps) {
+            byId.set(event.id, {
+                id: event.id,
+                date: event.date,
+                title: event.title,
+                serverName: event.hasServerName ? (event.serverName ?? null) : null,
+                status: event.status === 'previous' ? 'Past' : 'Going',
+                variant: 'brass',
+            });
+        }
+
+        for (const event of this.eventHistory) {
+            byId.set(event.id, {
+                id: event.id,
+                date: event.date,
+                title: event.title,
+                serverName: event.hasServerName ? (event.serverName ?? null) : null,
+                status: 'Attended',
+                variant: 'laurel',
+            });
+        }
+
+        // Most recent first — an upcoming commitment sorts above a past one for
+        // free, which is the order a reader scanning "what are they up to" wants.
+        return [...byId.values()].sort((a, b) => b.date.localeCompare(a.date));
+    }
+
+    /** The member's own prose, or null. Public — it is theirs to publish. */
+    get bio(): string | null {
+        return this.member?.bio?.trim() || null;
+    }
+
+    /** Public linked accounts. Never Discord — see {@link discordTag}. */
+    get socialLinks(): MemberSocialLink[] {
+        return this.member?.socialLinks ?? [];
+    }
+
+    /**
+     * The Discord tag, or null for anyone not entitled to it. It comes off the
+     * ENRICHED projection, which an anonymous reader never receives — so this is
+     * null for a guest because the field was never sent, not because a template
+     * hid it.
+     */
+    get discordTag(): string | null {
+        return this.enriched?.discordTag?.trim() || null;
     }
 
     /** Send the reader back here once they have signed in. */
