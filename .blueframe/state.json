@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
-  "lastSyncedAt": "2026-08-04T23:05:00Z",
-  "notesForNextSession": "T-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. All four viewer states (guest, ordinary member, staff, identity-only applicant) have now been walked in a browser, and profile / event detail / account / events / gallery were checked at 390px with no horizontal scroll on any. What is NOT done is listed in skippedByClaude \u2014 the biggest is that a member still cannot see their own PENDING gallery submission anywhere. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
-  "nextIdCounter": 288,
+  "lastSyncedCommit": "3b7d056bc0123328d99a5e0542a5c42829ea65ed",
+  "lastSyncedAt": "2026-08-04T23:55:00Z",
+  "notesForNextSession": "T-0288 (design-sync) is deployed: the design-reference React kit is live in the claude.ai/design project \"Lords Regiment\" (cedcda48-26c7-4a4c-ba22-cabd49522908). Re-sync is one command \u2014 see .design-sync/NOTES.md, which carries the non-obvious pins (React 18.3.1 for the UMD vendor path, playwright 1.61.0 to match the cached chromium 1228, --node-modules must be ./.ds-sync/node_modules, srcDir must stay design-reference or the converter scans the Angular app). Read its \"Re-sync risks\" section before touching design-reference/components.jsx: the prop contracts there are hand-written and cannot rot loudly.\n\nT-0287 (public site split) is in TEST, not review \u2014 it has been walked in a real browser as a guest and as an ordinary member against a seeded database, and three rounds of fixes have landed. Backend half is lords-dashboard-backend T-0215. Branch feat/public-site-redesign in both repos; PRs #66 (FE) and #80 (BE) into dev. \u26a0\ufe0f THE ONE THING TO NOT REGRESS: PublicLayoutComponent must stay `ChangeDetectionStrategy.Eager`. It is the change-detection ANCESTOR of every public page, and as OnPush it never went dirty, so ApplicationRef.tick() skipped the whole subtree \u2014 every public page rendered once with its pre-fetch state and never updated. That is what made the landing hero show a hardcoded fallback name and hide the member-count stats. Nothing in the build or the specs catches it, because the specs instantiate pages directly rather than through the layout route. Also do not undo: authGuard/event-detail return-URL stashing and the replay in routeAfterLogin (which is NOT gated on enrolment, deliberately \u2014 the locked-panel CTAs are aimed at people who are not members yet); the locked profile tabs and the roster's Status/Last Seen gating on isMember() rather than isAuthenticated(), because their endpoints require view_members_directory; and the public-nav suppressing its auth CTAs on /login. All four viewer states (guest, ordinary member, staff, identity-only applicant) have now been walked in a browser, and profile / event detail / account / events / gallery were checked at 390px with no horizontal scroll on any. What is NOT done is listed in skippedByClaude \u2014 the biggest is that a member still cannot see their own PENDING gallery submission anywhere. Test personas: mint a JWT with sub = a discord_identities.id and did = its snowflake, signed with JWT_SECRET; the dev compose stack already runs api on 3001 and the Angular dev server on 4200, both bind-mounting the working trees. Node on the host is v22.22.2 and the CLI needs >=22.22.3, so build/test run in a node:22 container (karma also needs chromium + a --no-sandbox launcher).",
+  "nextIdCounter": 289,
   "connections": [],
   "tasks": [
     {
@@ -18984,6 +18984,94 @@
           "to": "review",
           "by": "claude",
           "note": "shipped on feat/public-site-redesign; 733 unit tests, production build, eslint and prettier all green"
+        }
+      ]
+    },
+    {
+      "id": "T-0288",
+      "title": "Sync the design-reference React kit to Claude Design",
+      "summary": "Imported the 17 primitives in design-reference/components.jsx into the claude.ai/design project \"Lords Regiment\" so the design agent builds with the same parts the Angular hf-* components port. Added a thin re-export adapter (.design-sync/entry/index.jsx) rather than reimplementing anything, hand-written prop contracts (the kit has no TypeScript, so cfg.dtsPropsFor IS the API the agent codes against), a validated conventions header, 17 authored preview cards, and the three brand faces vendored as OFL variable woff2s. Also fixed Crest, which rendered a relative assets/ path that only resolved on a page served from design-reference/.",
+      "status": "deployed",
+      "type": "chore",
+      "size": "L",
+      "sizeWeight": 5,
+      "area": "platform",
+      "feature": "design-system-sync",
+      "subfeature": "claude-design-export",
+      "repo": "",
+      "paths": [
+        ".design-sync/config.json",
+        ".design-sync/conventions.md",
+        ".design-sync/NOTES.md",
+        ".design-sync/entry/index.jsx",
+        ".design-sync/previews/",
+        ".design-sync/fonts/",
+        "design-reference/components.jsx",
+        ".gitignore"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "package-validate.mjs exits 0; render check 17/17 clean, 0 bad/thin/blank/grid-overflow",
+          "status": "passed"
+        },
+        {
+          "desc": "window.LordsRegiment exposes 60 exports (17 components + 43 Icon<Name> aliases)",
+          "status": "passed"
+        },
+        {
+          "desc": "every conventions.md class and token verifies against the built _ds_bundle.css (69 classes)",
+          "status": "passed"
+        },
+        {
+          "desc": "all 17 preview cards captured and graded good on the absolute rubric",
+          "status": "passed"
+        },
+        {
+          "desc": "Crest renders crisply at 20/34/48/60px from the inlined data URI",
+          "status": "passed"
+        },
+        {
+          "desc": "kit page design-reference/Holdfast Command.html still renders Crest after the data-URI change",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "cfg.dtsPropsFor in .design-sync/config.json is the ONLY source of the prop contracts the design agent codes against, and there is no TypeScript in the kit to check it. If a component signature changes in design-reference/components.jsx the emitted .d.ts keeps describing the old one, with no error anywhere.",
+          "status": "open",
+          "notedAt": "2026-08-04T23:55:00Z"
+        },
+        {
+          "desc": "The entry adapter export list (17 components plus 43 icon names) is hand-maintained. A component or icon added to the kit stays invisible to Claude Design until it is added to .design-sync/entry/index.jsx and componentSrcMap.",
+          "status": "open",
+          "notedAt": "2026-08-04T23:55:00Z"
+        },
+        {
+          "desc": "design-reference/components.jsx Crest now depends on the inlined CREST_SRC data URI. Reverting that hunk or swapping the logo asset silently returns the crest to a path that only resolves inside design-reference/.",
+          "status": "open",
+          "notedAt": "2026-08-04T23:55:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "The 21 screen compositions in design-reference/screens-*.jsx were left out \u2014 scope was primitives only. They are zero-prop templates with hardcoded demo data, and they still reference relative assets/bg-1.jpg and assets/banner.png, which must be solved the way Crest was before they can sync.",
+        "The Angular components in src/app/shared/components/ are NOT synced and cannot be: Claude Design renders React. Porting them to React would be a reimplementation, which the sync process explicitly forbids.",
+        "Hover, focus and drag states are absent from every preview card \u2014 they do not render statically.",
+        "Fonts are the latin subset only, so non-latin member names fall back to a system face.",
+        "OFL.txt has to be copied into ds-bundle/fonts/ by hand after each build; the converter does not carry it and a rebuild wipes the output dir."
+      ],
+      "lastTouchedCommit": "3b7d056bc0123328d99a5e0542a5c42829ea65ed",
+      "createdAt": "2026-08-04T23:55:00Z",
+      "updatedAt": "2026-08-04T23:55:00Z",
+      "history": [
+        {
+          "at": "2026-08-04T23:55:00Z",
+          "from": null,
+          "to": "deployed",
+          "by": "claude",
+          "note": "17 components uploaded to claude.ai/design project cedcda48-26c7-4a4c-ba22-cabd49522908; validate exits 0, all previews graded good"
         }
       ]
     }
