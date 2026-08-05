@@ -19630,8 +19630,8 @@
           "status": "passed"
         },
         {
-          "desc": "browser: the members figure resolves to href=/roster in the real DOM (confirmed via --dump-dom) - still needs a real click-through to confirm SPA nav rather than a full reload",
-          "status": "pending"
+          "desc": "browser: a real trusted click on the members figure navigates to /roster via SPA nav - marker on window survived, so no full reload; title became 'Regimental Roster | Lords Regiment' and the roster table rendered its rows",
+          "status": "passed"
         },
         {
           "desc": "browser: admin overlay density 0 and 100 on the new radial vignette - 0 really is a bare photograph and 100 does not black out the type",
@@ -19659,7 +19659,7 @@
       ],
       "lastTouchedCommit": "4d7169ab0f96a5799ae2be1a9a3e7878116e0a35",
       "createdAt": "2026-08-05T15:15:00Z",
-      "updatedAt": "2026-08-05T15:32:00Z",
+      "updatedAt": "2026-08-05T15:52:00Z",
       "history": [
         {
           "at": "2026-08-05T15:15:00Z",
