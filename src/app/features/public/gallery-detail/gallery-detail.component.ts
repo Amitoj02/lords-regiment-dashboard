@@ -292,6 +292,23 @@ export class GalleryDetailComponent implements OnInit {
         return this.item?.mediaUrl ?? this.item?.thumbnailUrl ?? null;
     }
 
+    /**
+     * The clip URL with a `#t=` media fragment appended, so the hero shows a
+     * frame rather than a black rectangle before it is played.
+     *
+     * Same WebKit behaviour as the gallery grid (see `videoPreviewSrc` on
+     * GalleryCardComponent): iOS Safari and iOS Chrome paint nothing for a clip
+     * until they are asked for a specific time. 0.1s rather than 0, because
+     * plenty of encodes open on a black frame.
+     */
+    get videoSrc(): string | null {
+        const raw = this.embed?.kind === 'video' ? this.embed.rawUrl : null;
+        if (!raw) {
+            return null;
+        }
+        return raw.includes('#') ? raw : `${raw}#t=0.1`;
+    }
+
     /** Whether the tag input has hit the 10-tag cap. */
     get tagsAtLimit(): boolean {
         return this.editTags.length >= this.maxTags;

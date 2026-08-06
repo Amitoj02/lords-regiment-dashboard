@@ -15,31 +15,67 @@
     margin-top: 14px;
 }
 
+/* The banner, shown as a picture rather than used as a backdrop (T-0306).
+ *
+ * `contain`, not `cover`: these images are posters with words on them, and a
+ * cover crop takes the ends off the very line the poster exists to say. The
+ * height cap keeps one oddly-shaped upload from pushing the whole page down;
+ * the letterbox it leaves is filled by a blurred, over-scaled copy of the same
+ * image (the `::before`), so the frame reads as deliberate rather than as a
+ * picture that failed to fill its box.
+ *
+ * The inline `background-image` is what the `::before` inherits — the element
+ * itself never paints it, since the `<img>` covers it. */
 .event-banner {
-    height: 280px;
-    background: linear-gradient(to bottom right, var(--ink-850), var(--ink-800));
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: var(--ink-850);
     background-size: cover;
     background-position: center;
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
+    isolation: isolate;
 
-    &__overlay {
+    &::before {
+        content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.75) 0%,
-            rgba(0, 0, 0, 0.25) 60%,
-            transparent 100%
-        );
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        padding: 24px;
-        gap: 10px;
+        background: inherit;
+        background-size: cover;
+        background-position: center;
+        filter: blur(28px) saturate(0.6) brightness(0.45);
+        transform: scale(1.2);
+        z-index: -1;
     }
+
+    &__img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 460px;
+        object-fit: contain;
+    }
+
+    /* The "mini gradient shadow" that ends the banner: its bottom edge dissolves
+       into the page instead of stopping on a hard line. Capped as a FRACTION as
+       well as in pixels — a wide banner on a phone is only ~110px tall, and a
+       flat 72px fade would swallow most of the picture. */
+    &__fade {
+        position: absolute;
+        inset: auto 0 0;
+        height: min(72px, 26%);
+        background: linear-gradient(to bottom, rgba(11, 14, 20, 0), var(--ink-900));
+        pointer-events: none;
+    }
+}
+
+/* The heading the banner used to sit on top of. On the page's own ground now,
+   so it takes the page's own text colours. */
+.event-head {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 22px;
 
     &__badges {
         display: flex;
@@ -50,14 +86,14 @@
 
     &__title {
         font-size: 2rem;
-        color: var(--white);
+        color: var(--t-100);
         margin: 0;
         line-height: 1.2;
     }
 
     &__meta {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.875rem;
+        color: var(--t-300);
     }
 }
 
@@ -282,11 +318,17 @@
 // has to come after it to survive.
 @media (max-width: 820px) {
     .event-banner {
-        height: 200px;
+        margin-bottom: 18px;
 
-        &__overlay {
-            padding: 16px;
+        &__img {
+            max-height: 300px;
         }
+    }
+
+    .event-head {
+        gap: 10px;
+        margin-bottom: 18px;
+
         &__title {
             font-size: 1.5rem;
         }
