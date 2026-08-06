@@ -39,7 +39,19 @@
             property="og:description"
             content="Discipline, honour, and the line. A Holdfast: Nations at War regiment of standing."
         />
-        <meta property="og:image" content="https://lordsofholdfast.com/assets/images/banner.png" />
+        <!-- The crest, not a screenshot (T-0311). `/` is the URL every external
+             link points at and the one path the crawler matcher deliberately
+             skips, so THIS tag is what Discord unfurls for the site itself. It
+             pointed at banner.png — a frame of Holdfast gameplay that says
+             nothing about which regiment is being shared. social-card.png is
+             1200x630 of the regiment crest on `--ink-900`, the size every
+             unfurler wants for the wide card. Kept in step with `DEFAULT_IMAGE`
+             in core/services/seo.service.ts and `DEFAULT_CARD_IMAGE` in the
+             API's seo.service.ts, which is why this one is a coupled deploy. -->
+        <meta
+            property="og:image"
+            content="https://lordsofholdfast.com/assets/images/social-card.png"
+        />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Lords Regiment" />
         <meta

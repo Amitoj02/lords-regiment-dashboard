@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "cb76f9f6f1ad0878b9085478bcb1ac2752152a71",
-  "lastSyncedAt": "2026-08-06T01:30:00Z",
-  "notesForNextSession": "T-0303..T-0310 are in REVIEW as one PR against dev: the public-surface pass the owner asked for on 2026-08-05. All eight are frontend-only, no backend twin, no coupled release.\n\nTHE ONE THING WORTH KNOWING: five of these eight bugs were the SAME bug. The app's `.row` flex utility shares its class name with Bootstrap grid's `.row`, so every element using it inherits `margin-inline: -12px`. _base.scss documents this and deliberately does NOT reset it globally (T-0287 tried and backed out: pages laid out against the leak shift 12px the moment it goes). This pass patched four more sites locally — landing `.event-meta`, events `.event-time-row`, roster `.roster-head-actions`, and every `.row` inside `.gallery-page-wrap` at the mobile breakpoints — which brings the local-patch count to roughly eight. That global reset is now the cheaper change; it wants its own task, a screenshot of every public page before and after, and nothing else in the branch.\n\nSTILL OPEN ON iOS: T-0308 ships the `#t=0.1` media fragment, which is the last HTML-only lever for a posterless clip. It was confirmed in headless Chrome (black tile -> frame) but NOT on a real iPhone — T-0256 is still the blocked task that wants a real device. If the fragment turns out not to be enough, the remaining options are all server-side: ffmpeg posters in the API image, or a backfill that captures posters for the clips uploaded before T-0242.\n\nVERIFICATION SETUP that paid for itself, reuse it: the dev DB had 2 past events and 1 gallery item, which is not enough to see any of these bugs. `docker compose up` in ../lords-dashboard-backend brings up api/db/minio/web (web serves :4200, api on host :3001). Seed with plain SQL against the db container (root/devroot, db lords_dashboard) after pushing media into MinIO through `docker run --rm --network lords-dashboard-backend_lords minio/mc`. TWO TRAPS: `events.server_password` is an AES-256-GCM column, so a plaintext INSERT makes every /api/events call 500 with \"Malformed encrypted payload\" — mint the value with `docker exec ...api-1 node -e` using the container's own ENCRYPTION_KEY. And insert text through a UTF-8 client or em dashes land as mojibake.\n\nThe headless-screenshot recipe (google-chrome --headless=new --window-size, which DOES move the CSS viewport, unlike the browser extension) is what made the mobile work checkable. CI parity locally: `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` for format/lint/build, plus apt chromium and a --no-sandbox wrapper on CHROME_BIN for karma. 805 specs green.\n\nCARRIED OVER, UNCHANGED: T-0302's two disagreeing site descriptions (index.html says the tagline, DEFAULT_MISSION still says the old sentence) is still the open decision, still a four-line coupled release across two repos. Production is still serving main from an un-rebuilt web image. STATE.JSON: json.dump(indent=2, ensure_ascii=False) + trailing newline, raw em dashes; testPlan status must be pending|passed|failed; `type` has no `fix` member.",
-  "nextIdCounter": 311,
+  "lastSyncedCommit": "3cb20af5fe8777eb6320e7fabdb86647e6ba37e4",
+  "lastSyncedAt": "2026-08-06T03:15:00Z",
+  "notesForNextSession": "T-0311 is in REVIEW as PR #78 against dev and is a COUPLED RELEASE with lords-dashboard-backend:T-0302 — the API's DEFAULT_CARD_IMAGE now names /assets/images/social-card.png, a file that only exists in THIS repo's build. Deploy the web image first, or ship both together; an API deployed alone emits a card URL that 404s. banner.png is deliberately still in the build so the reverse order is safe too. VERIFY AFTER DEPLOY: paste the root URL into Discord with a cache-buster query (?v=2) — Discord caches an embed by URL and will keep serving the gameplay frame for the un-busted one for hours.\n\nT-0303..T-0310 are in REVIEW as one PR against dev: the public-surface pass the owner asked for on 2026-08-05. All eight are frontend-only, no backend twin, no coupled release.\n\nTHE ONE THING WORTH KNOWING: five of these eight bugs were the SAME bug. The app's `.row` flex utility shares its class name with Bootstrap grid's `.row`, so every element using it inherits `margin-inline: -12px`. _base.scss documents this and deliberately does NOT reset it globally (T-0287 tried and backed out: pages laid out against the leak shift 12px the moment it goes). This pass patched four more sites locally — landing `.event-meta`, events `.event-time-row`, roster `.roster-head-actions`, and every `.row` inside `.gallery-page-wrap` at the mobile breakpoints — which brings the local-patch count to roughly eight. That global reset is now the cheaper change; it wants its own task, a screenshot of every public page before and after, and nothing else in the branch.\n\nSTILL OPEN ON iOS: T-0308 ships the `#t=0.1` media fragment, which is the last HTML-only lever for a posterless clip. It was confirmed in headless Chrome (black tile -> frame) but NOT on a real iPhone — T-0256 is still the blocked task that wants a real device. If the fragment turns out not to be enough, the remaining options are all server-side: ffmpeg posters in the API image, or a backfill that captures posters for the clips uploaded before T-0242.\n\nVERIFICATION SETUP that paid for itself, reuse it: the dev DB had 2 past events and 1 gallery item, which is not enough to see any of these bugs. `docker compose up` in ../lords-dashboard-backend brings up api/db/minio/web (web serves :4200, api on host :3001). Seed with plain SQL against the db container (root/devroot, db lords_dashboard) after pushing media into MinIO through `docker run --rm --network lords-dashboard-backend_lords minio/mc`. TWO TRAPS: `events.server_password` is an AES-256-GCM column, so a plaintext INSERT makes every /api/events call 500 with \"Malformed encrypted payload\" — mint the value with `docker exec ...api-1 node -e` using the container's own ENCRYPTION_KEY. And insert text through a UTF-8 client or em dashes land as mojibake.\n\nThe headless-screenshot recipe (google-chrome --headless=new --window-size, which DOES move the CSS viewport, unlike the browser extension) is what made the mobile work checkable. CI parity locally: `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` for format/lint/build, plus apt chromium and a --no-sandbox wrapper on CHROME_BIN for karma. 805 specs green.\n\nCARRIED OVER, UNCHANGED: T-0302's two disagreeing site descriptions (index.html says the tagline, DEFAULT_MISSION still says the old sentence) is still the open decision, still a four-line coupled release across two repos. Production is still serving main from an un-rebuilt web image. STATE.JSON: json.dump(indent=2, ensure_ascii=False) + trailing newline, raw em dashes; testPlan status must be pending|passed|failed; `type` has no `fix` member.",
+  "nextIdCounter": 312,
   "connections": [],
   "tasks": [
     {
@@ -20470,6 +20470,71 @@
           "note": "created and opened as a PR against dev"
         }
       ]
+    },
+    {
+      "id": "T-0311",
+      "title": "Unfurl the regiment crest, not a gameplay screenshot, as the default card",
+      "summary": "The owner pasted https://lordsofholdfast.com/ into Discord and got a frame of Holdfast gameplay under the regiment's name — banner.png, the default card image on every public URL that has nothing of its own to show. Replaced it with social-card.png: the regiment crest centred on --ink-900 at 1200x630, composed from regiment-logo.png. Wide-card size on purpose — the crest is square on its own and Discord demotes a square image to a thumbnail whatever twitter:card claims, so the ink field is what keeps the large embed the owner already had. The title and the tagline are unchanged; only the picture is. Three writers had to move together in this repo: the static og:image in index.html (which is what `/` itself unfurls, because `/` is deliberately outside the crawler matcher), DEFAULT_IMAGE in core/services/seo.service.ts (which every SPA route falls through to), and the new asset. banner.png is KEPT and still ships: the API half is a separate deploy, and an API still on the old constant would emit a 404 card for the window between the two.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "core",
+      "feature": "seo",
+      "subfeature": "card-image",
+      "repo": "",
+      "paths": [
+        "src/index.html",
+        "src/app/core/services/seo.service.ts",
+        "src/assets/images/social-card.png"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0302"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Discord unfurl of https://lordsofholdfast.com/ shows the crest card, not the gameplay frame",
+          "status": "pending"
+        },
+        {
+          "desc": "the built index.html carries og:image = .../assets/images/social-card.png and the file is in dist assets",
+          "status": "passed"
+        },
+        {
+          "desc": "a route that passes no image (roster, /gallery) still emits og:image after SeoService.apply, now the crest card",
+          "status": "pending"
+        },
+        {
+          "desc": "an event or gallery item WITH its own image still unfurls that image, not the crest",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "DEFAULT_IMAGE is the fallback for every public route that passes no image — landing, roster, calendar, gallery index — so this changes the card on all four at once. The failure mode is a 404 card rather than a wrong one: the URL is only correct once the WEB image carrying social-card.png is deployed, and the API emits the same URL from its own constant.",
+          "status": "open",
+          "notedAt": "2026-08-06T03:15:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not delete banner.png even though nothing in this repo references it any more — the API emits the default card URL from its own copy of the constant, so deleting the file would break every shell-rendered card until the API half deploys too.",
+        "Did not touch the admin-editable hero: an owner-set hero banner or regiment banner still wins on /home in both the SPA and the shell. That is the Settings feature working, not a leftover. If the owner wants the crest there as well, the lever is clearing the banner in Settings, not code.",
+        "Did not add og:image:width/height/alt to index.html. SeoService sets all three the moment it boots; the static block is deliberately the minimum an unfurler needs."
+      ],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T03:15:00Z",
+      "updatedAt": "2026-08-06T03:15:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T03:15:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev, coupled to lords-dashboard-backend:T-0302 (its PR #87)"
+        }
+      ]
     }
   ],
   "history": [
@@ -20492,6 +20557,11 @@
       "at": "2026-08-06T01:30:00Z",
       "by": "claude",
       "note": "T-0303..T-0310 created from the owner's public-surface pass (row alignment, escaping CTAs, event banner rework, gallery phone gutters, iOS clip frames, eyebrow removal, roster head)"
+    },
+    {
+      "at": "2026-08-06T03:15:00Z",
+      "by": "claude",
+      "note": "T-0311 created (default card image -> composed crest card; coupled to backend T-0302)"
     }
   ]
 }

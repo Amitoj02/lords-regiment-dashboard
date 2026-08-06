@@ -74,11 +74,21 @@ const JSON_LD_ID = 'hf-json-ld';
  * is absent. The static default in `index.html` was therefore deleted by the
  * first `apply()` after boot, so a cold share of any of them unfurled with no
  * picture at all.
+ *
+ * THE CREST, NOT A SCREENSHOT (T-0311). This was banner.png, a frame of
+ * Holdfast gameplay: it filled the card, but a page with nothing of its own to
+ * show is precisely the page whose card has to identify the REGIMENT, and every
+ * such URL unfurled as the same anonymous battlefield. social-card.png is the
+ * crest centred on `--ink-900` at 1200x630 — the wide card's canonical size, so
+ * the layout is unchanged and only the subject is. The crest is square on its
+ * own and would have been demoted to a thumbnail by Discord; the ink field is
+ * what buys the large card, which is why this is a composed asset and not
+ * regiment-logo.png.
  */
 const DEFAULT_IMAGE: SeoImage = {
-    url: '/assets/images/banner.png',
-    width: 853,
-    height: 480,
+    url: '/assets/images/social-card.png',
+    width: 1200,
+    height: 630,
     alt: SITE_NAME,
 };
 
