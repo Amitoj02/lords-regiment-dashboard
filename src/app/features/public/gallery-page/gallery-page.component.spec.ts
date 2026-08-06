@@ -16,6 +16,7 @@ function item(id: string, tags: string[], status: GalleryItem['status'] = 'appro
         submittedAt: '2026-06-04T06:00:00Z',
         status,
         likes: 0,
+        views: 0,
         tags,
     };
 }

@@ -8,11 +8,27 @@ import { GalleryService, UpdateGalleryPayload } from '../../../core/services/gal
 import { AuthService } from '../../../core/services/auth.service';
 import { RegimentService } from '../../../core/services/regiment.service';
 import { SeoService, SeoVideo } from '../../../core/services/seo.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { DEFAULT_REGIMENT_NAME } from '../../../core/seo/seo-copy';
 import { MediaEmbed, MediaEmbedService } from '../../../shared/services/media-embed.service';
+import { formatCount } from '../../../shared/utils/format-count';
 
 /** Matches the share shell's own trim, so the two descriptions cannot differ. */
 const MAX_DESCRIPTION = 200;
+
+/**
+ * The like animation runs off a pair of identical keyframe names that alternate
+ * on each tap (see `likeTick`). Angular re-rendering an element with the SAME
+ * `animation-name` does not restart it, so a fast double-tap would play once and
+ * look broken; swapping the name is what makes every tap land.
+ */
+const POP_KEYFRAMES = ['hfLikePopA', 'hfLikePopB'] as const;
+const BURST_KEYFRAMES = ['hfLikeBurstA', 'hfLikeBurstB'] as const;
+const RING_KEYFRAMES = ['hfLikeRingA', 'hfLikeRingB'] as const;
+const ROLL_KEYFRAMES = ['hfLikeRollA', 'hfLikeRollB'] as const;
+
+/** Six pips, evenly spaced, thrown outward when a like lands. */
+const BURST_PIPS = [0, 60, 120, 180, 240, 300];
 
 /**
  * Public gallery detail page (T-0078) at /gallery/:id. Reads the id from the
@@ -43,6 +59,29 @@ export class GalleryDetailComponent implements OnInit {
     saving = false;
     deleting = false;
 
+    // ── Likes + views (T-0311) ──────────────────────────────────────────────
+    /** Live likes count; seeded from the item, then owned by the toggle. */
+    likes = 0;
+    /** Live views count; seeded from the item, then replaced by the recorded total. */
+    views = 0;
+    /**
+     * Whether the signed-in caller has liked this. Resolved by a second request
+     * because `GET /gallery/:id` is public and carries no `liked` — see
+     * `GalleryService.likeState`. Stays false for a signed-out reader, who has
+     * no button anyway.
+     */
+    liked = false;
+    /** A like/unlike request is in flight; the button refuses a second one. */
+    likePending = false;
+    /**
+     * Taps so far. Zero means "never touched", which is how the button knows to
+     * render with no animation at all on first paint; after that its parity
+     * picks which of the two identical keyframe sets to use so a repeat tap
+     * restarts the animation instead of being ignored.
+     */
+    likeTick = 0;
+    readonly burstPips = BURST_PIPS;
+
     private readonly destroyRef = inject(DestroyRef);
     private readonly route = inject(ActivatedRoute);
     private readonly gallery = inject(GalleryService);
@@ -52,6 +91,7 @@ export class GalleryDetailComponent implements OnInit {
     private readonly seo = inject(SeoService);
     private readonly document = inject(DOCUMENT);
     private readonly regiment = inject(RegimentService);
+    private readonly toast = inject(ToastService);
 
     /**
      * The live regiment name (T-0293). It is in the description's author
@@ -115,6 +155,10 @@ export class GalleryDetailComponent implements OnInit {
                     this.embed = this.mediaEmbed.resolve(item.mediaUrl ?? item.thumbnailUrl);
                     this.loading = false;
                     this.applySeo(item);
+                    this.likes = item.likes;
+                    this.views = item.views;
+                    this.resolveLikeState(item.id);
+                    this.countView(item.id);
                 },
                 error: (err) => {
                     console.error('Failed to load gallery item', err);
@@ -307,6 +351,157 @@ export class GalleryDetailComponent implements OnInit {
             return null;
         }
         return raw.includes('#') ? raw : `${raw}#t=0.1`;
+    }
+
+    // ── Likes + views (T-0311) ──────────────────────────────────────────────
+
+    /**
+     * Only a signed-in member gets the button. A signed-out reader sees the same
+     * two figures rendered as plain chips — the counts are public, the act is not.
+     * This is UX, not enforcement: the API rejects an unauthenticated like too.
+     */
+    get canLike(): boolean {
+        return this.auth.isAuthenticated();
+    }
+
+    /** `Like` while the count is zero, then the figure itself. */
+    get likesLabel(): string {
+        return this.likes > 0 ? formatCount(this.likes) : 'Like';
+    }
+
+    get viewsLabel(): string {
+        return formatCount(this.views);
+    }
+
+    get viewsNoun(): string {
+        return this.views === 1 ? 'view' : 'views';
+    }
+
+    get likesNoun(): string {
+        return this.likes === 1 ? 'like' : 'likes';
+    }
+
+    get likeAriaLabel(): string {
+        return this.liked ? 'Unlike this dispatch' : 'Like this dispatch';
+    }
+
+    /** Which half of each keyframe pair this tap uses — see POP_KEYFRAMES. */
+    private get animationPhase(): 0 | 1 {
+        return (this.likeTick % 2) as 0 | 1;
+    }
+
+    /** The heart's squash-and-stretch. `none` until the reader has tapped once. */
+    get popAnimation(): string {
+        if (this.likeTick === 0) return 'none';
+        return `${POP_KEYFRAMES[this.animationPhase]} .44s cubic-bezier(.34,1.56,.64,1)`;
+    }
+
+    /** Pips + ring fire only when a tap ADDS a like, never when it removes one. */
+    get burstAnimation(): string {
+        if (this.likeTick === 0 || !this.liked) return 'none';
+        return `${BURST_KEYFRAMES[this.animationPhase]} .62s ease-out`;
+    }
+
+    get ringAnimation(): string {
+        if (this.burstAnimation === 'none') return 'none';
+        return `${RING_KEYFRAMES[this.animationPhase]} .6s ease-out`;
+    }
+
+    /** The figure rolls up as it changes, so the number reads as having moved. */
+    get rollAnimation(): string {
+        if (this.likeTick === 0) return 'none';
+        return `${ROLL_KEYFRAMES[this.animationPhase]} .34s ease-out`;
+    }
+
+    /**
+     * Toggle the caller's like.
+     *
+     * Optimistic: the heart fills and the figure moves on the tap, then the
+     * server's authoritative count replaces the guess. A tap is a 34px target on
+     * a page the reader is already looking at — waiting a round trip to
+     * acknowledge it is the thing that makes a like button feel broken. On
+     * failure the optimistic state is rolled back and a toast says so, rather
+     * than leaving a filled heart that the next reload will contradict.
+     */
+    toggleLike(): void {
+        if (!this.item || this.likePending || !this.canLike) {
+            return;
+        }
+        const id = this.item.id;
+        const wasLiked = this.liked;
+        const previousLikes = this.likes;
+
+        this.liked = !wasLiked;
+        this.likes = Math.max(0, previousLikes + (wasLiked ? -1 : 1));
+        this.likeTick += 1;
+        this.likePending = true;
+
+        const request = wasLiked ? this.gallery.unlike(id) : this.gallery.like(id);
+        request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (state) => {
+                // The server's count wins: another member may have liked this
+                // between the page load and the tap.
+                this.likes = state.likesCount;
+                this.liked = state.liked;
+                this.likePending = false;
+            },
+            error: (err: unknown) => {
+                this.liked = wasLiked;
+                this.likes = previousLikes;
+                this.likePending = false;
+                console.error('Failed to update the like', err);
+                this.toast.error(
+                    wasLiked ? 'Could not remove your like.' : 'Could not record your like.',
+                );
+            },
+        });
+    }
+
+    /**
+     * Ask the API whether this caller has already liked the dispatch.
+     *
+     * Skipped entirely when signed out: the endpoint is authenticated by design
+     * (whether a given person liked something is not public), so calling it
+     * anonymously would be a guaranteed 401 in the console on every public page
+     * view. A failure here is silent — the heart simply renders hollow, which is
+     * what it would have done without this call at all.
+     */
+    private resolveLikeState(id: string): void {
+        if (!this.canLike) {
+            return;
+        }
+        this.gallery
+            .likeState(id)
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((state) => {
+                if (state) {
+                    this.liked = state.liked;
+                    this.likes = state.likesCount;
+                }
+            });
+    }
+
+    /**
+     * Record this visit. Fire-and-forget, and failure is invisible on purpose —
+     * a view counter that could interrupt reading a page would be worse than one
+     * that occasionally misses. The server dedupes by address, so a reader who
+     * has been here before simply does not move the number.
+     */
+    private countView(id: string): void {
+        this.gallery
+            .recordView(id)
+            .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((state) => {
+                if (state) {
+                    this.views = state.viewsCount;
+                }
+            });
     }
 
     /** Whether the tag input has hit the 10-tag cap. */

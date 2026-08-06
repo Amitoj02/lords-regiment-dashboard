@@ -32,6 +32,7 @@ function apiItem(overrides: Partial<ApiGalleryItem> = {}): ApiGalleryItem {
         ],
         tags: ['siege', 'defense'],
         likesCount: 4,
+        viewsCount: 1247,
         liked: false,
         submittedAt: '2026-06-04T06:00:00Z',
         approvedAt: null,
@@ -153,6 +154,55 @@ describe('GalleryService', () => {
         expect(req.request.method).toBe('POST');
         req.flush({ likesCount: 5, liked: true });
         expect(state).toEqual({ likesCount: 5, liked: true });
+    });
+
+    it('likeState() READS the caller’s own state without mutating it (T-0311)', () => {
+        // GET, not POST: the detail page needs to know whether the heart starts
+        // filled, and asking must not be the same act as liking.
+        let state: { likesCount: number; liked: boolean } | undefined;
+        service.likeState('g1').subscribe((s) => (state = s));
+        const req = httpMock.expectOne('/api/gallery/g1/like');
+        expect(req.request.method).toBe('GET');
+        req.flush({ likesCount: 5, liked: true });
+        expect(state).toEqual({ likesCount: 5, liked: true });
+    });
+
+    it('recordView() posts to the view endpoint and returns the fresh total (T-0311)', () => {
+        let state: { viewsCount: number } | undefined;
+        service.recordView('g1').subscribe((s) => (state = s));
+        const req = httpMock.expectOne('/api/gallery/g1/view');
+        expect(req.request.method).toBe('POST');
+        req.flush({ viewsCount: 1248 });
+        expect(state).toEqual({ viewsCount: 1248 });
+    });
+
+    it('maps viewsCount onto the view model, and defaults it when the API omits it', () => {
+        // An API deployed behind this bundle sends no viewsCount; `undefined`
+        // would render as the literal string in the count chip.
+        let result: GalleryItem[] | undefined;
+        service.getAll().subscribe((items) => (result = items));
+        httpMock
+            .expectOne((r) => r.url === '/api/gallery')
+            .flush(
+                page([
+                    apiItem({ id: 'g1' }),
+                    apiItem({ id: 'g2', viewsCount: undefined as unknown as number }),
+                ]),
+            );
+        expect(result?.[0].views).toBe(1247);
+        expect(result?.[1].views).toBe(0);
+    });
+
+    it('leaves likedByMe undefined when the public API sends no `liked`', () => {
+        // Not `false`: the public feed has no caller to answer about, and
+        // collapsing "unknown" to "no" is what makes a member's heart start
+        // hollow and their next tap a no-op.
+        let result: GalleryItem[] | undefined;
+        service.getAll().subscribe((items) => (result = items));
+        httpMock
+            .expectOne((r) => r.url === '/api/gallery')
+            .flush(page([apiItem({ liked: undefined })]));
+        expect(result?.[0].likedByMe).toBeUndefined();
     });
 
     it('update() PATCHes the caption + tags and maps the result (T-0183)', () => {

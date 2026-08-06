@@ -14,6 +14,14 @@
     overflow: hidden;
     transition: border-color 0.15s;
 
+    // The meta row's layout depends on how wide THIS CARD is, not on how wide the
+    // window is — the same card is ~380px in the gallery masonry, ~246px in the
+    // profile tab's 3-up and ~178px in that grid's 2-up on a phone. A media query
+    // cannot tell those apart (the last two are the same viewport), so the card
+    // declares itself a size container and the meta row queries it. See
+    // `.gallery-card-meta` below.
+    container-type: inline-size;
+
     &:hover {
         border-color: var(--rule-2);
     }
@@ -104,6 +112,66 @@
     margin-top: 8px;
     margin-left: 0;
     margin-right: 0;
+}
+
+// ── Like / view counts (T-0311) ──────────────────────────────────────────────
+
+// Pushed to the right edge of the meta row, opposite the submitter. `auto`
+// rather than a spacer element so the name keeps every pixel the figures do not
+// need — it is the thing that ellipsises, and the figures are four characters.
+.gallery-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+    margin-left: auto;
+}
+
+.gallery-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+// Oxblood for the heart — the palette's one warm accent, and the colour the
+// abandoned `.gallery-likes` rule reached for years ago. Brass is reserved for
+// the primary ACTION on a page, and a count is not one.
+// 5.4:1 on --ink-850, so the contrast guard is satisfied by the real pairing.
+.gallery-stat--likes {
+    color: var(--oxblood-300);
+}
+
+// Deliberately --t-300 and not the submitter's --t-400: t-400 measures 3.4:1 on
+// this surface, and these are figures a reader is meant to actually read.
+.gallery-stat--views {
+    color: var(--t-300);
+}
+
+.gallery-stat-figure {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1;
+}
+
+// The tightest surface: the profile tab's gallery grid, 2-up on a phone, where a
+// card is ~178px wide. At that width the submitter's name and the figures are
+// both fighting for the same line and the name loses badly, so the figures take
+// a line of their own. Nothing is hidden — between them they are four characters.
+@container (max-width: 210px) {
+    .gallery-card-meta {
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .gallery-submitter {
+        // Claim the whole first line so the stats are pushed onto the second.
+        flex: 1 0 100%;
+    }
+
+    .gallery-card-stats {
+        // Left-aligned once it owns its own line; `auto` would strand it right.
+        margin-left: 0;
+    }
 }
 
 .gallery-submitter {

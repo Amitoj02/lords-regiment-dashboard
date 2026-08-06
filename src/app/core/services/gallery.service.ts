@@ -61,10 +61,15 @@ export interface GallerySubmissionSummary {
     submitterUsername: string | null;
 }
 
-/** Response of the like/unlike endpoints. */
+/** Response of the like/unlike endpoints and of the like-state read. */
 export interface GalleryLikeState {
     likesCount: number;
     liked: boolean;
+}
+
+/** Response of POST /gallery/:id/view — the fresh total, and nothing else. */
+export interface GalleryViewState {
+    viewsCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -143,12 +148,38 @@ export class GalleryService {
             .pipe(map(mapGalleryItem));
     }
 
+    /**
+     * The signed-in caller's OWN like state, without changing it.
+     *
+     * Needed because `GET /gallery/:id` is public and therefore carries no
+     * `liked` — the detail page would otherwise paint a hollow heart for a
+     * member who has already liked the dispatch, and their next tap would be a
+     * no-op "like" instead of the unlike they meant. Only call this when
+     * authenticated; anonymously it is a 401 by design (whether a given person
+     * liked something is not a public fact).
+     */
+    likeState(id: string): Observable<GalleryLikeState> {
+        return this.http.get<GalleryLikeState>(`${this.base}/${id}/like`);
+    }
+
     like(id: string): Observable<GalleryLikeState> {
         return this.http.post<GalleryLikeState>(`${this.base}/${id}/like`, {});
     }
 
     unlike(id: string): Observable<GalleryLikeState> {
         return this.http.delete<GalleryLikeState>(`${this.base}/${id}/like`);
+    }
+
+    /**
+     * Record that this visitor has seen an item, and get the fresh total.
+     *
+     * Public — signing in is not required and makes no difference; every
+     * reader counts. The server dedupes by a keyed hash of the caller's address,
+     * so calling this on every page load is correct: a returning visitor simply
+     * does not move the number.
+     */
+    recordView(id: string): Observable<GalleryViewState> {
+        return this.http.post<GalleryViewState>(`${this.base}/${id}/view`, {});
     }
 
     delete(id: string): Observable<void> {
