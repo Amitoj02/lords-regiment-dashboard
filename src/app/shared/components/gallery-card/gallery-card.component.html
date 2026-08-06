@@ -74,6 +74,47 @@
                 ></hf-avatar>
                 <span class="gallery-submitter-name">{{ item.submittedBy }}</span>
             </div>
+            <!--
+                Counts, right-aligned on the same line as the submitter (T-0311).
+                READ-ONLY here on purpose: the whole card is one link target, so a
+                heart that could be clicked would be a control nested inside a
+                link. Liking happens on the detail page.
+
+                The heart is present only above zero (see `showLikes`); the eye
+                always is. Below ~210px of card — the profile grid's 2-up on a
+                phone — the container query in the SCSS drops this group to its
+                own line rather than letting it fight the name for room.
+            -->
+            @if (showStats) {
+            <div class="gallery-card-stats" [attr.aria-label]="statsLabel">
+                @if (showLikes) {
+                <span class="gallery-stat gallery-stat--likes" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        />
+                    </svg>
+                    <span class="gallery-stat-figure">{{ likesLabel }}</span>
+                </span>
+                }
+                <span class="gallery-stat gallery-stat--views" aria-hidden="true">
+                    <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span class="gallery-stat-figure">{{ viewsLabel }}</span>
+                </span>
+            </div>
+            }
         </div>
         <!--
             Who passed this submission. Staff-only: the API omits `approvedBy`

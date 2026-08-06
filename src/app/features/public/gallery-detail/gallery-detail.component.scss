@@ -66,6 +66,257 @@
     }
 }
 
+/* ── Likes + views (T-0311) ───────────────────────────────────────────────── */
+
+.detail-reactions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* The one interactive control on this row. Oxblood once liked, neutral before —
+   brass stays reserved for the page's primary action, which liking is not. */
+.detail-like {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 34px;
+    padding: 0 15px;
+    border-radius: var(--r-2);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    white-space: nowrap;
+    background: var(--ink-700);
+    border: 1px solid var(--rule-3);
+    color: var(--t-100);
+    transition:
+        background 0.12s,
+        border-color 0.12s,
+        color 0.12s;
+
+    &:hover:not(:disabled) {
+        border-color: var(--rule-3);
+        background: var(--ink-600);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+
+    &.is-liked {
+        /* rgba over ink-900 rather than a token: it is an 18%-opacity wash of
+           oxblood, which no flat token expresses. */
+        background: rgba(110, 42, 35, 0.18);
+        border-color: var(--oxblood-600);
+        color: var(--oxblood-300);
+    }
+}
+
+.detail-like-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    flex: none;
+}
+
+.detail-like-heart {
+    position: relative;
+}
+
+/* Decorative burst: a ring that expands out of the heart and six pips thrown
+   outward. Both are painted only on the tap that ADDS a like. */
+.detail-like-ring {
+    position: absolute;
+    width: 17px;
+    height: 17px;
+    border-radius: 999px;
+    border: 1.5px solid var(--oxblood-300);
+    opacity: 0;
+}
+
+.detail-like-pip-axis {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+.detail-like-pip {
+    position: absolute;
+    left: -1.75px;
+    top: -1.75px;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 999px;
+    background: var(--oxblood-300);
+    opacity: 0;
+}
+
+/* Clips the figure so it can roll up from below rather than swapping in place. */
+.detail-like-count {
+    display: inline-flex;
+    overflow: hidden;
+}
+
+.detail-like-figure {
+    font-family: var(--mono);
+    font-size: 12.5px;
+}
+
+/* Read-only chips: the signed-out likes figure, and the views figure in both
+   states. Never a control — there is no anonymous action to offer. */
+.detail-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.detail-stat--likes {
+    color: var(--oxblood-300);
+}
+
+.detail-stat--views {
+    color: var(--t-300);
+}
+
+.detail-stat-figure {
+    font-family: var(--mono);
+    font-size: 12.5px;
+}
+
+.detail-stat-noun {
+    font-size: 12.5px;
+    color: var(--t-400);
+}
+
+/* States the privacy rule where the reader is deciding whether to press it. */
+.detail-reactions-note {
+    font-size: 11.5px;
+    color: var(--t-500);
+    max-width: 34ch;
+    line-height: 1.5;
+    text-align: right;
+}
+
+/* Two identical keyframe sets per effect. The component alternates between them
+   on each tap because re-rendering an element with the same `animation-name`
+   does not restart the animation — a fast second tap would otherwise appear to
+   do nothing. */
+@keyframes hfLikePopA {
+    0% {
+        transform: scale(1);
+    }
+    28% {
+        transform: scale(0.78);
+    }
+    62% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+@keyframes hfLikePopB {
+    0% {
+        transform: scale(1);
+    }
+    28% {
+        transform: scale(0.78);
+    }
+    62% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+@keyframes hfLikeBurstA {
+    0% {
+        transform: translateY(-2px) scale(0.3);
+        opacity: 0;
+    }
+    18% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-17px) scale(0.15);
+        opacity: 0;
+    }
+}
+@keyframes hfLikeBurstB {
+    0% {
+        transform: translateY(-2px) scale(0.3);
+        opacity: 0;
+    }
+    18% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-17px) scale(0.15);
+        opacity: 0;
+    }
+}
+@keyframes hfLikeRingA {
+    0% {
+        transform: scale(0.45);
+        opacity: 0.85;
+    }
+    100% {
+        transform: scale(2.1);
+        opacity: 0;
+    }
+}
+@keyframes hfLikeRingB {
+    0% {
+        transform: scale(0.45);
+        opacity: 0.85;
+    }
+    100% {
+        transform: scale(2.1);
+        opacity: 0;
+    }
+}
+@keyframes hfLikeRollA {
+    0% {
+        transform: translateY(9px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+@keyframes hfLikeRollB {
+    0% {
+        transform: translateY(9px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Motion is decoration here — the fill and the figure already carry the state,
+   so a reader who has asked for less of it loses nothing. */
+@media (prefers-reduced-motion: reduce) {
+    .detail-like-heart,
+    .detail-like-ring,
+    .detail-like-pip,
+    .detail-like-figure {
+        animation: none !important;
+    }
+}
+
 /* Info block */
 .detail-body {
     display: flex;
@@ -196,5 +447,34 @@
 @media (max-width: 640px) {
     .detail-title {
         font-size: 26px;
+    }
+
+    /* The button becomes a proper 44px tap target, the row splits it against the
+       views figure, and the privacy note steps down to its own line — at 390px
+       it would otherwise squeeze both to a couple of characters each. */
+    .detail-reactions {
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .detail-like {
+        height: 44px;
+        padding: 0 18px;
+        font-size: 14px;
+    }
+
+    .detail-like-figure {
+        font-size: 13px;
+    }
+
+    .detail-reactions-note {
+        flex: 1 0 100%;
+        max-width: none;
+        text-align: left;
+    }
+
+    /* `.sp` would otherwise hold a full flex share of the line to itself. */
+    .detail-reactions .sp {
+        display: none;
     }
 }

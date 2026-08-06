@@ -15,6 +15,7 @@ function item(overrides: Partial<GalleryItem> = {}): GalleryItem {
         submittedAt: '2026-06-07T19:30:00',
         status: 'approved',
         likes: 0,
+        views: 0,
         tags: [],
         ...overrides,
     };
@@ -140,6 +141,66 @@ describe('GalleryCardComponent (T-0242 video posters)', () => {
         );
         const img = el.querySelector('img.gallery-card-img') as HTMLImageElement;
         expect(img.getAttribute('src')).toBe('https://cdn.example/uploads/shot.png');
+    });
+
+    describe('like + view counts (T-0311)', () => {
+        it('always shows the views chip, including at zero', () => {
+            // A dispatch nobody has opened yet is a fact about how new it is —
+            // hiding the eye would make "new" and "unpopular" look identical.
+            const el = render(item({ views: 0 }));
+            expect(el.querySelector('.gallery-stat--views')).toBeTruthy();
+            expect(
+                el.querySelector('.gallery-stat--views .gallery-stat-figure')!.textContent,
+            ).toContain('0');
+        });
+
+        it('hides the heart entirely below one like, rather than printing "0"', () => {
+            // A card reading "0 likes" is a small public verdict on the picture.
+            const el = render(item({ likes: 0, views: 12 }));
+            expect(el.querySelector('.gallery-stat--likes')).toBeNull();
+        });
+
+        it('shows the heart as soon as there is one like', () => {
+            const el = render(item({ likes: 1, views: 12 }));
+            expect(el.querySelector('.gallery-stat--likes')).toBeTruthy();
+        });
+
+        it('compacts both figures the same way', () => {
+            const el = render(item({ likes: 1247, views: 4830 }));
+            const figures = Array.from(el.querySelectorAll('.gallery-stat-figure')).map((n) =>
+                n.textContent!.trim(),
+            );
+            expect(figures).toEqual(['1.2k', '4.8k']);
+        });
+
+        it('drops both chips when the surface opts out via [showStats]', () => {
+            component.showStats = false;
+            const el = render(item({ likes: 9, views: 12 }));
+            expect(el.querySelector('.gallery-card-stats')).toBeNull();
+        });
+
+        it('defaults [showStats] on, so an archive card carries its counts', () => {
+            expect(component.showStats).toBe(true);
+        });
+
+        it('names the figures for a screen reader, which cannot see the icons', () => {
+            const el = render(item({ likes: 1, views: 1 }));
+            const group = el.querySelector('.gallery-card-stats')!;
+            // Singular at one, and the like clause is absent when there are none.
+            expect(group.getAttribute('aria-label')).toBe('1 like, 1 view');
+
+            const noLikes = render(item({ likes: 0, views: 5 }));
+            expect(noLikes.querySelector('.gallery-card-stats')!.getAttribute('aria-label')).toBe(
+                '5 views',
+            );
+        });
+
+        it('renders no interactive control — the whole card is one link target', () => {
+            // A heart that could be clicked here would be a button nested inside
+            // the card's <a>. Liking lives on the detail page.
+            const el = render(item({ likes: 3, views: 9 }));
+            expect(el.querySelector('.gallery-card-stats button')).toBeNull();
+        });
     });
 
     it('resets the failure flags when a new item is bound', () => {

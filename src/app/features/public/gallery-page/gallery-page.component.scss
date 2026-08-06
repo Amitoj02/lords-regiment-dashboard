@@ -198,11 +198,10 @@
     color: var(--t-400);
 }
 
-.gallery-likes {
-    gap: 4px;
-    color: var(--oxblood-300);
-    font-size: 11.5px;
-}
+/* `.gallery-likes` lived here — a likes chip styled years ago that no template
+   ever rendered. The real one now ships on hf-gallery-card (T-0311), where it
+   can actually reach the markup; keeping a second, unreachable copy here would
+   be the next reader's wild goose chase. */
 
 /* VOD / link badge */
 .gallery-vod-badge {

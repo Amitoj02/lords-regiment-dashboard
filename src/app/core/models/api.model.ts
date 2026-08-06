@@ -680,6 +680,8 @@ export interface ApiGalleryItem {
     files: ApiGalleryFile[];
     tags: string[];
     likesCount: number;
+    /** Distinct viewers (T-0311 / backend T-0302). Public, like `likesCount`. */
+    viewsCount: number;
     /** Present only for authenticated callers. */
     liked?: boolean;
     submittedAt: string;
@@ -715,6 +717,15 @@ export function mapGalleryItem(g: ApiGalleryItem): GalleryItem {
         submittedAt: g.submittedAt,
         status: g.status,
         likes: g.likesCount,
+        // `?? 0`, not a bare read: an item served by an API deployed ahead of
+        // this bundle has no `viewsCount`, and `undefined` would render as the
+        // literal string in the count chip rather than as "no views yet".
+        views: g.viewsCount ?? 0,
+        // Deliberately NOT defaulted. `liked` is absent on every public
+        // response because there is no caller to answer about — collapsing that
+        // to `false` here would tell the card a member has not liked something
+        // the API never had an opinion on. See GalleryItem.likedByMe.
+        likedByMe: g.liked,
         tags: g.tags ?? [],
         declineReason: g.declineReason,
         caption: g.caption ?? undefined,
