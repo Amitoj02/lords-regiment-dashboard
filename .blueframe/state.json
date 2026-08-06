@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "3cb20af5fe8777eb6320e7fabdb86647e6ba37e4",
-  "lastSyncedAt": "2026-08-06T03:55:00Z",
-  "notesForNextSession": "T-0311 is in REVIEW as a PR against dev, COUPLED to lords-dashboard-backend T-0302 (see https://github.com/Amitoj02/lords-dashboard-backend). Ship the two together: this bundle calls POST /gallery/:id/view and GET /gallery/:id/like, and neither exists on an older API. Deployed alone, the counts would render 0 and the like toggle would 404.\n\nTWO THINGS WORTH KNOWING.\n(1) The card's meta row responds to the CARD's width, not the window's, via a CSS container query on .gallery-card. That is not a stylistic choice: the same component is ~380px in the gallery masonry, ~246px in the profile tab's 3-up and ~178px in that grid's 2-up on a phone - the last two are the SAME viewport, so a media query cannot tell them apart. Threshold is 210px. Chrome cannot be resized below a 500px inner width, so verifying the 178px case means narrowing the grid from the console, not shrinking the window.\n(2) `likedByMe` is deliberately left `undefined` rather than defaulted to false when the API omits `liked`. The public feed has no caller to answer about, and collapsing unknown to 'no' is exactly what would make a member's heart start hollow and their next tap a no-op like instead of the unlike they meant. The detail page resolves the real answer through GalleryService.likeState.\n\nStill true from before: the T-0303..T-0310 public-surface pass merged to dev, and the `.row` / Bootstrap gutter collision documented in _base.scss remains the trap it always was.",
-  "nextIdCounter": 312,
+  "lastSyncedCommit": "853d54bf87383654a649c7e43f709d60ef573dc0",
+  "lastSyncedAt": "2026-08-06T05:10:00Z",
+  "notesForNextSession": "T-0312 is in REVIEW as a PR against dev: a one-line removal on the gallery dispatch page (the \"Nobody can see who liked a dispatch\" note). Frontend-only, no API surface, safe to merge alone.\n\nT-0311 is in REVIEW as a PR against dev, COUPLED to lords-dashboard-backend T-0302 (see https://github.com/Amitoj02/lords-dashboard-backend). Ship the two together: this bundle calls POST /gallery/:id/view and GET /gallery/:id/like, and neither exists on an older API. Deployed alone, the counts would render 0 and the like toggle would 404.\n\nTWO THINGS WORTH KNOWING.\n(1) The card's meta row responds to the CARD's width, not the window's, via a CSS container query on .gallery-card. That is not a stylistic choice: the same component is ~380px in the gallery masonry, ~246px in the profile tab's 3-up and ~178px in that grid's 2-up on a phone - the last two are the SAME viewport, so a media query cannot tell them apart. Threshold is 210px. Chrome cannot be resized below a 500px inner width, so verifying the 178px case means narrowing the grid from the console, not shrinking the window.\n(2) `likedByMe` is deliberately left `undefined` rather than defaulted to false when the API omits `liked`. The public feed has no caller to answer about, and collapsing unknown to 'no' is exactly what would make a member's heart start hollow and their next tap a no-op like instead of the unlike they meant. The detail page resolves the real answer through GalleryService.likeState.\n\nStill true from before: the T-0303..T-0310 public-surface pass merged to dev, and the `.row` / Bootstrap gutter collision documented in _base.scss remains the trap it always was.",
+  "nextIdCounter": 313,
   "connections": [],
   "tasks": [
     {
@@ -20578,6 +20578,52 @@
           "note": "implemented on feat/gallery-likes-and-views; 840 unit tests green, lint + contrast guard + prod build clean; verified live in Chrome on all four surfaces; PR open against dev"
         }
       ]
+    },
+    {
+      "id": "T-0312",
+      "title": "Drop the likes privacy note from the dispatch page",
+      "summary": "Removed the line \"Nobody can see who liked a dispatch — the count is the whole public record.\" from the reactions row on /gallery/:id at the owner's request. It answered a question the reader was not asking and held the right half of the row to do it. Took with it the .detail-reactions-note rules and the .sp spacer that existed only to push it right, plus the phone override that hid that spacer. The row keeps justify-content: space-between on phones, so the heart and the view count sit on the same edges they already did.",
+      "status": "review",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "gallery",
+      "feature": "engagement-counts",
+      "subfeature": "card-and-detail-counts",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the dispatch page's reactions row shows only the like control and the view count, with no note beside them",
+          "status": "pending"
+        },
+        {
+          "desc": "on a phone the heart still sits at the left edge and the view count at the right, with no empty band where the note was",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [
+        "Did not verify in a browser. The dev SPA was up on :4200 but the API behind it was not, so /gallery/:id had no dispatch to render and the reactions row could not be seen. The change is a pure removal covered by the prod build, 840 unit tests, lint, the contrast guard and Prettier; the phone-layout claim (heart left, views right) follows from space-between over the two remaining children, which is what the row already did while the note wrapped to its own line."
+      ],
+      "lastTouchedCommit": "853d54bf87383654a649c7e43f709d60ef573dc0",
+      "createdAt": "2026-08-06T05:10:00Z",
+      "updatedAt": "2026-08-06T05:10:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T05:10:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
     }
   ],
   "history": [
@@ -20605,6 +20651,11 @@
       "at": "2026-08-06T03:55:00Z",
       "by": "claude",
       "note": "T-0311 created and implemented: likes + views on the gallery card and detail page; coupled to backend T-0302"
+    },
+    {
+      "at": "2026-08-06T05:10:00Z",
+      "by": "claude",
+      "note": "T-0312 created and implemented: removed the likes privacy note from the gallery dispatch page reactions row"
     }
   ]
 }
