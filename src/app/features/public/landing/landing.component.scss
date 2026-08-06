@@ -378,6 +378,11 @@
 
 .event-meta {
     margin-top: 4px;
+    // `.row` is Bootstrap grid's class name as well as the app's flex utility, so
+    // it drags in `margin-inline: -12px`. That put the time/server line 12px left
+    // of the title above it and the platform badges below it — the one line in
+    // the row that did not share the column's left edge (T-0303).
+    margin-inline: 0;
 }
 
 .event-meta-time {
@@ -513,6 +518,36 @@
     // Reference mobile shows a 2-up gallery
     .gallery-grid {
         grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* The event row stops being one line.
+ *
+ * `.event-row` was `nowrap` at every width, and `.event-actions` carries
+ * `margin-left: auto`, so once the date column, the title and the meta lines no
+ * longer fit, the Details button was pushed straight out of the panel — past the
+ * right border and off the page, taking the document's scroll width with it
+ * (T-0304).
+ *
+ * Wrapping it costs one row of height and puts the button back inside. It lands
+ * under the event's own content column rather than at the row's padding edge, so
+ * it reads as this event's action instead of the panel's. 54px is the date
+ * column (38px) plus the row's 16px gap. */
+@media (max-width: 560px) {
+    .event-row {
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+
+    .event-details {
+        flex: 1 1 calc(100% - 54px);
+        min-width: 0;
+    }
+
+    .event-actions {
+        flex: 1 1 100%;
+        min-width: 0;
+        margin-left: 54px;
     }
 }
 

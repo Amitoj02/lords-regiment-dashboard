@@ -2,9 +2,9 @@
   "version": 1,
   "project": "lords-regiment-dashboard",
   "lastSyncedCommit": "cb76f9f6f1ad0878b9085478bcb1ac2752152a71",
-  "lastSyncedAt": "2026-08-05T21:30:00Z",
-  "notesForNextSession": "T-0302 is in REVIEW as a PR against dev: the static site description is now \"Discipline, honour, and the line. A Holdfast: Nations at War regiment of standing.\" in index.html (meta/og/twitter) and manifest.json. T-0301 merged to dev as PR #73.\n\n⚠️ STILL NOTHING IN PRODUCTION. main is the production branch and dev has not been promoted. Everything from T-0297 onward - crawler routing in the web image, shell parity, and now this description - reaches users only when dev goes to main AND the web image is rebuilt.\n\nTHE ONE THING TO DECIDE NEXT: this repo now holds two different site-level descriptions. The static shell says the tagline; DEFAULT_MISSION in core/seo/seo-copy.ts and the hardcoded twin in SeoService.reset() still say \"Roster, events and gallery for a Holdfast: Nations at War regiment.\" The owner asked only for the first string, so the second was left alone - it is byte-coupled to the API's seo.service.ts (:411, :799) and gallery-share.service.ts (:181) and changing it means a coupled release. If the answer is \"make them all the tagline\", it is a four-line change across two repos in one release, not a one-line change here. Note SeoService.reset() duplicates the literal rather than importing DEFAULT_MISSION - fix that in the same pass.\n\nVERIFY AFTER DEPLOY: fetch a crawler path with a Discordbot UA and read the headers. `Vary: Accept-Encoding` + `Cache-Control: no-store` means the nginx SPA answered (old build); `Vary: User-Agent` + `max-age=600` means the API shell did (new build). Production still returned the former at last check.\n\nSTATE.JSON FORMATTING: the committed file is `json.dump(indent=2, ensure_ascii=False)` with a trailing newline - raw em-dashes, NOT \\u escapes. Round-trip against `git show HEAD:.blueframe/state.json` before writing. Also: `type` has no `fix` member (T-0301 had one and it would have zeroed the repo in the Blueframe UI); valid types are feature|bug|chore|infra|question|spike.\n\nOWNER DECISIONS, do not relitigate: the profile card image is the AVATAR always (so twitter:card is `summary` by design); attendance is dead on every surface; the Discord tag is gone from the roster row but kept in the Owner-only CSV.\n\nSTILL NOT DONE: nothing pasted into a real Discord channel (Discord caches an unfurl ~30min with no purge - use a throwaway query string when re-testing). event-detail.component has no spec file. The profile.component.scss budget warning (8.91kB vs 8kB) is pre-existing.\n\nFrontend verification runs in a container - the host is on Node 22.22.2 and the Angular CLI needs >=22.22.3. `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` matches CI; karma needs chromium plus a --no-sandbox wrapper on CHROME_BIN (a wrapper script, so the repo stays clean).",
-  "nextIdCounter": 303,
+  "lastSyncedAt": "2026-08-06T01:30:00Z",
+  "notesForNextSession": "T-0303..T-0310 are in REVIEW as one PR against dev: the public-surface pass the owner asked for on 2026-08-05. All eight are frontend-only, no backend twin, no coupled release.\n\nTHE ONE THING WORTH KNOWING: five of these eight bugs were the SAME bug. The app's `.row` flex utility shares its class name with Bootstrap grid's `.row`, so every element using it inherits `margin-inline: -12px`. _base.scss documents this and deliberately does NOT reset it globally (T-0287 tried and backed out: pages laid out against the leak shift 12px the moment it goes). This pass patched four more sites locally — landing `.event-meta`, events `.event-time-row`, roster `.roster-head-actions`, and every `.row` inside `.gallery-page-wrap` at the mobile breakpoints — which brings the local-patch count to roughly eight. That global reset is now the cheaper change; it wants its own task, a screenshot of every public page before and after, and nothing else in the branch.\n\nSTILL OPEN ON iOS: T-0308 ships the `#t=0.1` media fragment, which is the last HTML-only lever for a posterless clip. It was confirmed in headless Chrome (black tile -> frame) but NOT on a real iPhone — T-0256 is still the blocked task that wants a real device. If the fragment turns out not to be enough, the remaining options are all server-side: ffmpeg posters in the API image, or a backfill that captures posters for the clips uploaded before T-0242.\n\nVERIFICATION SETUP that paid for itself, reuse it: the dev DB had 2 past events and 1 gallery item, which is not enough to see any of these bugs. `docker compose up` in ../lords-dashboard-backend brings up api/db/minio/web (web serves :4200, api on host :3001). Seed with plain SQL against the db container (root/devroot, db lords_dashboard) after pushing media into MinIO through `docker run --rm --network lords-dashboard-backend_lords minio/mc`. TWO TRAPS: `events.server_password` is an AES-256-GCM column, so a plaintext INSERT makes every /api/events call 500 with \"Malformed encrypted payload\" — mint the value with `docker exec ...api-1 node -e` using the container's own ENCRYPTION_KEY. And insert text through a UTF-8 client or em dashes land as mojibake.\n\nThe headless-screenshot recipe (google-chrome --headless=new --window-size, which DOES move the CSS viewport, unlike the browser extension) is what made the mobile work checkable. CI parity locally: `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` for format/lint/build, plus apt chromium and a --no-sandbox wrapper on CHROME_BIN for karma. 805 specs green.\n\nCARRIED OVER, UNCHANGED: T-0302's two disagreeing site descriptions (index.html says the tagline, DEFAULT_MISSION still says the old sentence) is still the open decision, still a four-line coupled release across two repos. Production is still serving main from an un-rebuilt web image. STATE.JSON: json.dump(indent=2, ensure_ascii=False) + trailing newline, raw em dashes; testPlan status must be pending|passed|failed; `type` has no `fix` member.",
+  "nextIdCounter": 311,
   "connections": [],
   "tasks": [
     {
@@ -20077,6 +20077,399 @@
           "note": "created and opened as a PR against dev"
         }
       ]
+    },
+    {
+      "id": "T-0303",
+      "title": "Align the event time/server line with the rest of its row",
+      "summary": "The time + server line on the landing page's Upcoming Orders and on /events sat 12px LEFT of the title above it and the platform badges below it — the one line in the row that did not share the column's left edge. Cause: both carry the shared `.row` flex utility, whose class name collides with Bootstrap grid's `.row` and so inherits `margin-inline: -12px`. Zeroed the leaked gutter on `.event-meta` (landing) and `.event-time-row` (/events). Measured after: title, time, platforms and CTA all start at the same x on both pages.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "events",
+      "subfeature": "event-list-row",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.scss",
+        "src/app/features/public/events-page/events-page.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/home and /events at 372px: title, time line and platform badges share one left edge",
+          "status": "pending"
+        },
+        {
+          "desc": "same three share one left edge at 1440px",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [
+        "Did not attempt the global `.row` gutter reset the utility's own comment defers — still its own task, still needs its own screenshots."
+      ],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0304",
+      "title": "Stop the Upcoming Orders CTA escaping the panel on a phone",
+      "summary": "`.event-row` was a nowrap flex at every width and `.event-actions` carries `margin-left: auto`, so once the date column, title and meta no longer fit, the Details button was pushed straight past the panel's right border and off the page — it defined document.scrollWidth (362px against a 372px viewport) and produced a horizontal scrollbar on the landing page. Below 560px the row now wraps: the body takes `calc(100% - 54px)` and the action drops to its own line indented by the same 54px (38px date column + the row's 16px gap), so the CTA reads as this event's action. Verified: scrollWidth back inside the viewport, button left edge equal to the title's.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "events",
+      "subfeature": "upcoming-orders",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/landing/landing.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/home at 372px: no horizontal scrollbar, document.scrollWidth <= innerWidth",
+          "status": "pending"
+        },
+        {
+          "desc": "/home at 372px: the Details button's left edge equals the event title's",
+          "status": "pending"
+        },
+        {
+          "desc": "/home at 1440px: the row is still one line with the CTA on the right",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0305",
+      "title": "Indent the events-list CTA to the event's own column",
+      "summary": "On /events below 560px `.event-list-meta` was `width: 100%` and started at the row's padding edge — 52px left of the title, sitting under the date block, so the CTA read as the panel's action rather than the event's. Swapped for `flex-basis: calc(100% - 52px)` plus a matching `margin-left`, which sums to exactly one row against the row's `row-gap`.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "events",
+      "subfeature": "event-list-row",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/events-page/events-page.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/events at 372px: View details, the title and the time line share one left edge",
+          "status": "pending"
+        },
+        {
+          "desc": "a signed-in reader's RSVP tally still sits beside the CTA on the same line",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0306",
+      "title": "Show the event banner as a picture, not as a backdrop for the title",
+      "summary": "The event page printed the status badges, the H1 and the date/server line ON TOP of the uploaded banner behind a dark scrim. Owner report: the art almost always carries its own type (muster time, server, kit) and both layers of words ended up unreadable. The banner is now its own block at the top of the page — an `<img>` at `object-fit: contain` so nothing is cropped, capped at 460px (300px on a phone) so one oddly-shaped upload cannot push the page down, with the letterbox filled by a blurred over-scaled copy of the same image. Its bottom edge dissolves into the page through a gradient capped as `min(72px, 26%)`. The badges/title/meta follow underneath as a `.event-head` on the page's own ground, in the page's own text colours. The banner block renders ONLY when there is art: with the type moved out, the old gradient fallback was an empty box. Also fixed the missing space that ran the zone label into the server separator (\"EDT· Lord\") — Angular drops the whitespace-only node between the two spans.",
+      "status": "review",
+      "type": "bug",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "public",
+      "feature": "events",
+      "subfeature": "event-detail",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/event-detail/event-detail.component.html",
+        "src/app/features/public/event-detail/event-detail.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "an event with a 3:1 banner renders it whole, uncropped, at 1440px and 390px",
+          "status": "pending"
+        },
+        {
+          "desc": "an event with a 4:3 banner is letterboxed against its own blurred backdrop, not cropped",
+          "status": "pending"
+        },
+        {
+          "desc": "an event with NO banner renders the heading alone, with no empty gradient box",
+          "status": "pending"
+        },
+        {
+          "desc": "the date line reads \"… EDT · Lord | …\" with a space either side of the separator",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "event-detail.component has no spec file, so nothing guards the new markup. The `.event-banner__overlay` / `__title` / `__meta` class names are gone; anything outside this component that targeted them (nothing found in src/ or design-reference/) would break silently.",
+          "status": "open"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0307",
+      "title": "Give the gallery back its phone gutters, one plate a row",
+      "summary": "`.gallery-page-wrap` sets `padding: 32px 56px 64px` and, being emulated-encapsulated at (0,2,0), outranked the global `.page` mobile rules at (0,1,0) — so 112px of a 390px phone (29% of the viewport) stayed as empty gutter and the masonry was squeezed into what was left. Added the breakpoint overrides the class had been shadowing (24px/16px at <=820, 20px/12px at <=560), dropped the masonry to ONE column below 560px at the owner's request, zeroed the Bootstrap `.row` gutter that would otherwise hang the page head, filter bar and tag list off the new tighter edge, and left-aligned the tag chips once the bar wraps.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "mobile-layout",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/gallery-page/gallery-page.component.scss"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/gallery at 372px: the page head, tabs, tag chips and every card share one left edge",
+          "status": "pending"
+        },
+        {
+          "desc": "/gallery at 372px: one card per row, ~90% of the viewport wide",
+          "status": "pending"
+        },
+        {
+          "desc": "/gallery at 768px: still 2-up",
+          "status": "pending"
+        },
+        {
+          "desc": "/gallery at 1440px: unchanged 3-column masonry at the 56px gutters",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0308",
+      "title": "Paint a frame for posterless clips on iOS",
+      "summary": "Owner confirmed on a real device that iOS Safari and iOS Chrome still show a flat black tile for directly-uploaded clips. T-0242's client-captured poster covers every clip submitted SINCE it shipped; clips submitted before, and any whose capture failed, have no poster and fall through to the inline `<video preload=\"metadata\">` — which WebKit paints nothing for unless it is asked for a specific time. Appending a `#t=0.1` media fragment to the src is the one HTML-only lever that makes it fetch and paint a frame without playing. Applied on the gallery card and on the detail hero; an existing fragment is left alone, and og:video still carries the clean URL. 0.1s rather than 0 because plenty of encodes open on a black frame. Confirmed in headless Chrome, where the same tile went from black to showing the frame.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "gallery",
+      "feature": "browse",
+      "subfeature": "video-poster",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts",
+        "src/app/features/public/gallery-detail/gallery-detail.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "a posterless uploaded clip shows a frame in the grid on a real iPhone (Safari AND Chrome)",
+          "status": "pending"
+        },
+        {
+          "desc": "the same clip's detail hero shows a frame rather than a black rectangle",
+          "status": "pending"
+        },
+        {
+          "desc": "a clip WITH a persisted poster still renders as an <img>, never a <video>",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "hf-gallery-card is shared by the public archive, the landing strip and the staff moderation queue. The change is confined to the no-poster branch, but any surface rendering an uploaded clip now requests a byte range at 0.1s instead of metadata alone — slightly more transfer on a grid of posterless clips.",
+          "status": "open"
+        }
+      ],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0309",
+      "title": "Drop the eyebrow labels from the four public pages",
+      "summary": "Removed \"Field Orders\" (/events), \"Gallery Dispatches\" (/gallery), \"Roll Call\" (/roster) and \"Field Dispatch\" (/gallery/:id) at the owner's request, together with the four now-dead rules that styled them. The page titles carry the pages. The admin console's own \"Field Orders\" sub-heading on /app/events is a different surface and was left alone.",
+      "status": "review",
+      "type": "chore",
+      "size": "XS",
+      "sizeWeight": 1,
+      "area": "public",
+      "feature": "nav",
+      "subfeature": "page-heads",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/events-page/events-page.component.html",
+        "src/app/features/public/gallery-page/gallery-page.component.html",
+        "src/app/features/public/roster/roster.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "all four pages render their title as the first line, with no eyebrow above it",
+          "status": "pending"
+        },
+        {
+          "desc": "the admin events console still shows its own Field Orders sub-heading",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
+    },
+    {
+      "id": "T-0310",
+      "title": "Align the roster member count with the lede on a phone",
+      "summary": "`.roster-head-actions` carries the shared `.row` class and so inherited Bootstrap grid's `margin-inline: -12px`. Stacked on a phone that pulled \"N members\" 12px LEFT of the lede it sits under; beside the lede on a desktop it hung the count and the export button 12px past the page's right gutter. Zeroed on both sides, which fixes both orientations. Also dropped the head's 8px action padding and tightened its gap to 6px below 820px, per the owner's request for less space above the count.",
+      "status": "review",
+      "type": "chore",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "roster",
+      "subfeature": "page-head",
+      "repo": "",
+      "paths": [
+        "src/app/features/public/roster/roster.component.scss",
+        "src/app/features/public/roster/roster.component.html"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "/roster at 372px: the title, lede and member count share one left edge",
+          "status": "pending"
+        },
+        {
+          "desc": "/roster at 372px: visibly less space between the lede and the count than before",
+          "status": "pending"
+        },
+        {
+          "desc": "/roster at 1440px: the count and Export button end level with the table's right edge",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [],
+      "skippedByClaude": [],
+      "lastTouchedCommit": "",
+      "createdAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-08-06T01:30:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T01:30:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and opened as a PR against dev"
+        }
+      ]
     }
   ],
   "history": [
@@ -20094,6 +20487,11 @@
       "at": "2026-08-05T21:30:00Z",
       "by": "claude",
       "note": "T-0302 created (site description -> regiment tagline); T-0301 merged to dev and its invalid type corrected"
+    },
+    {
+      "at": "2026-08-06T01:30:00Z",
+      "by": "claude",
+      "note": "T-0303..T-0310 created from the owner's public-surface pass (row alignment, escaping CTAs, event banner rework, gallery phone gutters, iOS clip frames, eyebrow removal, roster head)"
     }
   ]
 }

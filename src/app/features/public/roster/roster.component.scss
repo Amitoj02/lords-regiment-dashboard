@@ -11,13 +11,14 @@
     align-items: flex-start;
 }
 
-.roster-roll-call {
-    margin-bottom: 4px;
-}
-
 .roster-head-actions {
     gap: 12px;
     padding-top: 8px;
+    // Bootstrap grid's `.row` gutter (`margin-inline: -12px`) rides along on the
+    // shared flex utility. Stacked on a phone that pulled the member count 12px
+    // left of the lede it sits under; beside the lede on a desktop it hung the
+    // export button 12px past the page's right gutter (T-0310).
+    margin-inline: 0;
 }
 
 // ───────── Filter bar controls ─────────
@@ -234,6 +235,17 @@
 
 // ───────── Mobile: roster table → cards (ref: MobileMembers) ─────────
 @media (max-width: 820px) {
+    // The head stops being two columns and becomes two stacked lines, so the
+    // 8px that used to lift the count level with the title now only adds to the
+    // gap the page head already provides.
+    .roster-page-head {
+        gap: 6px;
+    }
+
+    .roster-head-actions {
+        padding-top: 0;
+    }
+
     // Cancel the global horizontal-scroll min-width; we go to cards instead
     .table-scroll .hf-table {
         min-width: 0;

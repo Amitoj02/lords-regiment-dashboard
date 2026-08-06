@@ -85,10 +85,6 @@
     flex-wrap: wrap;
 }
 
-.page-head-label {
-    margin-bottom: 6px;
-}
-
 .ongoing-section {
     margin-bottom: 32px;
 }
@@ -184,6 +180,11 @@
     gap: 10px;
     margin-top: 4px;
     flex-wrap: wrap;
+    // `.row` is Bootstrap grid's class name as well as the app's flex utility, so
+    // it drags in `margin-inline: -12px`. That put the time/server line 12px left
+    // of the title above it and the platform badges below it — the one line in
+    // the row that did not share the column's left edge (T-0303).
+    margin-inline: 0;
 }
 
 .event-time {
@@ -270,8 +271,13 @@
         flex-basis: calc(100% - 52px);
     }
 
+    /* Indented to the body's own left edge (36px date block + the 16px flex gap)
+       rather than parked at the row's padding edge, where the CTA sat under the
+       date column and read as the panel's action rather than this event's
+       (T-0305). Basis + margin add up to exactly one row. */
     .event-list-meta {
-        width: 100%;
+        flex-basis: calc(100% - 52px);
+        margin-left: 52px;
         display: flex;
         align-items: center;
         gap: 12px;
