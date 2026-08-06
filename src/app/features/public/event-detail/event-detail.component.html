@@ -11,41 +11,52 @@
         <!-- The console's breadcrumb went with the app shell; this is the way back. -->
         <a routerLink="/events" class="btn btn-ghost btn-sm event-back">&larr; All events</a>
 
-        <!-- Banner (uploaded image if present, else the gradient fallback — T-0098) -->
-        <div
-            class="event-banner"
-            [style.background-image]="event.bannerUrl ? 'url(' + event.bannerUrl + ')' : null"
-        >
-            <div class="event-banner__overlay">
-                <div class="event-banner__badges">
-                    <hf-event-status [status]="event.status"></hf-event-status>
-                    <hf-platform-badges [platforms]="event.platforms"></hf-platform-badges>
-                    @if (event.recurrenceCadence) {
-                    <span class="badge">Repeats {{ event.recurrenceCadence }}</span>
-                    }
-                    <!-- Tags are public metadata and read here for everyone. They
-                         used to sit in Server Details, which is signed-in only now
-                         — leaving them there would have hidden the one part of
-                         that panel an anonymous visitor is allowed to see. -->
-                    @for (tag of event.tags; track tag) {
-                    <span class="badge brass">{{ tag }}</span>
-                    }
-                </div>
-                <h1 class="event-banner__title serif-display">{{ event.title }}</h1>
-                <!-- The times are converted to the VIEWER's zone (T-0237), so this
-                     labels the viewer's zone — printing event.timezone here is what
-                     made a UTC instant look like an Eastern one. -->
-                <div class="event-banner__meta">
-                    <span
-                        >{{ event.date }} &middot; {{ event.startTime }} &ndash; {{ event.endTime }}
-                        {{ event.zoneLabel }}</span
-                    >
-                    @if (event.hasServerName && event.serverName) {
-                    <span>&middot; {{ event.serverName }}</span>
-                    }
-                </div>
-            </div>
+        <!-- Banner (T-0098; reworked in T-0306).
+             A picture, not a backdrop. The uploaded art almost always carries
+             its own type — the muster time, the server, the kit — and running
+             the page's title, badges and dates on top of it left both
+             unreadable. It is shown whole here, fades out at its bottom edge,
+             and the heading follows underneath on the page's own ground.
+             Rendered only when there IS art: with the type moved out, the old
+             gradient fallback was an empty box. -->
+        @if (event.bannerUrl) {
+        <div class="event-banner" [style.background-image]="'url(' + event.bannerUrl + ')'">
+            <img class="event-banner__img" [src]="event.bannerUrl" [alt]="event.title" />
+            <div class="event-banner__fade" aria-hidden="true"></div>
         </div>
+        }
+
+        <header class="event-head">
+            <div class="event-head__badges">
+                <hf-event-status [status]="event.status"></hf-event-status>
+                <hf-platform-badges [platforms]="event.platforms"></hf-platform-badges>
+                @if (event.recurrenceCadence) {
+                <span class="badge">Repeats {{ event.recurrenceCadence }}</span>
+                }
+                <!-- Tags are public metadata and read here for everyone. They
+                     used to sit in Server Details, which is signed-in only now
+                     — leaving them there would have hidden the one part of
+                     that panel an anonymous visitor is allowed to see. -->
+                @for (tag of event.tags; track tag) {
+                <span class="badge brass">{{ tag }}</span>
+                }
+            </div>
+            <h1 class="event-head__title serif-display">{{ event.title }}</h1>
+            <!-- The times are converted to the VIEWER's zone (T-0237), so this
+                 labels the viewer's zone — printing event.timezone here is what
+                 made a UTC instant look like an Eastern one. -->
+            <div class="event-head__meta">
+                <span
+                    >{{ event.date }} &middot; {{ event.startTime }} &ndash; {{ event.endTime }} {{
+                    event.zoneLabel }}</span
+                >
+                @if (event.hasServerName && event.serverName) {
+                <!-- Leading &nbsp;: Angular drops the whitespace-only node between
+                     the two spans, which ran the zone into the separator. -->
+                <span>&nbsp;&middot; {{ event.serverName }}</span>
+                }
+            </div>
+        </header>
 
         <!-- Two-column body -->
         <div class="event-body">

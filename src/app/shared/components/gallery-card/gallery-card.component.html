@@ -22,12 +22,15 @@
             (error)="posterFailed = true"
         />
         } @else if (preview?.kind === 'video' && !videoFailed) {
+        <!-- No poster: the `#t=` fragment on the src is what makes iOS paint a
+             frame here at all — see `videoPreviewSrc`. -->
         <video
-            [src]="preview!.rawUrl"
+            [src]="videoPreviewSrc"
             class="gallery-card-img"
             preload="metadata"
             muted
             playsinline
+            disablepictureinpicture
             (error)="videoFailed = true"
         ></video>
         } @else {

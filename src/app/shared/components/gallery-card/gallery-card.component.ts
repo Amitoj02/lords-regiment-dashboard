@@ -58,6 +58,29 @@ export class GalleryCardComponent {
         return this._item;
     }
 
+    /**
+     * The clip URL with a `#t=` media fragment, for the case where there is no
+     * poster to paint instead.
+     *
+     * iOS Safari — and iOS Chrome, which is the same WebKit underneath — renders
+     * NOTHING for a `preload="metadata"` clip it has not been asked for a
+     * specific frame of: the tile stays flat black behind the play badge, which
+     * is what T-0242's poster was meant to solve and still does for every clip
+     * uploaded since. Clips submitted BEFORE it, and any whose capture failed,
+     * have no poster at all, and a media fragment is the only thing that makes
+     * WebKit fetch and paint a frame without playing the video.
+     *
+     * 0.1s rather than 0: plenty of encodes open on a black frame, which would
+     * be indistinguishable from the bug. An existing fragment is left alone.
+     */
+    get videoPreviewSrc(): string | null {
+        const raw = this.preview?.kind === 'video' ? this.preview.rawUrl : null;
+        if (!raw) {
+            return null;
+        }
+        return raw.includes('#') ? raw : `${raw}#t=0.1`;
+    }
+
     /** 0..2 — selects one of the three masonry aspect ratios. */
     @Input() aspectIndex = 0;
     /** When true (default) the whole card links to /gallery/:id. */

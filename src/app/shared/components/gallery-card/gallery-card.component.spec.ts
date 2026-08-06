@@ -77,6 +77,24 @@ describe('GalleryCardComponent (T-0242 video posters)', () => {
         expect(video.hasAttribute('autoplay')).toBe(false);
     });
 
+    it('asks the posterless clip for a frame with a #t= fragment (T-0308)', () => {
+        // WebKit paints nothing for a clip it was not asked for a time of, which
+        // is why an iOS reader saw a flat black tile behind the play badge.
+        const el = render(item({ mediaUrl: 'https://cdn.example/uploads/clip.mp4' }));
+        const video = el.querySelector('video') as HTMLVideoElement;
+        expect(video.getAttribute('src')).toBe('https://cdn.example/uploads/clip.mp4#t=0.1');
+    });
+
+    it('leaves a clip URL that already carries a fragment alone', () => {
+        component.item = item({ mediaUrl: 'https://cdn.example/uploads/clip.mp4#t=4' });
+        expect(component.videoPreviewSrc).toBe('https://cdn.example/uploads/clip.mp4#t=4');
+    });
+
+    it('has no clip src to offer for a still image', () => {
+        component.item = item({ type: 'image', mediaUrl: 'https://cdn.example/uploads/shot.png' });
+        expect(component.videoPreviewSrc).toBeNull();
+    });
+
     it('shows the placeholder plus the play badge when the clip cannot be decoded', () => {
         render(item({ mediaUrl: 'https://cdn.example/uploads/clip.mp4' }));
         component.videoFailed = true;

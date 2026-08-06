@@ -22,7 +22,15 @@
                 ></iframe>
             </div>
             } @else if (embed?.kind === 'video') {
-            <video [src]="embed!.rawUrl" controls playsinline class="detail-media-el"></video>
+            <!-- `videoSrc`, not the raw URL: the `#t=` fragment is what makes iOS
+                 paint a frame here instead of a black rectangle. -->
+            <video
+                [src]="videoSrc"
+                controls
+                playsinline
+                preload="metadata"
+                class="detail-media-el"
+            ></video>
             } @else if (embed?.kind === 'image') {
             <img [src]="embed!.rawUrl" [alt]="item.title" class="detail-media-el" />
             } @else if (embed?.kind === 'link') {
@@ -46,7 +54,6 @@
 
         <!-- Info -->
         <div class="detail-body">
-            <div class="detail-eyebrow">Field Dispatch</div>
             <h1 class="detail-title serif-display">{{ item.title }}</h1>
 
             <div class="row detail-byline">
