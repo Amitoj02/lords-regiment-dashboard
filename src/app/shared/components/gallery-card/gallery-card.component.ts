@@ -2,6 +2,7 @@ import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core
 import { AuthService } from '../../../core/services/auth.service';
 import { GalleryItem } from '../../../core/models/gallery.model';
 import { MediaEmbed, MediaEmbedService } from '../../services/media-embed.service';
+import { formatCount } from '../../utils/format-count';
 
 /**
  * Reusable gallery card (T-0077). Renders a single approved gallery item — a
@@ -85,6 +86,48 @@ export class GalleryCardComponent {
     @Input() aspectIndex = 0;
     /** When true (default) the whole card links to /gallery/:id. */
     @Input() linkToDetail = true;
+
+    /**
+     * Whether to show the like/view counts on the meta row (T-0311).
+     *
+     * Defaulted ON, because every surface that renders this card today is an
+     * archive where "how many people saw this" is part of the point. It is an
+     * input rather than a constant so a future compact strip — a marketing
+     * teaser, a dashboard rail — can suppress the figures without forking the
+     * card. Nothing sets it false right now, and that is fine: the alternative
+     * was hardcoding a decision that the next caller would have to undo.
+     */
+    @Input() showStats = true;
+
+    /**
+     * Whether the heart appears at all.
+     *
+     * Absent below one, per the design: a card reading "0 likes" is a small
+     * public verdict on the picture, and an archive should not editorialise. The
+     * eye stays regardless — a dispatch with no views yet is a fact about how new
+     * it is, not about how good it is.
+     */
+    get showLikes(): boolean {
+        return this.showStats && (this._item?.likes ?? 0) > 0;
+    }
+
+    /** Compact figure for the likes chip (`47`, `1.2k`). */
+    get likesLabel(): string {
+        return formatCount(this._item?.likes ?? 0);
+    }
+
+    /** Compact figure for the views chip. */
+    get viewsLabel(): string {
+        return formatCount(this._item?.views ?? 0);
+    }
+
+    /** Screen-reader text for the meta chips, which are otherwise bare figures. */
+    get statsLabel(): string {
+        const likes = this._item?.likes ?? 0;
+        const views = this._item?.views ?? 0;
+        const viewPart = `${views} ${views === 1 ? 'view' : 'views'}`;
+        return likes > 0 ? `${likes} ${likes === 1 ? 'like' : 'likes'}, ${viewPart}` : viewPart;
+    }
 
     get aspectClass(): string {
         return `gallery-card-thumb--ar${((this.aspectIndex % 3) + 3) % 3}`;

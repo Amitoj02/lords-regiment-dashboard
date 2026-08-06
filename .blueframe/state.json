@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "cb76f9f6f1ad0878b9085478bcb1ac2752152a71",
-  "lastSyncedAt": "2026-08-06T01:30:00Z",
-  "notesForNextSession": "T-0303..T-0310 are in REVIEW as one PR against dev: the public-surface pass the owner asked for on 2026-08-05. All eight are frontend-only, no backend twin, no coupled release.\n\nTHE ONE THING WORTH KNOWING: five of these eight bugs were the SAME bug. The app's `.row` flex utility shares its class name with Bootstrap grid's `.row`, so every element using it inherits `margin-inline: -12px`. _base.scss documents this and deliberately does NOT reset it globally (T-0287 tried and backed out: pages laid out against the leak shift 12px the moment it goes). This pass patched four more sites locally — landing `.event-meta`, events `.event-time-row`, roster `.roster-head-actions`, and every `.row` inside `.gallery-page-wrap` at the mobile breakpoints — which brings the local-patch count to roughly eight. That global reset is now the cheaper change; it wants its own task, a screenshot of every public page before and after, and nothing else in the branch.\n\nSTILL OPEN ON iOS: T-0308 ships the `#t=0.1` media fragment, which is the last HTML-only lever for a posterless clip. It was confirmed in headless Chrome (black tile -> frame) but NOT on a real iPhone — T-0256 is still the blocked task that wants a real device. If the fragment turns out not to be enough, the remaining options are all server-side: ffmpeg posters in the API image, or a backfill that captures posters for the clips uploaded before T-0242.\n\nVERIFICATION SETUP that paid for itself, reuse it: the dev DB had 2 past events and 1 gallery item, which is not enough to see any of these bugs. `docker compose up` in ../lords-dashboard-backend brings up api/db/minio/web (web serves :4200, api on host :3001). Seed with plain SQL against the db container (root/devroot, db lords_dashboard) after pushing media into MinIO through `docker run --rm --network lords-dashboard-backend_lords minio/mc`. TWO TRAPS: `events.server_password` is an AES-256-GCM column, so a plaintext INSERT makes every /api/events call 500 with \"Malformed encrypted payload\" — mint the value with `docker exec ...api-1 node -e` using the container's own ENCRYPTION_KEY. And insert text through a UTF-8 client or em dashes land as mojibake.\n\nThe headless-screenshot recipe (google-chrome --headless=new --window-size, which DOES move the CSS viewport, unlike the browser extension) is what made the mobile work checkable. CI parity locally: `docker run --rm -v \"$PWD:/app:z\" -w /app node:26-bookworm` for format/lint/build, plus apt chromium and a --no-sandbox wrapper on CHROME_BIN for karma. 805 specs green.\n\nCARRIED OVER, UNCHANGED: T-0302's two disagreeing site descriptions (index.html says the tagline, DEFAULT_MISSION still says the old sentence) is still the open decision, still a four-line coupled release across two repos. Production is still serving main from an un-rebuilt web image. STATE.JSON: json.dump(indent=2, ensure_ascii=False) + trailing newline, raw em dashes; testPlan status must be pending|passed|failed; `type` has no `fix` member.",
-  "nextIdCounter": 311,
+  "lastSyncedCommit": "3cb20af5fe8777eb6320e7fabdb86647e6ba37e4",
+  "lastSyncedAt": "2026-08-06T03:55:00Z",
+  "notesForNextSession": "T-0311 is in REVIEW as a PR against dev, COUPLED to lords-dashboard-backend T-0302 (see https://github.com/Amitoj02/lords-dashboard-backend). Ship the two together: this bundle calls POST /gallery/:id/view and GET /gallery/:id/like, and neither exists on an older API. Deployed alone, the counts would render 0 and the like toggle would 404.\n\nTWO THINGS WORTH KNOWING.\n(1) The card's meta row responds to the CARD's width, not the window's, via a CSS container query on .gallery-card. That is not a stylistic choice: the same component is ~380px in the gallery masonry, ~246px in the profile tab's 3-up and ~178px in that grid's 2-up on a phone - the last two are the SAME viewport, so a media query cannot tell them apart. Threshold is 210px. Chrome cannot be resized below a 500px inner width, so verifying the 178px case means narrowing the grid from the console, not shrinking the window.\n(2) `likedByMe` is deliberately left `undefined` rather than defaulted to false when the API omits `liked`. The public feed has no caller to answer about, and collapsing unknown to 'no' is exactly what would make a member's heart start hollow and their next tap a no-op like instead of the unlike they meant. The detail page resolves the real answer through GalleryService.likeState.\n\nStill true from before: the T-0303..T-0310 public-surface pass merged to dev, and the `.row` / Bootstrap gutter collision documented in _base.scss remains the trap it always was.",
+  "nextIdCounter": 312,
   "connections": [],
   "tasks": [
     {
@@ -20470,6 +20470,114 @@
           "note": "created and opened as a PR against dev"
         }
       ]
+    },
+    {
+      "id": "T-0311",
+      "title": "Render likes and views across the gallery surfaces",
+      "summary": "Implements the owner's Claude Design brief 'Gallery Likes & Views'. Counts join the submitter line on hf-gallery-card, right-aligned and zero added card height, so the gallery index, the profile tab and every other surface that renders the card get them at once; the heart is absent below one like (a card reading '0 likes' is a small public verdict on the picture) while the eye always shows. The detail page gets the real toggle: optimistic, oxblood when liked, with a pop/burst/ring/roll animation whose keyframe names alternate so a repeat tap actually restarts it, and a 44px tap target on phones. A signed-out reader sees the same figures as plain chips and no button. Also records the view on load (fire-and-forget) and resolves the caller's own like state through the new authenticated GET, because the public item GET has no caller to answer about. Removed the orphaned .gallery-likes rule the brief spotted. Backend twin: lords-dashboard-backend T-0302.",
+      "status": "review",
+      "type": "feature",
+      "size": "M",
+      "sizeWeight": 5,
+      "area": "gallery",
+      "feature": "engagement-counts",
+      "subfeature": "card-and-detail-counts",
+      "repo": "",
+      "paths": [
+        "src/app/shared/components/gallery-card/gallery-card.component.ts",
+        "src/app/shared/components/gallery-card/gallery-card.component.html",
+        "src/app/shared/components/gallery-card/gallery-card.component.scss",
+        "src/app/features/public/gallery-detail/gallery-detail.component.ts",
+        "src/app/features/public/gallery-detail/gallery-detail.component.html",
+        "src/app/features/public/gallery-detail/gallery-detail.component.scss",
+        "src/app/shared/utils/format-count.ts",
+        "src/app/core/models/gallery.model.ts",
+        "src/app/core/models/api.model.ts",
+        "src/app/core/services/gallery.service.ts",
+        "src/app/features/public/gallery-page/gallery-page.component.scss"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0302"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "card shows the eye at zero views but hides the heart at zero likes",
+          "status": "passed"
+        },
+        {
+          "desc": "figures compact only above a thousand (640 stays 640; 1247 -> 1.2k) and never exceed four characters",
+          "status": "passed"
+        },
+        {
+          "desc": "cards render no interactive control - the whole card stays one link target",
+          "status": "passed"
+        },
+        {
+          "desc": "signed-in detail page shows a real toggle that fills, increments, and round-trips back on a second tap",
+          "status": "passed"
+        },
+        {
+          "desc": "a failed like rolls the optimistic state back and raises a toast",
+          "status": "passed"
+        },
+        {
+          "desc": "signed-out detail page shows both counts as chips and no button, and still records the view",
+          "status": "passed"
+        },
+        {
+          "desc": "live: like/unlike persists (gallery_likes gains and loses the row) and the view increments 4830 -> 4831",
+          "status": "passed"
+        },
+        {
+          "desc": "live: at a 178px card (profile grid, 2-up on a phone) the container query drops the counts to their own line, left-aligned",
+          "status": "passed"
+        },
+        {
+          "desc": "live: mobile detail button is 44px tall with the privacy note on its own line",
+          "status": "passed"
+        },
+        {
+          "desc": "contrast guard passes with oxblood-300 on ink-850 (5.4:1) and t-300 for views",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "GalleryItem gained a REQUIRED `views`, so every fixture and every construction site must set it. The compiler catches this in-repo (it did - two specs), but the field is also the first thing to go wrong if the API is deployed behind the SPA: mapGalleryItem defaults a missing viewsCount to 0 rather than rendering `undefined`.",
+          "status": "open"
+        },
+        {
+          "desc": "hf-gallery-card now declares `container-type: inline-size`, which establishes size containment on .gallery-card. Every surface rendering the card inherits that - the gallery masonry (which relies on break-inside: avoid inside CSS columns) and the profile grid were both checked live, but a future layout that depends on the card sizing from its content would be affected.",
+          "status": "open"
+        }
+      ],
+      "skippedByClaude": [
+        "[showStats] is defaulted true and NO surface sets it false. The design brief expected the landing strip to use hf-gallery-card; it does not - the landing page renders its own bespoke square-thumb strip, which was left untouched.",
+        "Left the rest of the dead .gallery-card* block in gallery-page.component.scss (roughly 117 lines superseded by the extracted component). Only the .gallery-likes rule was removed, because shipping a real likes row beside an unreachable one is the confusing part.",
+        "Did not surface likedByMe on the cards. It is now mapped from the API's `liked` (previously discarded) but only the detail page acts on a like, so no card reads it.",
+        "Did not add a most-liked sort or counts in the moderation queue - both are follow-ups the design doc offers."
+      ],
+      "lastTouchedCommit": "3cb20af5fe8777eb6320e7fabdb86647e6ba37e4",
+      "createdAt": "2026-08-06T03:55:00Z",
+      "updatedAt": "2026-08-06T03:55:00Z",
+      "history": [
+        {
+          "at": "2026-08-06T03:55:00Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created from the owner's Claude Design brief 'Gallery Likes & Views' imported via the claude_design MCP"
+        },
+        {
+          "at": "2026-08-06T03:55:00Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on feat/gallery-likes-and-views; 840 unit tests green, lint + contrast guard + prod build clean; verified live in Chrome on all four surfaces; PR open against dev"
+        }
+      ]
     }
   ],
   "history": [
@@ -20492,6 +20600,11 @@
       "at": "2026-08-06T01:30:00Z",
       "by": "claude",
       "note": "T-0303..T-0310 created from the owner's public-surface pass (row alignment, escaping CTAs, event banner rework, gallery phone gutters, iOS clip frames, eyebrow removal, roster head)"
+    },
+    {
+      "at": "2026-08-06T03:55:00Z",
+      "by": "claude",
+      "note": "T-0311 created and implemented: likes + views on the gallery card and detail page; coupled to backend T-0302"
     }
   ]
 }

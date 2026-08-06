@@ -52,6 +52,102 @@
             }
         </div>
 
+        <!--
+            Likes + views (T-0311). Directly under the plate, before the title —
+            the reader has just looked at the picture, and this is where the
+            response to it belongs.
+
+            Two shapes, one row: a signed-in member gets a real toggle, a
+            signed-out reader gets the same figure as a plain chip. The counts
+            themselves are public either way. Nobody, in either state, can see
+            WHO liked or viewed — there is no endpoint that would say.
+        -->
+        <div class="detail-reactions">
+            @if (canLike) {
+            <button
+                type="button"
+                class="detail-like"
+                [class.is-liked]="liked"
+                [attr.aria-pressed]="liked"
+                [attr.aria-label]="likeAriaLabel"
+                [disabled]="likePending"
+                (click)="toggleLike()"
+            >
+                <span class="detail-like-icon">
+                    <!-- Ring + pips: decorative, and only on the tap that ADDS a like. -->
+                    <span class="detail-like-ring" [style.animation]="ringAnimation"></span>
+                    @for (rot of burstPips; track rot) {
+                    <span class="detail-like-pip-axis" [style.transform]="'rotate(' + rot + 'deg)'">
+                        <span class="detail-like-pip" [style.animation]="burstAnimation"></span>
+                    </span>
+                    }
+                    <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        [attr.fill]="liked ? 'currentColor' : 'none'"
+                        [attr.stroke]="liked ? 'none' : 'currentColor'"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                        class="detail-like-heart"
+                        [style.animation]="popAnimation"
+                    >
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        />
+                    </svg>
+                </span>
+                <span class="detail-like-count">
+                    <span class="detail-like-figure" [style.animation]="rollAnimation"
+                        >{{ likesLabel }}</span
+                    >
+                </span>
+            </button>
+            } @else if (likes > 0) {
+            <span class="detail-stat detail-stat--likes">
+                <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                    />
+                </svg>
+                <span class="detail-stat-figure">{{ likesLabel }}</span>
+                <span class="detail-stat-noun">{{ likesNoun }}</span>
+            </span>
+            }
+
+            <span class="detail-stat detail-stat--views">
+                <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span class="detail-stat-figure">{{ viewsLabel }}</span>
+                <span class="detail-stat-noun">{{ viewsNoun }}</span>
+            </span>
+
+            <span class="sp"></span>
+            <span class="detail-reactions-note">
+                Nobody can see who liked a dispatch — the count is the whole public record.
+            </span>
+        </div>
+
         <!-- Info -->
         <div class="detail-body">
             <h1 class="detail-title serif-display">{{ item.title }}</h1>
