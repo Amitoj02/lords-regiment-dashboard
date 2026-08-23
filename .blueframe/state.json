@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "853d54bf87383654a649c7e43f709d60ef573dc0",
-  "lastSyncedAt": "2026-08-06T05:10:00Z",
-  "notesForNextSession": "T-0312 is in REVIEW as a PR against dev: a one-line removal on the gallery dispatch page (the \"Nobody can see who liked a dispatch\" note). Frontend-only, no API surface, safe to merge alone.\n\nT-0311 is in REVIEW as a PR against dev, COUPLED to lords-dashboard-backend T-0302 (see https://github.com/Amitoj02/lords-dashboard-backend). Ship the two together: this bundle calls POST /gallery/:id/view and GET /gallery/:id/like, and neither exists on an older API. Deployed alone, the counts would render 0 and the like toggle would 404.\n\nTWO THINGS WORTH KNOWING.\n(1) The card's meta row responds to the CARD's width, not the window's, via a CSS container query on .gallery-card. That is not a stylistic choice: the same component is ~380px in the gallery masonry, ~246px in the profile tab's 3-up and ~178px in that grid's 2-up on a phone - the last two are the SAME viewport, so a media query cannot tell them apart. Threshold is 210px. Chrome cannot be resized below a 500px inner width, so verifying the 178px case means narrowing the grid from the console, not shrinking the window.\n(2) `likedByMe` is deliberately left `undefined` rather than defaulted to false when the API omits `liked`. The public feed has no caller to answer about, and collapsing unknown to 'no' is exactly what would make a member's heart start hollow and their next tap a no-op like instead of the unlike they meant. The detail page resolves the real answer through GalleryService.likeState.\n\nStill true from before: the T-0303..T-0310 public-surface pass merged to dev, and the `.row` / Bootstrap gutter collision documented in _base.scss remains the trap it always was.",
-  "nextIdCounter": 313,
+  "lastSyncedCommit": "b0771a723d81b3d145967b74e4a14f6b71a03036",
+  "lastSyncedAt": "2026-08-23T23:35:00Z",
+  "notesForNextSession": "T-0313 is DONE on branch claude/holdfast-cheats-rickroll-opk427 and pushed; no PR was opened because none was requested. It is the /buycheats rickroll: public/buycheats/{index.html,go.js} plus one `location = /buycheats` block in nginx.conf. Frontend-only, no API surface, deployable alone.\n\nTHE ONE THING NOT TO \"TIDY UP\": that page is static on purpose and its redirect is an external .js on purpose. Turning it into an Angular route breaks the Discord card (no unfurler runs JS, so Discordbot gets the app shell and index.html's default og: tags). Turning the redirect into an inline <script> breaks it in production only (script-src 'self'; ng serve sends no CSP, so it would test clean everywhere it was tried). Turning it into a <meta http-equiv=\"refresh\"> risks an unfurler following it and previewing the video, which is the one failure the page exists to avoid. The reasoning is written into both files.\n\nTWO PRE-EXISTING BREAKAGES FOUND WHILE VERIFYING, both identical on origin/dev and both left alone:\n(1) `npm ci` fails - package-lock.json is out of sync with package.json (EUSAGE, \"Missing: chokidar@5.0.0 / readdirp@5.1.1 from lock file\"). CI's install step cannot be passing. A plain `npm install` regenerates a working tree, which is how this session built and tested.\n(2) `npm run format:check` fails on 4 files nobody touched here: src/app/core/models/social-link.model.ts, src/app/core/services/members.service.ts, src/app/core/services/public-members.service.ts, src/app/features/public/account/account.component.ts. `npm run format` fixes them, but that is an unrelated commit and the owner should decide whether it rides with something.\nBoth together mean CI is red on dev for reasons that have nothing to do with T-0313. Fix (1) first - nothing else in CI runs until the install does.\n\nLocal verification is reproducible without Docker (the daemon is unavailable here): apt-get install nginx-light, wrap nginx.conf in a minimal http{} block, stub `http://api:3000` to a dead IP literal so nginx will start, point root at dist/lords-regiment-dashboard/browser, and drive it with the globally-installed playwright against /opt/pw-browsers/chromium. Node here is v22.22.2 and the CLI needs >=22.22.3, so `nvm install 26` first.\n\nT-0312 is in REVIEW as a PR against dev: a one-line removal on the gallery dispatch page (the \"Nobody can see who liked a dispatch\" note). Frontend-only, no API surface, safe to merge alone.\n\nT-0311 is in REVIEW as a PR against dev, COUPLED to lords-dashboard-backend T-0302 (see https://github.com/Amitoj02/lords-dashboard-backend). Ship the two together: this bundle calls POST /gallery/:id/view and GET /gallery/:id/like, and neither exists on an older API. Deployed alone, the counts would render 0 and the like toggle would 404.\n\nTWO THINGS WORTH KNOWING.\n(1) The card's meta row responds to the CARD's width, not the window's, via a CSS container query on .gallery-card. That is not a stylistic choice: the same component is ~380px in the gallery masonry, ~246px in the profile tab's 3-up and ~178px in that grid's 2-up on a phone - the last two are the SAME viewport, so a media query cannot tell them apart. Threshold is 210px. Chrome cannot be resized below a 500px inner width, so verifying the 178px case means narrowing the grid from the console, not shrinking the window.\n(2) `likedByMe` is deliberately left `undefined` rather than defaulted to false when the API omits `liked`. The public feed has no caller to answer about, and collapsing unknown to 'no' is exactly what would make a member's heart start hollow and their next tap a no-op like instead of the unlike they meant. The detail page resolves the real answer through GalleryService.likeState.\n\nStill true from before: the T-0303..T-0310 public-surface pass merged to dev, and the `.row` / Bootstrap gutter collision documented in _base.scss remains the trap it always was.",
+  "nextIdCounter": 314,
   "connections": [],
   "tasks": [
     {
@@ -20624,6 +20624,75 @@
           "note": "created and opened as a PR against dev"
         }
       ]
+    },
+    {
+      "id": "T-0313",
+      "title": "Add the /buycheats prank page",
+      "summary": "A rickroll to paste into Discord. /buycheats unfurls as \"Holdfast Cheats & Tricks\" with a guide-shaped description and an in-game battle screenshot, then redirects to https://youtu.be/t179PiWXDnA. The card giving nothing away IS the feature. Built as a static document in public/ (index.html + go.js), not an Angular route: no unfurler runs JavaScript, so a client-rendered page would hand Discordbot the app shell and index.html's default og: tags. The crawler rewrite (T-0299) was not an option either - those shells are generated by the API, and a path in $lords_crawlable without a matching /api/seo/* route unfurls as a BROKEN card, so this would have been a coupled deploy for a joke. angular.json copies public/ verbatim to the dist root, so it ships with an ordinary build of this repo alone. The redirect is an external same-origin script because production serves script-src 'self' - the same trap that pins inlineCritical:false, and one that fails ONLY in production since ng serve sends no CSP. It is deliberately NOT a <meta http-equiv=\"refresh\">: that needs no JavaScript, but it sits in the markup an unfurler parses and some follow it, which would unfurl the video. No crawler executes JS, so the asymmetry is the whole design - the card is HTML, the redirect is JS. go.js reads its destination off the #continue link rather than hardcoding it, because nginx serves .js immutable for 30 days while index.html is no-store; that link doubles as the fallback a reader without JavaScript clicks. location.replace, not href=, so Back out of the video does not bounce the reader forward again. nginx.conf gains `location = /buycheats` purely to drop a redirect: the SPA fallback already resolved the file via its `$uri/` entry, but answered 301 -> /buycheats/ first. noindex (meta, NOT a robots.txt Disallow - whether Discordbot honours those is contested, and one that is honoured kills the preview) keeps the domain from ranking for \"holdfast cheats\" and keeps the redirect off Google's sneaky-redirect ledger.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "seo",
+      "subfeature": "buycheats-prank-page",
+      "repo": "",
+      "paths": [
+        "public/buycheats/index.html",
+        "public/buycheats/go.js",
+        "nginx.conf"
+      ],
+      "dependsOn": [],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "pasted into Discord, https://lordsofholdfast.com/buycheats unfurls as \"Holdfast Cheats & Tricks\" with the guide description and the bg-1 battle screenshot, and nothing in the card names YouTube",
+          "status": "pending"
+        },
+        {
+          "desc": "opening /buycheats in a browser lands on the video with no click - verified in headless Chromium against the built dist behind the real nginx.conf, with the production CSP (script-src 'self') applied: 43ms median over 5 runs, no console errors",
+          "status": "passed"
+        },
+        {
+          "desc": "Back out of the video returns the reader where they came from, not to /buycheats - verified in the same run (location.replace leaves no history entry)",
+          "status": "passed"
+        },
+        {
+          "desc": "/buycheats answers 200 directly rather than 301 -> /buycheats/, and /buycheats/ still answers too - both verified against the built dist",
+          "status": "passed"
+        },
+        {
+          "desc": "after deploy, Google has not indexed /buycheats and Search Console reports no sneaky-redirect manual action",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "nginx.conf is shared production infra: a new `location = /buycheats` sits between the fingerprinted-asset block and the SPA fallback. An exact-match location wins over every prefix location, so a mistake here could shadow SPA routing or divert crawler traffic. Locally the whole table still behaves - /, /home, /roster, an unknown path and the asset block were all re-checked against the built dist, and /home + /roster as Discordbot still fire the $lords_crawlable rewrite - but production has Caddy in front of this nginx, and Caddy was NOT exercised.",
+          "status": "open",
+          "notedAt": "2026-08-23T23:35:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not add /buycheats to $lords_crawlable or ask the backend for an /api/seo/buycheats shell. The static document already serves identical bytes to every client, and wiring the crawler path would have made a prank page a coupled two-repo deploy.",
+        "Did not verify the actual Discord embed - that needs the page live on lordsofholdfast.com. What was verified is the document Discordbot will parse: its og:/twitter: tags were read back off the built artifact through the real nginx config with an HTML parser, and no tag, header or meta-refresh in it names the destination.",
+        "Did not add a <meta http-equiv=\"refresh\"> fallback for readers without JavaScript, who get the manual Continue link instead. A meta refresh is the one auto-redirect a non-JS client would follow, and also the one an unfurler might - which would unfurl the video and lose the joke.",
+        "Did not serve humans a 302 off the existing $lords_is_crawler UA map, which would be the fastest possible redirect. Discord fetches an og:image with a spoofed Firefox UA (nginx.conf says so), and any unfurler whose UA is not in that list would have been redirected to the video and unfurled it. The JS redirect is safe against every unfurler, listed or not.",
+        "Did not fix the 4 pre-existing prettier failures (social-link.model.ts, members.service.ts, public-members.service.ts, account.component.ts) or the out-of-sync package-lock.json that makes `npm ci` fail on chokidar/readdirp. Both are identical on origin/dev and unrelated to this change; CI is already red on both counts. Flagged to the owner rather than folded into a prank page."
+      ],
+      "lastTouchedCommit": "b0771a723d81b3d145967b74e4a14f6b71a03036",
+      "createdAt": "2026-08-23T23:35:00Z",
+      "updatedAt": "2026-08-23T23:35:00Z",
+      "history": [
+        {
+          "at": "2026-08-23T23:35:00Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "created and implemented: static /buycheats page + nginx exact-match location; pushed to claude/holdfast-cheats-rickroll-opk427, no PR opened (not requested)"
+        }
+      ]
     }
   ],
   "history": [
@@ -20656,6 +20725,11 @@
       "at": "2026-08-06T05:10:00Z",
       "by": "claude",
       "note": "T-0312 created and implemented: removed the likes privacy note from the gallery dispatch page reactions row"
+    },
+    {
+      "at": "2026-08-23T23:35:00Z",
+      "by": "claude",
+      "note": "T-0313 created and implemented: the /buycheats prank page, a static unfurl-safe document plus an nginx exact-match location"
     }
   ]
 }
