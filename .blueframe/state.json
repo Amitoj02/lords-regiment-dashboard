@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "b0771a723d81b3d145967b74e4a14f6b71a03036",
-  "lastSyncedAt": "2026-08-23T23:35:00Z",
-  "notesForNextSession": "T-0313 is DONE on branch claude/holdfast-cheats-rickroll-opk427 and pushed; no PR was opened because none was requested. It is the /buycheats rickroll: public/buycheats/{index.html,go.js} plus one `location = /buycheats` block in nginx.conf. Frontend-only, no API surface, deployable alone.\n\nTHE ONE THING NOT TO \"TIDY UP\": that page is static on purpose and its redirect is an external .js on purpose. Turning it into an Angular route breaks the Discord card (no unfurler runs JS, so Discordbot gets the app shell and index.html's default og: tags). Turning the redirect into an inline <script> breaks it in production only (script-src 'self'; ng serve sends no CSP, so it would test clean everywhere it was tried). Turning it into a <meta http-equiv=\"refresh\"> risks an unfurler following it and previewing the video, which is the one failure the page exists to avoid. The reasoning is written into both files.\n\nTWO PRE-EXISTING BREAKAGES FOUND WHILE VERIFYING, both identical on origin/dev and both left alone:\n(1) `npm ci` fails - package-lock.json is out of sync with package.json (EUSAGE, \"Missing: chokidar@5.0.0 / readdirp@5.1.1 from lock file\"). CI's install step cannot be passing. A plain `npm install` regenerates a working tree, which is how this session built and tested.\n(2) `npm run format:check` fails on 4 files nobody touched here: src/app/core/models/social-link.model.ts, src/app/core/services/members.service.ts, src/app/core/services/public-members.service.ts, src/app/features/public/account/account.component.ts. `npm run format` fixes them, but that is an unrelated commit and the owner should decide whether it rides with something.\nBoth together mean CI is red on dev for reasons that have nothing to do with T-0313. Fix (1) first - nothing else in CI runs until the install does.\n\nLocal verification is reproducible without Docker (the daemon is unavailable here): apt-get install nginx-light, wrap nginx.conf in a minimal http{} block, stub `http://api:3000` to a dead IP literal so nginx will start, point root at dist/lords-regiment-dashboard/browser, and drive it with the globally-installed playwright against /opt/pw-browsers/chromium. Node here is v22.22.2 and the CLI needs >=22.22.3, so `nvm install 26` first.\n\nT-0312 is in REVIEW as a PR against dev: a one-line removal on the gallery dispatch page (the \"Nobody can see who liked a dispatch\" note). Frontend-only, no API surface, safe to merge alone.\n\nT-0311 is in REVIEW as a PR against dev, COUPLED to lords-dashboard-backend T-0302 (see https://github.com/Amitoj02/lords-dashboard-backend). Ship the two together: this bundle calls POST /gallery/:id/view and GET /gallery/:id/like, and neither exists on an older API. Deployed alone, the counts would render 0 and the like toggle would 404.\n\nTWO THINGS WORTH KNOWING.\n(1) The card's meta row responds to the CARD's width, not the window's, via a CSS container query on .gallery-card. That is not a stylistic choice: the same component is ~380px in the gallery masonry, ~246px in the profile tab's 3-up and ~178px in that grid's 2-up on a phone - the last two are the SAME viewport, so a media query cannot tell them apart. Threshold is 210px. Chrome cannot be resized below a 500px inner width, so verifying the 178px case means narrowing the grid from the console, not shrinking the window.\n(2) `likedByMe` is deliberately left `undefined` rather than defaulted to false when the API omits `liked`. The public feed has no caller to answer about, and collapsing unknown to 'no' is exactly what would make a member's heart start hollow and their next tap a no-op like instead of the unlike they meant. The detail page resolves the real answer through GalleryService.likeState.\n\nStill true from before: the T-0303..T-0310 public-surface pass merged to dev, and the `.row` / Bootstrap gutter collision documented in _base.scss remains the trap it always was.",
-  "nextIdCounter": 314,
+  "lastSyncedCommit": "754591f8a5be6fba91c6934d8b16aacf42a4681a",
+  "lastSyncedAt": "2026-09-07T18:12:36Z",
+  "notesForNextSession": "Dependabot is GONE from this repo (T-0314) but the bot does not actually stop until dev reaches main — GitHub reads .github/dependabot.yml from the DEFAULT BRANCH. Until that merge happens it will keep opening PRs against dev. All 12 previously-open Dependabot PRs across both repos were closed and their branches deleted.\n\nnpm audit is 0 here, but 8 of those fixes come from an overrides block pinning qs and uuid, NOT from a real dependency bump. THE ONE THING WORTH KNOWING: the honest fix is migrating off @angular-devkit/build-angular to @angular/build — npm deprecates the webpack builder on every install, and it is what drags in webpack-dev-server, sockjs and both overridden packages. Doing that migration lets you delete the overrides block entirely.\n\nTypeScript 7 is available but unusable: Angular 22 peers typescript >=6.0 <6.1. It arrives with the next Angular major, in the same commit as the rest of the toolchain. Keep the backend on the same TS major.",
+  "nextIdCounter": 315,
   "connections": [],
   "tasks": [
     {
@@ -20693,6 +20693,80 @@
           "note": "created and implemented: static /buycheats page + nginx exact-match location; pushed to claude/holdfast-cheats-rickroll-opk427, no PR opened (not requested)"
         }
       ]
+    },
+    {
+      "id": "T-0314",
+      "title": "Retire Dependabot and refresh dependencies by hand",
+      "summary": "The bot config here was elaborate — the angular group had to name @angular/*, @angular-devkit/*, @schematics/*, angular-eslint, ng-*, zone.js and typescript explicitly, plus a standing ignore on TypeScript majors — and it still produced PRs that could not go green alone. Alerts and automated security fixes were already disabled at the repo level, so the file drove version updates only. npm audit reported 19 vulnerabilities (11 high, 8 moderate); `npm update` clears all 11 highs (socket.io-parser, three undici, the qs/body-parser/express chain) because they were already fixed inside the declared ranges. The remaining 8 moderates needed an overrides block: qs 6.15.3->6.16.0 and uuid 8.3.2->11.1.1, both transitive dev-only dependencies of the deprecated webpack builder, where npm reported fixAvailable:false for uuid. Neither reaches the production bundle, and ng serve on Angular 22 runs on Vite, so the webpack-dev-server code carrying both advisories is not even executed.",
+      "status": "review",
+      "type": "chore",
+      "size": "M",
+      "sizeWeight": 3,
+      "area": "platform",
+      "feature": "dependency-hygiene",
+      "subfeature": "manual-updates",
+      "repo": "",
+      "paths": [
+        ".github/dependabot.yml",
+        "package.json",
+        "package-lock.json",
+        "README.md"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0303"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "format:check, lint (incl. contrast guard) and production build green from a clean npm ci",
+          "status": "passed"
+        },
+        {
+          "desc": "840 unit specs green in headless Chrome",
+          "status": "passed"
+        },
+        {
+          "desc": "ng serve boots and serves HTTP 200 with the uuid override in place",
+          "status": "passed"
+        },
+        {
+          "desc": "npm audit reports 0 vulnerabilities",
+          "status": "passed"
+        },
+        {
+          "desc": "confirm Dependabot stops opening PRs once dev reaches main",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "the overrides block forces qs and uuid for EVERY consumer in the tree, not just the vulnerable ones; uuid in particular jumps three majors (8 -> 11) inside sockjs",
+          "status": "open",
+          "note": "dev-only surface: both live under @angular-devkit/build-angular, nothing in dist/ resolves them. Drop the overrides entirely when this repo moves to @angular/build, which does not pull webpack-dev-server"
+        },
+        {
+          "desc": "the whole Angular toolchain moved 22.0.8 -> 22.1.5/22.1.7 in one commit, which is correct (Angular peers its packages to each other) but means a toolchain regression arrives all at once",
+          "status": "open",
+          "note": "840 specs and a production build passed; the profile.component.scss budget warning is pre-existing and unchanged"
+        }
+      ],
+      "skippedByClaude": [
+        "Held TypeScript 6 -> 7: Angular 22 peers typescript >=6.0 <6.1, so the bump cannot resolve — this is exactly what the deleted dependabot.yml ignore rule encoded, and the README now carries the reasoning",
+        "Held jasmine-core 6 -> 7 and angular-eslint 22.1.0 -> 22.4.0 (pinned exact) as majors/pin changes out of scope for a within-semver refresh",
+        "Did NOT migrate @angular-devkit/build-angular -> @angular/build, though npm deprecates the former on every install and it is the real fix for the two overridden advisories",
+        "Left the pre-existing profile.component.scss budget warning (8.91 kB against an 8.00 kB budget) alone — it predates this work"
+      ],
+      "lastTouchedCommit": "754591f8a5be6fba91c6934d8b16aacf42a4681a",
+      "createdAt": "2026-09-07T18:12:36Z",
+      "updatedAt": "2026-09-07T18:12:36Z",
+      "history": [
+        {
+          "at": "2026-09-07T18:12:36Z",
+          "by": "claude",
+          "note": "created and implemented: dependabot.yml removed, dependencies refreshed within semver, qs/uuid overrides added, audit clean"
+        }
+      ]
     }
   ],
   "history": [
@@ -20730,6 +20804,11 @@
       "at": "2026-08-23T23:35:00Z",
       "by": "claude",
       "note": "T-0313 created and implemented: the /buycheats prank page, a static unfurl-safe document plus an nginx exact-match location"
+    },
+    {
+      "at": "2026-09-07T18:12:36Z",
+      "by": "claude",
+      "note": "T-0314 created and implemented: Dependabot removed, dependencies refreshed within semver, qs/uuid overrides added (audit 0)"
     }
   ]
 }
