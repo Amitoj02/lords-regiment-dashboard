@@ -380,7 +380,18 @@ Karma and Jasmine, **56 spec files** sitting beside the code they cover — serv
 
 **CI** — [`.github/workflows/ci.yml`](./.github/workflows/ci.yml), workflow **CI**, job **Lint, build & test**. Runs on a push to any branch and on pull requests into `main` or `dev`, in the four-step order above. It declares top-level `permissions: contents: read` and references **no secrets at all**, so a fork PR runs the identical gate. The CI Node major deliberately tracks the Dockerfile's base image — testing on a different major than the release build ships is how a runtime regression slips past.
 
-**Dependabot** runs weekly across npm, GitHub Actions and Docker base images, and opens against `dev` rather than `main`. The npm `angular` group is deliberately wide — `@angular/*`, `@angular-devkit/*`, `@schematics/*`, `angular-eslint`, `zone.js` and `typescript` — because Angular peers all of them to one another. A bump that arrives without its siblings cannot resolve, and no amount of rebasing makes it mergeable.
+**Dependency updates are manual.** Dependabot was removed — it opened a weekly queue of PRs that mostly could not be merged on their own, because Angular peers `@angular/*`, `@angular-devkit/*`, `@schematics/*`, `angular-eslint`, `zone.js` and `typescript` to one another and a bump arriving without its siblings cannot resolve. Refresh dependencies deliberately instead:
+
+```bash
+npm outdated          # what has moved
+npm audit             # what has an advisory against it
+npm update            # everything inside the ranges in package.json
+npm audit fix         # transitive advisories, without breaking changes
+```
+
+Move the whole Angular toolchain in one commit or none of it, and run the full local gate (`format:check`, `lint`, `build`, `test:ci`) before pushing — the same four steps CI runs.
+
+The `overrides` block in `package.json` pins `qs` and `uuid` past their advisories. Both are transitive dev-only dependencies of `@angular-devkit/build-angular` — `qs` through `webpack-dev-server`'s and karma's copies of `express`/`body-parser`, `uuid` through `sockjs`, the dev server's websocket fallback. Neither reaches the production bundle, which is static files served by nginx. npm could not hoist a fixed version on its own (`fixAvailable: false` for `uuid`), so the override is the only way to reach a clean `npm audit` short of replacing the builder. Drop both the day this repo moves from the deprecated webpack builder to `@angular/build`, which does not pull `webpack-dev-server` at all.
 
 <details>
 <summary><strong>Traps that have cost real time</strong></summary>
