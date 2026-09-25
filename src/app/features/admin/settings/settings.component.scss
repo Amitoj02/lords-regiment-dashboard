@@ -249,6 +249,12 @@
     margin-top: 14px;
 }
 
+// Stands in for the hidden welcome channel + message while greetings are off
+// (T-0315), on the same rhythm as the field-rows it replaces.
+.welcome-off-hint {
+    margin: 14px 0 0;
+}
+
 // Welcome-message editor (T-0272): the placeholder hint and the character
 // counter share one baseline, and the counter is pushed to the trailing edge so
 // it reads as metadata rather than as part of the sentence.

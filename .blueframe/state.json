@@ -1,10 +1,10 @@
 {
   "version": 1,
   "project": "lords-regiment-dashboard",
-  "lastSyncedCommit": "754591f8a5be6fba91c6934d8b16aacf42a4681a",
-  "lastSyncedAt": "2026-09-07T18:12:36Z",
-  "notesForNextSession": "Dependabot is GONE from this repo (T-0314) but the bot does not actually stop until dev reaches main — GitHub reads .github/dependabot.yml from the DEFAULT BRANCH. Until that merge happens it will keep opening PRs against dev. All 12 previously-open Dependabot PRs across both repos were closed and their branches deleted.\n\nnpm audit is 0 here, but 8 of those fixes come from an overrides block pinning qs and uuid, NOT from a real dependency bump. THE ONE THING WORTH KNOWING: the honest fix is migrating off @angular-devkit/build-angular to @angular/build — npm deprecates the webpack builder on every install, and it is what drags in webpack-dev-server, sockjs and both overridden packages. Doing that migration lets you delete the overrides block entirely.\n\nTypeScript 7 is available but unusable: Angular 22 peers typescript >=6.0 <6.1. It arrives with the next Angular major, in the same commit as the rest of the toolchain. Keep the backend on the same TS major.",
-  "nextIdCounter": 315,
+  "lastSyncedCommit": "26203aa5436e4f72c35231b0271253c9e8fa106d",
+  "lastSyncedAt": "2026-09-25T18:34:44Z",
+  "notesForNextSession": "T-0315 (\"Welcome new members\" switch, welcome channel optional) is implemented on claude/eloquent-meitner-hqqsm1 and NOT merged. It needs backend T-0305 live first or alongside: the API rejects unknown fields, so this web image against an older API fails every bot-settings save.\n\nThis sync found dev fully merged to main, so every review task was advanced to deployed, with the merge that landed it named in its history.\n\nTHE ONE THING WORTH KNOWING: origin/fix/link-preview-logo-card holds a finished, never-merged fix (the crest, not banner.png, as the default unfurl card), filed there as T-0311, an id main had already given to likes and views. It is re-recorded here as T-0316 (backend T-0306). Merge its code, but resolve .blueframe/state.json by hand.\n\nUnchanged: migrating off @angular-devkit/build-angular to @angular/build is the honest fix that deletes the qs/uuid overrides block, and TypeScript 7 waits for the next Angular major. Locally the Angular CLI needs Node >= 22.22.3 (the cloud container ships 22.22.2), and Karma's Chrome needs --no-sandbox when running as root.",
+  "nextIdCounter": 317,
   "connections": [],
   "tasks": [
     {
@@ -16790,7 +16790,7 @@
       "id": "T-0259",
       "title": "Replace favicon.svg with a true vector source",
       "summary": "The shipped public/favicon.svg is a 75x75 raster wrapped in an <image> tag by RealFaviconGenerator, not real vector art - so it is LOWER resolution than favicon-96x96.png, and Chrome prefers the SVG over the PNG. Harmless at tab sizes (16-32 CSS px, 64 device px at 2x) but wrong at any larger surface. Replace it with a genuine vector crest if one exists; otherwise drop the SVG link so Chrome falls back to the 96px PNG.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -16825,7 +16825,7 @@
       ],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-23T01:21:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T01:21:00Z",
@@ -16840,6 +16840,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -16894,7 +16901,7 @@
       "id": "T-0261",
       "title": "Guild-membership gate screen with a Discord join CTA",
       "summary": "A signed-in user who is not in the regiment Discord guild keeps their session but must not reach the dashboard. Add a full-page gate (routed, not a dismissible modal, so it cannot be clicked past) explaining the requirement, with a Join the Discord button wired to the regiment's discordInviteUrl from /auth/me, an I have joined re-check button, and a sign-out escape hatch.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -16958,7 +16965,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T00:00:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-22T00:00:00Z",
@@ -16973,6 +16980,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -16980,7 +16994,7 @@
       "id": "T-0262",
       "title": "Re-check guild membership on dashboard entry, throttled",
       "summary": "Call GET /auth/guild-status when the user enters the dashboard shell (and on app resume), not on every HTTP call, with a client-side throttle so navigating between tabs does not re-fire it. A false verdict redirects to the gate; a failed/unavailable check must leave the user where they are rather than gating them.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -17035,7 +17049,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T00:00:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-22T00:00:00Z",
@@ -17050,6 +17064,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17057,7 +17078,7 @@
       "id": "T-0263",
       "title": "Route a non-guild-member to the gate straight after sign-in",
       "summary": "routeAfterLogin currently branches on member vs applicant only. Extend it so the OAuth callback sends a guildMember=false user to the gate instead of the dashboard or the application form, and so a successful re-check resumes the original destination.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -17101,7 +17122,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T00:00:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-22T00:00:00Z",
@@ -17116,6 +17137,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17123,7 +17151,7 @@
       "id": "T-0264",
       "title": "Drop Transfer Ownership from the matrix UI and clear the stale transfer copy",
       "summary": "The matrix renders straight from the API's capabilities array, so the Transfer Ownership row disappears on its own once the backend retires the capability. Confirmed during planning that the Angular app has NO transfer-ownership, transfer-discord or dissolve page - the settings panel has exactly five sections - so the remaining work is copy: SettingsService still documents discordServerId as moving through 'the dedicated transfer-discord action' and types UpdateSettingsPayload as Omit<SettingsDto,'discordServerId'>, both of which must follow whatever the backend decides about that field.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -17167,7 +17195,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T00:00:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-22T00:00:00Z",
@@ -17189,6 +17217,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17196,7 +17231,7 @@
       "id": "T-0265",
       "title": "Capability-gate the settings page, its inner nav and the sidebar entry",
       "summary": "Reported bug: the settings route is guarded by adminGuard (role-based), so a member without manage_settings sees the whole panel and all five inner sections; the API correctly 403s, so it is empty chrome. Gate the route on manage_settings OR manage_regiment_details, filter navItems per capability (Regiment group needs manage_settings, Public pages needs manage_regiment_details), default activeSection to the first permitted one, and hide the sidebar Settings entry when the user has neither.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -17263,7 +17298,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T00:00:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-22T00:00:00Z",
@@ -17278,6 +17313,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17285,7 +17327,7 @@
       "id": "T-0266",
       "title": "Respect the role hierarchy in the admin-action modal and roster row actions",
       "summary": "An Admin is currently offered role/rank/medal/suspend/ban controls against the Owner, and a Moderator against an Admin - the API will start rejecting those, so the UI must stop offering them. Drive the controls off the per-target permitted-actions flags from the member projection rather than re-deriving the rule client-side, and surface a clear message if a 403 still comes back.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -17344,7 +17386,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-22T00:00:00Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-22T00:00:00Z",
@@ -17359,6 +17401,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266; local CI green (553 specs, prettier/lint/build clean); PR opened"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17366,7 +17415,7 @@
       "id": "T-0267",
       "title": "Admin switch for the guild-membership gate",
       "summary": "The gate ships feature-flagged (discord_bot_settings.guild_gate_enabled, default false) but nothing in the SPA exposed the switch, so it could only be flipped by hand-calling the API. Adds a Require Discord server membership toggle to the Lord Adjutant panel with copy that states the consequence plainly, plus a pre-flight error notice when the gate is on while the bot is not enabled-and-connected.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -17406,7 +17455,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-23T03:56:42Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T03:56:42Z",
@@ -17421,6 +17470,13 @@
           "to": "review",
           "by": "claude",
           "note": "fixed in the same branch"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17428,7 +17484,7 @@
       "id": "T-0268",
       "title": "Roster showed \"Invalid Date\" for a member who has never signed in",
       "summary": "mapMember turns a null lastSeenAt into '', and formatLastSeen fed that straight to new Date(), so the Last Seen column rendered the literal string 'Invalid Date' for every member between approval and their first authenticated request. Renders 'Never' instead, guarding the parse rather than the input so any unparseable value degrades the same way. Found while verifying the T-0266 roster against realistic data.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -17460,7 +17516,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-23T03:56:42Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T03:56:42Z",
@@ -17475,6 +17531,13 @@
           "to": "review",
           "by": "claude",
           "note": "fixed in the same branch"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17482,7 +17545,7 @@
       "id": "T-0269",
       "title": "Guild-gate \"Still open to you\" copy did not share a left edge with its links",
       "summary": "The panel's paragraph inherited .gate-text's margin:0 auto / max-width:46ch from the centred hero, so inside the left-aligned secondary panel it sat inset above a full-width link list and read as a stray indent. The centring is now scoped to the hero via :not(.gate-centre). Found on a desktop screenshot of the gate.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -17510,7 +17573,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "af1309e1cdc5f1703c0f081bb92201ca9e736f0d",
       "createdAt": "2026-07-23T03:56:42Z",
-      "updatedAt": "2026-07-23T03:56:42Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T03:56:42Z",
@@ -17525,6 +17588,13 @@
           "to": "review",
           "by": "claude",
           "note": "fixed in the same branch"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via af1309e (PR #22); evidence af1309e"
         }
       ]
     },
@@ -17532,7 +17602,7 @@
       "id": "T-0270",
       "title": "Dark-theme the toast stack (light-on-light text is unreadable)",
       "summary": "The toast card pairs a parchment background (--parch-100) with light body text (--t-200), so every toast renders near-white text on a near-white card and the message is invisible. Re-skin the toast to the app's dark ink surface with --t-100 text, keeping the per-variant accent borders that already distinguish error/success/info. MEASURED: --t-200 (#d8d2c2) on --parch-100 (#ebe2c8) is 1.17:1. The card now sits on --ink-750 with --t-100 (~13.3:1), matching `.panel.raised` — the app's established tone for a surface floating above the page. Each variant also gained a low-alpha wash of its own hue so the variant survives the 3px rule being the only differentiator on a phone, and the dismiss glyph gained a focus ring (it had none) with its resting opacity raised 0.6 -> 0.75.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -17587,7 +17657,7 @@
       ],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-23T04:20:00Z",
-      "updatedAt": "2026-07-23T15:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T04:20:00Z",
@@ -17602,6 +17672,13 @@
           "to": "review",
           "by": "claude",
           "note": "toast re-skinned to the ink palette; 1.17:1 -> 13.3:1"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via c6d3bc6 (PR #23); evidence 9390733"
         }
       ]
     },
@@ -17609,7 +17686,7 @@
       "id": "T-0271",
       "title": "Sweep the remaining parchment surfaces for light-on-light text",
       "summary": "The toast is not the only parchment-backed element that never sets a dark text colour — the event-create toolbar strip and a few settings/event-detail panels use --parch-50/--parch-100 without an accompanying --t-on-parch. Audit every parchment background and either give it readable dark text or move it to the dark palette. AUDIT RESULT — the sweep found less rendered breakage and more latent breakage than expected. Of the eleven parchment backgrounds, four were already correct (.acct-del-quote, .rsvp-btn, .settings-nav button:hover, .parchment .btn-secondary), one was the toast (T-0270), and .chip measures 5.68:1 and passes. The three the plan named as broken — .orders-toolbar, .discord-reauth, .upload-target — are DEAD CSS: no template references any of them. They were given the text colour they should have had rather than deleted, so wiring one up cannot ship invisible copy; .archive-label in _base.scss is likewise unreferenced but was already correct. The real finding came from the guard built for the task, which measures every resolvable surface/text pair rather than only parchment ones: four INK surfaces carried --t-400 below the AA floor (thead th 4.17:1, .topbar-search / .privacy-hint / .drop-zone 3.90:1) and were moved one muted step to --t-300 (~7:1).",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -17672,7 +17749,7 @@
       ],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-23T04:20:00Z",
-      "updatedAt": "2026-07-23T15:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T04:20:00Z",
@@ -17687,6 +17764,13 @@
           "to": "review",
           "by": "claude",
           "note": "audited 11 parchment surfaces + added an enforcing contrast guard"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via c6d3bc6 (PR #23); evidence 9390733"
         }
       ]
     },
@@ -17694,7 +17778,7 @@
       "id": "T-0272",
       "title": "Edit the Discord welcome message from Settings > Discord & Adjutant",
       "summary": "The bot settings payload already carries welcomeMessage and the page tracks it for dirty-checking, but only the welcome CHANNEL picker is rendered — there is no control to author the greeting the adjutant posts when a member joins the guild. Add a textarea (with character counter, blank = use the house default, and the supported placeholder hint) beside the welcome channel picker. CORRECTION to this task's premise: the page did NOT track welcomeMessage for dirty-checking. hasUnsavedChanges() covered only the presentation and legal child editors, so this — the first free-text control in the Lord Adjutant panel — would have been discarded silently by the section-switch confirm and the CanDeactivate guard. Bot settings are now snapshotted on load and after every successful save, and that comparison feeds hasUnsavedChanges().",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -17760,7 +17844,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-23T04:20:00Z",
-      "updatedAt": "2026-07-23T15:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T04:20:00Z",
@@ -17775,6 +17859,13 @@
           "to": "review",
           "by": "claude",
           "note": "welcome editor + counter + token hint, with real dirty-tracking"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via c6d3bc6 (PR #23); evidence 9390733"
         }
       ]
     },
@@ -17782,7 +17873,7 @@
       "id": "T-0273",
       "title": "Verify the applicant only ever receives the User message after a decision",
       "summary": "T-0248 stopped the console sending the moderator note as the decline reason, but the leak persisted server-side and applicants still saw the staff note in their DM. Once the backend fix lands, re-verify the console end-to-end and tighten the decision-pane copy so the 'Staff only' promise on the note box is demonstrably true. VERIFIED: the console half was already correct — decline/hold post the note as `note` and never as `reason`, approve posts only discordDmMessage. That is now PINNED by exact key-set assertions rather than left to inspection, and approve gained request-body coverage it did not have. The copy was tightened on two counts: the note hint now says where the note goes as well as where it does not, and the decision notice no longer claims \"both boxes are kept after a decision\" — approve does not store a note, so that sentence was wrong for one of the three outcomes it covered.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -17830,7 +17921,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-23T04:20:00Z",
-      "updatedAt": "2026-07-23T15:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T04:20:00Z",
@@ -17845,6 +17936,13 @@
           "to": "review",
           "by": "claude",
           "note": "payload key sets pinned; decision-pane copy corrected"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via c6d3bc6 (PR #23); evidence 9390733"
         }
       ]
     },
@@ -17852,7 +17950,7 @@
       "id": "T-0274",
       "title": "Make the deciding officer on an application a clickable avatar + name chip",
       "summary": "Reported: the 'Approved by / Declined by' line named the officer but rendered them as inert text. decidedByMemberId - which the API has always sent - was dropped in mapApplication, so there was no id to link with. Carry it into the view model and render the officer as one chip (avatar + name inside a single anchor to /app/profile/:id), matching the treatment the applicant's own name already gets in the header above it.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -17907,7 +18005,7 @@
       ],
       "lastTouchedCommit": "466c2d544533976d96baada4b224fc5ecfdf3a41",
       "createdAt": "2026-07-23T05:25:13Z",
-      "updatedAt": "2026-07-23T05:25:13Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-23T05:25:13Z",
@@ -17922,6 +18020,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/planned-tasks-t0256-t0266, commit 466c2d5"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via c6d3bc6 (PR #23); evidence 466c2d5"
         }
       ]
     },
@@ -18023,7 +18128,7 @@
       ],
       "lastTouchedCommit": null,
       "createdAt": "2026-07-26T18:00:00Z",
-      "updatedAt": "2026-07-26T18:00:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-26T18:00:00Z",
@@ -18038,12 +18143,19 @@
           "to": "review",
           "by": "claude",
           "note": "implemented + 585 specs green on feat/privileged-role-link-warning; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 9ee300f (PR #48); evidence bebd4f3"
         }
       ],
       "id": "T-0276",
       "title": "Surface the privileged-Discord-role advisory in the Ranks & Medals role picker",
       "summary": "Pairs with lords-dashboard-backend:T-0189, which turned the 400 on linking a rank or medal to a privileged Discord role into an advisory on the 200. LinkDiscordResult carries that advisory as `warning` (null when absent, so a backend without the field degrades to silence rather than a broken screen), and the Discord role panel renders it as a warn notice — deliberately not the err channel `relinkError` uses, because nothing failed and there is nothing to retry. Cleared when that role is unlinked and when the editor moves to another rank or medal, so it can never describe a link the admin is no longer looking at.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -18055,7 +18167,7 @@
       "id": "T-0277",
       "title": "Lock the entry rank's name and Delete in the ranks admin",
       "summary": "The API now refuses a rename or a delete on a rank it resolves by name (Recruit), 403 for every caller, so the UI locks those two controls instead of offering them and catching the failure. Ladder row gets a muted padlock with the reason as its title; the editor Name field goes read-only with a LOCKED chip, the reason underneath and aria-describedby tying them together; the row menu OMITS Delete (a greyed-out Delete reads as \"not yet\" when the answer is \"never\") and shows a line of text saying why, keeping Edit. saveRank leaves `name` out of the body entirely for a locked rank, because the API only refuses a name it can see CHANGING and our own .trim() of the stored value is the one thing that could still differ. deleteRank re-checks the flag so a stale array or a keyboard path cannot fire a doomed request. mapRank reads an absent isProtected as false, so an older API leaves the ladder editable rather than freezing every row. One copy string feeds the tooltip, hint and flash.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -18122,7 +18234,7 @@
       ],
       "lastTouchedCommit": "f2b48ac39c48e5ecd207d722d9203aa6d6f1fa2f",
       "createdAt": "2026-07-26T23:55:00Z",
-      "updatedAt": "2026-07-26T23:55:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-26T23:55:00Z",
@@ -18137,6 +18249,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/protected-ranks; PR #47 open against dev, CI green"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 9ee300f (PR #48); evidence f2b48ac"
         }
       ]
     },
@@ -18144,7 +18263,7 @@
       "id": "T-0278",
       "title": "Stop the profile name rendering on top of the banner on mobile",
       "summary": "On a phone the display name and the Edit button rendered INSIDE the banner instead of below it. The desktop rule pulls the whole .profile-header up 40-48px and relies on `align-items: flex-end` to push the text back down — which only holds while .profile-header-info is SHORTER than the 132px avatar. At phone widths the rigid action buttons squeeze that column to ~106px, the 24px serif name wraps to two lines, the info block becomes the tallest flex item (~147px), and bottom-aligning the tallest item is a no-op: its top edge IS the container's, i.e. 40px inside the banner. The fix removes the dependency on relative heights rather than tuning the numbers — the header no longer moves and only the AVATAR is pulled up, so the text starts at the banner's bottom edge by construction at any height. Actions drop to their own full-width row, the shape the mobile design reference specifies, which also frees the width that made the name wrap.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -18188,7 +18307,7 @@
       ],
       "lastTouchedCommit": "c4527aec0b8b0889c07fa69019cbb90f8ce1b0f0",
       "createdAt": "2026-07-27T03:45:00Z",
-      "updatedAt": "2026-07-27T03:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T03:45:00Z",
@@ -18203,6 +18322,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/enlistment-roles-gallery-discord; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1c1f67a (PR #50); evidence c4527ae"
         }
       ]
     },
@@ -18210,7 +18336,7 @@
       "id": "T-0279",
       "title": "Align the roster mobile card rows",
       "summary": "In the mobile card list the avatar/nameplate block, the Rank row and the Medals row escaped the card's inset while Role, Status and Last Seen sat correctly. Every td has `padding: 5px 0`, so the 14px inset comes from the tr alone and all six rows share one content box — the difference is that three of them wrap their contents in `<div class=\"row\">`, and the app inherits Bootstrap grid's `margin-inline: -12px` on that class (its own .row rule overrides flex-wrap but never the margins). The 12px escapes in whichever direction the cell is aligned: the header block is flex-start so it started 12px left of the divider directly beneath it, while Rank and Medals are the last item in a space-between row so their border boxes overhung 12px right. Zeroed on those three cells.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "XS",
       "sizeWeight": 1,
@@ -18244,7 +18370,7 @@
       ],
       "lastTouchedCommit": "c4527aec0b8b0889c07fa69019cbb90f8ce1b0f0",
       "createdAt": "2026-07-27T03:45:00Z",
-      "updatedAt": "2026-07-27T03:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T03:45:00Z",
@@ -18259,6 +18385,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/enlistment-roles-gallery-discord; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1c1f67a (PR #50); evidence c4527ae"
         }
       ]
     },
@@ -18266,7 +18399,7 @@
       "id": "T-0280",
       "title": "Replace the Join role control with a Membership role, and add the gallery channels",
       "summary": "Pairs with lords-dashboard-backend:T-0191 and T-0195. The Join role picker becomes a Membership role picker with a hint that explains the inverted meaning — the adjutant no longer hands it to everyone who enters the guild; it grants it on approval and takes it back when someone leaves the roster, and mercenaries never receive it. Two new channel pickers for the gallery review and showcase channels. Both added to the shared save payload, whose full key set is pinned by a test.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -18310,7 +18443,7 @@
       ],
       "lastTouchedCommit": "c4527aec0b8b0889c07fa69019cbb90f8ce1b0f0",
       "createdAt": "2026-07-27T03:45:00Z",
-      "updatedAt": "2026-07-27T03:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T03:45:00Z",
@@ -18325,6 +18458,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/enlistment-roles-gallery-discord; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1c1f67a (PR #50); evidence c4527ae"
         }
       ]
     },
@@ -18332,7 +18472,7 @@
       "id": "T-0281",
       "title": "Tell gallery submitters that approval makes their post public, and confirm the submit",
       "summary": "Two gaps around one form. Before: nothing said an approved submission is published publicly and cross-posted to Discord. After: nothing said the submit had worked — a submission lands `pending` and /app/gallery lists only APPROVED items, so the member was bounced to a grid that pointedly did not contain what they had just uploaded, with no explanation. And a FAILED submit was entirely silent (console.error only). Now: an advisory above the button, a dark info toast on success, and the server's reason inline plus a toast on failure.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -18372,7 +18512,7 @@
       ],
       "lastTouchedCommit": "c4527aec0b8b0889c07fa69019cbb90f8ce1b0f0",
       "createdAt": "2026-07-27T03:45:00Z",
-      "updatedAt": "2026-07-27T03:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T03:45:00Z",
@@ -18387,6 +18527,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/enlistment-roles-gallery-discord; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1c1f67a (PR #50); evidence c4527ae"
         }
       ]
     },
@@ -18394,7 +18541,7 @@
       "id": "T-0282",
       "title": "Show who approved a gallery item to moderate_gallery holders",
       "summary": "Pairs with lords-dashboard-backend:T-0196. `approvedBy` renders on the gallery cards, the detail byline and the moderation queue. The API omits the key entirely for anyone without moderate_gallery, so its presence IS the gate; the local can() check beside it is a second one so the card is never the weakest link. mapGalleryItem also stops dropping approvedAt, which was already arriving and being discarded.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -18442,7 +18589,7 @@
       ],
       "lastTouchedCommit": "c4527aec0b8b0889c07fa69019cbb90f8ce1b0f0",
       "createdAt": "2026-07-27T03:45:00Z",
-      "updatedAt": "2026-07-27T03:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T03:45:00Z",
@@ -18457,6 +18604,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/enlistment-roles-gallery-discord; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1c1f67a (PR #50); evidence c4527ae"
         }
       ]
     },
@@ -18464,7 +18618,7 @@
       "id": "T-0283",
       "title": "Offer the caller's own tier in the role dropdown",
       "summary": "assignableRolesFor() cut the list at STRICTLY below the caller, mirroring the server ceiling of the day, so an Admin never saw \"Admin\" in the admin-action modal. The server now allows a manage_roles holder to appoint their own tier (backend T-0203), and the client half is what makes that reachable: slice(own) instead of slice(own + 1). A tier ABOVE the caller is still absent, and Owner is still absent from the list entirely - ownership moves through provisioning, never this control. Nothing about WHO may be acted on changed: permittedActions.changeRole is still the server-computed per-target gate and is still false for a peer, so the newly-offered entry only ever applies to a member below the caller. The one visible knock-on is the seeded select: an Admin opening a Moderator now sees that member's actual role preselected instead of a blank control.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "XS",
       "sizeWeight": 1,
@@ -18515,7 +18669,7 @@
       ],
       "lastTouchedCommit": "7e5ba6447db07a1569a05c49158bcddc7c3a3353",
       "createdAt": "2026-07-27T15:35:00Z",
-      "updatedAt": "2026-07-27T15:35:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T15:35:00Z",
@@ -18523,6 +18677,13 @@
           "to": "review",
           "by": "claude",
           "note": "client half of the owner request that \"Manage roles\" let a role promote others to its own level. Implemented on feat/manage-roles-grant-own-tier; lint, production build and the full karma suite green (602 specs); PR opened against dev."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via d58512c (PR #53); evidence 7e5ba64"
         }
       ]
     },
@@ -18530,7 +18691,7 @@
       "id": "T-0284",
       "title": "Derive-from-Discord button, and a confirmation for every admin action",
       "summary": "Two halves of the same complaint: an admin presses something in the member admin modal and cannot tell what happened. (1) A new Discord section offers \"Derive data from Discord\" with the hint \"It will derive rank and medals already assigned on Discord side.\", calling the new POST /members/:id/derive-from-discord (backend T-0204). It is the one action whose effect the caller cannot predict, so the server's own summary sentence is shown twice - as a toast AND left in the dialog, where the list of medals that came across can be re-read after the toast has gone. A run that found nothing is reported in the neutral (info) tone, not as an achievement. (2) EVERY admin action now raises a success toast. Failures have raised one since T-0246; successes raised nothing at all, and these dialogs sit over a page the change is not visible on - a role change swaps a value in a select that already showed it, a medal removal takes away a chip nobody was looking at, so a completed action and a click that silently did nothing looked identical. Each message is built from the member the SERVER returned rather than from the local form state, so it reports what landed; the award/remove messages read their medal title BEFORE the request, because the select is cleared and the chip is gone by the time it resolves. The existing toast component was already the dark elevated-ink card T-0270 made it, so no new surface was needed.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -18613,7 +18774,7 @@
       ],
       "lastTouchedCommit": "097be38382a7aac2b1f818ed9386dc41f5ecf4bc",
       "createdAt": "2026-07-27T16:45:00Z",
-      "updatedAt": "2026-07-27T16:45:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-27T16:45:00Z",
@@ -18621,6 +18782,13 @@
           "to": "review",
           "by": "claude",
           "note": "owner request: a derive-from-Discord button on the profile admin section, and a dark snackbar on the admin actions that had none. Implemented on feat/derive-member-data-from-discord; 614 unit tests green; verified in the running dev app (button, hint, both snackbars). PR opened against dev."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via d58512c (PR #53); evidence 097be38"
         }
       ]
     },
@@ -18628,7 +18796,7 @@
       "id": "T-0285",
       "title": "Explain the partial lockout when only the moderation half is withheld",
       "summary": "Companion to backend T-0211, which stopped subjecting rank and medal writes to the role hierarchy: an edit_ranks_medals holder may now decorate a peer, a senior, the regiment owner and their OWN record, while role/suspend/ban keep the full rule. No gate in this repo changed - every getter is already `capability && !!actions?.<flag>` and parsePermittedActions copies the block key-for-key, so the widened flags flow straight through. What changed is that a permittedActions block can now MIX true and false for one target, which produced a UI state the modal had no words for: a Moderator opening an Admin sees Rank, Medals and Derive working while Role, Suspend and Ban are simply absent. The only explanation of a hierarchy lockout lived in the all-or-nothing `!hasAnyPermittedAction` branch, which no longer fires for exactly the two cases it was written for. Adds moderationAvailable + moderationLockedOut and a second notice placed in the gap the missing sections leave, and narrows every sentence derived from standsLevelOrAbove from 'this record can only be managed by someone who outranks them' to the role/suspension/ban half - the old wording is now visibly untrue with the rank control on screen. The notice is suppressed for a caller who never held manage_roles: telling them a rule was applied that they were not subject to is noise. Also unpins the section divider from the Ban section (`:last-of-type`), because a rank/medal-only admin never renders Suspend or Ban and was left with a dangling rule. The owner then widened it again mid-review to include the caller's own record, which made two previously-unreachable states real: the roster `···` appears on your own row, and T-0246's disabled-and-explained Suspend/Ban treatment - written defensively for a dialog that never opened on self - is now the thing explaining the two dead controls beside a live rank picker.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 3,
@@ -18737,7 +18905,7 @@
       ],
       "lastTouchedCommit": "",
       "createdAt": "2026-07-28T16:45:00Z",
-      "updatedAt": "2026-07-28T19:10:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-28T16:45:00Z",
@@ -18752,6 +18920,13 @@
           "to": "review",
           "by": "claude",
           "note": "Owner follow-up: capability holders may also change their OWN rank and medals, self-derive included. No gate changed here either - the widened flags flow through - but the own-row and own-record states became reachable, so the roster and modal specs were re-pointed at them. 633 tests green, lint + contrast + build clean. PRs open into dev: this repo #59, backend [lords-dashboard-backend #69](https://github.com/Amitoj02/lords-dashboard-backend/pull/69)."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via d010378 (PR #58); evidence 0308635"
         }
       ]
     },
@@ -18759,7 +18934,7 @@
       "id": "T-0286",
       "title": "Show medals in cabinet order, and centre the Honours panel on the medal's own description",
       "summary": "Three fixes to how a member's decorations read. (1) ORDER: nothing here changes — the roster, the profile panel and the dashboard strip already render `medalAwards` verbatim, so the backend's precedence sort (lords-dashboard-backend T-0212) corrects all three plus the admin dialog chips for free. `precedence` is deliberately kept off the award shape so no client sort can creep back in; a spec pins that the mapper preserves the API's order, repeats included. (2) DESCRIPTION: `MemberMedalAward` gains `description` — the catalogue text /admin/ranks edits — and the Honours & Decorations panel now shows it instead of `award.detail`. `detail` was the per-award citation, which on the live roster is the same sentence on every medal ('Derived from their existing Discord roles'); a viewer wants to know what the medal TAKES. The field had to be threaded through all three hops — ApiMemberMedal, MemberMedalAward, and the `mapMedalAward` whitelist copy, which drops unknown wire fields with no type error. (3) LAYOUT: `.medal-item` was `align-items: flex-start`, pinning a ~48px text block to the top of a 64px hf-medal tile; it is now `center`, with `.medal-info` given its own column box so title and description centre as one block. Measured, not asserted from the stylesheet: the spec fails at a 16.3px offset under the old rule and passes at 0.00px under the new one.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -18839,7 +19014,7 @@
       ],
       "lastTouchedCommit": "618f038b30ca49f27111eb9707abbe803bf39cbf",
       "createdAt": "2026-07-29T22:20:00Z",
-      "updatedAt": "2026-07-29T22:20:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-07-29T22:20:00Z",
@@ -18847,6 +19022,13 @@
           "to": "review",
           "by": "claude",
           "note": "cabinet-order medals + catalogue description + centred Honours rows; PR into dev. PRs open into dev: this repo #60, backend [lords-dashboard-backend #70](https://github.com/Amitoj02/lords-dashboard-backend/pull/70). Merge the backend FIRST — the Honours panel renders a blank description until the API sends it."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via d010378 (PR #58); evidence 618f038"
         }
       ]
     },
@@ -18854,7 +19036,7 @@
       "id": "T-0287",
       "title": "Split the site: public roster/profiles/events/gallery, staff-only dashboard",
       "summary": "Moved everything a visitor or ordinary member uses out of /app to the root as indexable public pages (roster, /u/:handle profiles, events + RSVP, gallery + submit, account settings), left /app as a staff-only console gated on capabilities, replaced the soft-404 wildcard with a real 404, added SeoService + robots.txt, and built the account page hosting the new vanity handle.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "XL",
       "sizeWeight": 8,
@@ -18976,7 +19158,7 @@
       ],
       "lastTouchedCommit": "bf227f02fbf5c5b7d18791ba076eb6e5bf4ad4d3",
       "createdAt": "2026-08-04T22:10:00Z",
-      "updatedAt": "2026-08-04T23:05:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-04T22:10:00Z",
@@ -18984,6 +19166,13 @@
           "to": "review",
           "by": "claude",
           "note": "shipped on feat/public-site-redesign; 733 unit tests, production build, eslint and prettier all green"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1053b95 (PR #70); evidence bf227f0"
         }
       ]
     },
@@ -19079,7 +19268,7 @@
       "id": "T-0289",
       "title": "Rebuild the public member profile around a dossier rail",
       "summary": "Replaced the profile page layout with the Claude Design \"Member Profile - Final\" shape: a sticky 340px dossier rail (avatar over the banner, name, role badge, rank plaque, bio, actions, Elsewhere chips, particulars) beside a content column carrying Honours and a three-way segmented control. Merged the old Event History and RSVP tabs into one Activity list deduplicated by event id, and moved the Service Record from a stacked panel into a segment. At <=820px the rail comes apart via display:contents so Honours can sit between the identity block and Particulars, matching the mobile frame.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -19142,7 +19331,7 @@
       ],
       "lastTouchedCommit": "5608f1488eea1e1235a58f49c909e4776b0c86f4",
       "createdAt": "2026-08-05T04:10:00Z",
-      "updatedAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-05T04:10:00Z",
@@ -19164,6 +19353,13 @@
           "to": "review",
           "by": "claude",
           "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean PRs: frontend https://github.com/Amitoj02/lords-regiment-dashboard/pull/67 and backend https://github.com/Amitoj02/lords-dashboard-backend/pull/81, both into dev; merge the backend first."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1053b95 (PR #70); evidence 5608f14"
         }
       ]
     },
@@ -19171,7 +19367,7 @@
       "id": "T-0290",
       "title": "Optional member bio, published on the public profile",
       "summary": "Added an optional free-text bio (280 chars, trimmed server-side, whitespace-only stored as null) to the member model, the wire shape and the account editor, and rendered it in the dossier rail. It is PUBLIC by decision: member-authored, self-published and blank by default. Editing is reachable only from /account, which already refuses identity-only sessions, so an applicant cannot write one until their application is approved and a members row exists.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -19215,7 +19411,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "5608f1488eea1e1235a58f49c909e4776b0c86f4",
       "createdAt": "2026-08-05T04:10:00Z",
-      "updatedAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-05T04:10:00Z",
@@ -19237,6 +19433,13 @@
           "to": "review",
           "by": "claude",
           "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean PRs: frontend https://github.com/Amitoj02/lords-regiment-dashboard/pull/67 and backend https://github.com/Amitoj02/lords-dashboard-backend/pull/81, both into dev; merge the backend first."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1053b95 (PR #70); evidence 5608f14"
         }
       ]
     },
@@ -19244,7 +19447,7 @@
       "id": "T-0291",
       "title": "Linked accounts as handles, never URLs",
       "summary": "Added seven optional linked accounts (Twitch, YouTube, Instagram, TikTok, X, Steam, Medal.tv) stored as bare HANDLES. The server owns the URL template, so nothing a member types can publish an arbitrary outbound link on a crawlable page. Shipped a shared registry (src/app/core/models/social-link.model.ts) mirroring the server's per-platform regexes, a new hf-social-links chip row with the brand marks, and an account editor that normalises input and takes the handle out of a pasted profile URL. Discord is deliberately NOT in the set: it stays on the signed-in projection and renders as a separate, gated chip.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "L",
       "sizeWeight": 5,
@@ -19305,7 +19508,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "5608f1488eea1e1235a58f49c909e4776b0c86f4",
       "createdAt": "2026-08-05T04:10:00Z",
-      "updatedAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-05T04:10:00Z",
@@ -19327,6 +19530,13 @@
           "to": "review",
           "by": "claude",
           "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean PRs: frontend https://github.com/Amitoj02/lords-regiment-dashboard/pull/67 and backend https://github.com/Amitoj02/lords-dashboard-backend/pull/81, both into dev; merge the backend first."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1053b95 (PR #70); evidence 5608f14"
         }
       ]
     },
@@ -19334,7 +19544,7 @@
       "id": "T-0292",
       "title": "Collapse the signed-in topbar into Dashboard plus an account menu",
       "summary": "The public topbar gave a signed-in admin four peer buttons - Dashboard, My profile, Account, Sign out - of which two were the same destination under different names and one was destructive and one slip from Roster. Dashboard keeps its button because it is a different product; My profile, Edit profile (formerly \"Account\") and Sign out moved behind the member's own avatar. Dismisses on outside click and Escape. At <=820px the trigger is dropped and the panel becomes a plain section of the existing burger drawer rather than a dropdown inside a dropdown.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -19383,7 +19593,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "5608f1488eea1e1235a58f49c909e4776b0c86f4",
       "createdAt": "2026-08-05T04:10:00Z",
-      "updatedAt": "2026-08-05T04:10:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-05T04:10:00Z",
@@ -19405,6 +19615,13 @@
           "to": "review",
           "by": "claude",
           "note": "opened for review; 793 unit tests green, eslint + prettier + contrast guard clean PRs: frontend https://github.com/Amitoj02/lords-regiment-dashboard/pull/67 and backend https://github.com/Amitoj02/lords-dashboard-backend/pull/81, both into dev; merge the backend first."
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 1053b95 (PR #70); evidence 5608f14"
         }
       ]
     },
@@ -19841,7 +20058,7 @@
       "id": "T-0299",
       "title": "Carry the crawler routing in the web image so it cannot go un-deployed",
       "summary": "nginx.conf gains the UA + path matcher that rewrites crawlers to /api/seo/*, plus a /sitemap.xml proxy and an `internal` /__seo/ target. It ships inside this image, so `deploy web <tag>` is enough — the backend's Caddyfile needed a hand-sync that did not happen for months while /api/seo/* worked perfectly. Caddy still wins when synced (handle blocks are mutually exclusive and file-ordered), so the layers cannot disagree. index.html's static canonical moves from / to /home, which the sitemap and every shell already declared.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 3,
@@ -19882,7 +20099,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "2ab2ad86f680c50f91bc5ff256fffc74e32b66ca",
       "createdAt": "2026-08-05T18:30:00Z",
-      "updatedAt": "2026-08-05T18:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-05T18:30:00Z",
@@ -19890,6 +20107,13 @@
           "to": "review",
           "by": "claude",
           "note": "built and pushed as PR #71"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via c3492d5 (PR #72); evidence 2ab2ad8"
         }
       ]
     },
@@ -20030,7 +20254,7 @@
       "id": "T-0302",
       "title": "Swap the static site description for the regiment's tagline",
       "summary": "Replaced 'Roster, events, gallery and command tools for a Holdfast: Nations at War regiment.' with 'Discipline, honour, and the line. A Holdfast: Nations at War regiment of standing.' in all four places it existed: the meta description, og:description and twitter:description defaults in index.html, and the PWA manifest description. That sentence is already the seeded regiment description in the API (database/seeds/regiment.seed.ts), so this aligns the static shell with what the record says. Pure copy change - no backend twin, so unlike everything in core/seo/seo-copy.ts it is NOT a coupled deploy.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -20067,7 +20291,7 @@
       ],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-05T21:30:00Z",
-      "updatedAt": "2026-08-05T21:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-05T21:30:00Z",
@@ -20075,6 +20299,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 8efe0ed (PR #75); evidence 31d628b"
         }
       ]
     },
@@ -20082,7 +20313,7 @@
       "id": "T-0303",
       "title": "Align the event time/server line with the rest of its row",
       "summary": "The time + server line on the landing page's Upcoming Orders and on /events sat 12px LEFT of the title above it and the platform badges below it — the one line in the row that did not share the column's left edge. Cause: both carry the shared `.row` flex utility, whose class name collides with Bootstrap grid's `.row` and so inherits `margin-inline: -12px`. Zeroed the leaked gutter on `.event-meta` (landing) and `.event-time-row` (/events). Measured after: title, time, platforms and CTA all start at the same x on both pages.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -20113,7 +20344,7 @@
       ],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20121,6 +20352,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20128,7 +20366,7 @@
       "id": "T-0304",
       "title": "Stop the Upcoming Orders CTA escaping the panel on a phone",
       "summary": "`.event-row` was a nowrap flex at every width and `.event-actions` carries `margin-left: auto`, so once the date column, title and meta no longer fit, the Details button was pushed straight past the panel's right border and off the page — it defined document.scrollWidth (362px against a 372px viewport) and produced a horizontal scrollbar on the landing page. Below 560px the row now wraps: the body takes `calc(100% - 54px)` and the action drops to its own line indented by the same 54px (38px date column + the row's 16px gap), so the CTA reads as this event's action. Verified: scrollWidth back inside the viewport, button left edge equal to the title's.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -20160,7 +20398,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20168,6 +20406,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20175,7 +20420,7 @@
       "id": "T-0305",
       "title": "Indent the events-list CTA to the event's own column",
       "summary": "On /events below 560px `.event-list-meta` was `width: 100%` and started at the row's padding edge — 52px left of the title, sitting under the date block, so the CTA read as the panel's action rather than the event's. Swapped for `flex-basis: calc(100% - 52px)` plus a matching `margin-left`, which sums to exactly one row against the row's `row-gap`.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -20203,7 +20448,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20211,6 +20456,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20218,7 +20470,7 @@
       "id": "T-0306",
       "title": "Show the event banner as a picture, not as a backdrop for the title",
       "summary": "The event page printed the status badges, the H1 and the date/server line ON TOP of the uploaded banner behind a dark scrim. Owner report: the art almost always carries its own type (muster time, server, kit) and both layers of words ended up unreadable. The banner is now its own block at the top of the page — an `<img>` at `object-fit: contain` so nothing is cropped, capped at 460px (300px on a phone) so one oddly-shaped upload cannot push the page down, with the letterbox filled by a blurred over-scaled copy of the same image. Its bottom edge dissolves into the page through a gradient capped as `min(72px, 26%)`. The badges/title/meta follow underneath as a `.event-head` on the page's own ground, in the page's own text colours. The banner block renders ONLY when there is art: with the type moved out, the old gradient fallback was an empty box. Also fixed the missing space that ran the zone label into the server separator (\"EDT· Lord\") — Angular drops the whitespace-only node between the two spans.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "M",
       "sizeWeight": 3,
@@ -20260,7 +20512,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20268,6 +20520,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20275,7 +20534,7 @@
       "id": "T-0307",
       "title": "Give the gallery back its phone gutters, one plate a row",
       "summary": "`.gallery-page-wrap` sets `padding: 32px 56px 64px` and, being emulated-encapsulated at (0,2,0), outranked the global `.page` mobile rules at (0,1,0) — so 112px of a 390px phone (29% of the viewport) stayed as empty gutter and the masonry was squeezed into what was left. Added the breakpoint overrides the class had been shadowing (24px/16px at <=820, 20px/12px at <=560), dropped the masonry to ONE column below 560px at the owner's request, zeroed the Bootstrap `.row` gutter that would otherwise hang the page head, filter bar and tag list off the new tighter edge, and left-aligned the tag chips once the bar wraps.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -20311,7 +20570,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20319,6 +20578,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20326,7 +20592,7 @@
       "id": "T-0308",
       "title": "Paint a frame for posterless clips on iOS",
       "summary": "Owner confirmed on a real device that iOS Safari and iOS Chrome still show a flat black tile for directly-uploaded clips. T-0242's client-captured poster covers every clip submitted SINCE it shipped; clips submitted before, and any whose capture failed, have no poster and fall through to the inline `<video preload=\"metadata\">` — which WebKit paints nothing for unless it is asked for a specific time. Appending a `#t=0.1` media fragment to the src is the one HTML-only lever that makes it fetch and paint a frame without playing. Applied on the gallery card and on the detail hero; an existing fragment is left alone, and og:video still carries the clean URL. 0.1s rather than 0 because plenty of encodes open on a black frame. Confirmed in headless Chrome, where the same tile went from black to showing the frame.",
-      "status": "review",
+      "status": "deployed",
       "type": "bug",
       "size": "S",
       "sizeWeight": 2,
@@ -20366,7 +20632,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20374,6 +20640,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20381,7 +20654,7 @@
       "id": "T-0309",
       "title": "Drop the eyebrow labels from the four public pages",
       "summary": "Removed \"Field Orders\" (/events), \"Gallery Dispatches\" (/gallery), \"Roll Call\" (/roster) and \"Field Dispatch\" (/gallery/:id) at the owner's request, together with the four now-dead rules that styled them. The page titles carry the pages. The admin console's own \"Field Orders\" sub-heading on /app/events is a different surface and was left alone.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -20412,7 +20685,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20420,6 +20693,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20427,7 +20707,7 @@
       "id": "T-0310",
       "title": "Align the roster member count with the lede on a phone",
       "summary": "`.roster-head-actions` carries the shared `.row` class and so inherited Bootstrap grid's `margin-inline: -12px`. Stacked on a phone that pulled \"N members\" 12px LEFT of the lede it sits under; beside the lede on a desktop it hung the count and the export button 12px past the page's right gutter. Zeroed on both sides, which fixes both orientations. Also dropped the head's 8px action padding and tightened its gap to 6px below 820px, per the owner's request for less space above the count.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "S",
       "sizeWeight": 2,
@@ -20460,7 +20740,7 @@
       "skippedByClaude": [],
       "lastTouchedCommit": "",
       "createdAt": "2026-08-06T01:30:00Z",
-      "updatedAt": "2026-08-06T01:30:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T01:30:00Z",
@@ -20468,6 +20748,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 34e1007"
         }
       ]
     },
@@ -20475,7 +20762,7 @@
       "id": "T-0311",
       "title": "Render likes and views across the gallery surfaces",
       "summary": "Implements the owner's Claude Design brief 'Gallery Likes & Views'. Counts join the submitter line on hf-gallery-card, right-aligned and zero added card height, so the gallery index, the profile tab and every other surface that renders the card get them at once; the heart is absent below one like (a card reading '0 likes' is a small public verdict on the picture) while the eye always shows. The detail page gets the real toggle: optimistic, oxblood when liked, with a pop/burst/ring/roll animation whose keyframe names alternate so a repeat tap actually restarts it, and a 44px tap target on phones. A signed-out reader sees the same figures as plain chips and no button. Also records the view on load (fire-and-forget) and resolves the caller's own like state through the new authenticated GET, because the public item GET has no caller to answer about. Removed the orphaned .gallery-likes rule the brief spotted. Backend twin: lords-dashboard-backend T-0302.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "M",
       "sizeWeight": 5,
@@ -20561,7 +20848,7 @@
       ],
       "lastTouchedCommit": "3cb20af5fe8777eb6320e7fabdb86647e6ba37e4",
       "createdAt": "2026-08-06T03:55:00Z",
-      "updatedAt": "2026-08-06T03:55:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T03:55:00Z",
@@ -20576,6 +20863,13 @@
           "to": "review",
           "by": "claude",
           "note": "implemented on feat/gallery-likes-and-views; 840 unit tests green, lint + contrast guard + prod build clean; verified live in Chrome on all four surfaces; PR open against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via fc8f1c3 (PR #77); evidence 3cb20af"
         }
       ]
     },
@@ -20583,7 +20877,7 @@
       "id": "T-0312",
       "title": "Drop the likes privacy note from the dispatch page",
       "summary": "Removed the line \"Nobody can see who liked a dispatch — the count is the whole public record.\" from the reactions row on /gallery/:id at the owner's request. It answered a question the reader was not asking and held the right half of the row to do it. Took with it the .detail-reactions-note rules and the .sp spacer that existed only to push it right, plus the phone override that hid that spacer. The row keeps justify-content: space-between on phones, so the heart and the view count sit on the same edges they already did.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "XS",
       "sizeWeight": 1,
@@ -20614,7 +20908,7 @@
       ],
       "lastTouchedCommit": "853d54bf87383654a649c7e43f709d60ef573dc0",
       "createdAt": "2026-08-06T05:10:00Z",
-      "updatedAt": "2026-08-06T05:10:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-06T05:10:00Z",
@@ -20622,6 +20916,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and opened as a PR against dev"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 7200d31 (PR #82); evidence 853d54b"
         }
       ]
     },
@@ -20629,7 +20930,7 @@
       "id": "T-0313",
       "title": "Add the /buycheats prank page",
       "summary": "A rickroll to paste into Discord. /buycheats unfurls as \"Holdfast Cheats & Tricks\" with a guide-shaped description and an in-game battle screenshot, then redirects to https://youtu.be/t179PiWXDnA. The card giving nothing away IS the feature. Built as a static document in public/ (index.html + go.js), not an Angular route: no unfurler runs JavaScript, so a client-rendered page would hand Discordbot the app shell and index.html's default og: tags. The crawler rewrite (T-0299) was not an option either - those shells are generated by the API, and a path in $lords_crawlable without a matching /api/seo/* route unfurls as a BROKEN card, so this would have been a coupled deploy for a joke. angular.json copies public/ verbatim to the dist root, so it ships with an ordinary build of this repo alone. The redirect is an external same-origin script because production serves script-src 'self' - the same trap that pins inlineCritical:false, and one that fails ONLY in production since ng serve sends no CSP. It is deliberately NOT a <meta http-equiv=\"refresh\">: that needs no JavaScript, but it sits in the markup an unfurler parses and some follow it, which would unfurl the video. No crawler executes JS, so the asymmetry is the whole design - the card is HTML, the redirect is JS. go.js reads its destination off the #continue link rather than hardcoding it, because nginx serves .js immutable for 30 days while index.html is no-store; that link doubles as the fallback a reader without JavaScript clicks. location.replace, not href=, so Back out of the video does not bounce the reader forward again. nginx.conf gains `location = /buycheats` purely to drop a redirect: the SPA fallback already resolved the file via its `$uri/` entry, but answered 301 -> /buycheats/ first. noindex (meta, NOT a robots.txt Disallow - whether Discordbot honours those is contested, and one that is honoured kills the preview) keeps the domain from ranking for \"holdfast cheats\" and keeps the redirect off Google's sneaky-redirect ledger.",
-      "status": "review",
+      "status": "deployed",
       "type": "feature",
       "size": "S",
       "sizeWeight": 2,
@@ -20683,7 +20984,7 @@
       ],
       "lastTouchedCommit": "b0771a723d81b3d145967b74e4a14f6b71a03036",
       "createdAt": "2026-08-23T23:35:00Z",
-      "updatedAt": "2026-08-23T23:35:00Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-08-23T23:35:00Z",
@@ -20691,6 +20992,13 @@
           "to": "review",
           "by": "claude",
           "note": "created and implemented: static /buycheats page + nginx exact-match location; pushed to claude/holdfast-cheats-rickroll-opk427, no PR opened (not requested)"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via 82a1cf3 (PR #88); evidence b0771a7"
         }
       ]
     },
@@ -20698,7 +21006,7 @@
       "id": "T-0314",
       "title": "Retire Dependabot and refresh dependencies by hand",
       "summary": "The bot config here was elaborate — the angular group had to name @angular/*, @angular-devkit/*, @schematics/*, angular-eslint, ng-*, zone.js and typescript explicitly, plus a standing ignore on TypeScript majors — and it still produced PRs that could not go green alone. Alerts and automated security fixes were already disabled at the repo level, so the file drove version updates only. npm audit reported 19 vulnerabilities (11 high, 8 moderate); `npm update` clears all 11 highs (socket.io-parser, three undici, the qs/body-parser/express chain) because they were already fixed inside the declared ranges. The remaining 8 moderates needed an overrides block: qs 6.15.3->6.16.0 and uuid 8.3.2->11.1.1, both transitive dev-only dependencies of the deprecated webpack builder, where npm reported fixAvailable:false for uuid. Neither reaches the production bundle, and ng serve on Angular 22 runs on Vite, so the webpack-dev-server code carrying both advisories is not even executed.",
-      "status": "review",
+      "status": "deployed",
       "type": "chore",
       "size": "M",
       "sizeWeight": 3,
@@ -20759,12 +21067,161 @@
       ],
       "lastTouchedCommit": "754591f8a5be6fba91c6934d8b16aacf42a4681a",
       "createdAt": "2026-09-07T18:12:36Z",
-      "updatedAt": "2026-09-07T18:12:36Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
       "history": [
         {
           "at": "2026-09-07T18:12:36Z",
           "by": "claude",
           "note": "created and implemented: dependabot.yml removed, dependencies refreshed within semver, qs/uuid overrides added, audit clean"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "review",
+          "to": "deployed",
+          "by": "claude",
+          "note": "landed on main via b9cb83f (Merge branch 'dev': retire Dependabot, refresh dependencies, clear all); evidence 754591f"
+        }
+      ]
+    },
+    {
+      "id": "T-0315",
+      "title": "A \"Welcome new members\" switch in Settings > Discord & Adjutant, with the welcome channel plainly optional",
+      "summary": "Admins had no way to stop the adjutant greeting people who join the Discord server, and the welcome channel's empty choice read '— None —' although it meant 'send it as a DM'. A 'Welcome new members' switch now sits above the welcome channel and rides the shared bot-settings save (backend T-0305 persists it, default ON). While it is off, the channel and message controls give way to a one-line note that nobody is greeted and that returning members still get their roles back; switching off clears neither field. The switch never asks for a channel: the empty choice now reads '— Direct message —' and is labelled optional.",
+      "status": "review",
+      "type": "feature",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "admin",
+      "feature": "settings",
+      "subfeature": "discord-adjutant",
+      "repo": "",
+      "paths": [
+        "src/app/core/services/discord.service.ts",
+        "src/app/features/admin/settings/settings.component.html",
+        "src/app/features/admin/settings/settings.component.ts",
+        "src/app/features/admin/settings/settings.component.scss",
+        "src/app/features/admin/settings/settings.component.spec.ts"
+      ],
+      "dependsOn": [
+        "lords-dashboard-backend:T-0305"
+      ],
+      "blocks": [],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "the Welcome new members switch renders in the Lord Adjutant panel and is disabled without manage_settings",
+          "status": "passed"
+        },
+        {
+          "desc": "the empty welcome-channel choice reads Direct message, and saving with no channel succeeds",
+          "status": "passed"
+        },
+        {
+          "desc": "switched off, the channel and message controls are hidden and a note says nobody is greeted",
+          "status": "passed"
+        },
+        {
+          "desc": "saving off keeps the stored channel and message, and the pinned save-payload key set includes welcomeEnabled",
+          "status": "passed"
+        },
+        {
+          "desc": "live app against the API on the mock gateway: off saves and survives a reload, on with no channel saves cleanly, no horizontal overflow at 390px",
+          "status": "passed"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "Adds welcomeEnabled to the shared bot-settings save payload and the dirty-check snapshot. The pinned key-set spec guards a dropped or renamed key, but an API without backend T-0305 rejects the WHOLE save (forbidNonWhitelisted), and its GET omits the field so the panel shows greetings as off. Deploy the API first or together, and roll the two back together.",
+          "status": "open",
+          "notedAt": "2026-09-25T18:34:44Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not associate the switch's visible label with its checkbox via aria-labelledby: none of the panel's toggles do, so it wants a page-wide pass rather than one inconsistent fix.",
+        "Did not relabel the other channel pickers' '— None —' choice: for them an empty channel really does mean nothing is posted."
+      ],
+      "lastTouchedCommit": "26203aa5436e4f72c35231b0271253c9e8fa106d",
+      "createdAt": "2026-09-25T18:34:44Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
+      "history": [
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": null,
+          "to": "planned",
+          "by": "claude",
+          "note": "created from the owner's request: let the bot's welcome messages be turned off, without forcing a welcome channel"
+        },
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": "planned",
+          "to": "review",
+          "by": "claude",
+          "note": "implemented on claude/eloquent-meitner-hqqsm1; 846/846 specs, lint, build, and driven live against the API"
+        }
+      ]
+    },
+    {
+      "id": "T-0316",
+      "title": "Unfurl the regiment crest, not a gameplay screenshot, as the default card",
+      "summary": "Every public URL with no card image of its own unfurls banner.png, a frame of Holdfast gameplay. social-card.png (the crest centred on --ink-900 at 1200x630, wide so Discord keeps the large embed) replaces it in the static og:image in index.html, which is what / unfurls, and in DEFAULT_IMAGE in SeoService, which every SPA route falls through to; banner.png is kept so an API still on the old constant cannot 404. RECORDED BY SYNC: finished on origin/fix/link-preview-logo-card (793431c) but never merged; that branch filed it as T-0311, an id main had already given to gallery likes and views, so main's state never tracked it. main still unfurls banner.png.",
+      "status": "review",
+      "type": "bug",
+      "size": "S",
+      "sizeWeight": 2,
+      "area": "public",
+      "feature": "seo",
+      "subfeature": "site-defaults",
+      "repo": "",
+      "paths": [
+        "src/index.html",
+        "src/app/core/services/seo.service.ts",
+        "src/assets/images/social-card.png"
+      ],
+      "dependsOn": [],
+      "blocks": [
+        "lords-dashboard-backend:T-0306"
+      ],
+      "questions": [],
+      "testPlan": [
+        {
+          "desc": "Discord unfurl of https://lordsofholdfast.com/ shows the crest card, not the gameplay frame",
+          "status": "pending"
+        },
+        {
+          "desc": "the built index.html carries og:image = .../assets/images/social-card.png and the file is in dist assets",
+          "status": "passed"
+        },
+        {
+          "desc": "a route that passes no image (roster, /gallery) still emits og:image after SeoService.apply, now the crest card",
+          "status": "pending"
+        },
+        {
+          "desc": "an event or gallery item WITH its own image still unfurls that image, not the crest",
+          "status": "pending"
+        }
+      ],
+      "regressionRisk": [
+        {
+          "desc": "DEFAULT_IMAGE is the fallback for every public route that passes no image — landing, roster, calendar, gallery index — so this changes the card on all four at once. The failure mode is a 404 card rather than a wrong one: the URL is only correct once the WEB image carrying social-card.png is deployed, and the API emits the same URL from its own constant.",
+          "status": "open",
+          "notedAt": "2026-08-06T03:15:00Z"
+        }
+      ],
+      "skippedByClaude": [
+        "Did not delete banner.png even though nothing in this repo references it any more — the API emits the default card URL from its own copy of the constant, so deleting the file would break every shell-rendered card until the API half deploys too.",
+        "Did not touch the admin-editable hero: an owner-set hero banner or regiment banner still wins on /home in both the SPA and the shell. That is the Settings feature working, not a leftover. If the owner wants the crest there as well, the lever is clearing the banner in Settings, not code.",
+        "Did not add og:image:width/height/alt to index.html. SeoService sets all three the moment it boots; the static block is deliberately the minimum an unfurler needs."
+      ],
+      "lastTouchedCommit": "793431cce1d585d620b6492a5c5ab67032a1e1dc",
+      "createdAt": "2026-09-25T18:34:44Z",
+      "updatedAt": "2026-09-25T18:34:44Z",
+      "history": [
+        {
+          "at": "2026-09-25T18:34:44Z",
+          "from": null,
+          "to": "review",
+          "by": "claude",
+          "note": "recorded by sync from the unmerged origin/fix/link-preview-logo-card (793431c), where it was filed under the colliding id T-0311; the branch still needs merging, with .blueframe/state.json resolved by hand"
         }
       ]
     }
@@ -20809,6 +21266,21 @@
       "at": "2026-09-07T18:12:36Z",
       "by": "claude",
       "note": "T-0314 created and implemented: Dependabot removed, dependencies refreshed within semver, qs/uuid overrides added (audit 0)"
+    },
+    {
+      "at": "2026-09-25T18:34:44Z",
+      "by": "claude",
+      "note": "sync: dev fully merged to main (PR merges through #88, then b9cb83f); every review task advanced to deployed"
+    },
+    {
+      "at": "2026-09-25T18:34:44Z",
+      "by": "claude",
+      "note": "T-0315 created and implemented: \"Welcome new members\" switch with the welcome channel optional; coupled with backend T-0305"
+    },
+    {
+      "at": "2026-09-25T18:34:44Z",
+      "by": "claude",
+      "note": "T-0316 recorded from the unmerged origin/fix/link-preview-logo-card (filed there under a colliding id)"
     }
   ]
 }

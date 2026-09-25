@@ -327,6 +327,27 @@
                             <span class="toggle-track"></span>
                         </label>
                     </div>
+                    <!-- The greeting on/off switch (T-0315). Independent of the
+                         channel: with none picked the greeting is a DM, so no
+                         channel is needed to greet, or to stop greeting. -->
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Welcome new members</div>
+                            <div class="field-hint">
+                                Greet each person who joins the Discord server
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input
+                                id="welcome-enabled"
+                                type="checkbox"
+                                [(ngModel)]="botSettings.welcomeEnabled"
+                                [disabled]="!can('manage_settings')"
+                            />
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    @if (botSettings.welcomeEnabled) {
                     <!-- Channel pickers (populated by "Verify connection") -->
                     <div class="field-row bot-field">
                         <label class="field-label" for="welcome-channel">Welcome channel</label>
@@ -337,7 +358,7 @@
                             (ngModelChange)="setWelcomeChannel($event)"
                             [disabled]="!can('manage_settings')"
                         >
-                            <option value="">— None —</option>
+                            <option value="">— Direct message —</option>
                             @if (botSettings.welcomeChannelId &&
                             !channelLoaded(botSettings.welcomeChannelId)) {
                             <option [value]="botSettings.welcomeChannelId">
@@ -348,8 +369,8 @@
                             }
                         </select>
                         <p class="field-hint">
-                            Where the greeting is posted. With no channel set, the adjutant sends it
-                            as a direct message instead.
+                            Optional. Where the greeting is posted — with no channel set, the
+                            adjutant sends it to the new member as a direct message instead.
                         </p>
                     </div>
                     <!-- The greeting itself (T-0272). Sits with the channel that
@@ -383,6 +404,12 @@
                             >
                         </div>
                     </div>
+                    } @else {
+                    <p class="field-hint welcome-off-hint">
+                        Greetings are off — the adjutant welcomes nobody, in a channel or by direct
+                        message. Returning members still get their Discord roles back.
+                    </p>
+                    }
                     <div class="field-row bot-field">
                         <label class="field-label" for="enlistment-channel"
                             >Enlistment channel</label
