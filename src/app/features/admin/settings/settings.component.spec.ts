@@ -284,6 +284,7 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
     function bot(overrides: Partial<DiscordBotSettings> = {}): DiscordBotSettings {
         return {
             botEnabled: true,
+            welcomeEnabled: true,
             welcomeChannelId: null,
             welcomeMessage: null,
             enlistmentChannelId: null,
@@ -542,6 +543,7 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
                 'membershipRoleName',
                 'syncRolesOnChange',
                 'welcomeChannelId',
+                'welcomeEnabled',
                 'welcomeMessage',
             ]);
         });
@@ -564,6 +566,89 @@ describe('SettingsComponent — guild-membership gate switch (T-0261)', () => {
 
             component.saveBotSettings();
             expect(component.hasUnsavedChanges()).toBeFalse();
+        });
+    });
+
+    // ── T-0315: greetings can be switched off, and never need a channel ─────────
+    //
+    // Before the switch the only levers were the channel ("None" quietly meant
+    // "DM them") and the message (blank meant "the default"), so there was no way
+    // to stop the greeting at all. The switch and the channel are independent,
+    // and these pin both halves: off hides the greeting controls and saves
+    // without touching them; on never asks for a channel.
+    describe('welcome switch (T-0315)', () => {
+        const welcomeToggle = (el: HTMLElement) =>
+            el.querySelector<HTMLInputElement>('#welcome-enabled');
+        const channelPicker = (el: HTMLElement) =>
+            el.querySelector<HTMLSelectElement>('#welcome-channel');
+
+        it('renders the switch in the Lord Adjutant panel', () => {
+            const { el } = render(['manage_settings'], bot());
+
+            expect(welcomeToggle(el)?.type).toBe('checkbox');
+            expect(el.textContent).toContain('Welcome new members');
+        });
+
+        it('disables the switch for a caller without manage_settings', () => {
+            const { el } = render([], bot());
+            expect(welcomeToggle(el)?.disabled).toBeTrue();
+        });
+
+        it('offers the empty channel choice as a direct message — no channel is required', () => {
+            // "— None —" read as "no greeting" while it actually meant "DM them".
+            // The empty choice is a delivery route, and it saves without complaint.
+            const { component, discord, el } = render(['manage_settings'], bot());
+
+            expect(channelPicker(el)?.options[0].value).toBe('');
+            expect(channelPicker(el)?.options[0].textContent).toContain('Direct message');
+
+            component.saveBotSettings();
+
+            expect(component.botFlash).not.toContain('channel');
+            expect(discord.updateSettings.calls.mostRecent().args[0]).toEqual(
+                jasmine.objectContaining({ welcomeEnabled: true, welcomeChannelId: null }),
+            );
+        });
+
+        it('hides the channel and message while greetings are off, and says so', () => {
+            const { el } = render(['manage_settings'], bot({ welcomeEnabled: false }));
+
+            expect(channelPicker(el)).toBeNull();
+            expect(el.querySelector('#welcome-message')).toBeNull();
+            expect(el.textContent).toContain('Greetings are off');
+            // The rest of the panel is untouched by the switch.
+            expect(el.querySelector('#enlistment-channel')).not.toBeNull();
+        });
+
+        it('switching it off hides the greeting controls and marks the section dirty', () => {
+            // Driven through the model, like the rest of this harness: it declares
+            // the component without FormsModule, so ngModel is not live here.
+            const { component, el, detect } = render(['manage_settings'], bot());
+            expect(channelPicker(el)).not.toBeNull();
+
+            component.botSettings!.welcomeEnabled = false;
+            detect();
+
+            expect(channelPicker(el)).toBeNull();
+            expect(component.hasUnsavedChanges()).toBeTrue();
+        });
+
+        it('saves the switch off without clearing the stored channel or message', () => {
+            // Turning greetings back on should bring the old greeting back, so
+            // "off" is the switch alone — not a wipe of what it switches.
+            const settings = bot({ welcomeChannelId: '123', welcomeMessage: 'Fall in!' });
+            const { component, discord } = render(['manage_settings'], settings);
+            component.botSettings!.welcomeEnabled = false;
+
+            component.saveBotSettings();
+
+            expect(discord.updateSettings.calls.mostRecent().args[0]).toEqual(
+                jasmine.objectContaining({
+                    welcomeEnabled: false,
+                    welcomeChannelId: '123',
+                    welcomeMessage: 'Fall in!',
+                }),
+            );
         });
     });
 });

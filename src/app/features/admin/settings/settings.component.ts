@@ -636,6 +636,7 @@ export class SettingsComponent implements OnInit, HasUnsavedChanges {
         this.discord
             .updateSettings({
                 botEnabled: b.botEnabled,
+                welcomeEnabled: b.welcomeEnabled,
                 welcomeChannelId: b.welcomeChannelId,
                 welcomeMessage: b.welcomeMessage,
                 enlistmentChannelId: b.enlistmentChannelId,

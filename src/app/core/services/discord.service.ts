@@ -63,6 +63,13 @@ export interface DiscordVerifyConnection extends DiscordConnection {
 /** The regiment's Discord bot configuration (GET /discord/settings). */
 export interface DiscordBotSettings {
     botEnabled: boolean;
+    /**
+     * Whether the adjutant greets someone who joins the guild at all
+     * (lords-dashboard-backend T-0305, default true). Independent of the
+     * channel: off sends nothing, on with no channel sends a DM.
+     */
+    welcomeEnabled: boolean;
+    /** Optional. Null means the greeting is sent as a DM, never "no greeting". */
     welcomeChannelId: string | null;
     welcomeMessage: string | null;
     /** Per-purpose routed channels (admin-picked). */
